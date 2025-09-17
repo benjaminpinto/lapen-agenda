@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Edit, Trash2, MapPin } from 'lucide-react'
 import { useToast } from '@/components/hooks/use-toast'
@@ -50,8 +50,7 @@ const AdminCourts = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setPendingAction(() => submitForm)
-    setShowPasswordDialog(true)
+    await submitForm()
   }
 
   const submitForm = async () => {
@@ -183,14 +182,14 @@ const AdminCourts = () => {
           </p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Quadra
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
+        <Button onClick={() => { resetForm(); setIsDialogOpen(true); }}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Quadra
+        </Button>
+      </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>
                 {editingCourt ? 'Editar Quadra' : 'Nova Quadra'}
@@ -263,9 +262,8 @@ const AdminCourts = () => {
                 </Button>
               </div>
             </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {courts.map((court) => (

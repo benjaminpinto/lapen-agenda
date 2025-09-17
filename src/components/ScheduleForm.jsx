@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar, Clock, Users, Trophy } from 'lucide-react'
+
+import { DatePicker } from '@/components/ui/date-picker'
+import { Calendar as CalendarIcon, Clock, Users, Trophy } from 'lucide-react'
 import { useToast } from '@/components/hooks/use-toast'
 
 const ScheduleForm = () => {
@@ -162,7 +164,7 @@ const ScheduleForm = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Calendar className="h-6 w-6 mr-2 text-green-600" />
+            <CalendarIcon className="h-6 w-6 mr-2 text-green-600" />
             Novo Agendamento
           </CardTitle>
           <CardDescription>
@@ -176,7 +178,9 @@ const ScheduleForm = () => {
               <Label htmlFor="court">Quadra</Label>
               <Select value={formData.court_id} onValueChange={(value) => setFormData(prev => ({ ...prev, court_id: value }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione a quadra" />
+                  <SelectValue placeholder="Selecione a quadra">
+                    {formData.court_id && courts.find(court => String(court.id) === formData.court_id)?.name || "Selecione a quadra"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {courts.map((court) => (
@@ -193,14 +197,12 @@ const ScheduleForm = () => {
 
             {/* Date Selection */}
             <div>
-              <Label htmlFor="date">Data</Label>
-              <Input
-                id="date"
-                type="date"
-                min={getTodayDate()}
+              <Label>Data</Label>
+              <DatePicker
                 value={formData.date}
-                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                required
+                onChange={(date) => setFormData(prev => ({ ...prev, date }))}
+                disabled={(date) => date < new Date(getTodayDate())}
+                placeholder="Selecione a data"
               />
             </div>
 

@@ -1,66 +1,55 @@
-import { createContext, useContext, useState } from 'react'
+import * as React from "react"
 
-const TabsContext = createContext()
+const TabsContext = React.createContext()
 
-const Tabs = ({ defaultValue, value, onValueChange, className = '', children, ...props }) => {
-  const [internalValue, setInternalValue] = useState(defaultValue)
-  const currentValue = value !== undefined ? value : internalValue
-  
-  const handleValueChange = (newValue) => {
-    if (value === undefined) {
-      setInternalValue(newValue)
-    }
-    onValueChange?.(newValue)
-  }
-  
+const Tabs = ({ value, onValueChange, className = "", children, ...props }) => {
   return (
-    <TabsContext.Provider value={{ value: currentValue, onValueChange: handleValueChange }}>
-      <div className={className} {...props}>
+    <TabsContext.Provider value={{ value, onValueChange }}>
+      <div className={`w-full ${className}`} {...props}>
         {children}
       </div>
     </TabsContext.Provider>
   )
 }
 
-const TabsList = ({ className = '', children, ...props }) => (
+const TabsList = React.forwardRef(({ className = "", ...props }, ref) => (
   <div
-    className={`inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-gray-600 ${className}`}
+    ref={ref}
+    className={`inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-gray-500 ${className}`}
     {...props}
-  >
-    {children}
-  </div>
-)
+  />
+))
 
-const TabsTrigger = ({ value, className = '', children, ...props }) => {
-  const { value: currentValue, onValueChange } = useContext(TabsContext)
-  const isActive = currentValue === value
+const TabsTrigger = React.forwardRef(({ className = "", value: triggerValue, children, ...props }, ref) => {
+  const { value, onValueChange } = React.useContext(TabsContext)
+  const isActive = value === triggerValue
   
   return (
     <button
-      className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
-        isActive ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-      } ${className}`}
-      onClick={() => onValueChange(value)}
+      ref={ref}
+      onClick={() => onValueChange(triggerValue)}
+      className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all ${isActive ? 'bg-white text-gray-950 shadow-sm' : 'hover:bg-gray-200'} ${className}`}
       {...props}
     >
       {children}
     </button>
   )
-}
+})
 
-const TabsContent = ({ value, className = '', children, ...props }) => {
-  const { value: currentValue } = useContext(TabsContext)
+const TabsContent = React.forwardRef(({ className = "", value: contentValue, children, ...props }, ref) => {
+  const { value } = React.useContext(TabsContext)
   
-  if (currentValue !== value) return null
+  if (value !== contentValue) return null
   
   return (
     <div
-      className={`mt-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 ${className}`}
+      ref={ref}
+      className={`mt-2 ${className}`}
       {...props}
     >
       {children}
     </div>
   )
-}
+})
 
 export { Tabs, TabsList, TabsTrigger, TabsContent }

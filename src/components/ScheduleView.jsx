@@ -205,11 +205,11 @@ const ScheduleView = () => {
     }
 
     const getMatchTypeColor = (matchType) => {
-        return matchType === 'Liga' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+        return matchType === 'Liga' ? 'bg-yellow-100 !text-black' : 'bg-green-100 !text-black'
     }
 
     const getMatchTypeIcon = (matchType) => {
-        return matchType === 'Liga' ? <Trophy className="h-4 w-4"/> : <Users className="h-4 w-4"/>
+        return matchType === 'Liga' ? <Trophy className="h-4 w-4 text-black"/> : <Users className="h-4 w-4 text-black"/>
     }
 
     if (loading) {

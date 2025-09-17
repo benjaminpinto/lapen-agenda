@@ -140,3 +140,14 @@
     @apply bg-green-100 text-green-800 border border-green-200;
   }
 }
+
+/* Calendar disabled dates */
+.rdp-day:disabled,
+.rdp-day[disabled],
+.rdp-day[aria-disabled="true"],
+button:disabled {
+  color: #d1d5db !important;
+  background-color: #f3f4f6 !important;
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}

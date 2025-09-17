@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Plus, Trash2, Users } from 'lucide-react'
 import { useToast } from '@/components/hooks/use-toast'
 
@@ -56,7 +56,10 @@ const AdminPlayers = () => {
         })
         fetchPlayers()
         setNewPlayerName('')
-        setIsDialogOpen(false)
+        // Keep modal open and focus on input
+        setTimeout(() => {
+          document.getElementById('name')?.focus()
+        }, 100)
       } else {
         toast({
           title: "Erro",
@@ -120,14 +123,14 @@ const AdminPlayers = () => {
           </p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Jogador
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
+        <Button onClick={() => setIsDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Jogador
+        </Button>
+      </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Adicionar Jogador</DialogTitle>
               <DialogDescription>
@@ -156,9 +159,8 @@ const AdminPlayers = () => {
                 </Button>
               </div>
             </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>

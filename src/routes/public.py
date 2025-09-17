@@ -251,7 +251,7 @@ def generate_whatsapp_message():
     
     # Get first and last day of the month
     first_day = f"{year}-{month:02d}-01"
-    last_day_num = calendar.monthrange(year, month)[1]
+    last_day_num = calendar.monthrange(int(year), int(month))[1]
     last_day = f"{year}-{month:02d}-{last_day_num:02d}"
     
     db = get_db()
@@ -263,35 +263,29 @@ def generate_whatsapp_message():
         ORDER BY s.date, s.start_time
     ''', (today, first_day, last_day)).fetchall()
     
-    # Group schedules by date
-    grouped_schedules = {}
+    if not schedules:
+        message = f"📅 *Agenda LAPEN - {month_name} {year}*\n\nNenhum jogo agendado para este mês."
+        return jsonify({'message': message})
+    
+    message = f"📅 *Agenda LAPEN - {month_name} {year}*\n\n"
+    
+    current_date = None
     for schedule in schedules:
-        date = schedule['date']
-        if date not in grouped_schedules:
-            grouped_schedules[date] = []
-        grouped_schedules[date].append(schedule)
-    
-    # Generate message
-    message = f"*Agenda LAPEN - {month_name}/{year}* 🗓️\n\n"
-    
-    weekdays = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo']
-    
-    for date_str, day_schedules in grouped_schedules.items():
-        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-        weekday = weekdays[date_obj.weekday()]
-        day = date_obj.day
-        month_num = date_obj.month
+        schedule_date = datetime.strptime(schedule['date'], '%Y-%m-%d')
+        formatted_date = schedule_date.strftime('%d/%m')
+        day_name = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'][schedule_date.weekday()]
         
-        message += f"*{weekday}, {day:02d}/{month_num:02d}*\n"
+        if current_date != schedule['date']:
+            current_date = schedule['date']
+            message += f"\n🗓️ *{day_name}, {formatted_date}*\n"
         
-        for schedule in day_schedules:
-            match_emoji = "🥎" if schedule['match_type'] == 'Liga' else "🎾"
-            message += f"- *{schedule['court_name']}:* {schedule['start_time']} - {schedule['player1_name']} x {schedule['player2_name']} ({schedule['match_type']} {match_emoji})\n"
+        court_emoji = "🎾" if schedule['court_type'] == 'Tênis' else "🏸"
+        match_emoji = "🏆" if schedule['match_type'] == 'Liga' else "🤝"
         
-        message += "\n"
+        message += f"{court_emoji} {schedule['start_time']} - {schedule['court_name']}\n"
+        message += f"{match_emoji} {schedule['player1_name']} vs {schedule['player2_name']}\n"
+        message += f"📋 {schedule['match_type']}\n\n"
     
-    # Add footer with app URL placeholder
-    message += "Para agendar ou editar, acesse: [APP_URL]"
+    message += "---\n🎾 *LAPEN - Liga de Tênis*"
     
     return jsonify({'message': message})
-

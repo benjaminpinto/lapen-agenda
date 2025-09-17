@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Settings, LogOut, Calendar, Home } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/components/hooks/use-toast'
 
 const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
   const navigate = useNavigate()

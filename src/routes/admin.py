@@ -308,4 +308,3 @@ def get_dashboard_stats():
         'game_stats': [dict(stat) for stat in game_stats],
         'top_players': [dict(player) for player in top_players]
     })
-

@@ -1,4 +1,3 @@
-
 CREATE TABLE courts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE NOT NULL,
@@ -43,5 +42,3 @@ CREATE TABLE recurring_schedules (
     end_date TEXT NOT NULL, -- YYYY-MM-DD
     FOREIGN KEY (court_id) REFERENCES courts(id)
 );
-
-

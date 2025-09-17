@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Edit, Trash2, MapPin } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/components/hooks/use-toast'
 import PasswordConfirmDialog from './PasswordConfirmDialog'
 
 const AdminCourts = () => {

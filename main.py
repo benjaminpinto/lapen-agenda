@@ -9,7 +9,7 @@ from src.routes.admin import admin_bp
 from src.routes.public import public_bp
 from src.database import init_db
 
-app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
+app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'src', 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
 # Enable CORS for all routes
@@ -43,6 +43,6 @@ def serve(path):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)
 
 

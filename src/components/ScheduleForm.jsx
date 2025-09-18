@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 import { DatePicker } from '@/components/ui/date-picker'
-import { Calendar as CalendarIcon, Clock, Users, Trophy } from 'lucide-react'
+import { Calendar as CalendarIcon, Clock, Users, Trophy, GraduationCap } from 'lucide-react'
 import { useToast } from '@/components/hooks/use-toast'
 
 const ScheduleForm = () => {
@@ -306,6 +306,12 @@ const ScheduleForm = () => {
                     <div className="flex items-center">
                       <Trophy className="h-4 w-4 mr-2" />
                       Liga
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="Aula">
+                    <div className="flex items-center">
+                      <GraduationCap className="h-4 w-4 mr-2" />
+                      Aula
                     </div>
                   </SelectItem>
                 </SelectContent>

@@ -4,11 +4,20 @@ import {Calendar} from "@/components/ui/calendar"
 
 const DatePicker = ({value, onChange, placeholder = "Pick a date", disabled, ...props}) => {
     const [isOpen, setIsOpen] = React.useState(false)
-    const selectedDate = value ? new Date(value) : undefined
+    
+    // Parse date string to local date object
+    const selectedDate = value ? (() => {
+        const [year, month, day] = value.split('-').map(Number)
+        return new Date(year, month - 1, day)
+    })() : undefined
 
     const handleSelect = (date) => {
         if (date) {
-            const formattedDate = date.toISOString().split('T')[0]
+            // Format date in local timezone
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            const formattedDate = `${year}-${month}-${day}`
             onChange?.(formattedDate)
         }
         setIsOpen(false)
@@ -49,7 +58,11 @@ const DatePicker = ({value, onChange, placeholder = "Pick a date", disabled, ...
                             mode="single"
                             selected={selectedDate}
                             onSelect={handleSelect}
-                            disabled={(date) => date < new Date()}
+                            disabled={(date) => {
+                                const today = new Date()
+                                today.setHours(0, 0, 0, 0)
+                                return date < today
+                            }}
                             {...props}
                         />
                         <button

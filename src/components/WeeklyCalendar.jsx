@@ -1,14 +1,46 @@
 import {useEffect, useState} from 'react'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
-import {ChevronLeft, ChevronRight, Clock, GraduationCap, Trophy, Users} from 'lucide-react'
+import {ChevronLeft, ChevronRight, Clock, GraduationCap, Trophy, Users, Ban} from 'lucide-react'
 
 const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
     const [currentWeek, setCurrentWeek] = useState(new Date())
+    const [holidays, setHolidays] = useState([])
+    const [recurringSchedules, setRecurringSchedules] = useState([])
 
     useEffect(() => {
         fetchWeekSchedules(currentWeek.toISOString().split('T')[0])
+        fetchHolidays()
+        fetchRecurringSchedules()
     }, [currentWeek, fetchWeekSchedules])
+
+    const fetchHolidays = async () => {
+        try {
+            const response = await fetch('/api/admin/holidays-blocks', {
+                credentials: 'include'
+            })
+            if (response.ok) {
+                const data = await response.json()
+                setHolidays(data)
+            }
+        } catch (error) {
+            console.error('Error fetching holidays:', error)
+        }
+    }
+
+    const fetchRecurringSchedules = async () => {
+        try {
+            const response = await fetch('/api/admin/recurring-schedules', {
+                credentials: 'include'
+            })
+            if (response.ok) {
+                const data = await response.json()
+                setRecurringSchedules(data)
+            }
+        } catch (error) {
+            console.error('Error fetching recurring schedules:', error)
+        }
+    }
 
     const getWeekDays = (date) => {
         const week = []
@@ -34,6 +66,21 @@ const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
     const getSchedulesForDay = (date) => {
         const dateStr = date.toISOString().split('T')[0]
         return weekSchedules.filter(schedule => schedule.date === dateStr)
+    }
+
+    const getHolidaysForDay = (date) => {
+        const dateStr = date.toISOString().split('T')[0]
+        return holidays.filter(holiday => holiday.date === dateStr)
+    }
+
+    const getRecurringForDay = (date) => {
+        const dayOfWeek = (date.getDay() + 6) % 7 // Convert Sunday=0 to Monday=0
+        const dateStr = date.toISOString().split('T')[0]
+        return recurringSchedules.filter(schedule => 
+            schedule.day_of_week === dayOfWeek &&
+            dateStr >= schedule.start_date &&
+            dateStr <= schedule.end_date
+        )
     }
 
     const navigateWeek = (direction) => {
@@ -82,9 +129,37 @@ const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
                             </CardHeader>
                             <CardContent className="pt-0">
                                 <div className="space-y-2">
-                                    {daySchedules.length === 0 ? (
-                                        <p className="text-xs text-gray-400 text-center">Sem jogos</p>
-                                    ) : (
+                                    {(() => {
+                                        const dayHolidays = getHolidaysForDay(day)
+                                        const dayRecurring = getRecurringForDay(day)
+                                        return (
+                                            <>
+                                                {dayHolidays.map((holiday) => (
+                                                    <div key={`holiday-${holiday.id}`} className="p-2 bg-red-100 border-l-4 border-red-500 rounded text-xs">
+                                                        <div className="flex items-center mb-1">
+                                                            <Ban className="h-3 w-3 mr-1 text-red-600"/>
+                                                            <span className="font-medium text-red-800">
+                                                                {!holiday.start_time && !holiday.end_time ? 'Bloqueado' : `${holiday.start_time} - ${holiday.end_time}`}
+                                                            </span>
+                                                        </div>
+                                                        {holiday.description && (
+                                                            <div className="text-red-700 text-xs">{holiday.description}</div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                                {dayRecurring.map((recurring) => (
+                                                    <div key={`recurring-${recurring.id}`} className="p-2 bg-orange-100 border-l-4 border-orange-500 rounded text-xs">
+                                                        <div className="flex items-center mb-1">
+                                                            <Clock className="h-3 w-3 mr-1 text-orange-600"/>
+                                                            <span className="font-medium text-orange-800">{recurring.start_time}</span>
+                                                        </div>
+                                                        <div className="text-orange-700 font-medium">{recurring.court_name}</div>
+                                                        <div className="text-orange-700 text-xs">{recurring.description}</div>
+                                                    </div>
+                                                ))}
+                                                {daySchedules.length === 0 && dayHolidays.length === 0 && dayRecurring.length === 0 ? (
+                                                    <p className="text-xs text-gray-400 text-center">Sem eventos</p>
+                                                ) : (
                                         (() => {
                                             const courtGroups = daySchedules.reduce((groups, schedule) => {
                                                 const court = schedule.court_name
@@ -139,7 +214,11 @@ const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
                                                 </div>
                                             ))
                                         })()
-                                    )}
+                                                )}
+                                            </>
+                                        )
+                                    })()
+                                    }
                                 </div>
                             </CardContent>
                         </Card>

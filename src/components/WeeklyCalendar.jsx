@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
-import {ChevronLeft, ChevronRight, Clock, GraduationCap, Trophy, Users, Ban} from 'lucide-react'
+import {ChevronLeft, ChevronRight, Clock, GraduationCap, Trophy, Users, Ban, RotateCcw} from 'lucide-react'
 
 const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
     const [currentWeek, setCurrentWeek] = useState(new Date())
@@ -12,7 +12,7 @@ const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
         fetchWeekSchedules(currentWeek.toISOString().split('T')[0])
         fetchHolidays()
         fetchRecurringSchedules()
-    }, [currentWeek, fetchWeekSchedules])
+    }, [currentWeek])
 
     const fetchHolidays = async () => {
         try {
@@ -132,6 +132,24 @@ const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
                                     {(() => {
                                         const dayHolidays = getHolidaysForDay(day)
                                         const dayRecurring = getRecurringForDay(day)
+                                        
+                                        // Group schedules and recurring events by court
+                                        const courtGroups = daySchedules.reduce((groups, schedule) => {
+                                            const court = schedule.court_name
+                                            if (!groups[court]) groups[court] = { schedules: [], recurring: [] }
+                                            groups[court].schedules.push(schedule)
+                                            return groups
+                                        }, {})
+                                        
+                                        // Add recurring events to court groups
+                                        dayRecurring.forEach(recurring => {
+                                            const court = recurring.court_name
+                                            if (!courtGroups[court]) courtGroups[court] = { schedules: [], recurring: [] }
+                                            courtGroups[court].recurring.push(recurring)
+                                        })
+                                        
+                                        const hasAnyEvents = daySchedules.length > 0 || dayHolidays.length > 0 || dayRecurring.length > 0
+                                        
                                         return (
                                             <>
                                                 {dayHolidays.map((holiday) => (
@@ -147,73 +165,60 @@ const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
                                                         )}
                                                     </div>
                                                 ))}
-                                                {dayRecurring.map((recurring) => (
-                                                    <div key={`recurring-${recurring.id}`} className="p-2 bg-orange-100 border-l-4 border-orange-500 rounded text-xs">
-                                                        <div className="flex items-center mb-1">
-                                                            <Clock className="h-3 w-3 mr-1 text-orange-600"/>
-                                                            <span className="font-medium text-orange-800">{recurring.start_time}</span>
-                                                        </div>
-                                                        <div className="text-orange-700 font-medium">{recurring.court_name}</div>
-                                                        <div className="text-orange-700 text-xs">{recurring.description}</div>
-                                                    </div>
-                                                ))}
-                                                {daySchedules.length === 0 && dayHolidays.length === 0 && dayRecurring.length === 0 ? (
+                                                {!hasAnyEvents ? (
                                                     <p className="text-xs text-gray-400 text-center">Sem eventos</p>
                                                 ) : (
-                                        (() => {
-                                            const courtGroups = daySchedules.reduce((groups, schedule) => {
-                                                const court = schedule.court_name
-                                                if (!groups[court]) groups[court] = []
-                                                groups[court].push(schedule)
-                                                return groups
-                                            }, {})
-
-                                            return Object.entries(courtGroups).map(([courtName, courtSchedules]) => (
-                                                <div key={courtName} className="border-l-4 border-green-500 pl-2 mb-2">
-                                                    <div
-                                                        className="text-xs font-semibold text-green-700 mb-1 flex items-center">
-                                                        <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
-                                                        {courtName}
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        {courtSchedules.map((schedule) => (
-                                                            <div key={schedule.id}
-                                                                 className="p-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded text-xs border-l-2 border-gray-300">
-                                                                <div className="flex items-center justify-between mb-1">
-                                                                    <div className="flex items-center">
-                                                                        <Clock className="h-3 w-3 mr-1 text-gray-500"/>
-                                                                        <span
-                                                                            className="font-medium">{schedule.start_time}</span>
-                                                                    </div>
-                                                                    <div
-                                                                        className={`inline-flex items-center rounded-full px-1 py-0 text-xs border-2 transition-all duration-200 cursor-pointer ${
-                                                                            schedule.match_type === 'Liga' ? 'bg-yellow-200 text-yellow-800 border-yellow-300 hover:border-yellow-600' :
-                                                                            schedule.match_type === 'Aula' ? 'bg-purple-200 text-purple-800 border-purple-300 hover:border-purple-600' :
-                                                                            'bg-blue-200 text-blue-800 border-blue-300 hover:border-blue-600'
-                                                                        }`}
-                                                                        title={
-                                                                            schedule.match_type === 'Liga' ? 'Partida oficial da liga' :
-                                                                            schedule.match_type === 'Aula' ? 'Aula de tênis' :
-                                                                            'Partida amistosa entre jogadores'
-                                                                        }
-                                                                    >
-                                                                        {schedule.match_type === 'Liga' ?
-                                                                            <Trophy className="h-2 w-2"/> :
-                                                                            schedule.match_type === 'Aula' ?
-                                                                            <GraduationCap className="h-2 w-2"/> :
-                                                                            <Users className="h-2 w-2"/>
-                                                                        }
-                                                                    </div>
-                                                                </div>
-                                                                <div className="text-gray-800 font-medium">
-                                                                    {schedule.player1_name.split(' ')[0]} vs {schedule.player2_name.split(' ')[0]}
-                                                                </div>
+                                                    Object.entries(courtGroups).map(([courtName, courtData]) => (
+                                                        <div key={courtName} className="border-l-4 border-green-500 pl-2 mb-2">
+                                                            <div className="text-xs font-semibold text-green-700 mb-1 flex items-center">
+                                                                <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                                                                {courtName}
                                                             </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            ))
-                                        })()
+                                                            <div className="space-y-1">
+                                                                {courtData.recurring.map((recurring) => (
+                                                                    <div key={`recurring-${recurring.id}`} className="p-2 bg-orange-100 border-l-2 border-orange-500 rounded text-xs">
+                                                                        <div className="flex items-center mb-1">
+                                                                            <RotateCcw className="h-3 w-3 mr-1 text-orange-600"/>
+                                                                            <span className="font-medium text-orange-800">{recurring.start_time}</span>
+                                                                        </div>
+                                                                        <div className="text-orange-700 text-xs">{recurring.description}</div>
+                                                                    </div>
+                                                                ))}
+                                                                {courtData.schedules.map((schedule) => (
+                                                                    <div key={schedule.id} className="p-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded text-xs border-l-2 border-gray-300">
+                                                                        <div className="flex items-center justify-between mb-1">
+                                                                            <div className="flex items-center">
+                                                                                <Clock className="h-3 w-3 mr-1 text-gray-500"/>
+                                                                                <span className="font-medium">{schedule.start_time}</span>
+                                                                            </div>
+                                                                            <div
+                                                                                className={`inline-flex items-center rounded-full px-1 py-0 text-xs border-2 transition-all duration-200 cursor-pointer ${
+                                                                                    schedule.match_type === 'Liga' ? 'bg-yellow-200 text-yellow-800 border-yellow-300 hover:border-yellow-600' :
+                                                                                    schedule.match_type === 'Aula' ? 'bg-purple-200 text-purple-800 border-purple-300 hover:border-purple-600' :
+                                                                                    'bg-blue-200 text-blue-800 border-blue-300 hover:border-blue-600'
+                                                                                }`}
+                                                                                title={
+                                                                                    schedule.match_type === 'Liga' ? 'Partida oficial da liga' :
+                                                                                    schedule.match_type === 'Aula' ? 'Aula de tênis' :
+                                                                                    'Partida amistosa entre jogadores'
+                                                                                }
+                                                                            >
+                                                                                {schedule.match_type === 'Liga' ?
+                                                                                    <Trophy className="h-2 w-2"/> :
+                                                                                    schedule.match_type === 'Aula' ?
+                                                                                    <GraduationCap className="h-2 w-2"/> :
+                                                                                    <Users className="h-2 w-2"/>
+                                                                                }
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="text-gray-800 font-medium">
+                                                                            {schedule.player1_name.split(' ')[0]} vs {schedule.player2_name.split(' ')[0]}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ))
                                                 )}
                                             </>
                                         )

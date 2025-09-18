@@ -9,7 +9,7 @@ import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Textarea} from '@/components/ui/textarea'
-import {Calendar, Clock, Edit, Grid, List, MapPin, Share2, Trash2, Trophy, Users} from 'lucide-react'
+import {BarChart3, Calendar, Clock, Edit, List, MapPin, Share2, Trash2, Trophy, Users} from 'lucide-react'
 import {useToast} from '@/components/hooks/use-toast.js'
 
 const ScheduleView = () => {
@@ -23,6 +23,7 @@ const ScheduleView = () => {
     const [whatsappMessage, setWhatsappMessage] = useState('')
     const [showWhatsappDialog, setShowWhatsappDialog] = useState(false)
     const [players, setPlayers] = useState([])
+    const [stats, setStats] = useState({})
     const [formData, setFormData] = useState({
         player1_name: '',
         player2_name: '',
@@ -34,6 +35,7 @@ const ScheduleView = () => {
     useEffect(() => {
         fetchSchedules()
         fetchPlayers()
+        fetchStats()
 
         // Check if we should show WhatsApp sharing immediately
         if (searchParams.get('share') === 'true') {
@@ -81,6 +83,19 @@ const ScheduleView = () => {
             }
         } catch (error) {
             console.error('Error fetching players:', error)
+        }
+    }
+
+    const fetchStats = async () => {
+        try {
+            const response = await fetch('/api/public/dashboard-stats')
+            if (response.ok) {
+                const data = await response.json()
+                setStats(data)
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error)
+            setStats({})
         }
     }
 
@@ -243,8 +258,8 @@ const ScheduleView = () => {
                         Lista
                     </TabsTrigger>
                     <TabsTrigger value="calendar" className="flex items-center">
-                        <Grid className="h-4 w-4 mr-2"/>
-                        Calendário
+                        <BarChart3 className="h-4 w-4 mr-2"/>
+                        Estatísticas
                     </TabsTrigger>
                 </TabsList>
 
@@ -312,11 +327,53 @@ const ScheduleView = () => {
                 </TabsContent>
 
                 <TabsContent value="calendar" className="mt-6">
-                    <Card>
-                        <CardContent className="text-center py-8">
-                            <p className="text-gray-500">Visualização de calendário semanal em desenvolvimento</p>
-                        </CardContent>
-                    </Card>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg">Quadra Mais Agendada</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold text-green-600">
+                                    {stats.mostBookedCourt?.name || 'N/A'}
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                    {stats.mostBookedCourt?.bookings || 0} agendamentos este mês
+                                </p>
+                            </CardContent>
+                        </Card>
+                        
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg">Jogos por Tipo</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2">
+                                    {stats.gameStats?.map((stat) => (
+                                        <div key={stat.match_type} className="flex justify-between">
+                                            <span>{stat.match_type}</span>
+                                            <span className="font-semibold">{stat.count}</span>
+                                        </div>
+                                    )) || <p className="text-gray-500">Nenhum dado disponível</p>}
+                                </div>
+                            </CardContent>
+                        </Card>
+                        
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg">Jogadores Mais Assíduos</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-2">
+                                    {stats.topPlayers?.slice(0, 5).map((player, index) => (
+                                        <div key={player.player_name} className="flex justify-between">
+                                            <span className="text-sm">{index + 1}. {player.player_name}</span>
+                                            <span className="font-semibold text-sm">{player.games} jogos</span>
+                                        </div>
+                                    )) || <p className="text-gray-500">Nenhum dado disponível</p>}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </TabsContent>
             </Tabs>
 

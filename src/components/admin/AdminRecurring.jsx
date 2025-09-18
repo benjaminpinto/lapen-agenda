@@ -233,14 +233,14 @@ const AdminRecurring = () => {
                     </p>
                 </div>
 
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button onClick={resetForm}>
-                            <Plus className="h-4 w-4 mr-2"/>
-                            Nova Agenda Fixa
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
+                <Button onClick={() => {resetForm(); setIsDialogOpen(true)}}>
+                    <Plus className="h-4 w-4 mr-2"/>
+                    Nova Agenda Fixa
+                </Button>
+            </div>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent className="max-w-2xl">
                         <DialogHeader>
                             <DialogTitle>Criar Agenda Fixa</DialogTitle>
                             <DialogDescription>
@@ -254,7 +254,9 @@ const AdminRecurring = () => {
                                 <Select value={formData.court_id}
                                         onValueChange={(value) => setFormData(prev => ({...prev, court_id: value}))}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Selecione a quadra"/>
+                                        <SelectValue placeholder="Selecione a quadra">
+                                            {formData.court_id && courts.find(court => String(court.id) === formData.court_id)?.name || "Selecione a quadra"}
+                                        </SelectValue>
                                     </SelectTrigger>
                                     <SelectContent>
                                         {courts.map((court) => (
@@ -363,7 +365,6 @@ const AdminRecurring = () => {
                         </form>
                     </DialogContent>
                 </Dialog>
-            </div>
 
             <div className="grid gap-4">
                 {schedules.length === 0 ? (

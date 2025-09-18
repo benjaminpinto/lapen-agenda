@@ -144,14 +144,14 @@ const AdminHolidays = () => {
           </p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Bloqueio
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
+        <Button onClick={() => {resetForm(); setIsDialogOpen(true)}}>
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Bloqueio
+        </Button>
+      </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Criar Bloqueio</DialogTitle>
               <DialogDescription>
@@ -217,7 +217,6 @@ const AdminHolidays = () => {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
 
       <div className="grid gap-4">
         {holidays.length === 0 ? (

@@ -8,7 +8,7 @@ import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Textarea} from '@/components/ui/textarea'
-import {BarChart3, Calendar, Clock, Edit, List, MapPin, Share2, Trash2, Trophy, Users} from 'lucide-react'
+import {BarChart3, Calendar, Clock, Edit, GraduationCap, List, MapPin, Share2, Trash2, Trophy, Users} from 'lucide-react'
 import {useToast} from '@/components/hooks/use-toast.js'
 import WeeklyCalendar from './WeeklyCalendar'
 
@@ -24,6 +24,7 @@ const ScheduleView = () => {
     const [showWhatsappDialog, setShowWhatsappDialog] = useState(false)
     const [players, setPlayers] = useState([])
     const [stats, setStats] = useState({})
+    const [hidePastDates, setHidePastDates] = useState(true)
     const [formData, setFormData] = useState({
         player1_name: '',
         player2_name: '',
@@ -226,11 +227,15 @@ const ScheduleView = () => {
     }
 
     const getMatchTypeColor = (matchType) => {
-        return matchType === 'Liga' ? 'bg-yellow-100 !text-black' : 'bg-green-100 !text-black'
+        if (matchType === 'Liga') return 'bg-yellow-100 !text-black'
+        if (matchType === 'Aula') return 'bg-purple-100 !text-black'
+        return 'bg-green-100 !text-black'
     }
 
     const getMatchTypeIcon = (matchType) => {
-        return matchType === 'Liga' ? <Trophy className="h-4 w-4 text-black"/> : <Users className="h-4 w-4 text-black"/>
+        if (matchType === 'Liga') return <Trophy className="h-4 w-4 text-black"/>
+        if (matchType === 'Aula') return <GraduationCap className="h-4 w-4 text-black"/>
+        return <Users className="h-4 w-4 text-black"/>
     }
 
     if (loading) {
@@ -274,69 +279,142 @@ const ScheduleView = () => {
                 </TabsList>
 
                 <TabsContent value="list" className="mt-6">
-                    {Object.keys(groupedSchedules).length === 0 ? (
-                        <Card>
-                            <CardContent className="text-center py-8">
-                                <p className="text-gray-500">Nenhum agendamento encontrado para este mês</p>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        <div className="space-y-6">
-                            {Object.entries(groupedSchedules).map(([date, daySchedules]) => (
-                                <Card key={date}>
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center">
-                                            <Calendar className="h-5 w-5 mr-2 text-blue-600"/>
-                                            {formatDate(date)}
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-3">
-                                            {daySchedules.map((schedule) => (
-                                                <div key={schedule.id}
-                                                     className="flex items-center justify-between p-4 border rounded-lg">
-                                                    <div className="flex items-center space-x-4">
-                                                        <div className="flex items-center">
-                                                            <MapPin className="h-4 w-4 mr-1 text-green-600"/>
-                                                            <span className="font-medium">{schedule.court_name}</span>
-                                                        </div>
-                                                        <div className="flex items-center">
-                                                            <Clock className="h-4 w-4 mr-1 text-gray-500"/>
-                                                            <span>{schedule.start_time}</span>
-                                                        </div>
-                                                        <div>
-                                                            <span className="font-medium">{schedule.player1_name}</span>
-                                                            <span className="mx-2">x</span>
-                                                            <span className="font-medium">{schedule.player2_name}</span>
-                                                        </div>
-                                                        <div
-                                                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-2 transition-all duration-200 cursor-pointer ${schedule.match_type === 'Liga' ? 'bg-yellow-100 text-black border-yellow-300 hover:border-yellow-600' : 'bg-green-100 text-black border-green-300 hover:border-green-600'}`}
-                                                            title={schedule.match_type === 'Liga' ? 'Partida oficial da liga' : 'Partida amistosa entre jogadores'}
-                                                        >
-                                                            <div className="flex items-center">
-                                                                {getMatchTypeIcon(schedule.match_type)}
-                                                                <span className="ml-1">{schedule.match_type}</span>
+                    {(() => {
+                        const today = new Date().toISOString().split('T')[0]
+                        const futureSchedules = {}
+                        const pastSchedules = {}
+                        
+                        Object.entries(groupedSchedules).forEach(([date, daySchedules]) => {
+                            if (date >= today) {
+                                futureSchedules[date] = daySchedules
+                            } else {
+                                pastSchedules[date] = daySchedules
+                            }
+                        })
+                        
+                        const hasFutureSchedules = Object.keys(futureSchedules).length > 0
+                        const hasPastSchedules = Object.keys(pastSchedules).length > 0
+                        
+                        return (
+                            <div className="space-y-6">
+                                {!hasFutureSchedules && !hasPastSchedules ? (
+                                    <Card>
+                                        <CardContent className="text-center py-8">
+                                            <p className="text-gray-500">Nenhum agendamento encontrado para este mês</p>
+                                        </CardContent>
+                                    </Card>
+                                ) : (
+                                    <>
+                                        {Object.entries(futureSchedules).map(([date, daySchedules]) => (
+                                            <Card key={date}>
+                                                <CardHeader>
+                                                    <CardTitle className="flex items-center">
+                                                        <Calendar className="h-5 w-5 mr-2 text-blue-600"/>
+                                                        {formatDate(date)}
+                                                    </CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <div className="space-y-3">
+                                                        {daySchedules.map((schedule) => (
+                                                            <div key={schedule.id}
+                                                                 className="flex items-center justify-between p-4 border rounded-lg">
+                                                                <div className="flex items-center space-x-4">
+                                                                    <div className="flex items-center">
+                                                                        <MapPin className="h-4 w-4 mr-1 text-green-600"/>
+                                                                        <span className="font-medium">{schedule.court_name}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center">
+                                                                        <Clock className="h-4 w-4 mr-1 text-gray-500"/>
+                                                                        <span>{schedule.start_time}</span>
+                                                                    </div>
+                                                                    <div>
+                                                                        <span className="font-medium">{schedule.player1_name}</span>
+                                                                        <span className="mx-2">x</span>
+                                                                        <span className="font-medium">{schedule.player2_name}</span>
+                                                                    </div>
+                                                                    <div
+                                                                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-2 transition-all duration-200 cursor-pointer ${
+                                                                            schedule.match_type === 'Liga' ? 'bg-yellow-100 text-black border-yellow-300 hover:border-yellow-600' :
+                                                                            schedule.match_type === 'Aula' ? 'bg-purple-100 text-black border-purple-300 hover:border-purple-600' :
+                                                                            'bg-green-100 text-black border-green-300 hover:border-green-600'
+                                                                        }`}
+                                                                        title={
+                                                                            schedule.match_type === 'Liga' ? 'Partida oficial da liga' :
+                                                                            schedule.match_type === 'Aula' ? 'Aula de tênis' :
+                                                                            'Partida amistosa entre jogadores'
+                                                                        }
+                                                                    >
+                                                                        <div className="flex items-center">
+                                                                            {getMatchTypeIcon(schedule.match_type)}
+                                                                            <span className="ml-1">{schedule.match_type}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex space-x-2">
+                                                                    <Button variant="ghost" size="sm"
+                                                                            onClick={() => handleEdit(schedule)}>
+                                                                        <Edit className="h-4 w-4"/>
+                                                                    </Button>
+                                                                    <Button variant="ghost" size="sm"
+                                                                            onClick={() => handleDelete(schedule.id)}>
+                                                                        <Trash2 className="h-4 w-4"/>
+                                                                    </Button>
+                                                                </div>
                                                             </div>
-                                                        </div>
+                                                        ))}
                                                     </div>
-                                                    <div className="flex space-x-2">
-                                                        <Button variant="ghost" size="sm"
-                                                                onClick={() => handleEdit(schedule)}>
-                                                            <Edit className="h-4 w-4"/>
-                                                        </Button>
-                                                        <Button variant="ghost" size="sm"
-                                                                onClick={() => handleDelete(schedule.id)}>
-                                                            <Trash2 className="h-4 w-4"/>
-                                                        </Button>
-                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                        
+                                        {hasPastSchedules && (
+                                            <div className="mt-6">
+                                                <div className="mb-4 flex items-center justify-between">
+                                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={hidePastDates}
+                                                            onChange={(e) => setHidePastDates(e.target.checked)}
+                                                            className="rounded border-gray-300"
+                                                        />
+                                                        <span className="text-sm text-gray-600">Ocultar datas passadas</span>
+                                                    </label>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    )}
+                                                {!hidePastDates && (
+                                                    <Card className="border-gray-300">
+                                                <CardHeader className="bg-gray-50">
+                                                    <CardTitle className="text-gray-600 text-sm">
+                                                        Agendamentos Passados
+                                                    </CardTitle>
+                                                </CardHeader>
+                                                <CardContent className="pt-4">
+                                                    <div className="space-y-4">
+                                                        {Object.entries(pastSchedules).reverse().map(([date, daySchedules]) => (
+                                                            <div key={date} className="border-l-4 border-gray-300 pl-4">
+                                                                <h4 className="font-medium text-gray-600 mb-2">{formatDate(date)}</h4>
+                                                                <div className="space-y-2">
+                                                                    {daySchedules.map((schedule) => (
+                                                                        <div key={schedule.id} className="flex items-center space-x-4 p-2 bg-gray-50 rounded text-sm opacity-75">
+                                                                            <span className="font-medium">{schedule.court_name}</span>
+                                                                            <span>{schedule.start_time}</span>
+                                                                            <span>{schedule.player1_name} x {schedule.player2_name}</span>
+                                                                            <span className="text-xs px-2 py-1 bg-gray-200 rounded">{schedule.match_type}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </CardContent>
+                                                    </Card>
+                                                )}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        )
+                    })()}
                 </TabsContent>
 
                 <TabsContent value="weekly" className="mt-6">
@@ -435,6 +513,7 @@ const ScheduleView = () => {
                                 <SelectContent>
                                     <SelectItem value="Amistoso">Amistoso</SelectItem>
                                     <SelectItem value="Liga">Liga</SelectItem>
+                                    <SelectItem value="Aula">Aula</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

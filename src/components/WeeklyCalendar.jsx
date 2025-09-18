@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
-import {ChevronLeft, ChevronRight, Clock, Trophy, Users} from 'lucide-react'
+import {ChevronLeft, ChevronRight, Clock, GraduationCap, Trophy, Users} from 'lucide-react'
 
 const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
     const [currentWeek, setCurrentWeek] = useState(new Date())
@@ -111,11 +111,21 @@ const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
                                                                             className="font-medium">{schedule.start_time}</span>
                                                                     </div>
                                                                     <div
-                                                                        className={`inline-flex items-center rounded-full px-1 py-0 text-xs border-2 transition-all duration-200 cursor-pointer ${schedule.match_type === 'Liga' ? 'bg-yellow-200 text-yellow-800 border-yellow-300 hover:border-yellow-600' : 'bg-blue-200 text-blue-800 border-blue-300 hover:border-blue-600'}`}
-                                                                        title={schedule.match_type === 'Liga' ? 'Partida oficial da liga' : 'Partida amistosa entre jogadores'}
+                                                                        className={`inline-flex items-center rounded-full px-1 py-0 text-xs border-2 transition-all duration-200 cursor-pointer ${
+                                                                            schedule.match_type === 'Liga' ? 'bg-yellow-200 text-yellow-800 border-yellow-300 hover:border-yellow-600' :
+                                                                            schedule.match_type === 'Aula' ? 'bg-purple-200 text-purple-800 border-purple-300 hover:border-purple-600' :
+                                                                            'bg-blue-200 text-blue-800 border-blue-300 hover:border-blue-600'
+                                                                        }`}
+                                                                        title={
+                                                                            schedule.match_type === 'Liga' ? 'Partida oficial da liga' :
+                                                                            schedule.match_type === 'Aula' ? 'Aula de tênis' :
+                                                                            'Partida amistosa entre jogadores'
+                                                                        }
                                                                     >
                                                                         {schedule.match_type === 'Liga' ?
                                                                             <Trophy className="h-2 w-2"/> :
+                                                                            schedule.match_type === 'Aula' ?
+                                                                            <GraduationCap className="h-2 w-2"/> :
                                                                             <Users className="h-2 w-2"/>
                                                                         }
                                                                     </div>

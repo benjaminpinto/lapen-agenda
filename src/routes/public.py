@@ -1,5 +1,6 @@
 import calendar
-from datetime import datetime, timedelta
+import sqlite3
+from datetime import datetime, timedelta, time, timezone
 
 from flask import Blueprint, request, jsonify
 
@@ -11,23 +12,14 @@ public_bp = Blueprint('public', __name__, url_prefix='/api/public')
 def generate_time_slots():
     """Generate available time slots from 07:30 to 22:30 with 1.5 hour intervals"""
     slots = []
-    start_hour = 7
-    start_minute = 30
-
-    while True:
-        time_str = f"{start_hour:02d}:{start_minute:02d}"
-        slots.append(time_str)
-
-        # Add 90 minutes (1.5 hours)
-        start_minute += 90
-        if start_minute >= 60:
-            start_hour += start_minute // 60
-            start_minute = start_minute % 60
-
-        # Stop if we've reached the last possible slot (22:30)
-        if start_hour > 22 or (start_hour == 22 and start_minute > 30):
-            break
-
+    current_time = datetime.combine(datetime.today(), time(7, 30))
+    end_time = datetime.combine(datetime.today(), time(22, 30))
+    interval = timedelta(minutes=90)
+    
+    while current_time <= end_time:
+        slots.append(current_time.strftime('%H:%M'))
+        current_time += interval
+    
     return slots
 
 
@@ -112,11 +104,35 @@ def get_available_times():
     ''', (court_id, date)).fetchall()
     booked_times = [slot['start_time'] for slot in booked_slots]
 
-    # Filter out booked and blocked slots
-    available_slots = []
-    for slot in all_slots:
-        if slot not in booked_times and not is_time_blocked(date, slot, court_id):
-            available_slots.append(slot)
+    # Get all blocked times once
+    blocks = db.execute('SELECT * FROM holidays_blocks WHERE date = ?', (date,)).fetchall()
+    
+    date_obj = datetime.strptime(date, '%Y-%m-%d')
+    day_of_week = date_obj.weekday()
+    
+    recurring = db.execute('''
+        SELECT * FROM recurring_schedules 
+        WHERE day_of_week = ? AND start_date <= ? AND end_date >= ?
+        AND (? IS NULL OR court_id = ?)
+    ''', (day_of_week, date, date, court_id, court_id)).fetchall()
+    
+    # Check blocked times efficiently
+    def is_slot_blocked(start_time):
+        for block in blocks:
+            if not block['start_time'] and not block['end_time']:
+                return True
+            elif block['start_time'] and block['end_time']:
+                if block['start_time'] <= start_time < block['end_time']:
+                    return True
+        
+        for schedule in recurring:
+            if schedule['start_time'] <= start_time < schedule['end_time']:
+                return True
+        return False
+    
+    # Filter available slots
+    available_slots = [slot for slot in all_slots 
+                      if slot not in booked_times and not is_slot_blocked(slot)]
 
     return jsonify(available_slots)
 
@@ -156,8 +172,8 @@ def create_schedule():
         ''', (court_id, date, start_time, player1_name, player2_name, match_type))
         db.commit()
         return jsonify({'success': True, 'message': 'Schedule created successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+    except sqlite3.Error:
+        return jsonify({'error': 'Failed to create schedule'}), 500
 
 
 @public_bp.route('/schedules/<int:schedule_id>', methods=['PUT'])
@@ -172,6 +188,12 @@ def update_schedule(schedule_id):
         return jsonify({'error': 'All fields are required'}), 400
 
     db = get_db()
+    
+    # Check if schedule exists
+    existing = db.execute('SELECT id FROM schedules WHERE id = ?', (schedule_id,)).fetchone()
+    if not existing:
+        return jsonify({'error': 'Schedule not found'}), 404
+    
     try:
         db.execute('''
             UPDATE schedules 
@@ -180,8 +202,8 @@ def update_schedule(schedule_id):
         ''', (player1_name, player2_name, match_type, schedule_id))
         db.commit()
         return jsonify({'success': True, 'message': 'Schedule updated successfully'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+    except sqlite3.Error:
+        return jsonify({'error': 'Failed to update schedule'}), 500
 
 
 @public_bp.route('/schedules/<int:schedule_id>', methods=['DELETE'])
@@ -199,8 +221,9 @@ def delete_schedule(schedule_id):
 @public_bp.route('/schedules/month', methods=['GET'])
 def get_month_schedules():
     """Get all schedules for the current month"""
-    year = request.args.get('year', datetime.now().year)
-    month = request.args.get('month', datetime.now().month)
+    now = datetime.now(timezone.utc)
+    year = request.args.get('year', now.year)
+    month = request.args.get('month', now.month)
 
     # Get first and last day of the month
     first_day = f"{year}-{month:02d}-01"
@@ -247,7 +270,7 @@ def get_week_schedules():
 @public_bp.route('/whatsapp-message', methods=['GET'])
 def generate_whatsapp_message():
     """Generate WhatsApp message with current month's future schedules"""
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     year = now.year
     month = now.month
     today = now.strftime('%Y-%m-%d')
@@ -269,9 +292,9 @@ def generate_whatsapp_message():
         SELECT s.*, c.name as court_name, c.type as court_type
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
-        WHERE s.date >= ? AND s.date >= ? AND s.date <= ?
+        WHERE s.date >= ? AND s.date <= ?
         ORDER BY s.date, c.name, s.start_time
-    ''', (today, first_day, last_day)).fetchall()
+    ''', (today, last_day)).fetchall()
 
     if not schedules:
         message = f"📅 *Agenda LAPEN - {month_name} {year}*\n\nNenhum jogo agendado para este mês."
@@ -288,17 +311,17 @@ def generate_whatsapp_message():
             grouped_schedules[date][court_name] = []
         grouped_schedules[date][court_name].append(schedule)
 
-    message = f"📅 *Agenda LAPEN - {month_name} {year}*\n\n"
+    message_parts = [f"📅 *Agenda LAPEN - {month_name} {year}*\n\n"]
 
     for date, courts in grouped_schedules.items():
         schedule_date = datetime.strptime(date, '%Y-%m-%d')
         formatted_date = schedule_date.strftime('%d/%m')
         day_name = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'][schedule_date.weekday()]
 
-        message += f"\n🗓️ *{day_name}, {formatted_date}*\n"
+        message_parts.append(f"\n🗓️ *{day_name}, {formatted_date}*\n")
 
         for court_name, court_schedules in courts.items():
-            message += f"\n📍 *{court_name}*\n"
+            message_parts.append(f"\n📍 *{court_name}*\n")
 
             for schedule in court_schedules:
                 if schedule['match_type'] == 'Liga':
@@ -307,11 +330,10 @@ def generate_whatsapp_message():
                     match_emoji = "🎓"
                 else:
                     match_emoji = "🤝"
-                message += f"  🕐 {schedule['start_time']} - {schedule['player1_name']} vs {schedule['player2_name']} {match_emoji}\n"
+                message_parts.append(f"  🕐 {schedule['start_time']} - {schedule['player1_name']} vs {schedule['player2_name']} {match_emoji}\n")
 
-    message += "\n\n---\n"
-    message += f"\n\nPara criar ou alterar seu agendamento, acesse 🔗 {request.host_url}"
-    message += "\n\n\n🎾 *LAPEN - Liga Penedense de Tênis*"
+    message_parts.extend(["\n\n---\n", f"\n\nPara criar ou alterar seu agendamento, acesse 🔗 {request.host_url}", "\n\n\n🎾 *LAPEN - Liga Penedense de Tênis*"])
+    message = ''.join(message_parts)
 
     return jsonify({'message': message})
 
@@ -342,11 +364,16 @@ def get_public_dashboard_stats():
     
     # Top players this month
     top_players = db.execute('''
+        WITH monthly_schedules AS (
+            SELECT player1_name, player2_name 
+            FROM schedules 
+            WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
+        )
         SELECT player_name, COUNT(*) as games
         FROM (
-            SELECT player1_name as player_name FROM schedules WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
+            SELECT player1_name as player_name FROM monthly_schedules
             UNION ALL
-            SELECT player2_name as player_name FROM schedules WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
+            SELECT player2_name as player_name FROM monthly_schedules
         )
         GROUP BY player_name
         ORDER BY games DESC

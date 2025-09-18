@@ -3,7 +3,6 @@ import {useSearchParams} from 'react-router-dom'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs'
-import {Badge} from '@/components/ui/badge'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
@@ -310,12 +309,15 @@ const ScheduleView = () => {
                                                             <span className="mx-2">x</span>
                                                             <span className="font-medium">{schedule.player2_name}</span>
                                                         </div>
-                                                        <Badge className={getMatchTypeColor(schedule.match_type)}>
+                                                        <div
+                                                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-2 transition-all duration-200 cursor-pointer ${schedule.match_type === 'Liga' ? 'bg-yellow-100 text-black border-yellow-300 hover:border-yellow-600' : 'bg-green-100 text-black border-green-300 hover:border-green-600'}`}
+                                                            title={schedule.match_type === 'Liga' ? 'Partida oficial da liga' : 'Partida amistosa entre jogadores'}
+                                                        >
                                                             <div className="flex items-center">
                                                                 {getMatchTypeIcon(schedule.match_type)}
                                                                 <span className="ml-1">{schedule.match_type}</span>
                                                             </div>
-                                                        </Badge>
+                                                        </div>
                                                     </div>
                                                     <div className="flex space-x-2">
                                                         <Button variant="ghost" size="sm"
@@ -338,7 +340,7 @@ const ScheduleView = () => {
                 </TabsContent>
 
                 <TabsContent value="weekly" className="mt-6">
-                    <WeeklyCalendar weekSchedules={weekSchedules} fetchWeekSchedules={fetchWeekSchedules} />
+                    <WeeklyCalendar weekSchedules={weekSchedules} fetchWeekSchedules={fetchWeekSchedules}/>
                 </TabsContent>
 
                 <TabsContent value="stats" className="mt-6">
@@ -356,7 +358,7 @@ const ScheduleView = () => {
                                 </p>
                             </CardContent>
                         </Card>
-                        
+
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-lg">Jogos por Tipo</CardTitle>
@@ -372,7 +374,7 @@ const ScheduleView = () => {
                                 </div>
                             </CardContent>
                         </Card>
-                        
+
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-lg">Jogadores Mais Assíduos</CardTitle>

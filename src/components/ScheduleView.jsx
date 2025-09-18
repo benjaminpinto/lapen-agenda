@@ -11,6 +11,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/c
 import {Textarea} from '@/components/ui/textarea'
 import {BarChart3, Calendar, Clock, Edit, List, MapPin, Share2, Trash2, Trophy, Users} from 'lucide-react'
 import {useToast} from '@/components/hooks/use-toast.js'
+import WeeklyCalendar from './WeeklyCalendar'
 
 const ScheduleView = () => {
     const [searchParams] = useSearchParams()
@@ -44,6 +45,12 @@ const ScheduleView = () => {
             }, 1000)
         }
     }, [searchParams])
+
+    useEffect(() => {
+        if (viewType === 'weekly') {
+            fetchWeekSchedules()
+        }
+    }, [viewType])
 
     const fetchSchedules = async () => {
         try {
@@ -252,12 +259,16 @@ const ScheduleView = () => {
             </div>
 
             <Tabs value={viewType} onValueChange={setViewType} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="list" className="flex items-center">
                         <List className="h-4 w-4 mr-2"/>
                         Lista
                     </TabsTrigger>
-                    <TabsTrigger value="calendar" className="flex items-center">
+                    <TabsTrigger value="weekly" className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-2"/>
+                        Calendário Semanal
+                    </TabsTrigger>
+                    <TabsTrigger value="stats" className="flex items-center">
                         <BarChart3 className="h-4 w-4 mr-2"/>
                         Estatísticas
                     </TabsTrigger>
@@ -326,7 +337,11 @@ const ScheduleView = () => {
                     )}
                 </TabsContent>
 
-                <TabsContent value="calendar" className="mt-6">
+                <TabsContent value="weekly" className="mt-6">
+                    <WeeklyCalendar weekSchedules={weekSchedules} fetchWeekSchedules={fetchWeekSchedules} />
+                </TabsContent>
+
+                <TabsContent value="stats" className="mt-6">
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <Card>
                             <CardHeader>

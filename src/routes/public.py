@@ -310,3 +310,47 @@ def generate_whatsapp_message():
     message += "\n\n---\n🎾 *LAPEN - Liga Penedense de Tênis*"
 
     return jsonify({'message': message})
+
+
+@public_bp.route('/dashboard-stats', methods=['GET'])
+def get_public_dashboard_stats():
+    """Get dashboard statistics for public view"""
+    db = get_db()
+    
+    # Most booked court this month
+    most_booked_court = db.execute('''
+        SELECT c.name, COUNT(*) as bookings
+        FROM schedules s
+        JOIN courts c ON s.court_id = c.id
+        WHERE strftime('%Y-%m', s.date) = strftime('%Y-%m', 'now')
+        GROUP BY c.id, c.name
+        ORDER BY bookings DESC
+        LIMIT 1
+    ''').fetchone()
+    
+    # Total games by type this month
+    game_stats = db.execute('''
+        SELECT match_type, COUNT(*) as count
+        FROM schedules
+        WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
+        GROUP BY match_type
+    ''').fetchall()
+    
+    # Top players this month
+    top_players = db.execute('''
+        SELECT player_name, COUNT(*) as games
+        FROM (
+            SELECT player1_name as player_name FROM schedules WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
+            UNION ALL
+            SELECT player2_name as player_name FROM schedules WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
+        )
+        GROUP BY player_name
+        ORDER BY games DESC
+        LIMIT 5
+    ''').fetchall()
+    
+    return jsonify({
+        'mostBookedCourt': dict(most_booked_court) if most_booked_court else None,
+        'gameStats': [dict(stat) for stat in game_stats],
+        'topPlayers': [dict(player) for player in top_players]
+    })

@@ -13,7 +13,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: 'src/static',
+    outDir: 'dist',
   },
   server: {
     proxy: {

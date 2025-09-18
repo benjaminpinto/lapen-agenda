@@ -6,7 +6,7 @@ Este manual irá guiá-lo através de todas as funcionalidades do sistema Agenda
 
 ## 🌐 Acesso ao Sistema
 
-**URL:** https://60h5imclk651.manus.space
+**URL:** TBD
 
 O sistema funciona em qualquer navegador moderno (Chrome, Firefox, Safari, Edge) e é otimizado para dispositivos móveis e desktop.
 
@@ -48,6 +48,7 @@ O sistema funciona em qualquer navegador moderno (Chrome, Firefox, Safari, Edge)
 Escolha entre:
 - **🏆 Liga**: Partidas oficiais do campeonato
 - **👥 Amistoso**: Jogos recreativos
+- **🎓 Aula**: Aulas de tênis
 
 ### Passo 6: Confirmar
 1. Clique em "Confirmar Agendamento"
@@ -58,19 +59,40 @@ Escolha entre:
 
 ### Acessando a Agenda
 1. Clique em "Ver Agenda" no menu
-2. A página mostra todos os agendamentos do mês atual
+2. A página oferece três visualizações diferentes através de abas:
 
-### Funcionalidades da Visualização
+### Aba "Lista"
 - **Agrupamento por Data**: Agendamentos organizados por dia
 - **Informações Completas**: Quadra, horário, jogadores e tipo de partida
 - **Badges Coloridas**: 
   - 🟡 Liga (amarelo)
   - 🟢 Amistoso (verde)
+  - 🟣 Aula (roxo)
 
-### Ações Disponíveis
+### Aba "Calendário Semanal"
+- **Visualização Semanal**: Grade com 7 dias da semana
+- **Navegação**: Botões para navegar entre semanas
+- **Agrupamento por Quadra**: Dentro de cada dia, agendamentos são agrupados por quadra
+- **Destaque do Dia Atual**: Dia de hoje aparece destacado em azul
+- **Nomes Resumidos**: Mostra apenas o primeiro nome dos jogadores
+- **Badges Compactas**: Ícones menores para economizar espaço
+
+### Aba "Estatísticas"
+- **Quadra Mais Agendada**: Mostra qual quadra tem mais agendamentos no mês
+- **Jogos por Tipo**: Contagem de partidas Liga, Amistoso e Aula
+- **Jogadores Mais Assíduos**: Ranking dos 5 jogadores com mais jogos no mês
+
+### Ações Disponíveis (Aba Lista)
 Para cada agendamento, você pode:
 - **✏️ Editar**: Alterar jogadores ou tipo de partida
 - **🗑️ Excluir**: Remover o agendamento (com confirmação)
+
+### Interatividade (Todas as Abas)
+- **Badges com Tooltip**: Passe o mouse sobre as badges para ver descrições:
+  - Liga: "Partida oficial da liga"
+  - Amistoso: "Partida amistosa entre jogadores"
+  - Aula: "Aula de tênis"
+- **Efeito Hover**: Bordas das badges mudam de cor ao passar o mouse
 
 ## 📤 Compartilhamento no WhatsApp
 
@@ -86,6 +108,13 @@ Para cada agendamento, você pode:
 2. Clique em "Compartilhar no WhatsApp"
 3. O WhatsApp abrirá automaticamente com a mensagem pronta
 4. Escolha o contato ou grupo e envie
+
+### Conteúdo da Mensagem
+A mensagem inclui:
+- **Agendamentos Agrupados**: Por data e depois por quadra
+- **Link do Sistema**: URL automático para acesso direto ao sistema
+- **Formatação Organizada**: Emojis e estrutura clara
+- **Tipos de Partida**: Identificação visual de Liga (🏆), Amistoso (🤝) e Aula (🎓)
 
 ## ⚙️ Funções Administrativas
 

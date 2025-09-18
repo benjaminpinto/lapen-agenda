@@ -198,7 +198,7 @@ def delete_schedule(schedule_id):
 
 @public_bp.route('/schedules/month', methods=['GET'])
 def get_month_schedules():
-    """Get all schedules for the current month (future dates only)"""
+    """Get all schedules for the current month"""
     year = request.args.get('year', datetime.now().year)
     month = request.args.get('month', datetime.now().month)
 
@@ -207,17 +207,14 @@ def get_month_schedules():
     last_day_num = calendar.monthrange(int(year), int(month))[1]
     last_day = f"{year}-{month:02d}-{last_day_num:02d}"
 
-    # Only get future dates (including today)
-    today = datetime.now().strftime('%Y-%m-%d')
-
     db = get_db()
     schedules = db.execute('''
         SELECT s.*, c.name as court_name, c.type as court_type
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
-        WHERE s.date >= ? AND s.date >= ? AND s.date <= ?
+        WHERE s.date >= ? AND s.date <= ?
         ORDER BY s.date, s.start_time
-    ''', (today, first_day, last_day)).fetchall()
+    ''', (first_day, last_day)).fetchall()
 
     return jsonify([dict(schedule) for schedule in schedules])
 
@@ -304,10 +301,17 @@ def generate_whatsapp_message():
             message += f"\n📍 *{court_name}*\n"
 
             for schedule in court_schedules:
-                match_emoji = "🎾" if schedule['match_type'] == 'Liga' else "🤝"
+                if schedule['match_type'] == 'Liga':
+                    match_emoji = "🎾"
+                elif schedule['match_type'] == 'Aula':
+                    match_emoji = "🎓"
+                else:
+                    match_emoji = "🤝"
                 message += f"  🕐 {schedule['start_time']} - {schedule['player1_name']} vs {schedule['player2_name']} {match_emoji}\n"
 
-    message += "\n\n---\n🎾 *LAPEN - Liga Penedense de Tênis*"
+    message += "\n\n---\n"
+    message += f"\n\nPara criar ou alterar seu agendamento, acesse 🔗 {request.host_url}"
+    message += "\n\n\n🎾 *LAPEN - Liga Penedense de Tênis*"
 
     return jsonify({'message': message})
 

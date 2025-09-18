@@ -188,15 +188,59 @@ const ScheduleView = () => {
     }
 
     const handleWhatsappShare = async () => {
+        if (viewType === 'weekly') {
+            await captureWeeklyCalendar()
+        } else {
+            try {
+                const response = await fetch('/api/public/whatsapp-message')
+                if (response.ok) {
+                    const data = await response.json()
+                    setWhatsappMessage(data.message)
+                    setShowWhatsappDialog(true)
+                }
+            } catch (error) {
+                console.error('Error generating WhatsApp message:', error)
+            }
+        }
+    }
+
+    const captureWeeklyCalendar = async () => {
         try {
-            const response = await fetch('/api/public/whatsapp-message')
-            if (response.ok) {
-                const data = await response.json()
-                setWhatsappMessage(data.message)
-                setShowWhatsappDialog(true)
+            const html2canvas = (await import('html2canvas')).default
+            const element = document.querySelector('[data-weekly-calendar]')
+            if (element) {
+                const canvas = await html2canvas(element, {
+                    backgroundColor: '#ffffff',
+                    scale: 2
+                })
+                canvas.toBlob((blob) => {
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'agenda-semanal.png', { type: 'image/png' })] })) {
+                        navigator.share({
+                            title: 'Agenda Semanal LAPEN',
+                            text: 'Confira a agenda semanal das quadras de tênis',
+                            files: [new File([blob], 'agenda-semanal.png', { type: 'image/png' })]
+                        })
+                    } else {
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href = url
+                        a.download = 'agenda-semanal.png'
+                        a.click()
+                        URL.revokeObjectURL(url)
+                        toast({
+                            title: "Screenshot salva",
+                            description: "A imagem da agenda semanal foi baixada"
+                        })
+                    }
+                }, 'image/png')
             }
         } catch (error) {
-            console.error('Error generating WhatsApp message:', error)
+            console.error('Error capturing screenshot:', error)
+            toast({
+                title: "Erro",
+                description: "Erro ao capturar screenshot",
+                variant: "destructive"
+            })
         }
     }
 
@@ -418,7 +462,9 @@ const ScheduleView = () => {
                 </TabsContent>
 
                 <TabsContent value="weekly" className="mt-6">
-                    <WeeklyCalendar weekSchedules={weekSchedules} fetchWeekSchedules={fetchWeekSchedules}/>
+                    <div data-weekly-calendar>
+                        <WeeklyCalendar weekSchedules={weekSchedules} fetchWeekSchedules={fetchWeekSchedules}/>
+                    </div>
                 </TabsContent>
 
                 <TabsContent value="stats" className="mt-6">

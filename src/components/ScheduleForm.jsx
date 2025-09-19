@@ -160,7 +160,7 @@ const ScheduleForm = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto px-4 sm:px-0">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
@@ -318,11 +318,11 @@ const ScheduleForm = () => {
               </Select>
             </div>
 
-            <div className="flex justify-end space-x-4">
-              <Button type="button" variant="outline" onClick={() => navigate('/')}>
+            <div className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-4">
+              <Button type="button" variant="outline" onClick={() => navigate('/')} className="w-full sm:w-auto">
                 Cancelar
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading} className="w-full sm:w-auto">
                 {loading ? 'Agendando...' : 'Confirmar Agendamento'}
               </Button>
             </div>

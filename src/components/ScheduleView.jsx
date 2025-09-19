@@ -289,36 +289,40 @@ const ScheduleView = () => {
     const groupedSchedules = groupSchedulesByDate(schedules)
 
     return (
-        <div className="max-w-6xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 sm:mb-8 space-y-4 sm:space-y-0">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        Agenda de Quadras
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                        Agenda das Quadras
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 text-sm sm:text-base">
                         Visualize e gerencie os agendamentos
                     </p>
                 </div>
 
-                <Button onClick={handleWhatsappShare}>
+                <Button onClick={handleWhatsappShare} className="w-full sm:w-auto">
                     <Share2 className="h-4 w-4 mr-2"/>
-                    Compartilhar no WhatsApp
+                    <span className="hidden sm:inline">Compartilhar no WhatsApp</span>
+                    <span className="sm:hidden">Compartilhar</span>
                 </Button>
             </div>
 
             <Tabs value={viewType} onValueChange={setViewType} className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="list" className="flex items-center">
-                        <List className="h-4 w-4 mr-2"/>
-                        Lista
+                    <TabsTrigger value="list" className="flex items-center text-xs sm:text-sm">
+                        <List className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2"/>
+                        <span className="hidden sm:inline">Lista</span>
+                        <span className="sm:hidden">Lista</span>
                     </TabsTrigger>
-                    <TabsTrigger value="weekly" className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2"/>
-                        Calendário Semanal
+                    <TabsTrigger value="weekly" className="flex items-center text-xs sm:text-sm">
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2"/>
+                        <span className="hidden sm:inline">Calendário Semanal</span>
+                        <span className="sm:hidden">Semanal</span>
                     </TabsTrigger>
-                    <TabsTrigger value="stats" className="flex items-center">
-                        <BarChart3 className="h-4 w-4 mr-2"/>
-                        Estatísticas
+                    <TabsTrigger value="stats" className="flex items-center text-xs sm:text-sm">
+                        <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2"/>
+                        <span className="hidden sm:inline">Estatísticas</span>
+                        <span className="sm:hidden">Estatísticas</span>
                     </TabsTrigger>
                 </TabsList>
 
@@ -361,48 +365,92 @@ const ScheduleView = () => {
                                                     <div className="space-y-3">
                                                         {daySchedules.map((schedule) => (
                                                             <div key={schedule.id}
-                                                                 className="flex items-center justify-between p-4 border rounded-lg">
-                                                                <div className="flex items-center space-x-4">
-                                                                    <div className="flex items-center">
-                                                                        <MapPin className="h-4 w-4 mr-1 text-green-600"/>
-                                                                        <span className="font-medium">{schedule.court_name}</span>
+                                                                 className="border rounded-lg p-3 sm:p-4">
+                                                                {/* Mobile Layout */}
+                                                                <div className="block sm:hidden space-y-2">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div className="flex items-center space-x-2">
+                                                                            <MapPin className="h-4 w-4 text-green-600"/>
+                                                                            <span className="font-medium text-sm">{schedule.court_name}</span>
+                                                                        </div>
+                                                                        <div className="flex items-center space-x-1">
+                                                                            <Clock className="h-3 w-3 text-gray-500"/>
+                                                                            <span className="text-sm">{schedule.start_time}</span>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="flex items-center">
-                                                                        <Clock className="h-4 w-4 mr-1 text-gray-500"/>
-                                                                        <span>{schedule.start_time}</span>
-                                                                    </div>
-                                                                    <div>
-                                                                        <span className="font-medium">{schedule.player1_name}</span>
-                                                                        <span className="mx-2">x</span>
-                                                                        <span className="font-medium">{schedule.player2_name}</span>
-                                                                    </div>
-                                                                    <div
-                                                                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-2 transition-all duration-200 cursor-pointer ${
-                                                                            schedule.match_type === 'Liga' ? 'bg-yellow-100 text-black border-yellow-300 hover:border-yellow-600' :
-                                                                            schedule.match_type === 'Aula' ? 'bg-purple-100 text-black border-purple-300 hover:border-purple-600' :
-                                                                            'bg-green-100 text-black border-green-300 hover:border-green-600'
-                                                                        }`}
-                                                                        title={
-                                                                            schedule.match_type === 'Liga' ? 'Partida oficial da liga' :
-                                                                            schedule.match_type === 'Aula' ? 'Aula de tênis' :
-                                                                            'Partida amistosa entre jogadores'
-                                                                        }
-                                                                    >
-                                                                        <div className="flex items-center">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div className="text-sm">
+                                                                            <span className="font-medium">{schedule.player1_name}</span>
+                                                                            <span className="mx-1">x</span>
+                                                                            <span className="font-medium">{schedule.player2_name}</span>
+                                                                        </div>
+                                                                        <div
+                                                                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold border transition-all duration-200 ${
+                                                                                schedule.match_type === 'Liga' ? 'bg-yellow-100 text-black border-yellow-300' :
+                                                                                schedule.match_type === 'Aula' ? 'bg-purple-100 text-black border-purple-300' :
+                                                                                'bg-green-100 text-black border-green-300'
+                                                                            }`}
+                                                                        >
                                                                             {getMatchTypeIcon(schedule.match_type)}
                                                                             <span className="ml-1">{schedule.match_type}</span>
                                                                         </div>
                                                                     </div>
+                                                                    <div className="flex justify-end space-x-1">
+                                                                        <Button variant="ghost" size="sm"
+                                                                                onClick={() => handleEdit(schedule)}>
+                                                                            <Edit className="h-4 w-4"/>
+                                                                        </Button>
+                                                                        <Button variant="ghost" size="sm"
+                                                                                onClick={() => handleDelete(schedule.id)}>
+                                                                            <Trash2 className="h-4 w-4"/>
+                                                                        </Button>
+                                                                    </div>
                                                                 </div>
-                                                                <div className="flex space-x-2">
-                                                                    <Button variant="ghost" size="sm"
-                                                                            onClick={() => handleEdit(schedule)}>
-                                                                        <Edit className="h-4 w-4"/>
-                                                                    </Button>
-                                                                    <Button variant="ghost" size="sm"
-                                                                            onClick={() => handleDelete(schedule.id)}>
-                                                                        <Trash2 className="h-4 w-4"/>
-                                                                    </Button>
+                                                                
+                                                                {/* Desktop Layout */}
+                                                                <div className="hidden sm:flex items-center justify-between">
+                                                                    <div className="flex items-center space-x-4">
+                                                                        <div className="flex items-center">
+                                                                            <MapPin className="h-4 w-4 mr-1 text-green-600"/>
+                                                                            <span className="font-medium">{schedule.court_name}</span>
+                                                                        </div>
+                                                                        <div className="flex items-center">
+                                                                            <Clock className="h-4 w-4 mr-1 text-gray-500"/>
+                                                                            <span>{schedule.start_time}</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <span className="font-medium">{schedule.player1_name}</span>
+                                                                            <span className="mx-2">x</span>
+                                                                            <span className="font-medium">{schedule.player2_name}</span>
+                                                                        </div>
+                                                                        <div
+                                                                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-2 transition-all duration-200 cursor-pointer ${
+                                                                                schedule.match_type === 'Liga' ? 'bg-yellow-100 text-black border-yellow-300 hover:border-yellow-600' :
+                                                                                schedule.match_type === 'Aula' ? 'bg-purple-100 text-black border-purple-300 hover:border-purple-600' :
+                                                                                'bg-green-100 text-black border-green-300 hover:border-green-600'
+                                                                            }`}
+                                                                            title={
+                                                                                schedule.match_type === 'Liga' ? 'Partida oficial da liga' :
+                                                                                schedule.match_type === 'Aula' ? 'Aula de tênis' :
+                                                                                'Partida amistosa entre jogadores'
+                                                                            }
+                                                                        >
+                                                                            <div className="flex items-center">
+                                                                                {getMatchTypeIcon(schedule.match_type)}
+                                                                                <span className="ml-1">{schedule.match_type}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="flex space-x-2">
+                                                                        <Button variant="ghost" size="sm"
+                                                                                onClick={() => handleEdit(schedule)}>
+                                                                            <Edit className="h-4 w-4"/>
+                                                                        </Button>
+                                                                        <Button variant="ghost" size="sm"
+                                                                                onClick={() => handleDelete(schedule.id)}>
+                                                                            <Trash2 className="h-4 w-4"/>
+                                                                        </Button>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -468,7 +516,7 @@ const ScheduleView = () => {
                 </TabsContent>
 
                 <TabsContent value="stats" className="mt-6">
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-lg">Quadra Mais Agendada</CardTitle>
@@ -520,7 +568,7 @@ const ScheduleView = () => {
 
             {/* Edit Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-md mx-4 sm:mx-auto">
                     <DialogHeader>
                         <DialogTitle>Editar Agendamento</DialogTitle>
                         <DialogDescription>
@@ -578,7 +626,7 @@ const ScheduleView = () => {
 
             {/* WhatsApp Share Dialog */}
             <Dialog open={showWhatsappDialog} onOpenChange={setShowWhatsappDialog}>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-2xl mx-4 sm:mx-auto">
                     <DialogHeader>
                         <DialogTitle>Compartilhar no WhatsApp</DialogTitle>
                         <DialogDescription>

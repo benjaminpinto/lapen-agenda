@@ -151,3 +151,33 @@ button:disabled {
   opacity: 0.4 !important;
   cursor: not-allowed !important;
 }
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  /* Ensure minimum touch target size */
+  button, 
+  [role="button"],
+  input[type="button"],
+  input[type="submit"] {
+    min-height: 44px;
+  }
+  
+  /* Better spacing for mobile cards */
+  .mobile-card-spacing {
+    padding: 0.75rem;
+  }
+  
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Better mobile dialog positioning */
+  [data-radix-popper-content-wrapper] {
+    transform: none !important;
+    position: fixed !important;
+    inset: 1rem !important;
+    width: auto !important;
+    height: auto !important;
+  }
+}

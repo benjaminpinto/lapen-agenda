@@ -1,5 +1,4 @@
 import calendar
-import sqlite3
 from datetime import datetime, timedelta, time, timezone
 
 from flask import Blueprint, request, jsonify
@@ -8,6 +7,14 @@ from src.database import get_db
 
 public_bp = Blueprint('public', __name__, url_prefix='/api/public')
 
+def normalize_time(time_value):
+    """Convert time to string format for comparison"""
+    if isinstance(time_value, str):
+        return time_value
+    elif hasattr(time_value, 'strftime'):
+        return time_value.strftime('%H:%M')
+    return str(time_value)
+
 
 def generate_time_slots():
     """Generate available time slots from 07:30 to 22:30 with 1.5 hour intervals"""
@@ -15,11 +22,11 @@ def generate_time_slots():
     current_time = datetime.combine(datetime.today(), time(7, 30))
     end_time = datetime.combine(datetime.today(), time(22, 30))
     interval = timedelta(minutes=90)
-    
+
     while current_time <= end_time:
         slots.append(current_time.strftime('%H:%M'))
         current_time += interval
-    
+
     return slots
 
 
@@ -39,7 +46,7 @@ def is_time_blocked(date, start_time, court_id=None):
             return True
         elif block['start_time'] and block['end_time']:
             # Partial day block
-            if block['start_time'] <= start_time < block['end_time']:
+            if normalize_time(block['start_time']) <= start_time < normalize_time(block['end_time']):
                 return True
 
     # Check recurring schedules
@@ -53,7 +60,7 @@ def is_time_blocked(date, start_time, court_id=None):
     ''', (day_of_week, date, date, court_id, court_id)).fetchall()
 
     for schedule in recurring:
-        if schedule['start_time'] <= start_time < schedule['end_time']:
+        if normalize_time(schedule['start_time']) <= start_time < normalize_time(schedule['end_time']):
             return True
 
     return False
@@ -63,7 +70,7 @@ def is_time_blocked(date, start_time, court_id=None):
 def get_active_courts():
     """Get all active courts"""
     db = get_db()
-    courts = db.execute('SELECT * FROM courts WHERE active = 1').fetchall()
+    courts = db.execute('SELECT * FROM courts WHERE active = TRUE').fetchall()
     response = jsonify([dict(court) for court in courts])
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
@@ -102,37 +109,37 @@ def get_available_times():
         SELECT start_time FROM schedules 
         WHERE court_id = ? AND date = ?
     ''', (court_id, date)).fetchall()
-    booked_times = [slot['start_time'] for slot in booked_slots]
+    booked_times = [normalize_time(slot['start_time']) for slot in booked_slots]
 
     # Get all blocked times once
     blocks = db.execute('SELECT * FROM holidays_blocks WHERE date = ?', (date,)).fetchall()
-    
+
     date_obj = datetime.strptime(date, '%Y-%m-%d')
     day_of_week = date_obj.weekday()
-    
+
     recurring = db.execute('''
         SELECT * FROM recurring_schedules 
         WHERE day_of_week = ? AND start_date <= ? AND end_date >= ?
         AND (? IS NULL OR court_id = ?)
     ''', (day_of_week, date, date, court_id, court_id)).fetchall()
-    
+
     # Check blocked times efficiently
     def is_slot_blocked(start_time):
         for block in blocks:
             if not block['start_time'] and not block['end_time']:
                 return True
             elif block['start_time'] and block['end_time']:
-                if block['start_time'] <= start_time < block['end_time']:
+                if normalize_time(block['start_time']) <= start_time < normalize_time(block['end_time']):
                     return True
-        
+
         for schedule in recurring:
-            if schedule['start_time'] <= start_time < schedule['end_time']:
+            if normalize_time(schedule['start_time']) <= start_time < normalize_time(schedule['end_time']):
                 return True
         return False
-    
+
     # Filter available slots
-    available_slots = [slot for slot in all_slots 
-                      if slot not in booked_times and not is_slot_blocked(slot)]
+    available_slots = [slot for slot in all_slots
+                       if slot not in booked_times and not is_slot_blocked(slot)]
 
     return jsonify(available_slots)
 
@@ -172,7 +179,7 @@ def create_schedule():
         ''', (court_id, date, start_time, player1_name, player2_name, match_type))
         db.commit()
         return jsonify({'success': True, 'message': 'Schedule created successfully'})
-    except sqlite3.Error:
+    except Exception:
         return jsonify({'error': 'Failed to create schedule'}), 500
 
 
@@ -188,12 +195,12 @@ def update_schedule(schedule_id):
         return jsonify({'error': 'All fields are required'}), 400
 
     db = get_db()
-    
+
     # Check if schedule exists
     existing = db.execute('SELECT id FROM schedules WHERE id = ?', (schedule_id,)).fetchone()
     if not existing:
         return jsonify({'error': 'Schedule not found'}), 404
-    
+
     try:
         db.execute('''
             UPDATE schedules 
@@ -202,7 +209,7 @@ def update_schedule(schedule_id):
         ''', (player1_name, player2_name, match_type, schedule_id))
         db.commit()
         return jsonify({'success': True, 'message': 'Schedule updated successfully'})
-    except sqlite3.Error:
+    except Exception:
         return jsonify({'error': 'Failed to update schedule'}), 500
 
 
@@ -239,7 +246,16 @@ def get_month_schedules():
         ORDER BY s.date, s.start_time
     ''', (first_day, last_day)).fetchall()
 
-    return jsonify([dict(schedule) for schedule in schedules])
+    # Convert time objects to strings for JSON serialization
+    serialized_schedules = []
+    for schedule in schedules:
+        schedule_dict = dict(schedule)
+        if 'start_time' in schedule_dict:
+            schedule_dict['start_time'] = normalize_time(schedule_dict['start_time'])
+        if 'date' in schedule_dict and not isinstance(schedule_dict['date'], str):
+            schedule_dict['date'] = schedule_dict['date'].strftime('%Y-%m-%d')
+        serialized_schedules.append(schedule_dict)
+    return jsonify(serialized_schedules)
 
 
 @public_bp.route('/schedules/week', methods=['GET'])
@@ -264,7 +280,16 @@ def get_week_schedules():
         ORDER BY s.date, s.start_time
     ''', (start_date, end_date)).fetchall()
 
-    return jsonify([dict(schedule) for schedule in schedules])
+    # Convert time objects to strings for JSON serialization
+    serialized_schedules = []
+    for schedule in schedules:
+        schedule_dict = dict(schedule)
+        if 'start_time' in schedule_dict:
+            schedule_dict['start_time'] = normalize_time(schedule_dict['start_time'])
+        if 'date' in schedule_dict and not isinstance(schedule_dict['date'], str):
+            schedule_dict['date'] = schedule_dict['date'].strftime('%Y-%m-%d')
+        serialized_schedules.append(schedule_dict)
+    return jsonify(serialized_schedules)
 
 
 @public_bp.route('/whatsapp-message', methods=['GET'])
@@ -314,7 +339,11 @@ def generate_whatsapp_message():
     message_parts = [f"📅 *Agenda LAPEN - {month_name} {year}*\n\n"]
 
     for date, courts in grouped_schedules.items():
-        schedule_date = datetime.strptime(date, '%Y-%m-%d')
+        # Handle both string (SQLite) and date object (PostgreSQL)
+        if isinstance(date, str):
+            schedule_date = datetime.strptime(date, '%Y-%m-%d')
+        else:
+            schedule_date = datetime.combine(date, datetime.min.time())
         formatted_date = schedule_date.strftime('%d/%m')
         day_name = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'][schedule_date.weekday()]
 
@@ -327,12 +356,14 @@ def generate_whatsapp_message():
                 if schedule['match_type'] == 'Liga':
                     match_emoji = "🎾"
                 elif schedule['match_type'] == 'Aula':
-                    match_emoji = "🎓"
+                    match_emoji = "✍️"
                 else:
                     match_emoji = "🤝"
-                message_parts.append(f"  🕐 {schedule['start_time']} - {schedule['player1_name']} vs {schedule['player2_name']} {match_emoji}\n")
+                message_parts.append(
+                    f"  🕐 {normalize_time(schedule['start_time'])} - {schedule['player1_name']} vs {schedule['player2_name']} {match_emoji}\n")
 
-    message_parts.extend(["\n\n---\n", f"\n\nPara criar ou alterar seu agendamento, acesse 🔗 {request.host_url}", "\n\n\n🎾 *LAPEN - Liga Penedense de Tênis*"])
+    message_parts.extend(["\n\n---\n", f"\n\nPara criar ou alterar seu agendamento, acesse:\n🔗 {request.host_url}",
+                          "\n\n\n🎾 *LAPEN - Liga Penedense de Tênis*"])
     message = ''.join(message_parts)
 
     return jsonify({'message': message})
@@ -342,7 +373,7 @@ def generate_whatsapp_message():
 def get_public_dashboard_stats():
     """Get dashboard statistics for public view"""
     db = get_db()
-    
+
     # Most booked court this month
     most_booked_court = db.execute('''
         SELECT c.name, COUNT(*) as bookings
@@ -353,7 +384,7 @@ def get_public_dashboard_stats():
         ORDER BY bookings DESC
         LIMIT 1
     ''').fetchone()
-    
+
     # Total games by type this month
     game_stats = db.execute('''
         SELECT match_type, COUNT(*) as count
@@ -361,7 +392,7 @@ def get_public_dashboard_stats():
         WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
         GROUP BY match_type
     ''').fetchall()
-    
+
     # Top players this month
     top_players = db.execute('''
         WITH monthly_schedules AS (
@@ -379,7 +410,7 @@ def get_public_dashboard_stats():
         ORDER BY games DESC
         LIMIT 5
     ''').fetchall()
-    
+
     return jsonify({
         'mostBookedCourt': dict(most_booked_court) if most_booked_court else None,
         'gameStats': [dict(stat) for stat in game_stats],

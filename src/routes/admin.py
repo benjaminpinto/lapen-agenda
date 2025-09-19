@@ -3,6 +3,14 @@ from src.database import get_db
 import base64
 import os
 
+def normalize_time(time_value):
+    """Convert time to string format for comparison"""
+    if isinstance(time_value, str):
+        return time_value
+    elif hasattr(time_value, 'strftime'):
+        return time_value.strftime('%H:%M')
+    return str(time_value)
+
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
 ADMIN_PASSWORD = 'PTCadmin2025'
@@ -170,20 +178,37 @@ def delete_player(player_id):
 
 # Holidays/Blocks CRUD
 @admin_bp.route('/holidays-blocks', methods=['GET'])
-@require_admin_auth
 def get_holidays_blocks():
     db = get_db()
     blocks = db.execute('SELECT * FROM holidays_blocks ORDER BY date').fetchall()
-    return jsonify([dict(block) for block in blocks])
+    
+    # Convert time/date objects to strings for JSON serialization
+    serialized_blocks = []
+    for block in blocks:
+        block_dict = dict(block)
+        if 'start_time' in block_dict and block_dict['start_time']:
+            block_dict['start_time'] = normalize_time(block_dict['start_time'])
+        if 'end_time' in block_dict and block_dict['end_time']:
+            block_dict['end_time'] = normalize_time(block_dict['end_time'])
+        if 'date' in block_dict and not isinstance(block_dict['date'], str):
+            block_dict['date'] = block_dict['date'].strftime('%Y-%m-%d')
+        serialized_blocks.append(block_dict)
+    return jsonify(serialized_blocks)
 
 @admin_bp.route('/holidays-blocks', methods=['POST'])
 @require_admin_auth
 def create_holiday_block():
     data = request.get_json()
     date = data.get('date')
-    start_time = data.get('start_time')
-    end_time = data.get('end_time')
+    start_time = data.get('start_time') or None
+    end_time = data.get('end_time') or None
     description = data.get('description', '')
+    
+    # Convert empty strings to None for time fields
+    if start_time == '':
+        start_time = None
+    if end_time == '':
+        end_time = None
     
     db = get_db()
     try:
@@ -209,7 +234,6 @@ def delete_holiday_block(block_id):
 
 # Recurring Schedules CRUD
 @admin_bp.route('/recurring-schedules', methods=['GET'])
-@require_admin_auth
 def get_recurring_schedules():
     db = get_db()
     schedules = db.execute('''
@@ -218,7 +242,21 @@ def get_recurring_schedules():
         JOIN courts c ON rs.court_id = c.id 
         ORDER BY rs.start_date
     ''').fetchall()
-    return jsonify([dict(schedule) for schedule in schedules])
+    
+    # Convert time/date objects to strings for JSON serialization
+    serialized_schedules = []
+    for schedule in schedules:
+        schedule_dict = dict(schedule)
+        if 'start_time' in schedule_dict:
+            schedule_dict['start_time'] = normalize_time(schedule_dict['start_time'])
+        if 'end_time' in schedule_dict:
+            schedule_dict['end_time'] = normalize_time(schedule_dict['end_time'])
+        if 'start_date' in schedule_dict and not isinstance(schedule_dict['start_date'], str):
+            schedule_dict['start_date'] = schedule_dict['start_date'].strftime('%Y-%m-%d')
+        if 'end_date' in schedule_dict and not isinstance(schedule_dict['end_date'], str):
+            schedule_dict['end_date'] = schedule_dict['end_date'].strftime('%Y-%m-%d')
+        serialized_schedules.append(schedule_dict)
+    return jsonify(serialized_schedules)
 
 @admin_bp.route('/recurring-schedules', methods=['POST'])
 @require_admin_auth

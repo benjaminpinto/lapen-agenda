@@ -293,7 +293,7 @@ const ScheduleView = () => {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 sm:mb-8 space-y-4 sm:space-y-0">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                        Agenda de Quadras
+                        Agenda das Quadras
                     </h1>
                     <p className="text-gray-600 text-sm sm:text-base">
                         Visualize e gerencie os agendamentos
@@ -322,7 +322,7 @@ const ScheduleView = () => {
                     <TabsTrigger value="stats" className="flex items-center text-xs sm:text-sm">
                         <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2"/>
                         <span className="hidden sm:inline">Estatísticas</span>
-                        <span className="sm:hidden">Stats</span>
+                        <span className="sm:hidden">Estatísticas</span>
                     </TabsTrigger>
                 </TabsList>
 

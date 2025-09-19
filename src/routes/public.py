@@ -1,5 +1,4 @@
 import calendar
-
 from datetime import datetime, timedelta, time, timezone
 
 from flask import Blueprint, request, jsonify
@@ -23,11 +22,11 @@ def generate_time_slots():
     current_time = datetime.combine(datetime.today(), time(7, 30))
     end_time = datetime.combine(datetime.today(), time(22, 30))
     interval = timedelta(minutes=90)
-    
+
     while current_time <= end_time:
         slots.append(current_time.strftime('%H:%M'))
         current_time += interval
-    
+
     return slots
 
 
@@ -114,16 +113,16 @@ def get_available_times():
 
     # Get all blocked times once
     blocks = db.execute('SELECT * FROM holidays_blocks WHERE date = ?', (date,)).fetchall()
-    
+
     date_obj = datetime.strptime(date, '%Y-%m-%d')
     day_of_week = date_obj.weekday()
-    
+
     recurring = db.execute('''
         SELECT * FROM recurring_schedules 
         WHERE day_of_week = ? AND start_date <= ? AND end_date >= ?
         AND (? IS NULL OR court_id = ?)
     ''', (day_of_week, date, date, court_id, court_id)).fetchall()
-    
+
     # Check blocked times efficiently
     def is_slot_blocked(start_time):
         for block in blocks:
@@ -132,15 +131,15 @@ def get_available_times():
             elif block['start_time'] and block['end_time']:
                 if normalize_time(block['start_time']) <= start_time < normalize_time(block['end_time']):
                     return True
-        
+
         for schedule in recurring:
             if normalize_time(schedule['start_time']) <= start_time < normalize_time(schedule['end_time']):
                 return True
         return False
-    
+
     # Filter available slots
-    available_slots = [slot for slot in all_slots 
-                      if slot not in booked_times and not is_slot_blocked(slot)]
+    available_slots = [slot for slot in all_slots
+                       if slot not in booked_times and not is_slot_blocked(slot)]
 
     return jsonify(available_slots)
 
@@ -196,12 +195,12 @@ def update_schedule(schedule_id):
         return jsonify({'error': 'All fields are required'}), 400
 
     db = get_db()
-    
+
     # Check if schedule exists
     existing = db.execute('SELECT id FROM schedules WHERE id = ?', (schedule_id,)).fetchone()
     if not existing:
         return jsonify({'error': 'Schedule not found'}), 404
-    
+
     try:
         db.execute('''
             UPDATE schedules 
@@ -360,9 +359,11 @@ def generate_whatsapp_message():
                     match_emoji = "✍️"
                 else:
                     match_emoji = "🤝"
-                message_parts.append(f"  🕐 {normalize_time(schedule['start_time'])} - {schedule['player1_name']} vs {schedule['player2_name']} {match_emoji}\n")
+                message_parts.append(
+                    f"  🕐 {normalize_time(schedule['start_time'])} - {schedule['player1_name']} vs {schedule['player2_name']} {match_emoji}\n")
 
-    message_parts.extend(["\n\n---\n", f"\n\nPara criar ou alterar seu agendamento, acesse 🔗 {request.host_url}", "\n\n\n🎾 *LAPEN - Liga Penedense de Tênis*"])
+    message_parts.extend(["\n\n---\n", f"\n\nPara criar ou alterar seu agendamento, acesse:\n🔗 {request.host_url}",
+                          "\n\n\n🎾 *LAPEN - Liga Penedense de Tênis*"])
     message = ''.join(message_parts)
 
     return jsonify({'message': message})
@@ -372,7 +373,7 @@ def generate_whatsapp_message():
 def get_public_dashboard_stats():
     """Get dashboard statistics for public view"""
     db = get_db()
-    
+
     # Most booked court this month
     most_booked_court = db.execute('''
         SELECT c.name, COUNT(*) as bookings
@@ -383,7 +384,7 @@ def get_public_dashboard_stats():
         ORDER BY bookings DESC
         LIMIT 1
     ''').fetchone()
-    
+
     # Total games by type this month
     game_stats = db.execute('''
         SELECT match_type, COUNT(*) as count
@@ -391,7 +392,7 @@ def get_public_dashboard_stats():
         WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
         GROUP BY match_type
     ''').fetchall()
-    
+
     # Top players this month
     top_players = db.execute('''
         WITH monthly_schedules AS (
@@ -409,7 +410,7 @@ def get_public_dashboard_stats():
         ORDER BY games DESC
         LIMIT 5
     ''').fetchall()
-    
+
     return jsonify({
         'mostBookedCourt': dict(most_booked_court) if most_booked_court else None,
         'gameStats': [dict(stat) for stat in game_stats],

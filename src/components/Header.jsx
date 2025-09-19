@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Settings, LogOut, Calendar, Home, Menu, X } from 'lucide-react'
+import { Settings, LogOut, Calendar, Home, Menu, X, Eye } from 'lucide-react'
 import { useToast } from '@/components/hooks/use-toast'
 import { useState } from 'react'
 
@@ -57,6 +57,7 @@ const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
             
             <Link to="/view">
               <Button variant="ghost" size="sm">
+                <Eye className="h-4 w-4 mr-2" />
                 Ver Agenda
               </Button>
             </Link>
@@ -77,7 +78,7 @@ const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
             ) : (
               <Link to="/admin">
                 <Button variant="ghost" size="sm">
-                  <Settings className="h-4 w-4" />
+                  <Settings className="h-4 w-4 mr-2" />
                 </Button>
               </Link>
             )}
@@ -114,6 +115,7 @@ const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
               
               <Link to="/view" onClick={() => setIsMobileMenuOpen(false)}>
                 <Button variant="ghost" size="sm" className="w-full justify-start">
+                  <Eye className="h-4 w-4 mr-2" />
                   Ver Agenda
                 </Button>
               </Link>

@@ -5,13 +5,13 @@ import { Calendar, Clock, Users, Trophy } from 'lucide-react'
 
 const Home = () => {
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+    <div className="max-w-4xl mx-auto px-4 sm:px-0">
+      <div className="text-center mb-8 sm:mb-12">
+        <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4">
           Bem-vindo ao Agenda LAPEN
         </h1>
-        <p className="text-xl text-gray-600 mb-8">
-          Sistema de gerenciamento de agendamentos de quadras de tênis
+        <p className="text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8">
+          Sistema de gestão de reservas de quadras de tênis
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -29,7 +29,7 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-12">
         <Card>
           <CardHeader className="text-center">
             <Calendar className="h-12 w-12 text-green-600 mx-auto mb-2" />
@@ -84,7 +84,7 @@ const Home = () => {
           <CardTitle>Como funciona?</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
                 <span className="text-green-600 font-bold">1</span>

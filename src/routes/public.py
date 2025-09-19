@@ -1,5 +1,5 @@
 import calendar
-import sqlite3
+
 from datetime import datetime, timedelta, time, timezone
 
 from flask import Blueprint, request, jsonify
@@ -63,7 +63,7 @@ def is_time_blocked(date, start_time, court_id=None):
 def get_active_courts():
     """Get all active courts"""
     db = get_db()
-    courts = db.execute('SELECT * FROM courts WHERE active = 1').fetchall()
+    courts = db.execute('SELECT * FROM courts WHERE active = TRUE').fetchall()
     response = jsonify([dict(court) for court in courts])
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
@@ -172,7 +172,7 @@ def create_schedule():
         ''', (court_id, date, start_time, player1_name, player2_name, match_type))
         db.commit()
         return jsonify({'success': True, 'message': 'Schedule created successfully'})
-    except sqlite3.Error:
+    except Exception:
         return jsonify({'error': 'Failed to create schedule'}), 500
 
 
@@ -202,7 +202,7 @@ def update_schedule(schedule_id):
         ''', (player1_name, player2_name, match_type, schedule_id))
         db.commit()
         return jsonify({'success': True, 'message': 'Schedule updated successfully'})
-    except sqlite3.Error:
+    except Exception:
         return jsonify({'error': 'Failed to update schedule'}), 500
 
 

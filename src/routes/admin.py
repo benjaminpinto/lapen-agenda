@@ -200,9 +200,15 @@ def get_holidays_blocks():
 def create_holiday_block():
     data = request.get_json()
     date = data.get('date')
-    start_time = data.get('start_time')
-    end_time = data.get('end_time')
+    start_time = data.get('start_time') or None
+    end_time = data.get('end_time') or None
     description = data.get('description', '')
+    
+    # Convert empty strings to None for time fields
+    if start_time == '':
+        start_time = None
+    if end_time == '':
+        end_time = None
     
     db = get_db()
     try:

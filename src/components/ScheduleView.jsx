@@ -11,6 +11,7 @@ import {Textarea} from '@/components/ui/textarea'
 import {BarChart3, Calendar, Clock, Edit, GraduationCap, List, MapPin, Share2, Trash2, Trophy, Users} from 'lucide-react'
 import {useToast} from '@/components/hooks/use-toast.js'
 import WeeklyCalendar from './WeeklyCalendar'
+import MonthSelector from './ui/MonthSelector'
 
 const ScheduleView = () => {
     const [searchParams] = useSearchParams()
@@ -25,6 +26,8 @@ const ScheduleView = () => {
     const [players, setPlayers] = useState([])
     const [stats, setStats] = useState({})
     const [hidePastDates, setHidePastDates] = useState(true)
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
     const [formData, setFormData] = useState({
         player1_name: '',
         player2_name: '',
@@ -44,7 +47,7 @@ const ScheduleView = () => {
                 handleWhatsappShare()
             }, 1000)
         }
-    }, [searchParams])
+    }, [searchParams, selectedMonth, selectedYear])
 
     useEffect(() => {
         if (viewType === 'weekly') {
@@ -54,7 +57,7 @@ const ScheduleView = () => {
 
     const fetchSchedules = async () => {
         try {
-            const response = await fetch('/api/public/schedules/month')
+            const response = await fetch(`/api/public/schedules/month?year=${selectedYear}&month=${selectedMonth}`)
             if (response.ok) {
                 const data = await response.json()
                 setSchedules(data)
@@ -192,7 +195,7 @@ const ScheduleView = () => {
             await captureWeeklyCalendar()
         } else {
             try {
-                const response = await fetch('/api/public/whatsapp-message')
+                const response = await fetch(`/api/public/whatsapp-message?year=${selectedYear}&month=${selectedMonth}`)
                 if (response.ok) {
                     const data = await response.json()
                     setWhatsappMessage(data.message)
@@ -327,6 +330,14 @@ const ScheduleView = () => {
                 </TabsList>
 
                 <TabsContent value="list" className="mt-6">
+                    <MonthSelector 
+                        selectedMonth={selectedMonth}
+                        selectedYear={selectedYear}
+                        onMonthChange={(month, year) => {
+                            setSelectedMonth(month)
+                            setSelectedYear(year)
+                        }}
+                    />
                     {(() => {
                         const today = new Date().toISOString().split('T')[0]
                         const futureSchedules = {}

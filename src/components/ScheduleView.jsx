@@ -8,7 +8,7 @@ import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Textarea} from '@/components/ui/textarea'
-import {BarChart3, Calendar, Clock, Edit, GraduationCap, List, MapPin, Share2, Trash2, Trophy, Users} from 'lucide-react'
+import {BarChart3, Calendar, Clock, Edit, GraduationCap, List, MapPin, Medal, Share2, Trash2, Trophy, Users} from 'lucide-react'
 import {useToast} from '@/components/hooks/use-toast.js'
 import WeeklyCalendar from './WeeklyCalendar'
 import MonthSelector from './ui/MonthSelector'
@@ -276,12 +276,14 @@ const ScheduleView = () => {
     const getMatchTypeColor = (matchType) => {
         if (matchType === 'Liga') return 'bg-yellow-100 !text-black'
         if (matchType === 'Aula') return 'bg-purple-100 !text-black'
+        if (matchType === 'Torneio') return 'bg-orange-100 !text-black'
         return 'bg-green-100 !text-black'
     }
 
     const getMatchTypeIcon = (matchType) => {
         if (matchType === 'Liga') return <Trophy className="h-4 w-4 text-black"/>
         if (matchType === 'Aula') return <GraduationCap className="h-4 w-4 text-black"/>
+        if (matchType === 'Torneio') return <Medal className="h-4 w-4 text-black"/>
         return <Users className="h-4 w-4 text-black"/>
     }
 
@@ -399,6 +401,7 @@ const ScheduleView = () => {
                                                                             className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold border transition-all duration-200 ${
                                                                                 schedule.match_type === 'Liga' ? 'bg-yellow-100 text-black border-yellow-300' :
                                                                                 schedule.match_type === 'Aula' ? 'bg-purple-100 text-black border-purple-300' :
+                                                                                schedule.match_type === 'Torneio' ? 'bg-orange-100 text-black border-orange-300' :
                                                                                 'bg-green-100 text-black border-green-300'
                                                                             }`}
                                                                         >
@@ -438,11 +441,13 @@ const ScheduleView = () => {
                                                                             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-2 transition-all duration-200 cursor-pointer ${
                                                                                 schedule.match_type === 'Liga' ? 'bg-yellow-100 text-black border-yellow-300 hover:border-yellow-600' :
                                                                                 schedule.match_type === 'Aula' ? 'bg-purple-100 text-black border-purple-300 hover:border-purple-600' :
+                                                                                schedule.match_type === 'Torneio' ? 'bg-orange-100 text-black border-orange-300 hover:border-orange-600' :
                                                                                 'bg-green-100 text-black border-green-300 hover:border-green-600'
                                                                             }`}
                                                                             title={
                                                                                 schedule.match_type === 'Liga' ? 'Partida oficial da liga' :
                                                                                 schedule.match_type === 'Aula' ? 'Aula de tênis' :
+                                                                                schedule.match_type === 'Torneio' ? 'Partida de torneio' :
                                                                                 'Partida amistosa entre jogadores'
                                                                             }
                                                                         >
@@ -619,6 +624,7 @@ const ScheduleView = () => {
                                     <SelectItem value="Amistoso">Amistoso</SelectItem>
                                     <SelectItem value="Liga">Liga</SelectItem>
                                     <SelectItem value="Aula">Aula</SelectItem>
+                                    <SelectItem value="Torneio">Torneio</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

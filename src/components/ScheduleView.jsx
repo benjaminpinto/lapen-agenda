@@ -12,6 +12,7 @@ import {BarChart3, Calendar, Clock, Edit, GraduationCap, List, MapPin, Medal, Sh
 import {useToast} from '@/components/hooks/use-toast.js'
 import WeeklyCalendar from './WeeklyCalendar'
 import MonthSelector from './ui/MonthSelector'
+import MatchTypeBadge from './ui/MatchTypeBadge'
 
 const ScheduleView = () => {
     const [searchParams] = useSearchParams()
@@ -273,19 +274,7 @@ const ScheduleView = () => {
         return grouped
     }
 
-    const getMatchTypeColor = (matchType) => {
-        if (matchType === 'Liga') return 'bg-yellow-100 !text-black'
-        if (matchType === 'Aula') return 'bg-purple-100 !text-black'
-        if (matchType === 'Torneio') return 'bg-orange-100 !text-black'
-        return 'bg-green-100 !text-black'
-    }
 
-    const getMatchTypeIcon = (matchType) => {
-        if (matchType === 'Liga') return <Trophy className="h-4 w-4 text-black"/>
-        if (matchType === 'Aula') return <GraduationCap className="h-4 w-4 text-black"/>
-        if (matchType === 'Torneio') return <Medal className="h-4 w-4 text-black"/>
-        return <Users className="h-4 w-4 text-black"/>
-    }
 
     if (loading) {
         return <div className="text-center py-8">Carregando agenda...</div>
@@ -397,17 +386,7 @@ const ScheduleView = () => {
                                                                             <span className="mx-1">x</span>
                                                                             <span className="font-medium">{schedule.player2_name}</span>
                                                                         </div>
-                                                                        <div
-                                                                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold border transition-all duration-200 ${
-                                                                                schedule.match_type === 'Liga' ? 'bg-yellow-100 text-black border-yellow-300' :
-                                                                                schedule.match_type === 'Aula' ? 'bg-purple-100 text-black border-purple-300' :
-                                                                                schedule.match_type === 'Torneio' ? 'bg-orange-100 text-black border-orange-300' :
-                                                                                'bg-green-100 text-black border-green-300'
-                                                                            }`}
-                                                                        >
-                                                                            {getMatchTypeIcon(schedule.match_type)}
-                                                                            <span className="ml-1">{schedule.match_type}</span>
-                                                                        </div>
+                                                                        <MatchTypeBadge matchType={schedule.match_type} size="sm" />
                                                                     </div>
                                                                     <div className="flex justify-end space-x-1">
                                                                         <Button variant="ghost" size="sm"
@@ -437,25 +416,7 @@ const ScheduleView = () => {
                                                                             <span className="mx-2">x</span>
                                                                             <span className="font-medium">{schedule.player2_name}</span>
                                                                         </div>
-                                                                        <div
-                                                                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-2 transition-all duration-200 cursor-pointer ${
-                                                                                schedule.match_type === 'Liga' ? 'bg-yellow-100 text-black border-yellow-300 hover:border-yellow-600' :
-                                                                                schedule.match_type === 'Aula' ? 'bg-purple-100 text-black border-purple-300 hover:border-purple-600' :
-                                                                                schedule.match_type === 'Torneio' ? 'bg-orange-100 text-black border-orange-300 hover:border-orange-600' :
-                                                                                'bg-green-100 text-black border-green-300 hover:border-green-600'
-                                                                            }`}
-                                                                            title={
-                                                                                schedule.match_type === 'Liga' ? 'Partida oficial da liga' :
-                                                                                schedule.match_type === 'Aula' ? 'Aula de tênis' :
-                                                                                schedule.match_type === 'Torneio' ? 'Partida de torneio' :
-                                                                                'Partida amistosa entre jogadores'
-                                                                            }
-                                                                        >
-                                                                            <div className="flex items-center">
-                                                                                {getMatchTypeIcon(schedule.match_type)}
-                                                                                <span className="ml-1">{schedule.match_type}</span>
-                                                                            </div>
-                                                                        </div>
+                                                                        <MatchTypeBadge matchType={schedule.match_type} />
                                                                     </div>
                                                                     <div className="flex space-x-2">
                                                                         <Button variant="ghost" size="sm"

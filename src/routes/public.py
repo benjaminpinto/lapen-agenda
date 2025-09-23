@@ -367,6 +367,8 @@ def generate_whatsapp_message():
                     match_emoji = "🎾"
                 elif schedule['match_type'] == 'Aula':
                     match_emoji = "✍️"
+                elif schedule['match_type'] == 'Torneio':
+                    match_emoji = "🏅"
                 else:
                     match_emoji = "🤝"
                 message_parts.append(

@@ -229,12 +229,12 @@ def delete_schedule(schedule_id):
 def get_month_schedules():
     """Get all schedules for the current month"""
     now = datetime.now(timezone.utc)
-    year = request.args.get('year', now.year)
-    month = request.args.get('month', now.month)
+    year = int(request.args.get('year', now.year))
+    month = int(request.args.get('month', now.month))
 
     # Get first and last day of the month
     first_day = f"{year}-{month:02d}-01"
-    last_day_num = calendar.monthrange(int(year), int(month))[1]
+    last_day_num = calendar.monthrange(year, month)[1]
     last_day = f"{year}-{month:02d}-{last_day_num:02d}"
 
     db = get_db()
@@ -294,11 +294,16 @@ def get_week_schedules():
 
 @public_bp.route('/whatsapp-message', methods=['GET'])
 def generate_whatsapp_message():
-    """Generate WhatsApp message with current month's future schedules"""
+    """Generate WhatsApp message with selected month's schedules"""
     now = datetime.now(timezone.utc)
-    year = now.year
-    month = now.month
+    year = int(request.args.get('year', now.year))
+    month = int(request.args.get('month', now.month))
     today = now.strftime('%Y-%m-%d')
+    
+    # For selected month, show all schedules if it's not current month, otherwise show future schedules
+    current_month = now.month
+    current_year = now.year
+    show_all = (year != current_year or month != current_month)
 
     # Get month name in Portuguese
     month_names = [
@@ -313,16 +318,21 @@ def generate_whatsapp_message():
     last_day = f"{year}-{month:02d}-{last_day_num:02d}"
 
     db = get_db()
+    
+    # Use appropriate date filter based on whether we're showing current month or another month
+    start_date = first_day if show_all else max(today, first_day)
+    
     schedules = db.execute('''
         SELECT s.*, c.name as court_name, c.type as court_type
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
         WHERE s.date >= ? AND s.date <= ?
         ORDER BY s.date, c.name, s.start_time
-    ''', (today, last_day)).fetchall()
+    ''', (start_date, last_day)).fetchall()
 
     if not schedules:
-        message = f"📅 *Agenda LAPEN - {month_name} {year}*\n\nNenhum jogo agendado para este mês."
+        period_text = "este mês" if not show_all else f"{month_name.lower()} de {year}"
+        message = f"📅 *Agenda LAPEN - {month_name} {year}*\n\nNenhum jogo agendado para {period_text}."
         return jsonify({'message': message})
 
     # Group schedules by date and court

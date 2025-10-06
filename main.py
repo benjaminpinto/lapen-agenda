@@ -1,5 +1,10 @@
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 # DON\'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -7,21 +12,29 @@ from flask import Flask, send_from_directory
 from flask_cors import CORS
 from src.routes.admin import admin_bp
 from src.routes.public import public_bp
+from src.routes.auth import auth_bp
 from src.database import init_db
+from src.email_service import init_mail
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'src', 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = False
 
-# Enable CORS for all routes
-CORS(app)
+# Enable CORS for all routes with credentials support
+CORS(app, supports_credentials=True, origins=['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5001', 'http://127.0.0.1:5001'])
 
 # Initialize the database
 with app.app_context():
     init_db()
 
+# Initialize email service
+init_mail(app)
+
 # Register blueprints
 app.register_blueprint(admin_bp)
 app.register_blueprint(public_bp)
+app.register_blueprint(auth_bp)
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')

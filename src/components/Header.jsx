@@ -1,12 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Settings, LogOut, Calendar, Home, Menu, X, Eye } from 'lucide-react'
+import { Settings, LogOut, Calendar, Home, Menu, X, Eye, UserPlus, LogIn } from 'lucide-react'
 import { useToast } from '@/components/hooks/use-toast'
+import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
 
 const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { user, logout, isAuthenticated } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
@@ -62,26 +64,53 @@ const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
               </Button>
             </Link>
             
-            {isAdminAuthenticated ? (
-              <div className="flex items-center space-x-2">
-                <Link to="/admin/dashboard">
+            <div className="flex items-center space-x-2">
+              {isAuthenticated ? (
+                <>
+                  <span className="text-sm text-gray-600">Olá, {user?.name}</span>
+                  <Button variant="ghost" size="sm" onClick={() => { logout(); toast({ title: "Logout realizado" }); }}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login">
+                    <Button variant="ghost" size="sm">
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Entrar
+                    </Button>
+                  </Link>
+                  <Link to="/signup">
+                    <Button variant="outline" size="sm">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Criar Conta
+                    </Button>
+                  </Link>
+                </>
+              )}
+              
+              {isAdminAuthenticated ? (
+                <div className="flex items-center space-x-2">
+                  <Link to="/admin/dashboard">
+                    <Button variant="ghost" size="sm">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Admin
+                    </Button>
+                  </Link>
+                  <Button variant="ghost" size="sm" onClick={handleLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Admin Sair
+                  </Button>
+                </div>
+              ) : (
+                <Link to="/admin">
                   <Button variant="ghost" size="sm">
                     <Settings className="h-4 w-4 mr-2" />
-                    Admin
                   </Button>
                 </Link>
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sair
-                </Button>
-              </div>
-            ) : (
-              <Link to="/admin">
-                <Button variant="ghost" size="sm">
-                  <Settings className="h-4 w-4 mr-2" />
-                </Button>
-              </Link>
-            )}
+              )}
+            </div>
           </nav>
           
           {/* Mobile Menu Button */}
@@ -119,6 +148,42 @@ const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
                   Ver Agenda
                 </Button>
               </Link>
+              
+              {isAuthenticated ? (
+                <>
+                  <div className="px-3 py-2 text-sm text-gray-600">
+                    Olá, {user?.name}
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      logout()
+                      toast({ title: "Logout realizado" })
+                      setIsMobileMenuOpen(false)
+                    }}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                      <LogIn className="h-4 w-4 mr-2" />
+                      Entrar
+                    </Button>
+                  </Link>
+                  <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Criar Conta
+                    </Button>
+                  </Link>
+                </>
+              )}
               
               {isAdminAuthenticated ? (
                 <>

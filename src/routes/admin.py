@@ -178,7 +178,6 @@ def delete_player(player_id):
 
 # Holidays/Blocks CRUD
 @admin_bp.route('/holidays-blocks', methods=['GET'])
-@require_admin_auth
 def get_holidays_blocks():
     db = get_db()
     blocks = db.execute('SELECT * FROM holidays_blocks ORDER BY date').fetchall()
@@ -235,7 +234,6 @@ def delete_holiday_block(block_id):
 
 # Recurring Schedules CRUD
 @admin_bp.route('/recurring-schedules', methods=['GET'])
-@require_admin_auth
 def get_recurring_schedules():
     db = get_db()
     schedules = db.execute('''

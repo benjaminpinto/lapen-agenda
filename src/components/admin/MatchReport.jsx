@@ -3,7 +3,7 @@ import {Link, useParams} from 'react-router-dom'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
 import {Button} from '@/components/ui/button'
 import {Badge} from '@/components/ui/badge'
-import {ArrowLeft, Crown, Trophy, Users, Wallet} from 'lucide-react'
+import {ArrowLeft, Crown, Trophy, Users, Wallet, CheckCircle, XCircle, Clock} from 'lucide-react'
 
 const MatchReport = () => {
     const {matchId} = useParams()
@@ -57,8 +57,8 @@ const MatchReport = () => {
                             {match.player1_name} vs {match.player2_name} - {new Date(match.date).toLocaleDateString('pt-BR')}
                         </p>
                     </div>
-                    <Badge variant="outline" className="text-lg px-4 py-2">
-                        Finalizada
+                    <Badge variant={report.match.status === 'cancelled' ? 'destructive' : 'secondary'} className="text-lg px-4 py-2">
+                        {report.match.status === 'cancelled' ? 'Cancelada' : 'Finalizada'}
                     </Badge>
                 </div>
             </div>
@@ -115,12 +115,24 @@ const MatchReport = () => {
                         <div className="space-y-3">
                             {bets.filter(bet => bet.player_name === match.player1_name).map(bet => (
                                 <div key={bet.id} className={`p-3 rounded border ${
-                                    bet.status === 'won' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                                    bet.status === 'won' ? 'bg-green-50 border-green-200' : 
+                                    bet.status === 'refunded' && bet.refund_status === 'failed' ? 'bg-red-50 border-red-200' :
+                                    bet.status === 'refunded' ? 'bg-blue-50 border-blue-200' :
+                                    'bg-red-50 border-red-200'
                                 }`}>
                                     <div className="flex justify-between items-center">
-                                        <div>
-                                            <div className="font-semibold">{bet.user_name}</div>
-                                            <div className="text-sm text-gray-600">{bet.user_email}</div>
+                                        <div className="flex items-center space-x-2">
+                                            <div>
+                                                <div className="font-semibold">{bet.user_name}</div>
+                                                <div className="text-sm text-gray-600">{bet.user_email}</div>
+                                            </div>
+                                            {bet.status === 'refunded' && bet.refund_status && (
+                                                <div className="flex items-center" title={bet.refund_failure_reason || 'Reembolso enviado'}>
+                                                    {bet.refund_status === 'succeeded' && <CheckCircle className="h-4 w-4 text-green-600" />}
+                                                    {bet.refund_status === 'failed' && <XCircle className="h-4 w-4 text-red-600" />}
+                                                    {bet.refund_status === 'pending' && <Clock className="h-4 w-4 text-yellow-600" />}
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="text-right">
                                             <div className="font-semibold">R$ {bet.amount.toFixed(2)}</div>
@@ -131,6 +143,9 @@ const MatchReport = () => {
                                             )}
                                             {bet.status === 'lost' && (
                                                 <div className="text-sm text-red-600">Perdeu</div>
+                                            )}
+                                            {bet.status === 'refunded' && (
+                                                <div className="text-sm text-blue-600">Reembolsado</div>
                                             )}
                                         </div>
                                     </div>
@@ -161,12 +176,24 @@ const MatchReport = () => {
                         <div className="space-y-3">
                             {bets.filter(bet => bet.player_name === match.player2_name).map(bet => (
                                 <div key={bet.id} className={`p-3 rounded border ${
-                                    bet.status === 'won' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                                    bet.status === 'won' ? 'bg-green-50 border-green-200' : 
+                                    bet.status === 'refunded' && bet.refund_status === 'failed' ? 'bg-red-50 border-red-200' :
+                                    bet.status === 'refunded' ? 'bg-blue-50 border-blue-200' :
+                                    'bg-red-50 border-red-200'
                                 }`}>
                                     <div className="flex justify-between items-center">
-                                        <div>
-                                            <div className="font-semibold">{bet.user_name}</div>
-                                            <div className="text-sm text-gray-600">{bet.user_email}</div>
+                                        <div className="flex items-center space-x-2">
+                                            <div>
+                                                <div className="font-semibold">{bet.user_name}</div>
+                                                <div className="text-sm text-gray-600">{bet.user_email}</div>
+                                            </div>
+                                            {bet.status === 'refunded' && bet.refund_status && (
+                                                <div className="flex items-center" title={bet.refund_failure_reason || 'Reembolso enviado'}>
+                                                    {bet.refund_status === 'succeeded' && <CheckCircle className="h-4 w-4 text-green-600" />}
+                                                    {bet.refund_status === 'failed' && <XCircle className="h-4 w-4 text-red-600" />}
+                                                    {bet.refund_status === 'pending' && <Clock className="h-4 w-4 text-yellow-600" />}
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="text-right">
                                             <div className="font-semibold">R$ {bet.amount.toFixed(2)}</div>
@@ -177,6 +204,9 @@ const MatchReport = () => {
                                             )}
                                             {bet.status === 'lost' && (
                                                 <div className="text-sm text-red-600">Perdeu</div>
+                                            )}
+                                            {bet.status === 'refunded' && (
+                                                <div className="text-sm text-blue-600">Reembolsado</div>
                                             )}
                                         </div>
                                     </div>

@@ -7,6 +7,7 @@ import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Badge} from '@/components/ui/badge'
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger} from '@/components/ui/dialog'
 import {Trophy, Users, Wallet} from 'lucide-react'
 
 const AdminMatches = () => {
@@ -15,6 +16,8 @@ const AdminMatches = () => {
     const [winner, setWinner] = useState('')
     const [score, setScore] = useState('')
     const [loading, setLoading] = useState(false)
+    const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+    const [matchToCancel, setMatchToCancel] = useState(null)
     const {toast} = useToast()
     const navigate = useNavigate()
 
@@ -96,6 +99,42 @@ const AdminMatches = () => {
             })
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleCancelMatch = async () => {
+        if (!matchToCancel) return
+
+        try {
+            const response = await fetch(`/api/admin/matches/${matchToCancel.match_id}/cancel`, {
+                method: 'POST',
+                credentials: 'include'
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                toast({
+                    title: "Sucesso",
+                    description: `Partida cancelada. ${data.refunded_bets} apostas reembolsadas.`
+                })
+                fetchMatches()
+            } else {
+                const error = await response.json()
+                toast({
+                    title: "Erro",
+                    description: error.error,
+                    variant: "destructive"
+                })
+            }
+        } catch (error) {
+            toast({
+                title: "Erro",
+                description: "Erro ao cancelar partida",
+                variant: "destructive"
+            })
+        } finally {
+            setCancelDialogOpen(false)
+            setMatchToCancel(null)
         }
     }
 
@@ -189,13 +228,48 @@ const AdminMatches = () => {
                     )}
 
                     {match.status === 'upcoming' && (
-                        <Button
-                            onClick={() => setSelectedMatch(match)}
-                            className="w-full"
-                            variant="outline"
-                        >
-                            Finalizar Partida
-                        </Button>
+                        <div className="space-y-2">
+                            <Button
+                                onClick={() => setSelectedMatch(match)}
+                                className="w-full"
+                                variant="outline"
+                            >
+                                Finalizar Partida
+                            </Button>
+                            <>
+                                <Button
+                                    onClick={() => {
+                                        setMatchToCancel(match)
+                                        setCancelDialogOpen(true)
+                                    }}
+                                    className="w-full"
+                                    variant="destructive"
+                                    size="sm"
+                                >
+                                    Cancelar Partida
+                                </Button>
+                                <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Cancelar Partida</DialogTitle>
+                                            <DialogDescription>
+                                                Tem certeza que deseja cancelar a partida {matchToCancel?.player1_name} vs {matchToCancel?.player2_name}?
+                                                <br /><br />
+                                                Todas as apostas serão automaticamente reembolsadas.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="flex space-x-2 justify-end">
+                                            <Button variant="outline" onClick={() => setCancelDialogOpen(false)}>
+                                                Cancelar
+                                            </Button>
+                                            <Button variant="destructive" onClick={handleCancelMatch}>
+                                                Confirmar Cancelamento
+                                            </Button>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            </>
+                        </div>
                     )}
                 </CardContent>
             </Card>
@@ -253,7 +327,9 @@ const AdminMatches = () => {
                                 </div>
                             </div>
                             
-                            <Badge variant="outline">Finalizada</Badge>
+                            <Badge variant={match.status === 'cancelled' ? 'destructive' : 'secondary'}>
+                                {match.status === 'cancelled' ? 'Cancelada' : 'Finalizada'}
+                            </Badge>
                         </div>
                     </div>
                 </CardContent>
@@ -264,15 +340,22 @@ const AdminMatches = () => {
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold mb-2">Gerenciar Partidas</h1>
-                <p className="text-gray-600">Finalize partidas e liquide apostas</p>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold mb-2">Gerenciar Partidas</h1>
+                        <p className="text-gray-600">Finalize partidas e liquide apostas</p>
+                    </div>
+                    <Button onClick={() => navigate('/admin/reports')} variant="outline">
+                        Ver Relatórios
+                    </Button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
                     {/* Open Matches */}
                     <h2 className="text-xl font-semibold mb-4">Partidas em Aberto</h2>
-                    {matches.filter(m => m.status !== 'finished').length === 0 ? (
+                    {matches.filter(m => m.status !== 'finished' && m.status !== 'cancelled').length === 0 ? (
                         <Card className="mb-8">
                             <CardContent className="text-center py-8">
                                 <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
@@ -281,7 +364,7 @@ const AdminMatches = () => {
                         </Card>
                     ) : (
                         <div className="mb-8">
-                            {matches.filter(m => m.status !== 'finished').map(match => (
+                            {matches.filter(m => m.status !== 'finished' && m.status !== 'cancelled').map(match => (
                                 <MatchCard key={match.schedule_id} match={match}/>
                             ))}
                         </div>
@@ -289,7 +372,7 @@ const AdminMatches = () => {
                     
                     {/* Finished Matches */}
                     <h2 className="text-xl font-semibold mb-4">Partidas Encerradas</h2>
-                    {matches.filter(m => m.status === 'finished').length === 0 ? (
+                    {matches.filter(m => m.status === 'finished' || m.status === 'cancelled').length === 0 ? (
                         <Card>
                             <CardContent className="text-center py-8">
                                 <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
@@ -297,7 +380,7 @@ const AdminMatches = () => {
                             </CardContent>
                         </Card>
                     ) : (
-                        matches.filter(m => m.status === 'finished').map(match => (
+                        matches.filter(m => m.status === 'finished' || m.status === 'cancelled').map(match => (
                             <FinishedMatchCard key={match.schedule_id} match={match}/>
                         ))
                     )}

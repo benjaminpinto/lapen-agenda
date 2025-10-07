@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar, Clock, Users, Trophy } from 'lucide-react'
+import { Calendar, Clock, Trophy, DollarSign } from 'lucide-react'
 
 const Home = () => {
   return (
@@ -56,24 +56,24 @@ const Home = () => {
 
         <Card>
           <CardHeader className="text-center">
-            <Users className="h-12 w-12 text-purple-600 mx-auto mb-2" />
-            <CardTitle>Gestão de Jogadores</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription>
-              Autocomplete inteligente para facilitar o cadastro
-            </CardDescription>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="text-center">
             <Trophy className="h-12 w-12 text-yellow-600 mx-auto mb-2" />
             <CardTitle>Liga e Amistosos</CardTitle>
           </CardHeader>
           <CardContent>
             <CardDescription>
               Organize partidas de liga e jogos amistosos
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="text-center">
+            <DollarSign className="h-12 w-12 text-green-600 mx-auto mb-2" />
+            <CardTitle>Apostas Esportivas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription>
+              Aposte nas partidas e acompanhe os resultados
             </CardDescription>
           </CardContent>
         </Card>

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Settings, LogOut, Calendar, Home, Menu, X, Eye, UserPlus, LogIn } from 'lucide-react'
+import { Settings, LogOut, Calendar, Home, Menu, X, Eye, UserPlus, LogIn, Trophy } from 'lucide-react'
 import { useToast } from '@/components/hooks/use-toast'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
@@ -61,6 +61,13 @@ const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
               <Button variant="ghost" size="sm">
                 <Eye className="h-4 w-4 mr-2" />
                 Ver Agenda
+              </Button>
+            </Link>
+            
+            <Link to="/betting">
+              <Button variant="ghost" size="sm">
+                <Trophy className="h-4 w-4 mr-2" />
+                Apostas
               </Button>
             </Link>
             

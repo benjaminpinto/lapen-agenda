@@ -52,17 +52,18 @@ def send_bet_confirmation_email(email, name, bet_details):
             return False
         
         msg = Message(
-            subject='Bet Confirmation - Agenda LAPEN',
+            subject='Confirmação de Aposta - Agenda LAPEN',
             recipients=[email],
+            sender=current_app.config.get('MAIL_DEFAULT_SENDER') or current_app.config.get('MAIL_USERNAME') or 'benjaminpinto@gmail.com',
             html=f"""
-            <h2>Bet Confirmation</h2>
-            <p>Hi {name},</p>
-            <p>Your bet has been placed successfully!</p>
-            <p><strong>Match:</strong> {bet_details['match']}</p>
-            <p><strong>Player:</strong> {bet_details['player']}</p>
-            <p><strong>Amount:</strong> ${bet_details['amount']}</p>
-            <p><strong>Potential Return:</strong> ${bet_details['potential_return']}</p>
-            <p>Good luck!</p>
+            <h2>Confirmação de Aposta</h2>
+            <p>Olá {name},</p>
+            <p>Sua aposta foi realizada com sucesso!</p>
+            <p><strong>Partida:</strong> {bet_details['match']}</p>
+            <p><strong>Jogador:</strong> {bet_details['player']}</p>
+            <p><strong>Valor:</strong> {bet_details['amount']}</p>
+            <p><strong>Retorno Potencial:</strong> {bet_details['potential_return']}</p>
+            <p>Boa sorte!</p>
             """
         )
         

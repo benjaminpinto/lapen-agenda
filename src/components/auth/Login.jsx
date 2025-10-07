@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
-import { useToast } from '@/components/hooks/use-toast'
+import { useToast } from '@/contexts/ToastContext'
 import { LogIn, Mail, Lock } from 'lucide-react'
 
 const Login = () => {

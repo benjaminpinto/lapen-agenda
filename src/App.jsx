@@ -17,6 +17,8 @@ import SignUp from './components/auth/SignUp'
 import Login from './components/auth/Login'
 import SignUpSuccess from './components/auth/SignUpSuccess'
 import EmailVerification from './components/auth/EmailVerification'
+import BettingDashboard from './components/betting/BettingDashboard'
+import MyBets from './components/betting/MyBets'
 import './App.css'
 
 function App() {
@@ -45,6 +47,8 @@ function App() {
               <Route path="/signup-success" element={<SignUpSuccess />} />
               <Route path="/verify" element={<EmailVerification />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/betting" element={<BettingDashboard />} />
+              <Route path="/my-bets" element={<MyBets />} />
               <Route 
                 path="/admin" 
                 element={

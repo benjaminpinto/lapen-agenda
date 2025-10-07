@@ -46,22 +46,32 @@ export const AuthProvider = ({ children }) => {
   }
 
   const login = async (email, password) => {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, password })
-    })
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      })
 
-    const data = await response.json()
-    
-    if (response.ok) {
-      localStorage.setItem('auth_token', data.token)
-      setUser(data.user)
-      return { success: true }
-    } else {
-      return { success: false, error: data.error }
+      const text = await response.text()
+      
+      if (response.ok) {
+        const data = JSON.parse(text)
+        localStorage.setItem('auth_token', data.token)
+        setUser(data.user)
+        return { success: true }
+      } else {
+        try {
+          const data = JSON.parse(text)
+          return { success: false, error: data.error }
+        } catch {
+          return { success: false, error: 'Email ou senha inválidos' }
+        }
+      }
+    } catch (error) {
+      return { success: false, error: 'Erro de conexão' }
     }
   }
 

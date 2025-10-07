@@ -13,6 +13,8 @@ from flask_cors import CORS
 from src.routes.admin import admin_bp
 from src.routes.public import public_bp
 from src.routes.auth import auth_bp
+from src.routes.matches import matches_bp
+from src.routes.betting import betting_bp
 from src.database import init_db
 from src.email_service import init_mail
 
@@ -35,6 +37,8 @@ init_mail(app)
 app.register_blueprint(admin_bp)
 app.register_blueprint(public_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(matches_bp)
+app.register_blueprint(betting_bp)
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')

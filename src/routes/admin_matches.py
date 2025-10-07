@@ -95,6 +95,9 @@ def finish_match(match_id):
 @admin_matches_bp.route('/<int:match_id>/cancel', methods=['POST'])
 def cancel_match(match_id):
     """Cancel a match and refund all bets"""
+    import os
+    import stripe
+    
     db = get_db()
     try:
         # Check if match exists
@@ -107,22 +110,71 @@ def cancel_match(match_id):
         if match['status'] == 'finished':
             return jsonify({'error': 'Não é possível cancelar partida finalizada'}), 400
         
+        # Get all active bets for this match
+        cursor = db.execute('''
+            SELECT b.id, b.user_id, b.amount, b.payment_intent_id
+            FROM bets b
+            WHERE b.match_id = ? AND b.status = 'active'
+        ''', (match_id,))
+        
+        active_bets = cursor.fetchall()
+        refunded_count = 0
+        failed_refunds = 0
+        
+        # Process refunds for each bet
+        for bet in active_bets:
+            refund_status = 'pending'
+            stripe_refund_id = None
+            failure_reason = None
+            
+            try:
+                # Check if mock mode is active
+                if os.getenv('STRIPE_MOCK_ACTIVE', 'false').lower() == 'true':
+                    # Mock refund - always succeed
+                    refund_status = 'succeeded'
+                    stripe_refund_id = f'mock_refund_{bet["id"]}'
+                else:
+                    # Real Stripe refund
+                    stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+                    refund = stripe.Refund.create(
+                        payment_intent=bet['payment_intent_id'],
+                        amount=int(float(bet['amount']) * 100)  # Convert to cents
+                    )
+                    refund_status = refund.status
+                    stripe_refund_id = refund.id
+                    
+                if refund_status == 'succeeded':
+                    refunded_count += 1
+                else:
+                    failed_refunds += 1
+                    
+            except Exception as refund_error:
+                refund_status = 'failed'
+                failure_reason = str(refund_error)
+                failed_refunds += 1
+            
+            # Record refund attempt
+            db.execute('''
+                INSERT INTO refunds (bet_id, user_id, amount, stripe_refund_id, status, failure_reason)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (bet['id'], bet['user_id'], bet['amount'], stripe_refund_id, refund_status, failure_reason))
+        
         # Update match status
         db.execute('UPDATE matches SET status = ? WHERE id = ?', ('cancelled', match_id))
         
-        # Refund all active bets
-        cursor = db.execute('''
+        # Update bet status
+        db.execute('''
             UPDATE bets SET status = ? 
             WHERE match_id = ? AND status = 'active'
         ''', ('refunded', match_id))
         
-        refunded_count = cursor.rowcount
-        
         db.commit()
         
         return jsonify({
-            'message': 'Partida cancelada e apostas reembolsadas',
-            'refunded_bets': refunded_count
+            'message': 'Partida cancelada',
+            'refunded_bets': refunded_count,
+            'failed_refunds': failed_refunds,
+            'total_bets': len(active_bets)
         })
         
     except Exception as e:
@@ -139,7 +191,7 @@ def get_match_report(match_id):
         # Get match info
         cursor = db.execute('''
             SELECT s.player1_name, s.player2_name, s.date, s.start_time,
-                   mr.winner_name, mr.score, mr.total_winnings
+                   mr.winner_name, mr.score, mr.total_winnings, m.status
             FROM matches m
             JOIN schedules s ON m.schedule_id = s.id
             LEFT JOIN match_results mr ON m.id = mr.match_id
@@ -150,12 +202,14 @@ def get_match_report(match_id):
         if not match_info:
             return jsonify({'error': 'Partida não encontrada'}), 404
         
-        # Get all bets with user info
+        # Get all bets with user info and refund status
         cursor = db.execute('''
             SELECT b.id, b.amount, b.player_name, b.status, b.potential_return,
-                   u.name as user_name, u.email as user_email
+                   u.name as user_name, u.email as user_email,
+                   r.status as refund_status, r.failure_reason
             FROM bets b
             JOIN users u ON b.user_id = u.id
+            LEFT JOIN refunds r ON b.id = r.bet_id
             WHERE b.match_id = ?
             ORDER BY b.player_name, b.amount DESC
         ''', (match_id,))
@@ -172,7 +226,9 @@ def get_match_report(match_id):
                 'status': row['status'],
                 'potential_return': float(row['potential_return'] or 0),
                 'user_name': row['user_name'],
-                'user_email': row['user_email']
+                'user_email': row['user_email'],
+                'refund_status': row['refund_status'],
+                'refund_failure_reason': row['failure_reason']
             }
             bets.append(bet)
             total_pool += bet['amount']
@@ -183,7 +239,8 @@ def get_match_report(match_id):
                 'player1_name': match_info['player1_name'],
                 'player2_name': match_info['player2_name'],
                 'date': match_info['date'],
-                'start_time': match_info['start_time']
+                'start_time': match_info['start_time'],
+                'status': match_info['status']
             },
             'bets': bets,
             'summary': {
@@ -226,14 +283,19 @@ def get_betting_reports():
     """Get betting reports and statistics"""
     db = get_db()
     try:
-        # Get match statistics
+        # Get match statistics with proper pool calculation
         cursor = db.execute('''
             SELECT 
                 m.status,
                 COUNT(*) as match_count,
-                SUM(m.total_pool) as total_pool,
-                AVG(m.total_pool) as avg_pool
+                COALESCE(SUM(pool_totals.total_pool), 0) as total_pool,
+                COALESCE(AVG(pool_totals.total_pool), 0) as avg_pool
             FROM matches m
+            LEFT JOIN (
+                SELECT match_id, SUM(amount) as total_pool
+                FROM bets 
+                GROUP BY match_id
+            ) pool_totals ON m.id = pool_totals.match_id
             GROUP BY m.status
         ''')
         
@@ -251,7 +313,7 @@ def get_betting_reports():
                 b.status,
                 COUNT(*) as bet_count,
                 SUM(b.amount) as total_amount,
-                SUM(b.potential_return) as total_returns
+                SUM(COALESCE(b.potential_return, 0)) as total_returns
             FROM bets b
             GROUP BY b.status
         ''')
@@ -264,9 +326,20 @@ def get_betting_reports():
                 'total_returns': float(row['total_returns'] or 0)
             }
         
+        # Get additional analytics
+        cursor = db.execute('''
+            SELECT COUNT(DISTINCT user_id) as unique_bettors
+            FROM bets
+        ''')
+        unique_bettors = cursor.fetchone()['unique_bettors']
+        
         return jsonify({
             'match_statistics': match_stats,
-            'bet_statistics': bet_stats
+            'bet_statistics': bet_stats,
+            'analytics': {
+                'unique_bettors': unique_bettors,
+                'house_edge': 0.2
+            }
         })
         
     except Exception as e:

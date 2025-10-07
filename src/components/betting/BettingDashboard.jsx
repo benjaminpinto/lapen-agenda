@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/contexts/ToastContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Trophy, Clock, Users, DollarSign } from 'lucide-react'
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
+import { Trophy, Clock, Users, DollarSign, Share2, Wallet } from 'lucide-react'
+import ShareableMatchCard from './ShareableMatchCard'
+import html2canvas from 'html2canvas'
 
 const BettingDashboard = () => {
   const [matches, setMatches] = useState([])
@@ -127,7 +130,7 @@ const BettingDashboard = () => {
     }
   }
 
-  const MatchCard = ({ match }) => {
+  const FinishedMatchCard = ({ match }) => {
     const [odds, setOdds] = useState({})
     const [stats, setStats] = useState({})
 
@@ -143,6 +146,116 @@ const BettingDashboard = () => {
     }, [match.match_id])
 
     return (
+      <Card className="mb-3">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div>
+                <div className="font-semibold">
+                  {match.player1_name} vs {match.player2_name}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {new Date(match.date).toLocaleDateString('pt-BR')} às {match.start_time}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-6">
+              <div className="text-center">
+                <div className="text-sm text-gray-500">Total Apostas</div>
+                <div className="font-semibold flex items-center">
+                  <Wallet className="h-4 w-4 mr-1" />
+                  R$ {Object.values(stats).reduce((sum, stat) => sum + (stat.total_amount || 0), 0).toFixed(2)}
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <div className="text-sm text-gray-500">Apostadores</div>
+                <div className="font-semibold flex items-center">
+                  <Users className="h-4 w-4 mr-1" />
+                  {Object.values(stats).reduce((sum, stat) => sum + stat.bet_count, 0)}
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <div className="text-sm text-gray-500">Status</div>
+                <div className="font-semibold text-gray-600">Finalizada</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const MatchCard = ({ match }) => {
+    const [odds, setOdds] = useState({})
+    const [stats, setStats] = useState({})
+    const shareRef = useRef(null)
+    const [isSharing, setIsSharing] = useState(false)
+    const [showShareDialog, setShowShareDialog] = useState(false)
+
+    useEffect(() => {
+      if (match.match_id) {
+        fetchMatchOdds(match.match_id).then(data => {
+          if (data) {
+            setOdds(data.odds || {})
+            setStats(data.betting_stats || {})
+          }
+        })
+      }
+    }, [match.match_id])
+
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+    const handleShare = async () => {
+      setIsSharing(true)
+      
+      try {
+        const canvas = await html2canvas(shareRef.current, {
+          backgroundColor: '#ffffff',
+          scale: 2
+        })
+        
+        canvas.toBlob(async (blob) => {
+          if (navigator.share) {
+            try {
+              const file = new File([blob], 'match.png', { type: 'image/png' })
+              await navigator.share({
+                files: [file],
+                title: `${match.player1_name} vs ${match.player2_name}`,
+                text: 'Confira esta partida no LAPEN Betting!'
+              })
+            } catch (shareError) {
+              // Fallback: download image
+              const url = canvas.toDataURL()
+              const a = document.createElement('a')
+              a.href = url
+              a.download = `${match.player1_name}_vs_${match.player2_name}.png`
+              a.click()
+            }
+          } else {
+            // Fallback: download image
+            const url = canvas.toDataURL()
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `${match.player1_name}_vs_${match.player2_name}.png`
+            a.click()
+          }
+        })
+      } catch (error) {
+        console.error('Error sharing:', error)
+        toast({
+          title: "Erro",
+          description: "Erro ao compartilhar imagem",
+          variant: "destructive"
+        })
+      } finally {
+        setIsSharing(false)
+      }
+    }
+
+    return (
       <Card className="mb-4">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -156,8 +269,8 @@ const BettingDashboard = () => {
                 {new Date(match.date).toLocaleDateString('pt-BR')} às {match.start_time}
               </span>
               <span className="flex items-center">
-                <DollarSign className="h-4 w-4 mr-1" />
-                Pool: R$ {match.total_pool.toFixed(2)}
+                <Wallet className="h-4 w-4 mr-1" />
+                Apostas: R$ {(Object.values(stats).reduce((sum, stat) => sum + (stat.total_amount || 0), 0)).toFixed(2)}
               </span>
             </div>
           </CardDescription>
@@ -185,13 +298,66 @@ const BettingDashboard = () => {
           </div>
           
           {match.betting_enabled && match.status === 'upcoming' && (
-            <Button 
-              onClick={() => setSelectedMatch(match)}
-              className="w-full"
-              variant="outline"
-            >
-              Apostar nesta partida
-            </Button>
+            <div className="space-y-2">
+              <Button 
+                onClick={() => setSelectedMatch(match)}
+                className="w-full"
+                variant="outline"
+              >
+                Apostar nesta partida
+              </Button>
+              
+              {isMobile ? (
+                <Button 
+                  onClick={handleShare}
+                  disabled={isSharing}
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  {isSharing ? 'Compartilhando...' : 'Compartilhar'}
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    onClick={() => setShowShareDialog(true)}
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full"
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Compartilhar
+                  </Button>
+                  <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+                    <DialogContent className="max-w-md">
+                      <ShareableMatchCard 
+                        ref={shareRef}
+                        match={match} 
+                        odds={odds} 
+                        stats={stats} 
+                      />
+                      <Button 
+                        onClick={handleShare}
+                        disabled={isSharing}
+                        className="w-full mt-4"
+                      >
+                        <Share2 className="h-4 w-4 mr-2" />
+                        {isSharing ? 'Compartilhando...' : 'Compartilhar Imagem'}
+                      </Button>
+                    </DialogContent>
+                  </Dialog>
+                </>
+              )}
+              <div className="hidden">
+                <ShareableMatchCard 
+                  ref={shareRef}
+                  match={match} 
+                  odds={odds} 
+                  stats={stats} 
+                />
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -201,24 +367,51 @@ const BettingDashboard = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Tigrinho LAPEN 🐯</h1>
-        <p className="text-gray-600">Aposte nas partidas de tênis da LAPEN</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Tigrinho LAPEN 🐯</h1>
+            <p className="text-gray-600">Aposte nas partidas de tênis da LAPEN</p>
+          </div>
+          {isAuthenticated && (
+            <Button onClick={() => window.location.href = '/my-bets'} variant="outline">
+              Minhas Apostas
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Matches List */}
         <div className="lg:col-span-2">
+          {/* Available Matches */}
           <h2 className="text-xl font-semibold mb-4">Partidas Disponíveis</h2>
-          {matches.length === 0 ? (
-            <Card>
+          {matches.filter(m => m.status !== 'finished').length === 0 ? (
+            <Card className="mb-8">
               <CardContent className="text-center py-8">
                 <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                 <p className="text-gray-500">Nenhuma partida disponível para apostas</p>
               </CardContent>
             </Card>
           ) : (
-            matches.map(match => (
-              <MatchCard key={match.schedule_id} match={match} />
+            <div className="mb-8">
+              {matches.filter(m => m.status !== 'finished').map(match => (
+                <MatchCard key={match.schedule_id} match={match} />
+              ))}
+            </div>
+          )}
+          
+          {/* Finished Matches */}
+          <h2 className="text-xl font-semibold mb-4">Partidas Encerradas</h2>
+          {matches.filter(m => m.status === 'finished').length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-500">Nenhuma partida encerrada</p>
+              </CardContent>
+            </Card>
+          ) : (
+            matches.filter(m => m.status === 'finished').map(match => (
+              <FinishedMatchCard key={match.schedule_id} match={match} />
             ))
           )}
         </div>

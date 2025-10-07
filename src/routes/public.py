@@ -374,8 +374,8 @@ def generate_whatsapp_message():
                 message_parts.append(
                     f"  🕐 {normalize_time(schedule['start_time'])} - {schedule['player1_name']} vs {schedule['player2_name']} {match_emoji}\n")
 
-    message_parts.extend(["\n\n---\n", f"\n\nPara criar ou alterar seu agendamento, acesse:\n🔗 {request.host_url}",
-                          "\n\n\n🎾 *LAPEN - Liga Penedense de Tênis*"])
+    message_parts.extend(["\n\n---\n", f"Para criar ou alterar seu agendamento, acesse:\n🔗 {request.host_url}",
+                          "\n\n🎾 *LAPEN - Liga Penedense de Tênis*"])
     message = ''.join(message_parts)
 
     return jsonify({'message': message})

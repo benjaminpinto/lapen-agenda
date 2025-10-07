@@ -136,6 +136,19 @@ def place_bet():
         # Update match total pool
         update_match_pool(match_id, float(amount))
         
+        # Recalculate potential returns for all bets on this match
+        cursor = db.execute('''
+            SELECT id, amount, player_name FROM bets 
+            WHERE match_id = ? AND status = 'active'
+        ''', (match_id,))
+        
+        all_bets = cursor.fetchall()
+        for bet in all_bets:
+            new_potential_return = calculate_potential_return(match_id, bet['player_name'], bet['amount'])
+            db.execute('''
+                UPDATE bets SET potential_return = ? WHERE id = ?
+            ''', (new_potential_return, bet['id']))
+        
         db.commit()
         
         # Get user info for email

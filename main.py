@@ -15,13 +15,15 @@ from src.routes.public import public_bp
 from src.routes.auth import auth_bp
 from src.routes.matches import matches_bp
 from src.routes.betting import betting_bp
+from src.routes.admin_matches import admin_matches_bp
 from src.database import init_db
 from src.email_service import init_mail
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'src', 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 # Enable CORS for all routes with credentials support
 CORS(app, supports_credentials=True, origins=['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5001', 'http://127.0.0.1:5001'])
@@ -39,6 +41,7 @@ app.register_blueprint(public_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(matches_bp)
 app.register_blueprint(betting_bp)
+app.register_blueprint(admin_matches_bp)
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')

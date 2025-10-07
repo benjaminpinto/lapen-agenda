@@ -11,6 +11,8 @@ import AdminCourts from './components/admin/AdminCourts'
 import AdminPlayers from './components/admin/AdminPlayers'
 import AdminHolidays from './components/admin/AdminHolidays'
 import AdminRecurring from './components/admin/AdminRecurring'
+import AdminMatches from './components/admin/AdminMatches'
+import MatchReport from './components/admin/MatchReport'
 import ScheduleForm from './components/ScheduleForm'
 import ScheduleView from './components/ScheduleView'
 import SignUp from './components/auth/SignUp'
@@ -94,6 +96,22 @@ function App() {
                 element={
                   isAdminAuthenticated ? 
                   <AdminRecurring /> : 
+                  <Navigate to="/admin" />
+                } 
+              />
+              <Route 
+                path="/admin/matches" 
+                element={
+                  isAdminAuthenticated ? 
+                  <AdminMatches /> : 
+                  <Navigate to="/admin" />
+                } 
+              />
+              <Route 
+                path="/admin/matches/:matchId/report" 
+                element={
+                  isAdminAuthenticated ? 
+                  <MatchReport /> : 
                   <Navigate to="/admin" />
                 } 
               />

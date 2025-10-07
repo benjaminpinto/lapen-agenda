@@ -229,11 +229,11 @@ def get_match_bets(match_id):
         if not match_info:
             return jsonify({'error': 'Partida não encontrada'}), 404
         
-        # Get betting statistics
+        # Get betting statistics (include all bet statuses for finished matches)
         cursor = db.execute('''
             SELECT player_name, COUNT(*) as bet_count, SUM(amount) as total_amount
             FROM bets
-            WHERE match_id = ? AND status = 'active'
+            WHERE match_id = ?
             GROUP BY player_name
         ''', (match_id,))
         

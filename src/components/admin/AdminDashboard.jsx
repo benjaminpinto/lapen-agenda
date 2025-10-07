@@ -28,6 +28,8 @@ const AdminDashboard = () => {
       if (response.ok) {
         const data = await response.json()
         setStats(data)
+      } else {
+        console.error('Dashboard API error:', response.status, await response.text())
       }
     } catch (error) {
       console.error('Error fetching dashboard stats:', error)
@@ -52,7 +54,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <Link to="/admin/courts">
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardHeader className="text-center pb-2">
@@ -94,6 +96,18 @@ const AdminDashboard = () => {
             <CardHeader className="text-center pb-2">
               <Clock className="h-8 w-8 text-purple-600 mx-auto" />
               <CardTitle className="text-lg">Agenda Fixa</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button variant="ghost" size="sm">Gerenciar</Button>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/admin/matches">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="text-center pb-2">
+              <Trophy className="h-8 w-8 text-yellow-600 mx-auto" />
+              <CardTitle className="text-lg">Apostas</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
               <Button variant="ghost" size="sm">Gerenciar</Button>

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/contexts/ToastContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { History, Trophy, DollarSign, Calendar } from 'lucide-react'
+import { History, Trophy, DollarSign, Calendar, ArrowLeft, Wallet, TrendingUp } from 'lucide-react'
 
 const MyBets = () => {
   const [bets, setBets] = useState([])
@@ -46,13 +47,15 @@ const MyBets = () => {
   const getStatusBadge = (status) => {
     const statusMap = {
       'active': { label: 'Ativa', variant: 'default' },
-      'won': { label: 'Ganhou', variant: 'success' },
+      'won': { label: 'Ganhou', className: 'bg-green-100 text-green-800 hover:bg-green-100' },
       'lost': { label: 'Perdeu', variant: 'destructive' },
       'refunded': { label: 'Reembolsada', variant: 'secondary' }
     }
     
     const config = statusMap[status] || { label: status, variant: 'default' }
-    return <Badge variant={config.variant}>{config.label}</Badge>
+    return config.className ? 
+      <Badge className={config.className}>{config.label}</Badge> :
+      <Badge variant={config.variant}>{config.label}</Badge>
   }
 
   const getMatchStatusBadge = (status) => {
@@ -95,6 +98,12 @@ const MyBets = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
+        <Link to="/betting">
+          <Button variant="outline" size="sm" className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar para Apostas
+          </Button>
+        </Link>
         <h1 className="text-3xl font-bold mb-2">Minhas Apostas</h1>
         <p className="text-gray-600">Histórico das suas apostas</p>
       </div>
@@ -146,14 +155,14 @@ const MyBets = () => {
                   <div>
                     <div className="text-sm text-gray-500">Valor Apostado</div>
                     <div className="font-semibold flex items-center">
-                      <DollarSign className="h-4 w-4 mr-1" />
+                      <Wallet className="h-4 w-4 mr-1" />
                       R$ {bet.amount.toFixed(2)}
                     </div>
                   </div>
                   <div>
                     <div className="text-sm text-gray-500">Retorno Potencial</div>
                     <div className="font-semibold flex items-center">
-                      <DollarSign className="h-4 w-4 mr-1" />
+                      <TrendingUp className="h-4 w-4 mr-1" />
                       R$ {bet.potential_return.toFixed(2)}
                     </div>
                   </div>

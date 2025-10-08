@@ -2,7 +2,10 @@ from flask import Blueprint, request, jsonify
 from src.database import get_db
 from src.database_utils import get_current_date_sql, get_current_time_sql
 from src.auth import require_auth
+from src.logger import get_logger
 from datetime import datetime
+
+logger = get_logger()
 
 matches_bp = Blueprint('matches', __name__, url_prefix='/api/matches')
 

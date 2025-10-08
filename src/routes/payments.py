@@ -119,8 +119,10 @@ def get_payment_history(user_id):
                 'match_time': row['start_time']
             })
         
+        logger.info(f'Fetched payment history for user {user_id}: {len(payments)} payments')
         return jsonify({'payments': payments})
     except Exception as e:
-        return jsonify({'error': 'Error fetching payment history'}), 500
+        logger.error(f'Error fetching payment history for user {user_id}: {str(e)}')
+        return jsonify({'error': f'Error fetching payment history: {str(e)}'}), 500
     finally:
         db.close()

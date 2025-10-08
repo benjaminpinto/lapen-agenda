@@ -46,10 +46,12 @@ def get_available_matches():
             }
             matches.append(match_data)
         
+        logger.info(f'Fetched {len(matches)} matches successfully')
         return jsonify({'matches': matches})
         
     except Exception as e:
-        return jsonify({'error': 'Erro ao buscar partidas'}), 500
+        logger.error(f'Error fetching matches: {str(e)}')
+        return jsonify({'error': f'Erro ao buscar partidas: {str(e)}'}), 500
     finally:
         db.close()
 
@@ -93,13 +95,15 @@ def create_match():
         db.commit()
         match_id = cursor.lastrowid
         
+        logger.info(f'Match created: schedule_id={schedule_id}, match_id={match_id}')
         return jsonify({
             'message': 'Partida criada com sucesso',
             'match_id': match_id
         }), 201
         
     except Exception as e:
-        return jsonify({'error': 'Erro ao criar partida'}), 500
+        logger.error(f'Error creating match for schedule {schedule_id}: {str(e)}')
+        return jsonify({'error': f'Erro ao criar partida: {str(e)}'}), 500
     finally:
         db.close()
 
@@ -119,13 +123,15 @@ def toggle_betting(match_id):
         db.execute('UPDATE matches SET betting_enabled = ? WHERE id = ?', (new_status, match_id))
         db.commit()
         
+        logger.info(f'Betting toggled for match {match_id}: {new_status}')
         return jsonify({
             'message': f'Apostas {"habilitadas" if new_status else "desabilitadas"}',
             'betting_enabled': new_status
         })
         
     except Exception as e:
-        return jsonify({'error': 'Erro ao alterar status das apostas'}), 500
+        logger.error(f'Error toggling betting for match {match_id}: {str(e)}')
+        return jsonify({'error': f'Erro ao alterar status das apostas: {str(e)}'}), 500
     finally:
         db.close()
 
@@ -149,12 +155,14 @@ def update_match_status(match_id):
         db.execute('UPDATE matches SET status = ? WHERE id = ?', (status, match_id))
         db.commit()
         
+        logger.info(f'Match status updated: match_id={match_id}, status={status}')
         return jsonify({
             'message': 'Status da partida atualizado',
             'status': status
         })
         
     except Exception as e:
-        return jsonify({'error': 'Erro ao atualizar status'}), 500
+        logger.error(f'Error updating match status {match_id}: {str(e)}')
+        return jsonify({'error': f'Erro ao atualizar status: {str(e)}'}), 500
     finally:
         db.close()

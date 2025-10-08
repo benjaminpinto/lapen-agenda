@@ -179,7 +179,7 @@ def place_bet():
         
     except Exception as e:
         logger.error(f'Error placing bet: user_id={request.user_id}, error={str(e)}')
-        return jsonify({'error': 'Erro ao processar aposta'}), 500
+        return jsonify({'error': f'Erro ao processar aposta: {str(e)}'}), 500
     finally:
         db.close()
 
@@ -222,10 +222,12 @@ def get_user_bets():
             }
             bets.append(bet)
         
+        logger.info(f'Fetched {len(bets)} bets for user {request.user_id}')
         return jsonify({'bets': bets})
         
     except Exception as e:
-        return jsonify({'error': 'Erro ao buscar apostas'}), 500
+        logger.error(f'Error fetching bets for user {request.user_id}: {str(e)}')
+        return jsonify({'error': f'Erro ao buscar apostas: {str(e)}'}), 500
     finally:
         db.close()
 
@@ -281,7 +283,8 @@ def get_match_bets(match_id):
         })
         
     except Exception as e:
-        return jsonify({'error': 'Erro ao buscar estatísticas'}), 500
+        logger.error(f'Error fetching match bets for match {match_id}: {str(e)}')
+        return jsonify({'error': f'Erro ao buscar estatísticas: {str(e)}'}), 500
     finally:
         db.close()
 
@@ -314,9 +317,11 @@ def cancel_bet(bet_id):
         
         db.commit()
         
+        logger.info(f'Bet cancelled: bet_id={bet_id}, user_id={request.user_id}')
         return jsonify({'message': 'Aposta cancelada com sucesso'})
         
     except Exception as e:
-        return jsonify({'error': 'Erro ao cancelar aposta'}), 500
+        logger.error(f'Error cancelling bet {bet_id}: {str(e)}')
+        return jsonify({'error': f'Erro ao cancelar aposta: {str(e)}'}), 500
     finally:
         db.close()

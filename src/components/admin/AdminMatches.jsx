@@ -169,7 +169,7 @@ const AdminMatches = () => {
                                 <span>{match.player1_name} vs {match.player2_name}</span>
                             </CardTitle>
                             <CardDescription>
-                                {new Date(match.date).toLocaleDateString('pt-BR')} às {match.start_time}
+                                {new Date(match.date + 'T00:00:00').toLocaleDateString('pt-BR')} às {match.start_time}
                             </CardDescription>
                         </div>
                         {getStatusBadge(match.status)}
@@ -295,7 +295,7 @@ const AdminMatches = () => {
                                     {match.player1_name} vs {match.player2_name}
                                 </div>
                                 <div className="text-sm text-gray-500">
-                                    {new Date(match.date).toLocaleDateString('pt-BR')} às {match.start_time}
+                                    {new Date(match.date + 'T00:00:00').toLocaleDateString('pt-BR')} às {match.start_time}
                                 </div>
                             </div>
                         </div>

@@ -155,7 +155,7 @@ const BettingDashboard = () => {
                   {match.player1_name} vs {match.player2_name}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {new Date(match.date).toLocaleDateString('pt-BR')} às {match.start_time}
+                  {new Date(match.date + 'T00:00:00').toLocaleDateString('pt-BR')} às {match.start_time}
                 </div>
               </div>
             </div>
@@ -268,7 +268,7 @@ const BettingDashboard = () => {
             <div className="flex items-center space-x-4 text-sm">
               <span className="flex items-center">
                 <Clock className="h-4 w-4 mr-1" />
-                {new Date(match.date).toLocaleDateString('pt-BR')} às {match.start_time}
+                {new Date(match.date + 'T00:00:00').toLocaleDateString('pt-BR')} às {match.start_time}
               </span>
               <span className="flex items-center">
                 <Wallet className="h-4 w-4 mr-1" />

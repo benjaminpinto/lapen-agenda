@@ -57,7 +57,9 @@ const MatchReport = () => {
                             {match.player1_name} vs {match.player2_name} - {new Date(match.date).toLocaleDateString('pt-BR')}
                         </p>
                     </div>
-                    <Badge variant={report.match.status === 'cancelled' ? 'destructive' : 'secondary'} className="text-lg px-4 py-2">
+                    <Badge className={`text-lg px-4 py-2 ${
+                        report.match.status === 'cancelled' ? 'bg-red-100 text-red-800 hover:bg-yellow-200' : 'bg-green-100 text-green-800 hover:bg-yellow-200'
+                    }`}>
                         {report.match.status === 'cancelled' ? 'Cancelada' : 'Finalizada'}
                     </Badge>
                 </div>

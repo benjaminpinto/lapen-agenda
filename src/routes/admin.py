@@ -1,8 +1,11 @@
 from flask import Blueprint, request, jsonify, session
 from src.database import get_db
 from src.database_utils import get_month_comparison_sql
+from src.logger import get_logger
 import base64
 import os
+
+logger = get_logger()
 
 def normalize_time(time_value):
     """Convert time to string format for comparison"""
@@ -23,8 +26,10 @@ def login():
     
     if password == ADMIN_PASSWORD:
         session['admin_authenticated'] = True
+        logger.info('Admin login successful')
         return jsonify({'success': True, 'message': 'Login successful'})
     else:
+        logger.warning('Admin login failed - invalid password')
         return jsonify({'success': False, 'message': 'Invalid password'}), 401
 
 @admin_bp.route('/logout', methods=['POST'])
@@ -89,8 +94,10 @@ def create_court():
             (name, court_type, description, active, image_url)
         )
         db.commit()
+        logger.info(f'Court created: {name}')
         return jsonify({'success': True, 'message': 'Court created successfully'})
     except Exception as e:
+        logger.error(f'Error creating court {name}: {str(e)}')
         return jsonify({'success': False, 'message': str(e)}), 400
 
 @admin_bp.route('/courts/<int:court_id>', methods=['PUT'])

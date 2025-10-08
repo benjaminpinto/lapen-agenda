@@ -149,14 +149,14 @@ const AdminMatches = () => {
 
         const getStatusBadge = (status) => {
             const statusMap = {
-                upcoming: {label: 'Agendada', variant: 'secondary'},
-                live: {label: 'Ao Vivo', variant: 'default'},
-                finished: {label: 'Finalizada', variant: 'outline'},
-                cancelled: {label: 'Cancelada', variant: 'destructive'}
+                upcoming: {label: 'Agendada', className: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'},
+                live: {label: 'Ao Vivo', className: 'bg-orange-100 text-orange-800 hover:bg-orange-120'},
+                finished: {label: 'Finalizada', className: 'bg-green-100 text-green-800 hover:bg-green-120'},
+                cancelled: {label: 'Cancelada', className: 'bg-red-100 text-red-800 hover:bg-red-120'}
             }
 
             const config = statusMap[status] || statusMap.upcoming
-            return <Badge variant={config.variant}>{config.label}</Badge>
+            return <Badge className={config.className}>{config.label}</Badge>
         }
 
         return (
@@ -327,7 +327,7 @@ const AdminMatches = () => {
                                 </div>
                             </div>
                             
-                            <Badge variant={match.status === 'cancelled' ? 'destructive' : 'secondary'}>
+                            <Badge className={match.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}>
                                 {match.status === 'cancelled' ? 'Cancelada' : 'Finalizada'}
                             </Badge>
                         </div>

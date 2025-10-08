@@ -402,7 +402,7 @@ const BettingDashboard = () => {
           
           {/* Finished Matches */}
           <h2 className="text-xl font-semibold mb-4">Partidas Encerradas</h2>
-          {matches.filter(m => m.status === 'finished').length === 0 ? (
+          {matches.filter(m => m.status === 'finished' || m.status === 'cancelled').length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
                 <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4" />
@@ -410,7 +410,7 @@ const BettingDashboard = () => {
               </CardContent>
             </Card>
           ) : (
-            matches.filter(m => m.status === 'finished').map(match => (
+            matches.filter(m => m.status === 'finished' || m.status === 'cancelled').map(match => (
               <FinishedMatchCard key={match.schedule_id} match={match} />
             ))
           )}

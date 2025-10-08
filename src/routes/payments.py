@@ -1,0 +1,118 @@
+from flask import Blueprint, request, jsonify
+import stripe
+import os
+from src.database import get_db
+
+payments_bp = Blueprint('payments', __name__, url_prefix='/api/payments')
+
+@payments_bp.route('/webhook', methods=['POST'])
+def stripe_webhook():
+    """Handle Stripe webhook events"""
+    payload = request.get_data()
+    sig_header = request.headers.get('Stripe-Signature')
+    endpoint_secret = os.environ.get('STRIPE_WEBHOOK_SECRET')
+    
+    if not endpoint_secret:
+        return jsonify({'error': 'Webhook secret not configured'}), 400
+    
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
+    except ValueError:
+        return jsonify({'error': 'Invalid payload'}), 400
+    except stripe.error.SignatureVerificationError:
+        return jsonify({'error': 'Invalid signature'}), 400
+    
+    # Handle payment success
+    if event['type'] == 'payment_intent.succeeded':
+        payment_intent = event['data']['object']
+        handle_payment_success(payment_intent)
+    
+    # Handle payment failure
+    elif event['type'] == 'payment_intent.payment_failed':
+        payment_intent = event['data']['object']
+        handle_payment_failure(payment_intent)
+    
+    return jsonify({'status': 'success'})
+
+def handle_payment_success(payment_intent):
+    """Handle successful payment"""
+    payment_id = payment_intent['id']
+    
+    db = get_db()
+    try:
+        # Update bet status if exists
+        db.execute('''
+            UPDATE bets SET status = 'confirmed' 
+            WHERE payment_id = ? AND status = 'pending'
+        ''', (payment_id,))
+        
+        # Log payment success
+        db.execute('''
+            INSERT INTO payment_logs (payment_id, event_type, status, amount, metadata)
+            VALUES (?, 'payment_success', 'succeeded', ?, ?)
+        ''', (payment_id, payment_intent.get('amount', 0) / 100, str(payment_intent.get('metadata', {}))))
+        
+        db.commit()
+    except Exception as e:
+        print(f"Error handling payment success: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+def handle_payment_failure(payment_intent):
+    """Handle failed payment"""
+    payment_id = payment_intent['id']
+    
+    db = get_db()
+    try:
+        # Update bet status
+        db.execute('''
+            UPDATE bets SET status = 'failed' 
+            WHERE payment_id = ? AND status = 'pending'
+        ''', (payment_id,))
+        
+        # Log payment failure
+        db.execute('''
+            INSERT INTO payment_logs (payment_id, event_type, status, amount, error_message)
+            VALUES (?, 'payment_failed', 'failed', ?, ?)
+        ''', (payment_id, payment_intent.get('amount', 0) / 100, payment_intent.get('last_payment_error', {}).get('message', 'Unknown error')))
+        
+        db.commit()
+    except Exception as e:
+        print(f"Error handling payment failure: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+@payments_bp.route('/history/<int:user_id>', methods=['GET'])
+def get_payment_history(user_id):
+    """Get payment history for a user"""
+    db = get_db()
+    try:
+        cursor = db.execute('''
+            SELECT b.payment_id, b.amount, b.status, b.created_at,
+                   s.player1_name, s.player2_name, s.date, s.start_time
+            FROM bets b
+            JOIN matches m ON b.match_id = m.id
+            JOIN schedules s ON m.schedule_id = s.id
+            WHERE b.user_id = ?
+            ORDER BY b.created_at DESC
+        ''', (user_id,))
+        
+        payments = []
+        for row in cursor.fetchall():
+            payments.append({
+                'payment_id': row['payment_id'],
+                'amount': float(row['amount']),
+                'status': row['status'],
+                'created_at': row['created_at'],
+                'match': f"{row['player1_name']} vs {row['player2_name']}",
+                'match_date': row['date'],
+                'match_time': row['start_time']
+            })
+        
+        return jsonify({'payments': payments})
+    except Exception as e:
+        return jsonify({'error': 'Error fetching payment history'}), 500
+    finally:
+        db.close()

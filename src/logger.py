@@ -11,24 +11,26 @@ def setup_logger():
     
     logger.setLevel(logging.INFO)
     
-    # Create logs directory
-    os.makedirs('logs', exist_ok=True)
-    
-    # File handler
-    file_handler = logging.FileHandler(f'logs/app_{datetime.now().strftime("%Y%m%d")}.log')
-    file_handler.setLevel(logging.INFO)
-    
-    # Console handler
+    # Console handler (always available)
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
     
     # Formatter
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
     
-    logger.addHandler(file_handler)
     logger.addHandler(console_handler)
+    
+    # File handler (only if writable filesystem)
+    try:
+        os.makedirs('logs', exist_ok=True)
+        file_handler = logging.FileHandler(f'logs/app_{datetime.now().strftime("%Y%m%d")}.log')
+        file_handler.setLevel(logging.INFO)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+    except OSError:
+        # Read-only filesystem (like Vercel), skip file logging
+        pass
     
     return logger
 

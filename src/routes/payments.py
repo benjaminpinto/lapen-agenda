@@ -2,6 +2,9 @@ from flask import Blueprint, request, jsonify
 import stripe
 import os
 from src.database import get_db
+from src.logger import get_logger
+
+logger = get_logger()
 
 payments_bp = Blueprint('payments', __name__, url_prefix='/api/payments')
 
@@ -36,8 +39,6 @@ def stripe_webhook():
 
 def handle_payment_success(payment_intent):
     """Handle successful payment"""
-    from src.logger import get_logger
-    logger = get_logger()
     
     payment_id = payment_intent['id']
     
@@ -65,8 +66,6 @@ def handle_payment_success(payment_intent):
 
 def handle_payment_failure(payment_intent):
     """Handle failed payment"""
-    from src.logger import get_logger
-    logger = get_logger()
     
     payment_id = payment_intent['id']
     

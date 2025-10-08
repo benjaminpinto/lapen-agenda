@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from src.database import get_db
 
 def is_match_eligible_for_betting(schedule_id):
-    """Check if a match is eligible for betting (future match only)"""
+    """Check if a match is eligible for betting (at least 1 hour before match)"""
     db = get_db()
     try:
         cursor = db.execute('''
@@ -14,11 +14,12 @@ def is_match_eligible_for_betting(schedule_id):
         if not schedule:
             return False
         
-        # Check if match is in the future
+        # Check if match is at least 1 hour in the future
         match_datetime = f"{schedule['date']} {schedule['start_time']}"
         match_time = datetime.strptime(match_datetime, '%Y-%m-%d %H:%M')
+        cutoff_time = datetime.now() + timedelta(hours=1)
         
-        return match_time > datetime.now()
+        return match_time > cutoff_time
         
     except Exception:
         return False

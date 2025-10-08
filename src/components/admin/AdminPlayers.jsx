@@ -4,8 +4,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Trash2, Users } from 'lucide-react'
+import { Plus, Trash2, Users, ArrowLeft } from 'lucide-react'
 import { useToast } from '@/components/hooks/use-toast'
+import { Link } from 'react-router-dom'
 
 const AdminPlayers = () => {
   const [players, setPlayers] = useState([])
@@ -113,6 +114,12 @@ const AdminPlayers = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
+      <Link to="/admin/dashboard">
+        <Button variant="outline" size="sm" className="mb-4">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar ao Dashboard
+        </Button>
+      </Link>
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">

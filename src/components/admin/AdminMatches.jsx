@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react'
-import {useNavigate} from 'react-router-dom'
+import {useNavigate, Link} from 'react-router-dom'
 import {useToast} from '@/contexts/ToastContext'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
@@ -8,7 +8,7 @@ import {Label} from '@/components/ui/label'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Badge} from '@/components/ui/badge'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger} from '@/components/ui/dialog'
-import {Trophy, Users, Wallet} from 'lucide-react'
+import {Trophy, Users, Wallet, ArrowLeft} from 'lucide-react'
 
 const AdminMatches = () => {
     const [matches, setMatches] = useState([])
@@ -340,6 +340,12 @@ const AdminMatches = () => {
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="mb-8">
+                <Link to="/admin/dashboard">
+                    <Button variant="outline" size="sm" className="mb-4">
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Voltar ao Dashboard
+                    </Button>
+                </Link>
                 <div className="flex justify-between items-center">
                     <div>
                         <h1 className="text-3xl font-bold mb-2">Gerenciar Partidas</h1>

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, time, timezone
 from flask import Blueprint, request, jsonify
 
 from src.database import get_db
+from src.database_utils import get_current_date_sql, get_current_time_sql, get_month_comparison_sql
 
 public_bp = Blueprint('public', __name__, url_prefix='/api/public')
 
@@ -387,36 +388,34 @@ def get_public_dashboard_stats():
     db = get_db()
 
     # Most booked court this month
-    most_booked_court = db.execute('''
+    month_condition = get_month_comparison_sql('s.date')
+    most_booked_court = db.execute(f'''
         SELECT c.name, COUNT(*) as bookings
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
-        WHERE strftime('%Y-%m', s.date) = strftime('%Y-%m', 'now')
+        WHERE {month_condition}
         GROUP BY c.id, c.name
         ORDER BY bookings DESC
         LIMIT 1
     ''').fetchone()
 
     # Total games by type this month
-    game_stats = db.execute('''
+    month_condition = get_month_comparison_sql('date')
+    game_stats = db.execute(f'''
         SELECT match_type, COUNT(*) as count
         FROM schedules
-        WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
+        WHERE {month_condition}
         GROUP BY match_type
     ''').fetchall()
 
     # Top players this month
-    top_players = db.execute('''
-        WITH monthly_schedules AS (
-            SELECT player1_name, player2_name 
-            FROM schedules 
-            WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
-        )
+    month_condition = get_month_comparison_sql('date')
+    top_players = db.execute(f'''
         SELECT player_name, COUNT(*) as games
         FROM (
-            SELECT player1_name as player_name FROM monthly_schedules
+            SELECT player1_name as player_name FROM schedules WHERE {month_condition}
             UNION ALL
-            SELECT player2_name as player_name FROM monthly_schedules
+            SELECT player2_name as player_name FROM schedules WHERE {month_condition}
         )
         GROUP BY player_name
         ORDER BY games DESC

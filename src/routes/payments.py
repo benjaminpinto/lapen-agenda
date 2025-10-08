@@ -36,6 +36,9 @@ def stripe_webhook():
 
 def handle_payment_success(payment_intent):
     """Handle successful payment"""
+    from src.logger import get_logger
+    logger = get_logger()
+    
     payment_id = payment_intent['id']
     
     db = get_db()
@@ -53,14 +56,18 @@ def handle_payment_success(payment_intent):
         ''', (payment_id, payment_intent.get('amount', 0) / 100, str(payment_intent.get('metadata', {}))))
         
         db.commit()
+        logger.info(f'Payment success handled: {payment_id}')
     except Exception as e:
-        print(f"Error handling payment success: {e}")
+        logger.error(f'Error handling payment success {payment_id}: {e}')
         db.rollback()
     finally:
         db.close()
 
 def handle_payment_failure(payment_intent):
     """Handle failed payment"""
+    from src.logger import get_logger
+    logger = get_logger()
+    
     payment_id = payment_intent['id']
     
     db = get_db()
@@ -78,8 +85,9 @@ def handle_payment_failure(payment_intent):
         ''', (payment_id, payment_intent.get('amount', 0) / 100, payment_intent.get('last_payment_error', {}).get('message', 'Unknown error')))
         
         db.commit()
+        logger.warning(f'Payment failure handled: {payment_id}')
     except Exception as e:
-        print(f"Error handling payment failure: {e}")
+        logger.error(f'Error handling payment failure {payment_id}: {e}')
         db.rollback()
     finally:
         db.close()

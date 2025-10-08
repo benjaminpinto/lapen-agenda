@@ -152,7 +152,7 @@ const AdminReports = () => {
                                     <div className="text-sm text-gray-600">
                                         R$ {stats.total_amount.toFixed(2)}
                                     </div>
-                                    {stats.total_returns > 0 && (
+                                    {status === 'won' && stats.total_returns > 0 && (
                                         <div className="text-xs text-green-600">
                                             Retorno: R$ {stats.total_returns.toFixed(2)}
                                         </div>

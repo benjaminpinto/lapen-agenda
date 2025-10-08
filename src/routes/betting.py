@@ -5,7 +5,10 @@ from src.utils.match_utils import is_match_eligible_for_betting, get_or_create_m
 from src.utils.odds_calculator import calculate_odds, calculate_potential_return
 from src.utils.payment_processor import create_payment_intent, confirm_payment
 from src.email_service import send_bet_confirmation_email
+from src.logger import get_logger
 from decimal import Decimal
+
+logger = get_logger()
 
 betting_bp = Blueprint('betting', __name__, url_prefix='/api/betting')
 
@@ -165,6 +168,7 @@ def place_bet():
             }
             send_bet_confirmation_email(user['email'], user['name'], bet_details)
         
+        logger.info(f'Bet placed: user_id={request.user_id}, match_id={match_id}, amount={amount}, player={player_name}')
         return jsonify({
             'message': 'Aposta realizada com sucesso',
             'bet_id': bet_id,
@@ -174,6 +178,7 @@ def place_bet():
         }), 201
         
     except Exception as e:
+        logger.error(f'Error placing bet: user_id={request.user_id}, error={str(e)}')
         return jsonify({'error': 'Erro ao processar aposta'}), 500
     finally:
         db.close()

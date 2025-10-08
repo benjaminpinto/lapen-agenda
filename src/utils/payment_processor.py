@@ -80,6 +80,9 @@ def log_payment_event(payment_id, event_type, status, amount, error_message=None
     """Log payment events to database"""
     try:
         from src.database import get_db
+        from src.logger import get_logger
+        
+        logger = get_logger()
         db = get_db()
         
         db.execute('''
@@ -89,5 +92,8 @@ def log_payment_event(payment_id, event_type, status, amount, error_message=None
         
         db.commit()
         db.close()
+        logger.info(f'Payment event logged: {payment_id} - {event_type} - {status}')
     except Exception as e:
-        print(f"Error logging payment event: {e}")
+        from src.logger import get_logger
+        logger = get_logger()
+        logger.error(f'Error logging payment event {payment_id}: {e}')

@@ -29,6 +29,8 @@ def get_available_matches():
         matches = []
         
         for schedule in schedules:
+            status = schedule['status'] or 'upcoming'
+            
             match_data = {
                 'schedule_id': schedule['id'],
                 'match_id': schedule['match_id'],
@@ -38,7 +40,7 @@ def get_available_matches():
                 'player1_name': schedule['player1_name'],
                 'player2_name': schedule['player2_name'],
                 'match_type': schedule['match_type'],
-                'status': schedule['status'] or 'upcoming',
+                'status': status,
                 'betting_enabled': schedule['betting_enabled'] if schedule['betting_enabled'] is not None else True,
                 'total_pool': float(schedule['total_pool'] or 0)
             }

@@ -179,7 +179,9 @@ const BettingDashboard = () => {
               
               <div className="text-center">
                 <div className="text-sm text-gray-500">Status</div>
-                <div className="font-semibold text-gray-600">Finalizada</div>
+                <div className="font-semibold text-gray-600">
+                  {match.status === 'cancelled' ? 'Cancelada' : 'Finalizada'}
+                </div>
               </div>
             </div>
           </div>
@@ -385,7 +387,7 @@ const BettingDashboard = () => {
         <div className="lg:col-span-2">
           {/* Available Matches */}
           <h2 className="text-xl font-semibold mb-4">Partidas Disponíveis</h2>
-          {matches.filter(m => m.status !== 'finished').length === 0 ? (
+          {matches.filter(m => m.status === 'upcoming').length === 0 ? (
             <Card className="mb-8">
               <CardContent className="text-center py-8">
                 <Users className="h-12 w-12 mx-auto text-gray-400 mb-4" />
@@ -394,7 +396,7 @@ const BettingDashboard = () => {
             </Card>
           ) : (
             <div className="mb-8">
-              {matches.filter(m => m.status !== 'finished').map(match => (
+              {matches.filter(m => m.status === 'upcoming').map(match => (
                 <MatchCard key={match.schedule_id} match={match} />
               ))}
             </div>

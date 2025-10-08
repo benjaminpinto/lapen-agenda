@@ -2,7 +2,10 @@ from flask import Blueprint, request, jsonify
 from src.database import get_db
 from src.auth import hash_password, verify_password, generate_token, generate_verification_token, require_auth, get_user_by_email, get_user_by_id
 from src.email_service import send_verification_email
+from src.logger import get_logger
 import re
+
+logger = get_logger()
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
@@ -49,12 +52,14 @@ def register():
         user_id = cursor.lastrowid
         token = generate_token(user_id)
         
+        logger.info(f'User registered: email={email}, user_id={user_id}')
+        
         # Send verification email
         try:
             email_sent = send_verification_email(email, name, verification_token)
-            print(f"Email sent result: {email_sent}")
+            logger.info(f'Verification email sent to {email}: {email_sent}')
         except Exception as e:
-            print(f"Email sending failed: {e}")
+            logger.error(f'Email sending failed for {email}: {e}')
         
         return jsonify({
             'message': 'Usuário cadastrado com sucesso',
@@ -85,8 +90,10 @@ def login():
     
     user = get_user_by_email(email)
     if not user or not verify_password(password, user['password_hash']):
+        logger.warning(f'Login failed for email: {email}')
         return jsonify({'error': 'Email ou senha inválidos'}), 401
     
+    logger.info(f'User logged in: email={email}, user_id={user["id"]}')
     token = generate_token(user['id'])
     
     return jsonify({

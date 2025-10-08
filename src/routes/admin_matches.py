@@ -1,7 +1,10 @@
 from flask import Blueprint, request, jsonify
 from src.database import get_db
 from src.email_service import send_winner_notification_email, send_bet_settlement_email
+from src.logger import get_logger
 from decimal import Decimal
+
+logger = get_logger()
 
 admin_matches_bp = Blueprint('admin_matches', __name__, url_prefix='/api/admin/matches')
 
@@ -113,6 +116,7 @@ def finish_match(match_id):
         
         db.commit()
         
+        logger.info(f'Match finished: match_id={match_id}, winner={winner_name}, total_pool={total_pool}, winning_bets={len(winning_bets)}')
         return jsonify({
             'message': 'Partida finalizada e apostas liquidadas',
             'total_pool': float(total_pool),
@@ -204,6 +208,7 @@ def cancel_match(match_id):
         
         db.commit()
         
+        logger.info(f'Match cancelled: match_id={match_id}, refunded={refunded_count}, failed={failed_refunds}, total={len(active_bets)}')
         return jsonify({
             'message': 'Partida cancelada',
             'refunded_bets': refunded_count,

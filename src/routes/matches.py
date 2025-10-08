@@ -34,12 +34,21 @@ def get_available_matches():
         for schedule in schedules:
             status = schedule['status'] or 'upcoming'
             
+            # Convert time objects to strings for JSON serialization
+            start_time = schedule['start_time']
+            if hasattr(start_time, 'strftime'):
+                start_time = start_time.strftime('%H:%M')
+            
+            date = schedule['date']
+            if hasattr(date, 'strftime'):
+                date = date.strftime('%Y-%m-%d')
+            
             match_data = {
                 'schedule_id': schedule['id'],
                 'match_id': schedule['match_id'],
                 'court_name': schedule['court_name'],
-                'date': schedule['date'],
-                'start_time': schedule['start_time'],
+                'date': date,
+                'start_time': start_time,
                 'player1_name': schedule['player1_name'],
                 'player2_name': schedule['player2_name'],
                 'match_type': schedule['match_type'],

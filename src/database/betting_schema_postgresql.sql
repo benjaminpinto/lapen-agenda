@@ -1,7 +1,7 @@
 -- Betting functionality database schema for PostgreSQL (Vercel Production)
 
 -- Users table for authentication
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE users (
 );
 
 -- Matches table to link schedules with betting
-CREATE TABLE matches (
+CREATE TABLE IF NOT EXISTS matches (
     id SERIAL PRIMARY KEY,
     schedule_id INTEGER NOT NULL,
     status VARCHAR(20) DEFAULT 'upcoming' CHECK (status IN ('upcoming', 'live', 'finished', 'cancelled')),
@@ -26,7 +26,7 @@ CREATE TABLE matches (
 );
 
 -- Bets table to store individual bets
-CREATE TABLE bets (
+CREATE TABLE IF NOT EXISTS bets (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     match_id INTEGER NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE bets (
 );
 
 -- Match results table to store outcomes
-CREATE TABLE match_results (
+CREATE TABLE IF NOT EXISTS match_results (
     id SERIAL PRIMARY KEY,
     match_id INTEGER NOT NULL,
     winner_name VARCHAR(255) NOT NULL,
@@ -53,13 +53,13 @@ CREATE TABLE match_results (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_matches_schedule_id ON matches(schedule_id);
-CREATE INDEX idx_matches_status ON matches(status);
-CREATE INDEX idx_bets_user_id ON bets(user_id);
-CREATE INDEX idx_bets_match_id ON bets(match_id);
-CREATE INDEX idx_bets_status ON bets(status);
-CREATE INDEX idx_match_results_match_id ON match_results(match_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_matches_schedule_id ON matches(schedule_id);
+CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status);
+CREATE INDEX IF NOT EXISTS idx_bets_user_id ON bets(user_id);
+CREATE INDEX IF NOT EXISTS idx_bets_match_id ON bets(match_id);
+CREATE INDEX IF NOT EXISTS idx_bets_status ON bets(status);
+CREATE INDEX IF NOT EXISTS idx_match_results_match_id ON match_results(match_id);
 
 -- Update trigger for users table
 CREATE OR REPLACE FUNCTION update_updated_at_column()

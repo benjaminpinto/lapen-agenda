@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from src.database import get_db
+from src.database_utils import get_current_date_sql, get_current_time_sql
 from src.auth import require_auth
 from datetime import datetime
 
@@ -11,14 +12,16 @@ def get_available_matches():
     db = get_db()
     try:
         # Get future schedules that can be bet on
-        cursor = db.execute('''
+        current_date = get_current_date_sql()
+        current_time = get_current_time_sql()
+        cursor = db.execute(f'''
             SELECT s.id, s.court_id, s.date, s.start_time, s.player1_name, s.player2_name, 
                    s.match_type, c.name as court_name,
                    m.id as match_id, m.status, m.betting_enabled, m.total_pool
             FROM schedules s
             LEFT JOIN courts c ON s.court_id = c.id
             LEFT JOIN matches m ON s.id = m.schedule_id
-            WHERE s.date > date('now') OR (s.date = date('now') AND s.start_time > time('now'))
+            WHERE s.date > {current_date} OR (s.date = {current_date} AND s.start_time > {current_time})
             ORDER BY s.date, s.start_time
         ''')
         
@@ -61,9 +64,11 @@ def create_match():
     db = get_db()
     try:
         # Check if schedule exists and is in the future
-        cursor = db.execute('''
+        current_date = get_current_date_sql()
+        current_time = get_current_time_sql()
+        cursor = db.execute(f'''
             SELECT * FROM schedules 
-            WHERE id = ? AND (date > date('now') OR (date = date('now') AND start_time > time('now')))
+            WHERE id = ? AND (date > {current_date} OR (date = {current_date} AND start_time > {current_time}))
         ''', (schedule_id,))
         
         schedule = cursor.fetchone()

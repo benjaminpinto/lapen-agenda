@@ -126,7 +126,8 @@ def finish_match(match_id):
         
     except Exception as e:
         db.rollback()
-        return jsonify({'error': 'Erro ao finalizar partida'}), 500
+        logger.error(f'Error finishing match {match_id}: {str(e)}')
+        return jsonify({'error': f'Erro ao finalizar partida: {str(e)}'}), 500
     finally:
         db.close()
 
@@ -218,7 +219,8 @@ def cancel_match(match_id):
         
     except Exception as e:
         db.rollback()
-        return jsonify({'error': 'Erro ao cancelar partida'}), 500
+        logger.error(f'Error cancelling match {match_id}: {str(e)}')
+        return jsonify({'error': f'Erro ao cancelar partida: {str(e)}'}), 500
     finally:
         db.close()
 
@@ -292,7 +294,8 @@ def get_match_report(match_id):
         })
         
     except Exception as e:
-        return jsonify({'error': 'Erro ao gerar relatório'}), 500
+        logger.error(f'Error generating match report {match_id}: {str(e)}')
+        return jsonify({'error': f'Erro ao gerar relatório: {str(e)}'}), 500
     finally:
         db.close()
 
@@ -313,7 +316,8 @@ def get_match_result(match_id):
         })
         
     except Exception as e:
-        return jsonify({'error': 'Erro ao buscar resultado'}), 500
+        logger.error(f'Error fetching match result {match_id}: {str(e)}')
+        return jsonify({'error': f'Erro ao buscar resultado: {str(e)}'}), 500
     finally:
         db.close()
 
@@ -382,6 +386,7 @@ def get_betting_reports():
         })
         
     except Exception as e:
-        return jsonify({'error': 'Erro ao gerar relatórios'}), 500
+        logger.error(f'Error generating betting reports: {str(e)}')
+        return jsonify({'error': f'Erro ao gerar relatórios: {str(e)}'}), 500
     finally:
         db.close()

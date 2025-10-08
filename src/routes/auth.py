@@ -74,7 +74,8 @@ def register():
         }), 201
         
     except Exception as e:
-        return jsonify({'error': 'Falha no cadastro'}), 500
+        logger.error(f'Error registering user {email}: {str(e)}')
+        return jsonify({'error': f'Falha no cadastro: {str(e)}'}), 500
     finally:
         db.close()
 
@@ -96,6 +97,7 @@ def login():
     logger.info(f'User logged in: email={email}, user_id={user["id"]}')
     token = generate_token(user['id'])
     
+    logger.info(f'User login successful: {email}')
     return jsonify({
         'message': 'Login realizado com sucesso',
         'token': token,
@@ -137,10 +139,12 @@ def verify_email():
                   (True, user['id']))
         db.commit()
         
+        logger.info(f'Email verified for user {user["id"]}')
         return jsonify({'message': 'Email verificado com sucesso'})
         
     except Exception as e:
-        return jsonify({'error': 'Falha na verificação'}), 500
+        logger.error(f'Error verifying email with token {token}: {str(e)}')
+        return jsonify({'error': f'Falha na verificação: {str(e)}'}), 500
     finally:
         db.close()
 
@@ -168,9 +172,11 @@ def change_password():
                   (new_password_hash, request.user_id))
         db.commit()
         
+        logger.info(f'Password changed for user {request.user_id}')
         return jsonify({'message': 'Senha alterada com sucesso'})
         
     except Exception as e:
-        return jsonify({'error': 'Falha ao alterar senha'}), 500
+        logger.error(f'Error changing password for user {request.user_id}: {str(e)}')
+        return jsonify({'error': f'Falha ao alterar senha: {str(e)}'}), 500
     finally:
         db.close()

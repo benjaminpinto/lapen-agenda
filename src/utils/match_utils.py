@@ -17,7 +17,8 @@ def is_match_eligible_for_betting(schedule_id):
         # Check if match is at least 1 hour in the future
         match_datetime = f"{schedule['date']} {schedule['start_time']}"
         match_time = datetime.strptime(match_datetime, '%Y-%m-%d %H:%M')
-        cutoff_time = datetime.now() + timedelta(hours=1)
+        now = datetime.now()
+        cutoff_time = now + timedelta(hours=1)
         
         return match_time > cutoff_time
         

@@ -11,22 +11,25 @@ matches_bp = Blueprint('matches', __name__, url_prefix='/api/matches')
 
 @matches_bp.route('/', methods=['GET'])
 def get_available_matches():
-    """Get matches available for betting (future matches only)"""
+    """Get matches available for betting (future matches and today's matches after current time)"""
     db = get_db()
     try:
-        # Get future schedules that can be bet on
-        current_date = get_current_date_sql()
-        current_time = get_current_time_sql()
-        cursor = db.execute(f'''
+        # Get future schedules and today's matches after current time
+        from datetime import datetime
+        now = datetime.now()
+        current_date = now.strftime('%Y-%m-%d')
+        current_time = now.strftime('%H:%M')
+        
+        cursor = db.execute('''
             SELECT s.id, s.court_id, s.date, s.start_time, s.player1_name, s.player2_name, 
                    s.match_type, c.name as court_name,
                    m.id as match_id, m.status, m.betting_enabled, m.total_pool
             FROM schedules s
             LEFT JOIN courts c ON s.court_id = c.id
             LEFT JOIN matches m ON s.id = m.schedule_id
-            WHERE s.date > {current_date} OR (s.date = {current_date} AND s.start_time >= {current_time})
+            WHERE s.date > ? OR (s.date = ? AND s.start_time > ?)
             ORDER BY s.date, s.start_time
-        ''')
+        ''', (current_date, current_date, current_time))
         
         schedules = cursor.fetchall()
         matches = []
@@ -43,14 +46,7 @@ def get_available_matches():
             if hasattr(date, 'strftime'):
                 date = date.strftime('%Y-%m-%d')
             
-            # Check if match is still eligible for betting (1 hour before)
-            from datetime import datetime, timedelta
-            try:
-                match_datetime = datetime.strptime(f"{date} {start_time}", '%Y-%m-%d %H:%M')
-                cutoff_time = datetime.now() + timedelta(hours=1)
-                is_betting_eligible = match_datetime > cutoff_time
-            except:
-                is_betting_eligible = True
+            # Betting eligibility validated server-side when placing bets (1-hour before match rule)
             
             match_data = {
                 'schedule_id': schedule['id'],
@@ -62,7 +58,7 @@ def get_available_matches():
                 'player2_name': schedule['player2_name'],
                 'match_type': schedule['match_type'],
                 'status': status,
-                'betting_enabled': (schedule['betting_enabled'] if schedule['betting_enabled'] is not None else True) and is_betting_eligible,
+                'betting_enabled': schedule['betting_enabled'] if schedule['betting_enabled'] is not None else True,
                 'total_pool': float(schedule['total_pool'] or 0)
             }
             matches.append(match_data)

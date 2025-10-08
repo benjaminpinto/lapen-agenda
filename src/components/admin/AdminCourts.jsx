@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Edit, Trash2, MapPin } from 'lucide-react'
+import { Plus, Edit, Trash2, MapPin, ArrowLeft } from 'lucide-react'
 import { useToast } from '@/components/hooks/use-toast'
 import PasswordConfirmDialog from './PasswordConfirmDialog'
+import { Link } from 'react-router-dom'
 
 const AdminCourts = () => {
   const [courts, setCourts] = useState([])
@@ -172,6 +173,12 @@ const AdminCourts = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
+      <Link to="/admin/dashboard">
+        <Button variant="outline" size="sm" className="mb-4">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar ao Dashboard
+        </Button>
+      </Link>
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">

@@ -35,7 +35,7 @@ def create_bet_payment_intent():
     
     # Check if match is eligible for betting
     if not is_match_eligible_for_betting(schedule_id):
-        return jsonify({'error': 'Esta partida não está disponível para apostas'}), 400
+        return jsonify({'error': 'Apostas encerradas - menos de 1 hora para o início da partida'}), 400
     
     # Create payment intent
     payment_result = create_payment_intent(
@@ -84,7 +84,18 @@ def place_bet():
     
     # Check if match is eligible for betting
     if not is_match_eligible_for_betting(schedule_id):
-        return jsonify({'error': 'Esta partida não está disponível para apostas'}), 400
+        # Update betting_enabled to false for this match
+        match_id = get_or_create_match(schedule_id)
+        if match_id:
+            db = get_db()
+            try:
+                db.execute('UPDATE matches SET betting_enabled = ? WHERE id = ?', (False, match_id))
+                db.commit()
+            except:
+                pass
+            finally:
+                db.close()
+        return jsonify({'error': 'Apostas encerradas - menos de 1 hora para o início da partida'}), 400
     
     # Get or create match
     match_id = get_or_create_match(schedule_id)

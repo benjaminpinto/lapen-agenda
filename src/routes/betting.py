@@ -203,16 +203,29 @@ def get_user_bets():
         
         bets = []
         for row in cursor.fetchall():
+            # Serialize date/time fields
+            created_at = row['created_at']
+            if hasattr(created_at, 'strftime'):
+                created_at = created_at.strftime('%Y-%m-%d %H:%M:%S')
+            
+            date = row['date']
+            if hasattr(date, 'strftime'):
+                date = date.strftime('%Y-%m-%d')
+            
+            start_time = row['start_time']
+            if hasattr(start_time, 'strftime'):
+                start_time = start_time.strftime('%H:%M')
+            
             bet = {
                 'id': row['id'],
                 'amount': float(row['amount']),
                 'player_name': row['player_name'],
                 'status': row['status'],
                 'potential_return': float(row['potential_return'] or 0),
-                'created_at': row['created_at'],
+                'created_at': created_at,
                 'match': {
-                    'date': row['date'],
-                    'start_time': row['start_time'],
+                    'date': date,
+                    'start_time': start_time,
                     'player1_name': row['player1_name'],
                     'player2_name': row['player2_name'],
                     'match_type': row['match_type'],
@@ -267,12 +280,21 @@ def get_match_bets(match_id):
         # Calculate current odds
         odds_data = calculate_odds(match_id)
         
+        # Serialize date/time fields
+        date = match_info['date']
+        if hasattr(date, 'strftime'):
+            date = date.strftime('%Y-%m-%d')
+        
+        start_time = match_info['start_time']
+        if hasattr(start_time, 'strftime'):
+            start_time = start_time.strftime('%H:%M')
+        
         return jsonify({
             'match': {
                 'player1_name': match_info['player1_name'],
                 'player2_name': match_info['player2_name'],
-                'date': match_info['date'],
-                'start_time': match_info['start_time'],
+                'date': date,
+                'start_time': start_time,
                 'total_pool': float(match_info['total_pool']),
                 'status': match_info['status'],
                 'betting_enabled': match_info['betting_enabled']

@@ -47,17 +47,47 @@ def confirm_payment(payment_intent_id):
 
 def refund_payment(payment_intent_id, amount=None):
     """Refund a payment"""
+    if os.environ.get('STRIPE_MOCK_ACTIVE', 'false').lower() == 'true':
+        # Mock refund for development
+        return {
+            'success': True,
+            'refund_id': f'mock_refund_{payment_intent_id}'
+        }
+    
     try:
         refund = stripe.Refund.create(
             payment_intent=payment_intent_id,
             amount=int(amount * 100) if amount else None
         )
+        
+        # Log refund
+        log_payment_event(payment_intent_id, 'refund_created', refund.status, amount or 0)
+        
         return {
             'success': True,
-            'refund_id': refund.id
+            'refund_id': refund.id,
+            'status': refund.status
         }
     except stripe.error.StripeError as e:
+        # Log refund failure
+        log_payment_event(payment_intent_id, 'refund_failed', 'failed', amount or 0, str(e))
         return {
             'success': False,
             'error': str(e)
         }
+
+def log_payment_event(payment_id, event_type, status, amount, error_message=None, metadata=None):
+    """Log payment events to database"""
+    try:
+        from src.database import get_db
+        db = get_db()
+        
+        db.execute('''
+            INSERT INTO payment_logs (payment_id, event_type, status, amount, error_message, metadata)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (payment_id, event_type, status, amount, error_message, str(metadata) if metadata else None))
+        
+        db.commit()
+        db.close()
+    except Exception as e:
+        print(f"Error logging payment event: {e}")

@@ -42,8 +42,8 @@ def get_or_create_match(schedule_id):
         
         cursor = db.execute('''
             INSERT INTO matches (schedule_id, status, betting_enabled, total_pool, house_edge)
-            VALUES (?, 'upcoming', TRUE, 0.00, 0.20)
-        ''', (schedule_id,))
+            VALUES (?, 'upcoming', ?, 0.00, 0.20)
+        ''', (schedule_id, True))
         
         db.commit()
         return cursor.lastrowid

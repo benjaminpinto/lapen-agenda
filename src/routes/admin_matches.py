@@ -187,11 +187,11 @@ def cancel_match(match_id):
                 failure_reason = str(refund_error)
                 failed_refunds += 1
             
-            # Record refund attempt
+            # Log refund attempt
             db.execute('''
-                INSERT INTO refunds (bet_id, user_id, amount, stripe_refund_id, status, failure_reason)
+                INSERT INTO payment_logs (payment_id, event_type, status, amount, error_message, metadata)
                 VALUES (?, ?, ?, ?, ?, ?)
-            ''', (bet['id'], bet['user_id'], bet['amount'], stripe_refund_id, refund_status, failure_reason))
+            ''', (bet['payment_intent_id'], 'refund_attempt', refund_status, bet['amount'], failure_reason, f'bet_id:{bet["id"]}'))
         
         # Update match status
         db.execute('UPDATE matches SET status = ? WHERE id = ?', ('cancelled', match_id))
@@ -239,11 +239,11 @@ def get_match_report(match_id):
         # Get all bets with user info and refund status
         cursor = db.execute('''
             SELECT b.id, b.amount, b.player_name, b.status, b.potential_return,
-                   u.name as user_name, u.email as user_email,
-                   r.status as refund_status, r.failure_reason
+                   u.name as user_name, u.email as user_email, b.payment_id,
+                   pl.status as refund_status, pl.error_message as failure_reason
             FROM bets b
             JOIN users u ON b.user_id = u.id
-            LEFT JOIN refunds r ON b.id = r.bet_id
+            LEFT JOIN payment_logs pl ON b.payment_id = pl.payment_id AND pl.event_type = 'refund_attempt'
             WHERE b.match_id = ?
             ORDER BY b.player_name, b.amount DESC
         ''', (match_id,))

@@ -24,7 +24,7 @@ def get_available_matches():
             FROM schedules s
             LEFT JOIN courts c ON s.court_id = c.id
             LEFT JOIN matches m ON s.id = m.schedule_id
-            WHERE s.date > {current_date} OR (s.date = {current_date} AND s.start_time > {current_time})
+            WHERE s.date > {current_date} OR (s.date = {current_date} AND s.start_time >= {current_time})
             ORDER BY s.date, s.start_time
         ''')
         
@@ -43,6 +43,15 @@ def get_available_matches():
             if hasattr(date, 'strftime'):
                 date = date.strftime('%Y-%m-%d')
             
+            # Check if match is still eligible for betting (1 hour before)
+            from datetime import datetime, timedelta
+            try:
+                match_datetime = datetime.strptime(f"{date} {start_time}", '%Y-%m-%d %H:%M')
+                cutoff_time = datetime.now() + timedelta(hours=1)
+                is_betting_eligible = match_datetime > cutoff_time
+            except:
+                is_betting_eligible = True
+            
             match_data = {
                 'schedule_id': schedule['id'],
                 'match_id': schedule['match_id'],
@@ -53,7 +62,7 @@ def get_available_matches():
                 'player2_name': schedule['player2_name'],
                 'match_type': schedule['match_type'],
                 'status': status,
-                'betting_enabled': schedule['betting_enabled'] if schedule['betting_enabled'] is not None else True,
+                'betting_enabled': (schedule['betting_enabled'] if schedule['betting_enabled'] is not None else True) and is_betting_eligible,
                 'total_pool': float(schedule['total_pool'] or 0)
             }
             matches.append(match_data)

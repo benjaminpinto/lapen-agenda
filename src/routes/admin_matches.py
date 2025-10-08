@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from src.database import get_db
+from src.email_service import send_winner_notification_email, send_bet_settlement_email
 from decimal import Decimal
 
 admin_matches_bp = Blueprint('admin_matches', __name__, url_prefix='/api/admin/matches')
@@ -58,24 +59,57 @@ def finish_match(match_id):
             VALUES (?, ?, ?, ?, ?)
         ''', (match_id, winner_name, score, float(total_winnings), True))
         
-        # Settle bets
+        # Get match details for emails
+        cursor = db.execute('''
+            SELECT s.player1_name, s.player2_name
+            FROM schedules s
+            JOIN matches m ON s.id = m.schedule_id
+            WHERE m.id = ?
+        ''', (match_id,))
+        match_info = cursor.fetchone()
+        match_details = {
+            'match': f"{match_info['player1_name']} vs {match_info['player2_name']}",
+            'winner': winner_name
+        }
+        
+        # Settle bets and send notifications
         if total_winning_amount > 0:
             # Calculate payout ratio
             payout_ratio = total_winnings / total_winning_amount
             
-            # Update winning bets
+            # Update winning bets and send winner emails
             for bet in winning_bets:
                 payout = Decimal(str(bet['amount'])) * payout_ratio
                 db.execute('''
                     UPDATE bets SET status = ?, potential_return = ? 
                     WHERE id = ?
                 ''', ('won', float(payout), bet['id']))
+                
+                # Get user info and send winner email
+                cursor = db.execute('SELECT name, email FROM users WHERE id = ?', (bet['user_id'],))
+                user = cursor.fetchone()
+                if user:
+                    send_winner_notification_email(user['email'], user['name'], match_details, float(payout))
+                    send_bet_settlement_email(user['email'], user['name'], match_details, 'won', float(payout))
         
-        # Update losing bets
+        # Update losing bets and send settlement emails
+        cursor = db.execute('''
+            SELECT b.user_id, u.name, u.email
+            FROM bets b
+            JOIN users u ON b.user_id = u.id
+            WHERE b.match_id = ? AND b.player_name != ? AND b.status = 'active'
+        ''', (match_id, winner_name))
+        
+        losing_users = cursor.fetchall()
+        
         db.execute('''
             UPDATE bets SET status = ? 
             WHERE match_id = ? AND player_name != ? AND status = 'active'
         ''', ('lost', match_id, winner_name))
+        
+        # Send settlement emails to losing bettors
+        for user in losing_users:
+            send_bet_settlement_email(user['email'], user['name'], match_details, 'lost', 0)
         
         db.commit()
         

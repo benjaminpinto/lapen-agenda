@@ -52,9 +52,9 @@ def send_bet_confirmation_email(email, name, bet_details):
             return False
         
         msg = Message(
-            subject='Confirmação de Aposta - Agenda LAPEN',
+            subject='Confirmação de Aposta - Tigrinho LAPEN',
             recipients=[email],
-            sender=current_app.config.get('MAIL_DEFAULT_SENDER') or current_app.config.get('MAIL_USERNAME') or 'benjaminpinto@gmail.com',
+            sender=current_app.config.get('MAIL_DEFAULT_SENDER') or current_app.config.get('MAIL_USERNAME') or 'lapen.ptc@gmail.com',
             html=f"""
             <h2>Confirmação de Aposta</h2>
             <p>Olá {name},</p>
@@ -71,4 +71,70 @@ def send_bet_confirmation_email(email, name, bet_details):
         return True
     except Exception as e:
         print(f"Failed to send bet confirmation email: {e}")
+        return False
+
+def send_winner_notification_email(email, name, match_details, payout_amount):
+    """Send winner notification email"""
+    try:
+        mail = current_app.extensions.get('mail')
+        if not mail:
+            return False
+        
+        msg = Message(
+            subject='Parabéns! Você ganhou! - Tigrinho LAPEN',
+            recipients=[email],
+            sender=current_app.config.get('MAIL_DEFAULT_SENDER') or current_app.config.get('MAIL_USERNAME') or 'lapen.ptc@gmail.com',
+            html=f"""
+            <h2>🎉 Parabéns! Você ganhou!</h2>
+            <p>Olá {name},</p>
+            <p>Sua aposta foi vencedora!</p>
+            <p><strong>Partida:</strong> {match_details['match']}</p>
+            <p><strong>Vencedor:</strong> {match_details['winner']}</p>
+            <p><strong>Valor Ganho:</strong> R$ {payout_amount:.2f}</p>
+            <p>O valor será creditado em sua conta em breve.</p>
+            <p>Continue apostando e boa sorte!</p>
+            """
+        )
+        
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Failed to send winner notification email: {e}")
+        return False
+
+def send_bet_settlement_email(email, name, match_details, bet_result, amount):
+    """Send bet settlement confirmation email"""
+    try:
+        mail = current_app.extensions.get('mail')
+        if not mail:
+            return False
+        
+        subject = 'Resultado da Aposta - Tigrinho LAPEN'
+        if bet_result == 'won':
+            result_text = f"<p style='color: green;'><strong>✅ Sua aposta foi vencedora!</strong></p>"
+            amount_text = f"<p><strong>Valor Ganho:</strong> R$ {amount:.2f}</p>"
+        else:
+            result_text = f"<p style='color: red;'><strong>❌ Sua aposta não foi vencedora desta vez.</strong></p>"
+            amount_text = ""
+        
+        msg = Message(
+            subject=subject,
+            recipients=[email],
+            sender=current_app.config.get('MAIL_DEFAULT_SENDER') or current_app.config.get('MAIL_USERNAME') or 'lapen.ptc@gmail.com',
+            html=f"""
+            <h2>Resultado da Aposta</h2>
+            <p>Olá {name},</p>
+            <p>A partida foi finalizada!</p>
+            <p><strong>Partida:</strong> {match_details['match']}</p>
+            <p><strong>Vencedor:</strong> {match_details['winner']}</p>
+            {result_text}
+            {amount_text}
+            <p>Obrigado por apostar conosco!</p>
+            """
+        )
+        
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Failed to send bet settlement email: {e}")
         return False

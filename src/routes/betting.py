@@ -50,9 +50,12 @@ def create_bet_payment_intent():
             }
         )
         
-        if not payment_result['success']:
+        logger.info(f'Payment result: {payment_result}')
+        
+        if not payment_result or not payment_result.get('success'):
+            error_msg = payment_result.get('error', 'Unknown error') if payment_result else 'Payment processor returned None'
             logger.error(f'Payment intent creation failed: {payment_result}')
-            return jsonify({'error': f'Erro ao processar pagamento: {payment_result.get("error", "Unknown error")}'}), 500
+            return jsonify({'error': f'Erro ao processar pagamento: {error_msg}'}), 500
     except Exception as e:
         logger.error(f'Exception during payment intent creation: {str(e)}')
         return jsonify({'error': f'Erro ao processar pagamento: {str(e)}'}), 500

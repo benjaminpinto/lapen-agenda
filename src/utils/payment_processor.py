@@ -2,11 +2,18 @@ import stripe
 import os
 from flask import current_app
 
-stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+# Set Stripe API key
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY') or os.environ.get('STRIPE_SECRET_KEY')
 
 def create_payment_intent(amount, currency='brl', metadata=None):
     """Create a Stripe payment intent or mock payment"""
-    if os.environ.get('STRIPE_MOCK_ACTIVE', 'false').lower() == 'true':
+    from src.logger import get_logger
+    logger = get_logger()
+    
+    mock_active = (os.getenv('STRIPE_MOCK_ACTIVE') or os.environ.get('STRIPE_MOCK_ACTIVE', 'false')).lower() == 'true'
+    logger.info(f'Stripe mock active: {mock_active}, API key set: {bool(stripe.api_key)}')
+    
+    if mock_active:
         # Mock payment for development
         mock_id = f"mock_pi_{int(amount * 100)}_{hash(str(metadata))}"
         return {
@@ -24,7 +31,7 @@ def create_payment_intent(amount, currency='brl', metadata=None):
         )
         return {
             'success': True,
-            'client_secret': intent.client_secret,
+            'client_secret': getattr(intent, 'client_secret', None),
             'payment_intent_id': intent.id
         }
     except stripe.error.StripeError as e:
@@ -35,7 +42,8 @@ def create_payment_intent(amount, currency='brl', metadata=None):
 
 def confirm_payment(payment_intent_id):
     """Confirm a payment was successful"""
-    if os.environ.get('STRIPE_MOCK_ACTIVE', 'false').lower() == 'true':
+    mock_active = (os.getenv('STRIPE_MOCK_ACTIVE') or os.environ.get('STRIPE_MOCK_ACTIVE', 'false')).lower() == 'true'
+    if mock_active:
         # Mock payment confirmation - always return True for mock payments
         return payment_intent_id.startswith('mock_pi_')
     
@@ -47,7 +55,8 @@ def confirm_payment(payment_intent_id):
 
 def refund_payment(payment_intent_id, amount=None):
     """Refund a payment"""
-    if os.environ.get('STRIPE_MOCK_ACTIVE', 'false').lower() == 'true':
+    mock_active = (os.getenv('STRIPE_MOCK_ACTIVE') or os.environ.get('STRIPE_MOCK_ACTIVE', 'false')).lower() == 'true'
+    if mock_active:
         # Mock refund for development
         return {
             'success': True,

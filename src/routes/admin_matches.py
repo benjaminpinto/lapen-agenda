@@ -80,20 +80,27 @@ def finish_match(match_id):
             # Calculate payout ratio
             payout_ratio = total_winnings / total_winning_amount
             
+            # Get winning bets with user info
+            cursor = db.execute('''
+                SELECT b.id, b.amount, b.user_id, u.name, u.email
+                FROM bets b
+                JOIN users u ON b.user_id = u.id
+                WHERE b.match_id = ? AND b.player_name = ? AND b.status = 'active'
+            ''', (match_id, winner_name))
+            
+            winning_bets_with_users = cursor.fetchall()
+            
             # Update winning bets and send winner emails
-            for bet in winning_bets:
+            for bet in winning_bets_with_users:
                 payout = Decimal(str(bet['amount'])) * payout_ratio
                 db.execute('''
                     UPDATE bets SET status = ?, potential_return = ? 
                     WHERE id = ?
                 ''', ('won', float(payout), bet['id']))
                 
-                # Get user info and send winner email
-                cursor = db.execute('SELECT name, email FROM users WHERE id = ?', (bet['user_id'],))
-                user = cursor.fetchone()
-                if user:
-                    send_winner_notification_email(user['email'], user['name'], match_details, float(payout))
-                    send_bet_settlement_email(user['email'], user['name'], match_details, 'won', float(payout))
+                # Send winner emails
+                send_winner_notification_email(bet['email'], bet['name'], match_details, float(payout))
+                send_bet_settlement_email(bet['email'], bet['name'], match_details, 'won', float(payout))
         
         # Update losing bets and send settlement emails
         cursor = db.execute('''
@@ -125,7 +132,6 @@ def finish_match(match_id):
         })
         
     except Exception as e:
-        db.rollback()
         logger.error(f'Error finishing match {match_id}: {str(e)}')
         return jsonify({'error': f'Erro ao finalizar partida: {str(e)}'}), 500
     finally:
@@ -218,7 +224,6 @@ def cancel_match(match_id):
         })
         
     except Exception as e:
-        db.rollback()
         logger.error(f'Error cancelling match {match_id}: {str(e)}')
         return jsonify({'error': f'Erro ao cancelar partida: {str(e)}'}), 500
     finally:

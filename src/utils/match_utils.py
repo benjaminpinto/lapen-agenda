@@ -3,6 +3,9 @@ from src.database import get_db
 
 def is_match_eligible_for_betting(schedule_id):
     """Check if a match is eligible for betting (at least 1 hour before match)"""
+    from src.logger import get_logger
+    logger = get_logger()
+    
     db = get_db()
     try:
         cursor = db.execute('''
@@ -11,13 +14,14 @@ def is_match_eligible_for_betting(schedule_id):
         ''', (schedule_id,))
         
         schedule = cursor.fetchone()
+        logger.info(f'Schedule lookup for {schedule_id}: {schedule}')
+        
         if not schedule:
+            logger.info(f'No schedule found for {schedule_id}')
             return False
         
         # Check if match is at least 1 hour in the future (using UTC)
         from datetime import timezone
-        from src.logger import get_logger
-        logger = get_logger()
         
         match_datetime = f"{schedule['date']} {schedule['start_time']}"
         match_time = datetime.strptime(match_datetime, '%Y-%m-%d %H:%M')

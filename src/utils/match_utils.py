@@ -23,7 +23,10 @@ def is_match_eligible_for_betting(schedule_id):
         # Check if match is at least 1 hour in the future (using UTC)
         from datetime import timezone
         
-        match_datetime = f"{schedule['date']} {schedule['start_time']}"
+        # Convert date and time objects to strings
+        date_str = schedule['date'].strftime('%Y-%m-%d') if hasattr(schedule['date'], 'strftime') else str(schedule['date'])
+        time_str = schedule['start_time'].strftime('%H:%M') if hasattr(schedule['start_time'], 'strftime') else str(schedule['start_time'])
+        match_datetime = f"{date_str} {time_str}"
         match_time = datetime.strptime(match_datetime, '%Y-%m-%d %H:%M')
         # Assume match time is in local timezone (UTC-3 for Brazil)
         match_time_utc = match_time.replace(tzinfo=timezone.utc) + timedelta(hours=3)

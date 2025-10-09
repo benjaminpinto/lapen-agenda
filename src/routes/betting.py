@@ -142,32 +142,33 @@ def place_bet():
         if cursor.fetchone():
             return jsonify({'error': 'Você já tem uma aposta ativa nesta partida'}), 400
         
-        # Calculate potential return
-        potential_return = calculate_potential_return(match_id, player_name, float(amount))
-        
-        # Create bet record
+        # Create bet record with temporary potential return
         cursor = db.execute('''
             INSERT INTO bets (user_id, match_id, player_name, amount, status, potential_return, payment_id)
-            VALUES (?, ?, ?, ?, 'active', ?, ?)
-        ''', (request.user_id, match_id, player_name, float(amount), potential_return, payment_intent_id))
+            VALUES (?, ?, ?, ?, 'active', 0, ?)
+        ''', (request.user_id, match_id, player_name, float(amount), payment_intent_id))
         
         bet_id = cursor.lastrowid
         
         # Update match total pool
         update_match_pool(match_id, float(amount))
         
-        # Recalculate potential returns for all bets on this match
+        # Recalculate potential returns for all bets on this match (including the new one)
         cursor = db.execute('''
             SELECT id, amount, player_name FROM bets 
             WHERE match_id = ? AND status = 'active'
         ''', (match_id,))
         
         all_bets = cursor.fetchall()
+        potential_return = 0
         for bet in all_bets:
             new_potential_return = calculate_potential_return(match_id, bet['player_name'], bet['amount'])
             db.execute('''
                 UPDATE bets SET potential_return = ? WHERE id = ?
             ''', (new_potential_return, bet['id']))
+            # Store the potential return for the new bet
+            if bet['id'] == bet_id:
+                potential_return = new_potential_return
         
         db.commit()
         

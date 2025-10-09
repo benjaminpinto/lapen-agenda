@@ -9,6 +9,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/c
 import {Badge} from '@/components/ui/badge'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger} from '@/components/ui/dialog'
 import {Trophy, Users, Wallet, ArrowLeft} from 'lucide-react'
+import FinishedMatchCard from '../shared/FinishedMatchCard'
 
 const AdminMatches = () => {
     const [matches, setMatches] = useState([])
@@ -230,7 +231,18 @@ const AdminMatches = () => {
                     {match.status === 'upcoming' && (
                         <div className="space-y-2">
                             <Button
-                                onClick={() => setSelectedMatch(match)}
+                                onClick={() => {
+                                    setSelectedMatch(match)
+                                    // Scroll to finish match form on mobile
+                                    if (window.innerWidth < 1024) {
+                                        setTimeout(() => {
+                                            document.querySelector('.lg\\:col-span-2')?.nextElementSibling?.scrollIntoView({
+                                                behavior: 'smooth',
+                                                block: 'start'
+                                            })
+                                        }, 100)
+                                    }
+                                }}
                                 className="w-full"
                                 variant="outline"
                             >
@@ -276,66 +288,7 @@ const AdminMatches = () => {
         )
     }
 
-    const FinishedMatchCard = ({match}) => {
-        const [details, setDetails] = useState(null)
 
-        useEffect(() => {
-            if (match.match_id) {
-                fetchMatchDetails(match.match_id).then(setDetails)
-            }
-        }, [match.match_id])
-
-        return (
-            <Card className="mb-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/admin/matches/${match.match_id}/report`)}>
-                <CardContent className="py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <div>
-                                <div className="font-semibold">
-                                    {match.player1_name} vs {match.player2_name}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                    {new Date(match.date + 'T00:00:00').toLocaleDateString('pt-BR')} às {match.start_time}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-6">
-                            {details?.winner && (
-                                <div className="text-center">
-                                    <div className="text-sm text-gray-500">Vencedor</div>
-                                    <div className="font-semibold text-yellow-600 flex items-center">
-                                        <Trophy className="h-4 w-4 mr-1"/>
-                                        {details.winner}
-                                    </div>
-                                </div>
-                            )}
-                            
-                            <div className="text-center">
-                                <div className="text-sm text-gray-500">Total Apostas</div>
-                                <div className="font-semibold flex items-center">
-                                    <Wallet className="h-4 w-4 mr-1"/>
-                                    R$ {Object.values(details?.betting_stats || {}).reduce((sum, stat) => sum + (stat.total_amount || 0), 0).toFixed(2)}
-                                </div>
-                            </div>
-                            
-                            <div className="text-center">
-                                <div className="text-sm text-gray-500">Apostadores</div>
-                                <div className="font-semibold flex items-center">
-                                    <Users className="h-4 w-4 mr-1"/>
-                                    {details?.betting_stats ? Object.values(details.betting_stats).reduce((sum, stat) => sum + stat.bet_count, 0) : 0}
-                                </div>
-                            </div>
-                            
-                            <Badge className={match.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}>
-                                {match.status === 'cancelled' ? 'Cancelada' : 'Finalizada'}
-                            </Badge>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        )
-    }
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -386,9 +339,16 @@ const AdminMatches = () => {
                             </CardContent>
                         </Card>
                     ) : (
-                        matches.filter(m => m.status === 'finished' || m.status === 'cancelled').map(match => (
-                            <FinishedMatchCard key={match.schedule_id} match={match}/>
-                        ))
+                        matches.filter(m => m.status === 'finished' || m.status === 'cancelled')
+                            .sort((a, b) => new Date(b.date) - new Date(a.date))
+                            .map(match => (
+                                <FinishedMatchCard 
+                                    key={match.schedule_id} 
+                                    match={match} 
+                                    onClick={() => navigate(`/admin/matches/${match.match_id}/report`)}
+                                    showWinner={true}
+                                />
+                            ))
                     )}
                 </div>
 

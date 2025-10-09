@@ -155,6 +155,29 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                                 </Button>
                             </Link>
 
+                            <Link to="/betting" onClick={() => setIsMobileMenuOpen(false)}>
+                                <Button variant="ghost" size="sm" className="w-full justify-start">
+                                    <Trophy className="h-4 w-4 mr-2"/>
+                                    Apostas
+                                </Button>
+                            </Link>
+
+                            {isAdminAuthenticated ? (
+                                <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                                        <Settings className="h-4 w-4 mr-2"/>
+                                        Admin
+                                    </Button>
+                                </Link>
+                            ) : (
+                                <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                                        <Settings className="h-4 w-4 mr-2"/>
+                                        Admin
+                                    </Button>
+                                </Link>
+                            )}
+
                             {isAuthenticated ? (
                                 <>
                                     <div className="px-3 py-2 text-sm text-gray-600">
@@ -189,36 +212,6 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                                         </Button>
                                     </Link>
                                 </>
-                            )}
-
-                            {isAdminAuthenticated ? (
-                                <>
-                                    <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
-                                        <Button variant="ghost" size="sm" className="w-full justify-start">
-                                            <Settings className="h-4 w-4 mr-2"/>
-                                            Admin
-                                        </Button>
-                                    </Link>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="w-full justify-start"
-                                        onClick={() => {
-                                            handleLogout()
-                                            setIsMobileMenuOpen(false)
-                                        }}
-                                    >
-                                        <LogOut className="h-4 w-4 mr-2"/>
-                                        Sair
-                                    </Button>
-                                </>
-                            ) : (
-                                <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <Button variant="ghost" size="sm" className="w-full justify-start">
-                                        <Settings className="h-4 w-4 mr-2"/>
-                                        Admin
-                                    </Button>
-                                </Link>
                             )}
                         </div>
                     </nav>

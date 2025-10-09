@@ -57,11 +57,15 @@ def get_available_matches():
             if hasattr(date, 'strftime'):
                 date = date.strftime('%Y-%m-%d')
 
-            # Check if match is at least 1 hour in the future
+            # Check if match is at least 1 hour in the future (using UTC)
             try:
+                from datetime import timezone
                 match_datetime = datetime.strptime(f"{date} {start_time}", '%Y-%m-%d %H:%M')
-                cutoff_time = now + timedelta(hours=1)
-                if match_datetime <= cutoff_time:
+                # Assume match time is in local timezone (UTC-3 for Brazil)
+                match_datetime_utc = match_datetime.replace(tzinfo=timezone.utc) + timedelta(hours=3)
+                now_utc = datetime.now(timezone.utc)
+                cutoff_time_utc = now_utc + timedelta(hours=1)
+                if match_datetime_utc <= cutoff_time_utc:
                     continue  # Skip matches less than 1 hour away
             except:
                 pass  # If parsing fails, include the match

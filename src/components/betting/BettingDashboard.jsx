@@ -216,27 +216,41 @@ const BettingDashboard = () => {
       try {
         const canvas = await html2canvas(shareRef.current, {
           backgroundColor: '#ffffff',
-          scale: 2
+          scale: window.devicePixelRatio || 1,
+          useCORS: true,
+          allowTaint: true
         })
         
-        canvas.toBlob(async (blob) => {
-          if (navigator.share) {
-            try {
+        if (navigator.share) {
+          try {
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+            if (blob && blob.size > 0) {
               const file = new File([blob], 'match.png', { type: 'image/png' })
+              // Try sharing with file first
+              try {
+                await navigator.share({
+                  files: [file],
+                  title: `${match.player1_name} vs ${match.player2_name}`,
+                  text: 'Confira esta partida no LAPEN Betting!'
+                })
+              } catch (fileShareError) {
+                // If file sharing fails, share text only
+                await navigator.share({
+                  title: `${match.player1_name} vs ${match.player2_name}`,
+                  text: `Confira esta partida no LAPEN Betting! ${match.player1_name} vs ${match.player2_name}`,
+                  url: window.location.href
+                })
+              }
+            } else {
+              // Share text only if blob is empty
               await navigator.share({
-                files: [file],
                 title: `${match.player1_name} vs ${match.player2_name}`,
-                text: 'Confira esta partida no LAPEN Betting!'
+                text: `Confira esta partida no LAPEN Betting! ${match.player1_name} vs ${match.player2_name}`,
+                url: window.location.href
               })
-            } catch (shareError) {
-              // Fallback: download image
-              const url = canvas.toDataURL()
-              const a = document.createElement('a')
-              a.href = url
-              a.download = `${match.player1_name}_vs_${match.player2_name}.png`
-              a.click()
             }
-          } else {
+          } catch (shareError) {
+            console.log('Share failed, falling back to download')
             // Fallback: download image
             const url = canvas.toDataURL()
             const a = document.createElement('a')
@@ -244,7 +258,14 @@ const BettingDashboard = () => {
             a.download = `${match.player1_name}_vs_${match.player2_name}.png`
             a.click()
           }
-        })
+        } else {
+          // Fallback: download image
+          const url = canvas.toDataURL()
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `${match.player1_name}_vs_${match.player2_name}.png`
+          a.click()
+        }
       } catch (error) {
         console.error('Error sharing:', error)
         toast({
@@ -351,7 +372,7 @@ const BettingDashboard = () => {
                   </Dialog>
                 </>
               )}
-              <div className="hidden">
+              <div style={{ position: 'absolute', left: '-9999px', top: '0' }}>
                 <ShareableMatchCard 
                   ref={shareRef}
                   match={match} 

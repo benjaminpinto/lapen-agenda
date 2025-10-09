@@ -16,12 +16,17 @@ def is_match_eligible_for_betting(schedule_id):
         
         # Check if match is at least 1 hour in the future (using UTC)
         from datetime import timezone
+        from src.logger import get_logger
+        logger = get_logger()
+        
         match_datetime = f"{schedule['date']} {schedule['start_time']}"
         match_time = datetime.strptime(match_datetime, '%Y-%m-%d %H:%M')
         # Assume match time is in local timezone (UTC-3 for Brazil)
         match_time_utc = match_time.replace(tzinfo=timezone.utc) + timedelta(hours=3)
         now_utc = datetime.now(timezone.utc)
         cutoff_time_utc = now_utc + timedelta(hours=1)
+        
+        logger.info(f'Match eligibility check: match_time={match_datetime}, match_time_utc={match_time_utc}, now_utc={now_utc}, cutoff_utc={cutoff_time_utc}, eligible={match_time_utc > cutoff_time_utc}')
         
         return match_time_utc > cutoff_time_utc
         

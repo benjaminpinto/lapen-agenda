@@ -5,7 +5,7 @@ const ShareableMatchCard = forwardRef(({ match, odds, stats }, ref) => {
     <div 
       ref={ref}
       className="relative w-[400px] h-[600px] bg-cover bg-center flex flex-col justify-between p-6 text-white"
-      style={{ backgroundImage: 'url(/src/static/images/bet-img-bkgnd.png)' }}
+      style={{ backgroundImage: 'url(/static/images/bet-img-bkgnd.png)' }}
     >
       {/* Header */}
       <div className="bg-black bg-opacity-50 rounded-lg p-4 text-center">

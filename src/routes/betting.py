@@ -35,21 +35,27 @@ def create_bet_payment_intent():
     
     # Check if match is eligible for betting
     if not is_match_eligible_for_betting(schedule_id):
+        logger.info(f'Betting not eligible for schedule {schedule_id}')
         return jsonify({'error': 'Apostas encerradas - menos de 1 hora para o início da partida'}), 400
     
     # Create payment intent
-    payment_result = create_payment_intent(
-        amount=float(amount),
-        metadata={
-            'user_id': request.user_id,
-            'schedule_id': schedule_id,
-            'player_name': player_name,
-            'type': 'bet'
-        }
-    )
-    
-    if not payment_result['success']:
-        return jsonify({'error': 'Erro ao processar pagamento'}), 500
+    try:
+        payment_result = create_payment_intent(
+            amount=float(amount),
+            metadata={
+                'user_id': request.user_id,
+                'schedule_id': schedule_id,
+                'player_name': player_name,
+                'type': 'bet'
+            }
+        )
+        
+        if not payment_result['success']:
+            logger.error(f'Payment intent creation failed: {payment_result}')
+            return jsonify({'error': f'Erro ao processar pagamento: {payment_result.get("error", "Unknown error")}'}), 500
+    except Exception as e:
+        logger.error(f'Exception during payment intent creation: {str(e)}')
+        return jsonify({'error': f'Erro ao processar pagamento: {str(e)}'}), 500
     
     return jsonify({
         'client_secret': payment_result['client_secret'],

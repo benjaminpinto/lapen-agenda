@@ -24,7 +24,9 @@ def send_verification_email(email, name, verification_token):
             print("Mail extension not found")
             return False
         
-        verification_url = f"{os.environ.get('FRONTEND_URL', 'http://localhost:5173')}/verify?token={verification_token}"
+        # Get base URL using same logic as public.py line 378
+        from flask import request
+        verification_url = f"{request.host_url}verify?token={verification_token}"
         
         msg = Message(
             subject='Confirme sua conta Agenda LAPEN',

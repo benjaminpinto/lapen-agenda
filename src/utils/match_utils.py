@@ -14,13 +14,16 @@ def is_match_eligible_for_betting(schedule_id):
         if not schedule:
             return False
         
-        # Check if match is at least 1 hour in the future
+        # Check if match is at least 1 hour in the future (using UTC)
+        from datetime import timezone
         match_datetime = f"{schedule['date']} {schedule['start_time']}"
         match_time = datetime.strptime(match_datetime, '%Y-%m-%d %H:%M')
-        now = datetime.now()
-        cutoff_time = now + timedelta(hours=1)
+        # Assume match time is in local timezone (UTC-3 for Brazil)
+        match_time_utc = match_time.replace(tzinfo=timezone.utc) + timedelta(hours=3)
+        now_utc = datetime.now(timezone.utc)
+        cutoff_time_utc = now_utc + timedelta(hours=1)
         
-        return match_time > cutoff_time
+        return match_time_utc > cutoff_time_utc
         
     except Exception:
         return False

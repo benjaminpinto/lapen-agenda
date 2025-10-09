@@ -124,26 +124,28 @@ const MyBets = () => {
           {bets.map(bet => (
             <Card key={bet.id}>
               <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="flex items-center space-x-2">
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center space-x-2">
                       <Trophy className="h-5 w-5" />
-                      <span>{bet.match.player1_name} vs {bet.match.player2_name}</span>
-                    </CardTitle>
-                    <CardDescription>
-                      <div className="flex items-center space-x-4 mt-2">
-                        <span className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          {bet.match.date} às {bet.match.start_time}
-                        </span>
-                        <span>{bet.match.court_name}</span>
-                      </div>
-                    </CardDescription>
+                    </div>
+                    <div className="flex space-x-2">
+                      {getStatusBadge(bet.status)}
+                      {getMatchStatusBadge(bet.match.status)}
+                    </div>
                   </div>
-                  <div className="flex space-x-2">
-                    {getStatusBadge(bet.status)}
-                    {getMatchStatusBadge(bet.match.status)}
-                  </div>
+                  <CardTitle className="mb-2">
+                    {bet.match.player1_name} vs {bet.match.player2_name}
+                  </CardTitle>
+                  <CardDescription>
+                    <div className="flex items-center space-x-4">
+                      <span className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        {bet.match.date} às {bet.match.start_time}
+                      </span>
+                      <span>{bet.match.court_name}</span>
+                    </div>
+                  </CardDescription>
                 </div>
               </CardHeader>
               <CardContent>

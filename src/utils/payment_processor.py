@@ -29,12 +29,29 @@ def create_payment_intent(amount, currency='brl', metadata=None):
             metadata=metadata or {},
             automatic_payment_methods={'enabled': True}
         )
+        
+        logger.info(f'PaymentIntent created: id={intent.id}, status={intent.status}, client_secret exists={hasattr(intent, "client_secret")}')
+        
+        if not hasattr(intent, 'client_secret') or intent.client_secret is None:
+            logger.error(f'PaymentIntent missing client_secret: {intent}')
+            return {
+                'success': False,
+                'error': 'PaymentIntent created but missing client_secret'
+            }
+        
         return {
             'success': True,
-            'client_secret': getattr(intent, 'client_secret', None),
+            'client_secret': intent.client_secret,
             'payment_intent_id': intent.id
         }
     except stripe.error.StripeError as e:
+        logger.error(f'Stripe error: {e}')
+        return {
+            'success': False,
+            'error': str(e)
+        }
+    except Exception as e:
+        logger.error(f'Unexpected error creating PaymentIntent: {e}')
         return {
             'success': False,
             'error': str(e)

@@ -157,7 +157,7 @@ def cancel_match(match_id):
         
         # Get all active bets for this match
         cursor = db.execute('''
-            SELECT b.id, b.user_id, b.amount, b.payment_intent_id
+            SELECT b.id, b.user_id, b.amount, b.payment_id
             FROM bets b
             WHERE b.match_id = ? AND b.status = 'active'
         ''', (match_id,))
@@ -182,7 +182,7 @@ def cancel_match(match_id):
                     # Real Stripe refund
                     stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
                     refund = stripe.Refund.create(
-                        payment_intent=bet['payment_intent_id'],
+                        payment_intent=bet['payment_id'],
                         amount=int(float(bet['amount']) * 100)  # Convert to cents
                     )
                     refund_status = refund.status
@@ -202,7 +202,7 @@ def cancel_match(match_id):
             db.execute('''
                 INSERT INTO payment_logs (payment_id, event_type, status, amount, error_message, metadata)
                 VALUES (?, ?, ?, ?, ?, ?)
-            ''', (bet['payment_intent_id'], 'refund_attempt', refund_status, bet['amount'], failure_reason, f'bet_id:{bet["id"]}'))
+            ''', (bet['payment_id'], 'refund_attempt', refund_status, bet['amount'], failure_reason, f'bet_id:{bet["id"]}'))
         
         # Update match status
         db.execute('UPDATE matches SET status = ? WHERE id = ?', ('cancelled', match_id))

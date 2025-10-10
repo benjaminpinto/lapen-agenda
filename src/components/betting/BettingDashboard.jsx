@@ -9,6 +9,7 @@ import {Dialog, DialogContent} from '@/components/ui/dialog'
 import {CheckCircle, Clock, Share2, Trophy, Users, Wallet} from 'lucide-react'
 import ShareableMatchCard from './ShareableMatchCard'
 import FinishedMatchCard from '../shared/FinishedMatchCard'
+import PaymentForm from './PaymentForm'
 import html2canvas from 'html2canvas'
 
 const BettingDashboard = () => {
@@ -17,6 +18,8 @@ const BettingDashboard = () => {
     const [betAmount, setBetAmount] = useState('')
     const [selectedPlayer, setSelectedPlayer] = useState('')
     const [loading, setLoading] = useState(false)
+    const [clientSecret, setClientSecret] = useState(null)
+    const [showPayment, setShowPayment] = useState(false)
     const {isAuthenticated, user} = useAuth()
     const {toast} = useToast()
 
@@ -26,7 +29,13 @@ const BettingDashboard = () => {
 
     const fetchMatches = async () => {
         try {
-            const response = await fetch('/api/matches/')
+            const headers = {}
+            const token = localStorage.getItem('auth_token')
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`
+            }
+            
+            const response = await fetch('/api/matches/', { headers })
             const data = await response.json()
             setMatches(data.matches || [])
         } catch (error) {
@@ -70,7 +79,6 @@ const BettingDashboard = () => {
         setLoading(true)
 
         try {
-            // Create payment intent
             const paymentResponse = await fetch('/api/betting/create-payment-intent', {
                 method: 'POST',
                 headers: {
@@ -90,7 +98,22 @@ const BettingDashboard = () => {
                 throw new Error(paymentData.error)
             }
 
-            // Place bet with payment intent ID
+            setClientSecret(paymentData.client_secret)
+            setShowPayment(true)
+
+        } catch (error) {
+            toast({
+                title: "Erro",
+                description: error.message,
+                variant: "destructive"
+            })
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handlePaymentSuccess = async (setPaymentLoading, currentBetAmount, currentSelectedPlayer, currentSelectedMatch) => {
+        try {
             const betResponse = await fetch('/api/betting/place-bet', {
                 method: 'POST',
                 headers: {
@@ -98,10 +121,10 @@ const BettingDashboard = () => {
                     'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                 },
                 body: JSON.stringify({
-                    schedule_id: selectedMatch.schedule_id,
-                    player_name: selectedPlayer,
-                    amount: parseFloat(betAmount),
-                    payment_intent_id: paymentData.payment_intent_id
+                    schedule_id: currentSelectedMatch.schedule_id,
+                    player_name: currentSelectedPlayer,
+                    amount: parseFloat(currentBetAmount),
+                    payment_intent_id: clientSecret.split('_secret_')[0]
                 })
             })
 
@@ -110,13 +133,14 @@ const BettingDashboard = () => {
             if (betResponse.ok) {
                 toast({
                     title: "Aposta realizada!",
-                    description: `Aposta de R$ ${betAmount} em ${selectedPlayer}`
+                    description: `Aposta de R$ ${currentBetAmount} em ${currentSelectedPlayer}`
                 })
                 setBetAmount('')
                 setSelectedPlayer('')
                 setSelectedMatch(null)
+                setClientSecret(null)
+                setShowPayment(false)
                 fetchMatches()
-                // Redirect to my bets page
                 setTimeout(() => {
                     window.location.href = '/my-bets'
                 }, 1500)
@@ -131,8 +155,16 @@ const BettingDashboard = () => {
                 variant: "destructive"
             })
         } finally {
-            setLoading(false)
+            setPaymentLoading(false)
         }
+    }
+
+    const handlePaymentError = (error) => {
+        toast({
+            title: "Erro no pagamento",
+            description: error,
+            variant: "destructive"
+        })
     }
 
 
@@ -286,7 +318,7 @@ const BettingDashboard = () => {
                         )}
                     </div>
 
-                    {match.betting_enabled && match.status === 'upcoming' && (
+                    {match.betting_enabled && match.status === 'upcoming' && !match.user_has_bet && (
                         <div className="space-y-2">
                             <Button
                                 onClick={() => {
@@ -356,6 +388,14 @@ const BettingDashboard = () => {
                                     odds={odds}
                                     stats={stats}
                                 />
+                            </div>
+                        </div>
+                    )}
+                    
+                    {match.user_has_bet && (
+                        <div className="text-center p-3 bg-green-50 rounded border border-green-200">
+                            <div className="text-sm text-green-700 font-medium">
+                                ✅ Você já tem uma aposta nesta partida
                             </div>
                         </div>
                     )}
@@ -478,18 +518,31 @@ const BettingDashboard = () => {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Button
-                                            onClick={handlePlaceBet}
-                                            disabled={loading || !selectedPlayer || !betAmount}
-                                            className="w-full"
-                                        >
-                                            {loading ? 'Processando...' : 'Confirmar Aposta'}
-                                        </Button>
+                                        {!showPayment ? (
+                                            <Button
+                                                onClick={handlePlaceBet}
+                                                disabled={loading || !selectedPlayer || !betAmount}
+                                                className="w-full"
+                                            >
+                                                {loading ? 'Processando...' : 'Prosseguir para Pagamento'}
+                                            </Button>
+                                        ) : (
+                                            <PaymentForm
+                                                clientSecret={clientSecret}
+                                                onSuccess={handlePaymentSuccess}
+                                                onError={handlePaymentError}
+                                                betAmount={betAmount}
+                                                selectedPlayer={selectedPlayer}
+                                                selectedMatch={selectedMatch}
+                                            />
+                                        )}
                                         <Button
                                             onClick={() => {
                                                 setSelectedMatch(null)
                                                 setBetAmount('')
                                                 setSelectedPlayer('')
+                                                setClientSecret(null)
+                                                setShowPayment(false)
                                             }}
                                             variant="outline"
                                             className="w-full"

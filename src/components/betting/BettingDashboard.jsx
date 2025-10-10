@@ -487,24 +487,41 @@ const BettingDashboard = () => {
                                     <div>
                                         <Label>Escolha o Jogador</Label>
                                         <div className="grid grid-cols-2 gap-2 mt-2">
-                                            <div className={`p-2 rounded text-center text-sm font-medium border ${
-                                                selectedPlayer === selectedMatch.player1_name 
-                                                    ? (showPayment ? 'bg-slate-600 text-white border-slate-600' : 'bg-blue-600 text-white border-blue-600 cursor-pointer hover:bg-blue-700')
-                                                    : (showPayment ? 'bg-gray-100 text-gray-500 border-gray-300' : 'border-gray-300 cursor-pointer hover:bg-gray-50')
-                                            }`}
-                                            onClick={!showPayment ? () => setSelectedPlayer(selectedMatch.player1_name) : undefined}
-                                            >
-                                                {selectedPlayer === selectedMatch.player1_name && showPayment && "✓ "}{selectedMatch.player1_name}
-                                            </div>
-                                            <div className={`p-2 rounded text-center text-sm font-medium border ${
-                                                selectedPlayer === selectedMatch.player2_name 
-                                                    ? (showPayment ? 'bg-slate-600 text-white border-slate-600' : 'bg-blue-600 text-white border-blue-600 cursor-pointer hover:bg-blue-700')
-                                                    : (showPayment ? 'bg-gray-100 text-gray-500 border-gray-300' : 'border-gray-300 cursor-pointer hover:bg-gray-50')
-                                            }`}
-                                            onClick={!showPayment ? () => setSelectedPlayer(selectedMatch.player2_name) : undefined}
-                                            >
-                                                {selectedPlayer === selectedMatch.player2_name && showPayment && "✓ "}{selectedMatch.player2_name}
-                                            </div>
+                                            {showPayment ? (
+                                                <>
+                                                    <div className={`p-2 rounded text-center text-sm font-medium border ${
+                                                        selectedPlayer === selectedMatch.player1_name 
+                                                            ? 'bg-slate-600 text-white border-slate-600'
+                                                            : 'bg-gray-100 text-gray-500 border-gray-300'
+                                                    }`}>
+                                                        {selectedPlayer === selectedMatch.player1_name && "✓ "}{selectedMatch.player1_name}
+                                                    </div>
+                                                    <div className={`p-2 rounded text-center text-sm font-medium border ${
+                                                        selectedPlayer === selectedMatch.player2_name 
+                                                            ? 'bg-slate-600 text-white border-slate-600'
+                                                            : 'bg-gray-100 text-gray-500 border-gray-300'
+                                                    }`}>
+                                                        {selectedPlayer === selectedMatch.player2_name && "✓ "}{selectedMatch.player2_name}
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Button
+                                                        variant={selectedPlayer === selectedMatch.player1_name ? "default" : "outline"}
+                                                        onClick={() => setSelectedPlayer(selectedMatch.player1_name)}
+                                                        size="sm"
+                                                    >
+                                                        {selectedMatch.player1_name}
+                                                    </Button>
+                                                    <Button
+                                                        variant={selectedPlayer === selectedMatch.player2_name ? "default" : "outline"}
+                                                        onClick={() => setSelectedPlayer(selectedMatch.player2_name)}
+                                                        size="sm"
+                                                    >
+                                                        {selectedMatch.player2_name}
+                                                    </Button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
 

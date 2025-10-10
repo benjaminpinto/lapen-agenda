@@ -40,36 +40,23 @@ def create_payment_intent(amount, currency='brl', metadata=None):
         
         logger.info(f'PaymentIntent params: {create_params}')
         
-        intent = stripe.PaymentIntent.create(**create_params)
-        
-        logger.info(f'PaymentIntent created successfully')
-        logger.info(f'Intent type: {type(intent)}')
-        
-        # Safely access attributes
         try:
-            intent_id = intent.id
-            logger.info(f'Intent ID: {intent_id}')
+            intent = stripe.PaymentIntent.create(**create_params)
+            logger.info(f'PaymentIntent created successfully')
+            logger.info(f'Intent type: {type(intent)}')
+        except AttributeError as ae:
+            logger.error(f'AttributeError in PaymentIntent.create: {ae}')
+            logger.error(f'Stripe module attributes: {dir(stripe)}')
+            logger.error(f'PaymentIntent attributes: {dir(stripe.PaymentIntent) if hasattr(stripe, "PaymentIntent") else "No PaymentIntent"}')
+            raise ae
         except Exception as e:
-            logger.error(f'Error accessing intent.id: {e}')
-            intent_id = None
-            
-        try:
-            client_secret = intent.client_secret
-            logger.info(f'Client secret retrieved successfully')
-        except Exception as e:
-            logger.error(f'Error accessing intent.client_secret: {e}')
-            client_secret = None
-        
-        if not client_secret:
-            return {
-                'success': False,
-                'error': 'Could not retrieve client_secret from PaymentIntent'
-            }
+            logger.error(f'General error in PaymentIntent.create: {e}')
+            raise e
         
         return {
             'success': True,
-            'client_secret': client_secret,
-            'payment_intent_id': intent_id
+            'client_secret': intent.client_secret,
+            'payment_intent_id': intent.id
         }
     except Exception as e:
         logger.error(f'Error creating PaymentIntent: {e}')

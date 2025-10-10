@@ -42,12 +42,34 @@ def create_payment_intent(amount, currency='brl', metadata=None):
         
         intent = stripe.PaymentIntent.create(**create_params)
         
-        logger.info(f'PaymentIntent created successfully: {intent.id}')
+        logger.info(f'PaymentIntent created successfully')
+        logger.info(f'Intent type: {type(intent)}')
+        
+        # Safely access attributes
+        try:
+            intent_id = intent.id
+            logger.info(f'Intent ID: {intent_id}')
+        except Exception as e:
+            logger.error(f'Error accessing intent.id: {e}')
+            intent_id = None
+            
+        try:
+            client_secret = intent.client_secret
+            logger.info(f'Client secret retrieved successfully')
+        except Exception as e:
+            logger.error(f'Error accessing intent.client_secret: {e}')
+            client_secret = None
+        
+        if not client_secret:
+            return {
+                'success': False,
+                'error': 'Could not retrieve client_secret from PaymentIntent'
+            }
         
         return {
             'success': True,
-            'client_secret': intent.client_secret,
-            'payment_intent_id': intent.id
+            'client_secret': client_secret,
+            'payment_intent_id': intent_id
         }
     except Exception as e:
         logger.error(f'Error creating PaymentIntent: {e}')

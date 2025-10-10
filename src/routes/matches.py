@@ -23,24 +23,62 @@ def get_available_matches():
         current_date = now.strftime('%Y-%m-%d')
         current_time = now.strftime('%H:%M')
 
-        cursor = db.execute('''
-                            SELECT s.id,
-                                   s.court_id,
-                                   s.date,
-                                   s.start_time,
-                                   s.player1_name,
-                                   s.player2_name,
-                                   s.match_type,
-                                   c.name as court_name,
-                                   m.id   as match_id,
-                                   m.status,
-                                   m.betting_enabled,
-                                   m.total_pool
-                            FROM schedules s
-                                     LEFT JOIN courts c ON s.court_id = c.id
-                                     LEFT JOIN matches m ON s.id = m.schedule_id
-                            ORDER BY s.date, s.start_time
-                            ''')
+        # Get user_id from token if provided
+        user_id = None
+        auth_header = request.headers.get('Authorization')
+        
+        if auth_header and auth_header.startswith('Bearer '):
+            try:
+                import jwt
+                import os
+                token = auth_header.split(' ')[1]
+                from flask import current_app
+                payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+                user_id = payload.get('user_id')
+            except Exception as e:
+                pass  # Invalid token, continue as non-authenticated
+        
+        if user_id:
+            cursor = db.execute('''
+                                SELECT s.id,
+                                       s.court_id,
+                                       s.date,
+                                       s.start_time,
+                                       s.player1_name,
+                                       s.player2_name,
+                                       s.match_type,
+                                       c.name as court_name,
+                                       m.id   as match_id,
+                                       m.status,
+                                       m.betting_enabled,
+                                       m.total_pool,
+                                       CASE WHEN b.id IS NOT NULL THEN 1 ELSE 0 END as user_has_bet
+                                FROM schedules s
+                                         LEFT JOIN courts c ON s.court_id = c.id
+                                         LEFT JOIN matches m ON s.id = m.schedule_id
+                                         LEFT JOIN bets b ON m.id = b.match_id AND b.user_id = ? AND b.status = 'active'
+                                ORDER BY s.date, s.start_time
+                                ''', (user_id,))
+        else:
+            cursor = db.execute('''
+                                SELECT s.id,
+                                       s.court_id,
+                                       s.date,
+                                       s.start_time,
+                                       s.player1_name,
+                                       s.player2_name,
+                                       s.match_type,
+                                       c.name as court_name,
+                                       m.id   as match_id,
+                                       m.status,
+                                       m.betting_enabled,
+                                       m.total_pool,
+                                       0 as user_has_bet
+                                FROM schedules s
+                                         LEFT JOIN courts c ON s.court_id = c.id
+                                         LEFT JOIN matches m ON s.id = m.schedule_id
+                                ORDER BY s.date, s.start_time
+                                ''')
 
         schedules = cursor.fetchall()
         matches = []
@@ -70,6 +108,8 @@ def get_available_matches():
             except:
                 pass  # If parsing fails, include the match
 
+            user_has_bet = bool(schedule['user_has_bet'])
+            
             match_data = {
                 'schedule_id': schedule['id'],
                 'match_id': schedule['match_id'],
@@ -81,7 +121,8 @@ def get_available_matches():
                 'match_type': schedule['match_type'],
                 'status': status,
                 'betting_enabled': schedule['betting_enabled'] if schedule['betting_enabled'] is not None else True,
-                'total_pool': float(schedule['total_pool'] or 0)
+                'total_pool': float(schedule['total_pool'] or 0),
+                'user_has_bet': user_has_bet
             }
             matches.append(match_data)
 

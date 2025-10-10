@@ -27,13 +27,32 @@ def create_payment_intent(amount, currency='brl', metadata=None):
             amount=int(amount * 100),  # Stripe uses cents
             currency=currency,
             metadata=metadata or {},
-            payment_method_types=['card'] # Add pix when live
+            payment_method_types=['card']
         )
         
-        logger.info(f'PaymentIntent created: id={intent.id}, status={intent.status}, client_secret exists={hasattr(intent, "client_secret")}')
+        logger.info(f'PaymentIntent object type: {type(intent)}')
+        logger.info(f'PaymentIntent dir: {[attr for attr in dir(intent) if not attr.startswith("_")] if intent else "None"}')
         
-        if not hasattr(intent, 'client_secret') or intent.client_secret is None:
-            logger.error(f'PaymentIntent missing client_secret: {intent}')
+        if intent is None:
+            logger.error('PaymentIntent is None')
+            return {
+                'success': False,
+                'error': 'PaymentIntent creation returned None'
+            }
+        
+        # Try different ways to access client_secret
+        client_secret = None
+        if hasattr(intent, 'client_secret'):
+            client_secret = intent.client_secret
+        elif hasattr(intent, 'get'):
+            client_secret = intent.get('client_secret')
+        elif isinstance(intent, dict):
+            client_secret = intent.get('client_secret')
+        
+        logger.info(f'PaymentIntent id: {getattr(intent, "id", "missing")}, client_secret: {client_secret is not None}')
+        
+        if client_secret is None:
+            logger.error(f'Cannot find client_secret. Intent type: {type(intent)}, attributes: {list(intent.__dict__.keys()) if hasattr(intent, "__dict__") else "no dict"}')
             return {
                 'success': False,
                 'error': 'PaymentIntent created but missing client_secret'
@@ -41,8 +60,8 @@ def create_payment_intent(amount, currency='brl', metadata=None):
         
         return {
             'success': True,
-            'client_secret': intent.client_secret,
-            'payment_intent_id': intent.id
+            'client_secret': client_secret,
+            'payment_intent_id': getattr(intent, 'id', None)
         }
     except Exception as e:
         logger.error(f'Error creating PaymentIntent: {e}')

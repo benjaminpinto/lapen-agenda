@@ -27,7 +27,7 @@ def create_payment_intent(amount, currency='brl', metadata=None):
             amount=int(amount * 100),  # Stripe uses cents
             currency=currency,
             metadata=metadata or {},
-            automatic_payment_methods={'enabled': True}
+            payment_method_types=['card'] # Add pix when live
         )
         
         logger.info(f'PaymentIntent created: id={intent.id}, status={intent.status}, client_secret exists={hasattr(intent, "client_secret")}')
@@ -44,14 +44,8 @@ def create_payment_intent(amount, currency='brl', metadata=None):
             'client_secret': intent.client_secret,
             'payment_intent_id': intent.id
         }
-    except stripe.error.StripeError as e:
-        logger.error(f'Stripe error: {e}')
-        return {
-            'success': False,
-            'error': str(e)
-        }
     except Exception as e:
-        logger.error(f'Unexpected error creating PaymentIntent: {e}')
+        logger.error(f'Error creating PaymentIntent: {e}')
         return {
             'success': False,
             'error': str(e)
@@ -67,7 +61,7 @@ def confirm_payment(payment_intent_id):
     try:
         intent = stripe.PaymentIntent.retrieve(payment_intent_id)
         return intent.status == 'succeeded'
-    except stripe.error.StripeError:
+    except Exception:
         return False
 
 def refund_payment(payment_intent_id, amount=None):
@@ -94,7 +88,7 @@ def refund_payment(payment_intent_id, amount=None):
             'refund_id': refund.id,
             'status': refund.status
         }
-    except stripe.error.StripeError as e:
+    except Exception as e:
         # Log refund failure
         log_payment_event(payment_intent_id, 'refund_failed', 'failed', amount or 0, str(e))
         return {

@@ -43,14 +43,8 @@ def create_payment_intent(amount, currency='brl', metadata=None):
         try:
             intent = stripe.PaymentIntent.create(**create_params)
             logger.info(f'PaymentIntent created successfully')
-            logger.info(f'Intent type: {type(intent)}')
-        except AttributeError as ae:
-            logger.error(f'AttributeError in PaymentIntent.create: {ae}')
-            logger.error(f'Stripe module attributes: {dir(stripe)}')
-            logger.error(f'PaymentIntent attributes: {dir(stripe.PaymentIntent) if hasattr(stripe, "PaymentIntent") else "No PaymentIntent"}')
-            raise ae
         except Exception as e:
-            logger.error(f'General error in PaymentIntent.create: {e}')
+            logger.error(f'Error in PaymentIntent creation: {e}')
             raise e
         
         return {

@@ -290,7 +290,7 @@ const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
                                                                 {courtData.schedules.map((schedule) => (
                                                                     <div key={schedule.id} className="p-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded text-xs border-l-2 border-gray-300">
                                                                         <div className="flex items-center space-x-1 mb-1">
-                                                                            <MatchTypeBadge matchType={schedule.match_type} size="sm" />
+                                                                            <MatchTypeBadge matchType={schedule.match_type} size="sm" iconOnly />
                                                                             <span className="font-medium">{schedule.start_time}</span>
                                                                         </div>
                                                                         <div className="text-gray-800 font-medium">

@@ -79,27 +79,64 @@ const BettingDashboard = () => {
         setLoading(true)
 
         try {
-            const paymentResponse = await fetch('/api/betting/create-payment-intent', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                },
-                body: JSON.stringify({
-                    schedule_id: selectedMatch.schedule_id,
-                    player_name: selectedPlayer,
-                    amount: parseFloat(betAmount)
+            // Check if mock mode is active
+            if (import.meta.env.VITE_STRIPE_MOCK_ACTIVE === 'true') {
+                // Mock payment - directly place bet without Stripe
+                const betResponse = await fetch('/api/betting/place-bet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({
+                        schedule_id: selectedMatch.schedule_id,
+                        player_name: selectedPlayer,
+                        amount: parseFloat(betAmount),
+                        payment_intent_id: 'mock_pi_' + Date.now()
+                    })
                 })
-            })
 
-            const paymentData = await paymentResponse.json()
+                const betData = await betResponse.json()
 
-            if (!paymentResponse.ok) {
-                throw new Error(paymentData.error)
+                if (betResponse.ok) {
+                    toast({
+                        title: "Aposta realizada! [Modo Teste]",
+                        description: `Aposta de R$ ${betAmount} em ${selectedPlayer}`
+                    })
+                    setBetAmount('')
+                    setSelectedPlayer('')
+                    setSelectedMatch(null)
+                    fetchMatches()
+                    setTimeout(() => {
+                        window.location.href = '/my-bets'
+                    }, 1500)
+                } else {
+                    throw new Error(betData.error)
+                }
+            } else {
+                // Normal Stripe payment flow
+                const paymentResponse = await fetch('/api/betting/create-payment-intent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
+                    body: JSON.stringify({
+                        schedule_id: selectedMatch.schedule_id,
+                        player_name: selectedPlayer,
+                        amount: parseFloat(betAmount)
+                    })
+                })
+
+                const paymentData = await paymentResponse.json()
+
+                if (!paymentResponse.ok) {
+                    throw new Error(paymentData.error)
+                }
+
+                setClientSecret(paymentData.client_secret)
+                setShowPayment(true)
             }
-
-            setClientSecret(paymentData.client_secret)
-            setShowPayment(true)
 
         } catch (error) {
             toast({

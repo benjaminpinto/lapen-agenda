@@ -179,16 +179,19 @@ def place_bet():
         cursor = db.execute('SELECT name, email FROM users WHERE id = ?', (request.user_id,))
         user = cursor.fetchone()
         
-        # Send confirmation email
+        # Send confirmation email (don't fail if email fails)
         if user:
-            bet_details = {
-                'match': f"{match_info['player1_name']} vs {match_info['player2_name']}",
-                'player': player_name,
-                'amount': f"R$ {amount}",
-                'potential_return': f"R$ {potential_return}",
-                'transaction_id': payment_intent_id
-            }
-            send_bet_confirmation_email(user['email'], user['name'], bet_details)
+            try:
+                bet_details = {
+                    'match': f"{match_info['player1_name']} vs {match_info['player2_name']}",
+                    'player': player_name,
+                    'amount': f"R$ {amount}",
+                    'potential_return': f"R$ {potential_return}",
+                    'transaction_id': payment_intent_id
+                }
+                send_bet_confirmation_email(user['email'], user['name'], bet_details)
+            except Exception as email_error:
+                logger.error(f'Failed to send bet confirmation email: {str(email_error)}')
         
         logger.info(f'Bet placed: user_id={request.user_id}, match_id={match_id}, amount={amount}, player={player_name}')
         return jsonify({

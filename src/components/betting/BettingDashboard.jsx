@@ -360,15 +360,13 @@ const BettingDashboard = () => {
                             <Button
                                 onClick={() => {
                                     setSelectedMatch(match)
-                                    // Scroll to betting form on mobile
-                                    if (window.innerWidth < 1024) {
-                                        setTimeout(() => {
-                                            document.querySelector('.lg\\:col-span-2')?.nextElementSibling?.scrollIntoView({
-                                                behavior: 'smooth',
-                                                block: 'start'
-                                            })
-                                        }, 100)
-                                    }
+                                    // Scroll to betting form
+                                    setTimeout(() => {
+                                        document.querySelector('.lg\\:col-span-2')?.nextElementSibling?.scrollIntoView({
+                                            behavior: 'smooth',
+                                            block: 'start'
+                                        })
+                                    }, 100)
                                 }}
                                 className="w-full"
                                 variant="outline"

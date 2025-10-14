@@ -8,7 +8,7 @@ import {Label} from '@/components/ui/label'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Badge} from '@/components/ui/badge'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger} from '@/components/ui/dialog'
-import {Trophy, Users, Wallet, ArrowLeft} from 'lucide-react'
+import {Trophy, Users, Wallet, ArrowLeft, ChevronDown} from 'lucide-react'
 import FinishedMatchCard from '../shared/FinishedMatchCard'
 
 const AdminMatches = () => {
@@ -19,6 +19,8 @@ const AdminMatches = () => {
     const [loading, setLoading] = useState(false)
     const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
     const [matchToCancel, setMatchToCancel] = useState(null)
+    const [openMatchesOpen, setOpenMatchesOpen] = useState(true)
+    const [finishedMatchesOpen, setFinishedMatchesOpen] = useState(false)
     const {toast} = useToast()
     const navigate = useNavigate()
 
@@ -320,43 +322,73 @@ const AdminMatches = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
                     {/* Open Matches */}
-                    <h2 className="text-xl font-semibold mb-4">Partidas em Aberto</h2>
-                    {matches.filter(m => m.match_id && m.status !== 'finished' && m.status !== 'cancelled').length === 0 ? (
-                        <Card className="mb-8">
-                            <CardContent className="text-center py-8">
-                                <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
-                                <p className="text-gray-500">Nenhuma partida em aberto</p>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        <div className="mb-8">
-                            {matches.filter(m => m.match_id && m.status !== 'finished' && m.status !== 'cancelled').map(match => (
-                                <MatchCard key={match.schedule_id} match={match}/>
-                            ))}
+                    <div className="mb-8">
+                        <button
+                            onClick={() => setOpenMatchesOpen(!openMatchesOpen)}
+                            className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-red-50 hover:from-orange-100 hover:to-red-100 rounded-lg transition-all duration-200 border border-orange-200 mb-4"
+                        >
+                            <div className="flex items-center gap-2">
+                                <Trophy className="h-5 w-5 text-orange-600"/>
+                                <h2 className="text-xl font-semibold text-orange-900">Partidas em Aberto</h2>
+                                <Badge className="bg-orange-600 text-white">
+                                    {matches.filter(m => m.match_id && m.status !== 'finished' && m.status !== 'cancelled').length}
+                                </Badge>
+                            </div>
+                            <ChevronDown className={`h-5 w-5 text-orange-600 transition-transform duration-200 ${openMatchesOpen ? 'rotate-180' : ''}`}/>
+                        </button>
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${openMatchesOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                            {matches.filter(m => m.match_id && m.status !== 'finished' && m.status !== 'cancelled').length === 0 ? (
+                                <Card>
+                                    <CardContent className="text-center py-8">
+                                        <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
+                                        <p className="text-gray-500">Nenhuma partida em aberto</p>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                matches.filter(m => m.match_id && m.status !== 'finished' && m.status !== 'cancelled').map(match => (
+                                    <MatchCard key={match.schedule_id} match={match}/>
+                                ))
+                            )}
                         </div>
-                    )}
+                    </div>
                     
                     {/* Finished Matches */}
-                    <h2 className="text-xl font-semibold mb-4">Partidas Encerradas</h2>
-                    {matches.filter(m => m.match_id && (m.status === 'finished' || m.status === 'cancelled')).length === 0 ? (
-                        <Card>
-                            <CardContent className="text-center py-8">
-                                <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
-                                <p className="text-gray-500">Nenhuma partida encerrada</p>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        matches.filter(m => m.match_id && (m.status === 'finished' || m.status === 'cancelled'))
-                            .sort((a, b) => new Date(b.date) - new Date(a.date))
-                            .map(match => (
-                                <FinishedMatchCard 
-                                    key={match.schedule_id} 
-                                    match={match} 
-                                    onClick={() => navigate(`/admin/matches/${match.match_id}/report`)}
-                                    showWinner={true}
-                                />
-                            ))
-                    )}
+                    <div>
+                        <button
+                            onClick={() => setFinishedMatchesOpen(!finishedMatchesOpen)}
+                            className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100 rounded-lg transition-all duration-200 border border-gray-200 mb-4"
+                        >
+                            <div className="flex items-center gap-2">
+                                <Trophy className="h-5 w-5 text-gray-600"/>
+                                <h2 className="text-xl font-semibold text-gray-900">Partidas Encerradas</h2>
+                                <Badge className="bg-gray-600 text-white">
+                                    {matches.filter(m => m.match_id && (m.status === 'finished' || m.status === 'cancelled')).length}
+                                </Badge>
+                            </div>
+                            <ChevronDown className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${finishedMatchesOpen ? 'rotate-180' : ''}`}/>
+                        </button>
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${finishedMatchesOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                            {matches.filter(m => m.match_id && (m.status === 'finished' || m.status === 'cancelled')).length === 0 ? (
+                                <Card>
+                                    <CardContent className="text-center py-8">
+                                        <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
+                                        <p className="text-gray-500">Nenhuma partida encerrada</p>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                matches.filter(m => m.match_id && (m.status === 'finished' || m.status === 'cancelled'))
+                                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                                    .map(match => (
+                                        <FinishedMatchCard 
+                                            key={match.schedule_id} 
+                                            match={match} 
+                                            onClick={() => navigate(`/admin/matches/${match.match_id}/report`)}
+                                            showWinner={true}
+                                        />
+                                    ))
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 <div>

@@ -336,6 +336,25 @@ def generate_whatsapp_message():
         message = f"📅 *Agenda LAPEN - {month_name} {year}*\n\nNenhum jogo agendado para {period_text}."
         return jsonify({'message': message})
 
+    # Get betting odds for matches with active bets
+    match_odds = {}
+    for schedule in schedules:
+        match = db.execute('SELECT id FROM matches WHERE schedule_id = ? AND status = "upcoming"', (schedule['id'],)).fetchone()
+        if match:
+            bets = db.execute('''
+                SELECT player_name, SUM(amount) as total_amount
+                FROM bets
+                WHERE match_id = ? AND status = 'active'
+                GROUP BY player_name
+            ''', (match['id'],)).fetchall()
+            
+            if len(bets) == 2:
+                total_pool = sum(bet['total_amount'] for bet in bets)
+                odds = {}
+                for bet in bets:
+                    odds[bet['player_name']] = round(total_pool / bet['total_amount'], 2)
+                match_odds[schedule['id']] = odds
+
     # Group schedules by date and court
     grouped_schedules = {}
     for schedule in schedules:
@@ -372,8 +391,21 @@ def generate_whatsapp_message():
                     match_emoji = "🏅"
                 else:
                     match_emoji = "🤝"
+                
+                # Add odds if available
+                odds_text = ""
+                if schedule['id'] in match_odds:
+                    odds = match_odds[schedule['id']]
+                    p1_odd = odds.get(schedule['player1_name'], 0)
+                    p2_odd = odds.get(schedule['player2_name'], 0)
+                    
+                    if p1_odd > p2_odd:
+                        odds_text = f" ({p1_odd:.2f}x 🔥 vs {p2_odd:.2f}x)"
+                    else:
+                        odds_text = f" ({p1_odd:.2f}x vs {p2_odd:.2f}x 🔥)"
+                
                 message_parts.append(
-                    f"  🕐 {normalize_time(schedule['start_time'])} - {schedule['player1_name']} vs {schedule['player2_name']} {match_emoji}\n")
+                    f"  🕐 {normalize_time(schedule['start_time'])} - {schedule['player1_name']} vs {schedule['player2_name']} {match_emoji}{odds_text}\n")
 
     message_parts.extend(["\n\n---\n", f"Para criar ou alterar seu agendamento, acesse:\n🔗 {request.host_url}",
                           "\n\n🎾 *LAPEN - Liga Penedense de Tênis*"])

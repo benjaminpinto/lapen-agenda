@@ -6,7 +6,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/compo
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Dialog, DialogContent} from '@/components/ui/dialog'
-import {CheckCircle, Clock, Share2, Trophy, Users, Wallet} from 'lucide-react'
+import {CheckCircle, Clock, Share2, Star, Trophy, Users, Wallet} from 'lucide-react'
 import ShareableMatchCard from './ShareableMatchCard'
 import FinishedMatchCard from '../shared/FinishedMatchCard'
 import PaymentForm from './PaymentForm'
@@ -318,8 +318,15 @@ const BettingDashboard = () => {
                     <div className="grid grid-cols-2 gap-4 mb-4">
                         {stats[match.player1_name] && stats[match.player2_name] ? (
                             <>
-                                <div className="text-center p-3 bg-blue-50 rounded">
-                                    <div className="font-semibold">{match.player1_name}</div>
+                                <div className={`text-center p-3 rounded relative ${
+                                    match.user_bet_player === match.player1_name 
+                                        ? 'bg-amber-100 border-2 border-amber-400' 
+                                        : 'bg-blue-50'
+                                }`}>
+                                    <div className="font-semibold flex items-center justify-center gap-1">
+                                        {match.user_bet_player === match.player1_name && <Star className="h-4 w-4 fill-amber-500 text-amber-500" />}
+                                        {match.player1_name}
+                                    </div>
                                     <div className="text-sm text-gray-600">
                                         Odds: {odds[match.player1_name] ? `${odds[match.player1_name]}x` : 'N/A'}
                                     </div>
@@ -327,8 +334,15 @@ const BettingDashboard = () => {
                                         Apostas: R$ {stats[match.player1_name]?.total_amount?.toFixed(2) || '0.00'}
                                     </div>
                                 </div>
-                                <div className="text-center p-3 bg-green-50 rounded">
-                                    <div className="font-semibold">{match.player2_name}</div>
+                                <div className={`text-center p-3 rounded relative ${
+                                    match.user_bet_player === match.player2_name 
+                                        ? 'bg-amber-100 border-2 border-amber-400' 
+                                        : 'bg-green-50'
+                                }`}>
+                                    <div className="font-semibold flex items-center justify-center gap-1">
+                                        {match.user_bet_player === match.player2_name && <Star className="h-4 w-4 fill-amber-500 text-amber-500" />}
+                                        {match.player2_name}
+                                    </div>
                                     <div className="text-sm text-gray-600">
                                         Odds: {odds[match.player2_name] ? `${odds[match.player2_name]}x` : 'N/A'}
                                     </div>
@@ -458,9 +472,21 @@ const BettingDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Matches List */}
                 <div className="lg:col-span-2">
+                    {/* Active Bets */}
+                    {isAuthenticated && matches.filter(m => m.status === 'upcoming' && m.user_has_bet).length > 0 && (
+                        <>
+                            <h2 className="text-xl font-semibold mb-4">Apostas Em Andamento</h2>
+                            <div className="mb-8">
+                                {matches.filter(m => m.status === 'upcoming' && m.user_has_bet).map(match => (
+                                    <MatchCard key={match.schedule_id} match={match}/>
+                                ))}
+                            </div>
+                        </>
+                    )}
+
                     {/* Available Matches */}
                     <h2 className="text-xl font-semibold mb-4">Partidas Disponíveis</h2>
-                    {matches.filter(m => m.status === 'upcoming').length === 0 ? (
+                    {matches.filter(m => m.status === 'upcoming' && !m.user_has_bet).length === 0 ? (
                         <Card className="mb-8">
                             <CardContent className="text-center py-8">
                                 <Users className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
@@ -469,7 +495,7 @@ const BettingDashboard = () => {
                         </Card>
                     ) : (
                         <div className="mb-8">
-                            {matches.filter(m => m.status === 'upcoming').map(match => (
+                            {matches.filter(m => m.status === 'upcoming' && !m.user_has_bet).map(match => (
                                 <MatchCard key={match.schedule_id} match={match}/>
                             ))}
                         </div>

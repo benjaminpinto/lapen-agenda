@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from src.database import get_db
 from src.email_service import send_winner_notification_email, send_bet_settlement_email
 from src.logger import get_logger
+from src.auth import require_auth
 from decimal import Decimal
 
 logger = get_logger()
@@ -9,6 +10,7 @@ logger = get_logger()
 admin_matches_bp = Blueprint('admin_matches', __name__, url_prefix='/api/admin/matches')
 
 @admin_matches_bp.route('/<int:match_id>/finish', methods=['POST'])
+@require_auth
 def finish_match(match_id):
     """Finish a match and settle all bets"""
     data = request.get_json()
@@ -138,6 +140,7 @@ def finish_match(match_id):
         db.close()
 
 @admin_matches_bp.route('/<int:match_id>/cancel', methods=['POST'])
+@require_auth
 def cancel_match(match_id):
     """Cancel a match and refund all bets"""
     import os

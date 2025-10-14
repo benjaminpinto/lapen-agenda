@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar, Clock, Trophy, DollarSign } from 'lucide-react'
+import { Calendar, CalendarDays, Clock, Trophy, DollarSign } from 'lucide-react'
 
 const Home = () => {
   return (
@@ -23,7 +23,14 @@ const Home = () => {
           </Link>
           <Link to="/view">
             <Button variant="outline" size="lg" className="w-full sm:w-auto">
+              <CalendarDays className="h-5 w-5 mr-2" />
               Ver Agenda
+            </Button>
+          </Link>
+          <Link to="/betting">
+            <Button variant="outline" size="lg" className="w-full sm:w-auto bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 border-amber-300 text-amber-900">
+              <Trophy className="h-5 w-5 mr-2" />
+              Apostar
             </Button>
           </Link>
         </div>

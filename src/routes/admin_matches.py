@@ -100,8 +100,7 @@ def finish_match(match_id):
                     WHERE id = ?
                 ''', ('won', float(payout), bet['id']))
                 
-                # Send winner emails
-                send_winner_notification_email(bet['email'], bet['name'], match_details, float(payout))
+                # Send settlement email
                 send_bet_settlement_email(bet['email'], bet['name'], match_details, 'won', float(payout))
         
         # Update losing bets and send settlement emails

@@ -8,9 +8,11 @@ import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Textarea} from '@/components/ui/textarea'
-import {BarChart3, Calendar, Clock, Edit, GraduationCap, List, MapPin, Share2, Trash2, Trophy, Users} from 'lucide-react'
+import {BarChart3, Calendar, Clock, Edit, GraduationCap, List, MapPin, Medal, Share2, Trash2, Trophy, Users} from 'lucide-react'
 import {useToast} from '@/components/hooks/use-toast.js'
 import WeeklyCalendar from './WeeklyCalendar'
+import MonthSelector from './ui/MonthSelector'
+import MatchTypeBadge from './ui/MatchTypeBadge'
 
 const ScheduleView = () => {
     const [searchParams] = useSearchParams()
@@ -25,6 +27,8 @@ const ScheduleView = () => {
     const [players, setPlayers] = useState([])
     const [stats, setStats] = useState({})
     const [hidePastDates, setHidePastDates] = useState(true)
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
     const [formData, setFormData] = useState({
         player1_name: '',
         player2_name: '',
@@ -44,7 +48,7 @@ const ScheduleView = () => {
                 handleWhatsappShare()
             }, 1000)
         }
-    }, [searchParams])
+    }, [searchParams, selectedMonth, selectedYear])
 
     useEffect(() => {
         if (viewType === 'weekly') {
@@ -54,7 +58,7 @@ const ScheduleView = () => {
 
     const fetchSchedules = async () => {
         try {
-            const response = await fetch('/api/public/schedules/month')
+            const response = await fetch(`/api/public/schedules/month?year=${selectedYear}&month=${selectedMonth}`)
             if (response.ok) {
                 const data = await response.json()
                 setSchedules(data)
@@ -192,7 +196,7 @@ const ScheduleView = () => {
             await captureWeeklyCalendar()
         } else {
             try {
-                const response = await fetch('/api/public/whatsapp-message')
+                const response = await fetch(`/api/public/whatsapp-message?year=${selectedYear}&month=${selectedMonth}`)
                 if (response.ok) {
                     const data = await response.json()
                     setWhatsappMessage(data.message)
@@ -270,17 +274,7 @@ const ScheduleView = () => {
         return grouped
     }
 
-    const getMatchTypeColor = (matchType) => {
-        if (matchType === 'Liga') return 'bg-yellow-100 !text-black'
-        if (matchType === 'Aula') return 'bg-purple-100 !text-black'
-        return 'bg-green-100 !text-black'
-    }
 
-    const getMatchTypeIcon = (matchType) => {
-        if (matchType === 'Liga') return <Trophy className="h-4 w-4 text-black"/>
-        if (matchType === 'Aula') return <GraduationCap className="h-4 w-4 text-black"/>
-        return <Users className="h-4 w-4 text-black"/>
-    }
 
     if (loading) {
         return <div className="text-center py-8">Carregando agenda...</div>
@@ -327,6 +321,14 @@ const ScheduleView = () => {
                 </TabsList>
 
                 <TabsContent value="list" className="mt-6">
+                    <MonthSelector 
+                        selectedMonth={selectedMonth}
+                        selectedYear={selectedYear}
+                        onMonthChange={(month, year) => {
+                            setSelectedMonth(month)
+                            setSelectedYear(year)
+                        }}
+                    />
                     {(() => {
                         const today = new Date().toISOString().split('T')[0]
                         const futureSchedules = {}
@@ -384,16 +386,7 @@ const ScheduleView = () => {
                                                                             <span className="mx-1">x</span>
                                                                             <span className="font-medium">{schedule.player2_name}</span>
                                                                         </div>
-                                                                        <div
-                                                                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold border transition-all duration-200 ${
-                                                                                schedule.match_type === 'Liga' ? 'bg-yellow-100 text-black border-yellow-300' :
-                                                                                schedule.match_type === 'Aula' ? 'bg-purple-100 text-black border-purple-300' :
-                                                                                'bg-green-100 text-black border-green-300'
-                                                                            }`}
-                                                                        >
-                                                                            {getMatchTypeIcon(schedule.match_type)}
-                                                                            <span className="ml-1">{schedule.match_type}</span>
-                                                                        </div>
+                                                                        <MatchTypeBadge matchType={schedule.match_type} size="sm" />
                                                                     </div>
                                                                     <div className="flex justify-end space-x-1">
                                                                         <Button variant="ghost" size="sm"
@@ -423,23 +416,7 @@ const ScheduleView = () => {
                                                                             <span className="mx-2">x</span>
                                                                             <span className="font-medium">{schedule.player2_name}</span>
                                                                         </div>
-                                                                        <div
-                                                                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-2 transition-all duration-200 cursor-pointer ${
-                                                                                schedule.match_type === 'Liga' ? 'bg-yellow-100 text-black border-yellow-300 hover:border-yellow-600' :
-                                                                                schedule.match_type === 'Aula' ? 'bg-purple-100 text-black border-purple-300 hover:border-purple-600' :
-                                                                                'bg-green-100 text-black border-green-300 hover:border-green-600'
-                                                                            }`}
-                                                                            title={
-                                                                                schedule.match_type === 'Liga' ? 'Partida oficial da liga' :
-                                                                                schedule.match_type === 'Aula' ? 'Aula de tênis' :
-                                                                                'Partida amistosa entre jogadores'
-                                                                            }
-                                                                        >
-                                                                            <div className="flex items-center">
-                                                                                {getMatchTypeIcon(schedule.match_type)}
-                                                                                <span className="ml-1">{schedule.match_type}</span>
-                                                                            </div>
-                                                                        </div>
+                                                                        <MatchTypeBadge matchType={schedule.match_type} />
                                                                     </div>
                                                                     <div className="flex space-x-2">
                                                                         <Button variant="ghost" size="sm"
@@ -608,6 +585,7 @@ const ScheduleView = () => {
                                     <SelectItem value="Amistoso">Amistoso</SelectItem>
                                     <SelectItem value="Liga">Liga</SelectItem>
                                     <SelectItem value="Aula">Aula</SelectItem>
+                                    <SelectItem value="Torneio">Torneio</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

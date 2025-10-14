@@ -6,7 +6,8 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/compo
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Dialog, DialogContent} from '@/components/ui/dialog'
-import {CheckCircle, Clock, Share2, Star, Trophy, Users, Wallet} from 'lucide-react'
+import {Badge} from '@/components/ui/badge'
+import {CheckCircle, ChevronDown, Clock, Flame, Share2, Star, Trophy, Users, Wallet} from 'lucide-react'
 import ShareableMatchCard from './ShareableMatchCard'
 import FinishedMatchCard from '../shared/FinishedMatchCard'
 import PaymentForm from './PaymentForm'
@@ -20,6 +21,9 @@ const BettingDashboard = () => {
     const [loading, setLoading] = useState(false)
     const [clientSecret, setClientSecret] = useState(null)
     const [showPayment, setShowPayment] = useState(false)
+    const [activeBetsOpen, setActiveBetsOpen] = useState(false)
+    const [availableMatchesOpen, setAvailableMatchesOpen] = useState(true)
+    const [finishedMatchesOpen, setFinishedMatchesOpen] = useState(false)
     const {isAuthenticated, user} = useAuth()
     const {toast} = useToast()
 
@@ -301,8 +305,8 @@ const BettingDashboard = () => {
                         <span>{match.player1_name} vs {match.player2_name}</span>
                         <Trophy className="h-5 w-5 text-yellow-500"/>
                     </CardTitle>
-                    <CardDescription>
-                        <div className="flex items-center space-x-4 text-sm">
+                    <div className="text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-4">
               <span className="flex items-center">
                 <Clock className="h-4 w-4 mr-1"/>
                   {new Date(match.date + 'T00:00:00').toLocaleDateString('pt-BR')} às {match.start_time}
@@ -312,7 +316,7 @@ const BettingDashboard = () => {
                 Apostas: R$ {(Object.values(stats).reduce((sum, stat) => sum + (stat.total_amount || 0), 0)).toFixed(2)}
               </span>
                         </div>
-                    </CardDescription>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 gap-4 mb-4">
@@ -472,51 +476,93 @@ const BettingDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Matches List */}
                 <div className="lg:col-span-2">
+                    {/* Available Matches */}
+                    <div className="mb-8">
+                        <button
+                            onClick={() => setAvailableMatchesOpen(!availableMatchesOpen)}
+                            className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-green-50 hover:from-blue-100 hover:to-green-100 rounded-lg transition-all duration-200 border border-blue-200 mb-4"
+                        >
+                            <div className="flex items-center gap-2">
+                                <Flame className="h-5 w-5 text-blue-600"/>
+                                <h2 className="text-xl font-semibold text-blue-900">Partidas Disponíveis</h2>
+                                <Badge className="bg-blue-600 text-white">
+                                    {matches.filter(m => m.status === 'upcoming' && !m.user_has_bet).length}
+                                </Badge>
+                            </div>
+                            <ChevronDown className={`h-5 w-5 text-blue-600 transition-transform duration-200 ${availableMatchesOpen ? 'rotate-180' : ''}`}/>
+                        </button>
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${availableMatchesOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                            {matches.filter(m => m.status === 'upcoming' && !m.user_has_bet).length === 0 ? (
+                                <Card>
+                                    <CardContent className="text-center py-8">
+                                        <Users className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
+                                        <p className="text-gray-500">Nenhuma partida disponível para apostas</p>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                matches.filter(m => m.status === 'upcoming' && !m.user_has_bet).map(match => (
+                                    <MatchCard key={match.schedule_id} match={match}/>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
                     {/* Active Bets */}
                     {isAuthenticated && matches.filter(m => m.status === 'upcoming' && m.user_has_bet).length > 0 && (
-                        <>
-                            <h2 className="text-xl font-semibold mb-4">Apostas Em Andamento</h2>
-                            <div className="mb-8">
+                        <div className="mb-8">
+                            <button
+                                onClick={() => setActiveBetsOpen(!activeBetsOpen)}
+                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 rounded-lg transition-all duration-200 border border-amber-200 mb-4"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-5 w-5 text-amber-600"/>
+                                    <h2 className="text-xl font-semibold text-amber-900">Apostas Em Andamento</h2>
+                                    <Badge className="bg-amber-600 text-white">
+                                        {matches.filter(m => m.status === 'upcoming' && m.user_has_bet).length}
+                                    </Badge>
+                                </div>
+                                <ChevronDown className={`h-5 w-5 text-amber-600 transition-transform duration-200 ${activeBetsOpen ? 'rotate-180' : ''}`}/>
+                            </button>
+                            <div className={`transition-all duration-300 ease-in-out overflow-hidden ${activeBetsOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                                 {matches.filter(m => m.status === 'upcoming' && m.user_has_bet).map(match => (
                                     <MatchCard key={match.schedule_id} match={match}/>
                                 ))}
                             </div>
-                        </>
-                    )}
-
-                    {/* Available Matches */}
-                    <h2 className="text-xl font-semibold mb-4">Partidas Disponíveis</h2>
-                    {matches.filter(m => m.status === 'upcoming' && !m.user_has_bet).length === 0 ? (
-                        <Card className="mb-8">
-                            <CardContent className="text-center py-8">
-                                <Users className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
-                                <p className="text-gray-500">Nenhuma partida disponível para apostas</p>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        <div className="mb-8">
-                            {matches.filter(m => m.status === 'upcoming' && !m.user_has_bet).map(match => (
-                                <MatchCard key={match.schedule_id} match={match}/>
-                            ))}
                         </div>
                     )}
 
                     {/* Finished Matches */}
-                    <h2 className="text-xl font-semibold mb-4">Partidas Encerradas</h2>
-                    {matches.filter(m => m.status === 'finished' || m.status === 'cancelled').length === 0 ? (
-                        <Card>
-                            <CardContent className="text-center py-8">
-                                <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
-                                <p className="text-gray-500">Nenhuma partida encerrada</p>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        matches.filter(m => m.status === 'finished' || m.status === 'cancelled')
-                            .sort((a, b) => new Date(b.date) - new Date(a.date))
-                            .map(match => (
-                                <FinishedMatchCard key={match.schedule_id} match={match}/>
-                            ))
-                    )}
+                    <div>
+                        <button
+                            onClick={() => setFinishedMatchesOpen(!finishedMatchesOpen)}
+                            className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100 rounded-lg transition-all duration-200 border border-gray-200 mb-4"
+                        >
+                            <div className="flex items-center gap-2">
+                                <CheckCircle className="h-5 w-5 text-gray-600"/>
+                                <h2 className="text-xl font-semibold text-gray-900">Partidas Encerradas</h2>
+                                <Badge className="bg-gray-600 text-white">
+                                    {matches.filter(m => m.status === 'finished' || m.status === 'cancelled').length}
+                                </Badge>
+                            </div>
+                            <ChevronDown className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${finishedMatchesOpen ? 'rotate-180' : ''}`}/>
+                        </button>
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${finishedMatchesOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                            {matches.filter(m => m.status === 'finished' || m.status === 'cancelled').length === 0 ? (
+                                <Card>
+                                    <CardContent className="text-center py-8">
+                                        <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
+                                        <p className="text-gray-500">Nenhuma partida encerrada</p>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                matches.filter(m => m.status === 'finished' || m.status === 'cancelled')
+                                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                                    .map(match => (
+                                        <FinishedMatchCard key={match.schedule_id} match={match}/>
+                                    ))
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Betting Form */}

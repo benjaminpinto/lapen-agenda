@@ -1,6 +1,6 @@
 import { GraduationCap, Medal, Trophy, Users } from 'lucide-react'
 
-const MatchTypeBadge = ({ matchType, size = 'default', className = '' }) => {
+const MatchTypeBadge = ({ matchType, size = 'default', className = '', iconOnly = false }) => {
     const getIcon = () => {
         const iconSize = size === 'sm' ? 'h-2 w-2' : size === 'xs' ? 'h-3 w-3' : 'h-4 w-4'
         
@@ -36,7 +36,7 @@ const MatchTypeBadge = ({ matchType, size = 'default', className = '' }) => {
             title={getTitle()}
         >
             {getIcon()}
-            <span className="ml-1">{matchType}</span>
+            {!iconOnly && <span className="ml-1">{matchType}</span>}
         </div>
     )
 }

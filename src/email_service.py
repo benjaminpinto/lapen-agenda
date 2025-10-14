@@ -53,6 +53,10 @@ def send_bet_confirmation_email(email, name, bet_details):
         if not mail:
             return False
         
+        potential_return_html = ""
+        if bet_details.get('potential_return') and bet_details['potential_return'] != 'R$ 0' and bet_details['potential_return'] != 'R$ 0.00':
+            potential_return_html = f"<p><strong>Retorno Potencial:</strong> {bet_details['potential_return']}</p>"
+        
         msg = Message(
             subject='Confirmação de Aposta - Tigrinho LAPEN',
             recipients=[email],
@@ -64,7 +68,8 @@ def send_bet_confirmation_email(email, name, bet_details):
             <p><strong>Partida:</strong> {bet_details['match']}</p>
             <p><strong>Jogador:</strong> {bet_details['player']}</p>
             <p><strong>Valor:</strong> {bet_details['amount']}</p>
-            <p><strong>Retorno Potencial:</strong> {bet_details['potential_return']}</p>
+            {potential_return_html}
+            <p><strong>ID da Transação:</strong> {bet_details['transaction_id']}</p>
             <p>Boa sorte!</p>
             """
         )

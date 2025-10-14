@@ -1,7 +1,11 @@
 from flask import Blueprint, request, jsonify, session
 from src.database import get_db
+from src.database_utils import get_month_comparison_sql
+from src.logger import get_logger
 import base64
 import os
+
+logger = get_logger()
 
 def normalize_time(time_value):
     """Convert time to string format for comparison"""
@@ -22,8 +26,10 @@ def login():
     
     if password == ADMIN_PASSWORD:
         session['admin_authenticated'] = True
+        logger.info('Admin login successful')
         return jsonify({'success': True, 'message': 'Login successful'})
     else:
+        logger.warning('Admin login failed - invalid password')
         return jsonify({'success': False, 'message': 'Invalid password'}), 401
 
 @admin_bp.route('/logout', methods=['POST'])
@@ -88,8 +94,10 @@ def create_court():
             (name, court_type, description, active, image_url)
         )
         db.commit()
+        logger.info(f'Court created: {name}')
         return jsonify({'success': True, 'message': 'Court created successfully'})
     except Exception as e:
+        logger.error(f'Error creating court {name}: {str(e)}')
         return jsonify({'success': False, 'message': str(e)}), 400
 
 @admin_bp.route('/courts/<int:court_id>', methods=['PUT'])
@@ -310,31 +318,34 @@ def get_dashboard_stats():
     db = get_db()
     
     # Most booked court this month
-    most_booked_court = db.execute('''
+    month_condition = get_month_comparison_sql('s.date')
+    most_booked_court = db.execute(f'''
         SELECT c.name, COUNT(*) as bookings
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
-        WHERE strftime('%Y-%m', s.date) = strftime('%Y-%m', 'now')
+        WHERE {month_condition}
         GROUP BY c.id, c.name
         ORDER BY bookings DESC
         LIMIT 1
     ''').fetchone()
     
     # Total games by type this month
-    game_stats = db.execute('''
+    month_condition = get_month_comparison_sql('date')
+    game_stats = db.execute(f'''
         SELECT match_type, COUNT(*) as count
         FROM schedules
-        WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
+        WHERE {month_condition}
         GROUP BY match_type
     ''').fetchall()
     
     # Top players this month
-    top_players = db.execute('''
+    month_condition = get_month_comparison_sql('date')
+    top_players = db.execute(f'''
         SELECT player_name, COUNT(*) as games
         FROM (
-            SELECT player1_name as player_name FROM schedules WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
+            SELECT player1_name as player_name FROM schedules WHERE {month_condition}
             UNION ALL
-            SELECT player2_name as player_name FROM schedules WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
+            SELECT player2_name as player_name FROM schedules WHERE {month_condition}
         )
         GROUP BY player_name
         ORDER BY games DESC

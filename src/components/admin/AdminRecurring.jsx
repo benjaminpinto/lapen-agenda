@@ -5,17 +5,11 @@ import {Label} from '@/components/ui/label'
 import {Textarea} from '@/components/ui/textarea'
 import {Checkbox} from '@/components/ui/checkbox'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
-} from '@/components/ui/dialog'
-import {Clock, MapPin, Plus, Trash2} from 'lucide-react'
+import {Card, CardContent} from '@/components/ui/card'
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
+import {ArrowLeft, Clock, MapPin, Plus, Trash2} from 'lucide-react'
 import {useToast} from "@/components/hooks/use-toast.js";
+import {Link} from 'react-router-dom'
 
 const AdminRecurring = () => {
     const [schedules, setSchedules] = useState([])
@@ -223,6 +217,12 @@ const AdminRecurring = () => {
 
     return (
         <div className="max-w-6xl mx-auto">
+            <Link to="/admin/dashboard">
+                <Button variant="outline" size="sm" className="mb-4">
+                    <ArrowLeft className="h-4 w-4 mr-2"/>
+                    Voltar ao Dashboard
+                </Button>
+            </Link>
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -233,7 +233,10 @@ const AdminRecurring = () => {
                     </p>
                 </div>
 
-                <Button onClick={() => {resetForm(); setIsDialogOpen(true)}}>
+                <Button onClick={() => {
+                    resetForm();
+                    setIsDialogOpen(true)
+                }}>
                     <Plus className="h-4 w-4 mr-2"/>
                     Nova Agenda Fixa
                 </Button>
@@ -241,132 +244,132 @@ const AdminRecurring = () => {
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle>Criar Agenda Fixa</DialogTitle>
-                            <DialogDescription>
-                                Configure um agendamento recorrente para aulas ou eventos regulares
-                            </DialogDescription>
-                        </DialogHeader>
+                    <DialogHeader>
+                        <DialogTitle>Criar Agenda Fixa</DialogTitle>
+                        <DialogDescription>
+                            Configure um agendamento recorrente para aulas ou eventos regulares
+                        </DialogDescription>
+                    </DialogHeader>
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div>
-                                <Label htmlFor="court">Quadra</Label>
-                                <Select value={formData.court_id}
-                                        onValueChange={(value) => setFormData(prev => ({...prev, court_id: value}))}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione a quadra">
-                                            {formData.court_id && courts.find(court => String(court.id) === formData.court_id)?.name || "Selecione a quadra"}
-                                        </SelectValue>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {courts.map((court) => (
-                                            <SelectItem key={court.id} value={court.id.toString()}>
-                                                {court.name} ({court.type})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div>
-                                <Label>Dias da Semana</Label>
-                                <div className="grid grid-cols-2 gap-2 mt-2">
-                                    {weekDays.map((day) => (
-                                        <div key={day.value} className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id={`day-${day.value}`}
-                                                checked={formData.days_of_week.includes(day.value)}
-                                                onCheckedChange={(checked) => handleDayToggle(day.value, checked)}
-                                            />
-                                            <Label htmlFor={`day-${day.value}`} className="text-sm">
-                                                {day.label}
-                                            </Label>
-                                        </div>
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div>
+                            <Label htmlFor="court">Quadra</Label>
+                            <Select value={formData.court_id}
+                                    onValueChange={(value) => setFormData(prev => ({...prev, court_id: value}))}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione a quadra">
+                                        {formData.court_id && courts.find(court => String(court.id) === formData.court_id)?.name || "Selecione a quadra"}
+                                    </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {courts.map((court) => (
+                                        <SelectItem key={court.id} value={court.id.toString()}>
+                                            {court.name} ({court.type})
+                                        </SelectItem>
                                     ))}
-                                </div>
-                            </div>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                            <div>
-                                <Label>Horários</Label>
-                                <div className="space-y-2 mt-2">
-                                    {formData.times.map((time, index) => (
-                                        <div key={index} className="flex items-center space-x-2">
-                                            <Input
-                                                type="time"
-                                                value={time}
-                                                onChange={(e) => updateTimeSlot(index, e.target.value)}
-                                                className="flex-1"
-                                            />
-                                            {formData.times.length > 1 && (
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => removeTimeSlot(index)}
-                                                >
-                                                    Remover
-                                                </Button>
-                                            )}
-                                        </div>
-                                    ))}
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={addTimeSlot}
-                                    >
-                                        Adicionar Horário
-                                    </Button>
-                                </div>
+                        <div>
+                            <Label>Dias da Semana</Label>
+                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                {weekDays.map((day) => (
+                                    <div key={day.value} className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={`day-${day.value}`}
+                                            checked={formData.days_of_week.includes(day.value)}
+                                            onCheckedChange={(checked) => handleDayToggle(day.value, checked)}
+                                        />
+                                        <Label htmlFor={`day-${day.value}`} className="text-sm">
+                                            {day.label}
+                                        </Label>
+                                    </div>
+                                ))}
                             </div>
+                        </div>
 
+                        <div>
+                            <Label>Horários</Label>
+                            <div className="space-y-2 mt-2">
+                                {formData.times.map((time, index) => (
+                                    <div key={index} className="flex items-center space-x-2">
+                                        <Input
+                                            type="time"
+                                            value={time}
+                                            onChange={(e) => updateTimeSlot(index, e.target.value)}
+                                            className="flex-1"
+                                        />
+                                        {formData.times.length > 1 && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => removeTimeSlot(index)}
+                                            >
+                                                Remover
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))}
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={addTimeSlot}
+                                >
+                                    Adicionar Horário
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label htmlFor="description">Descrição</Label>
+                            <Textarea
+                                id="description"
+                                value={formData.description}
+                                onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
+                                placeholder="Ex: Aula Professor Alexandre"
+                                required
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="description">Descrição</Label>
-                                <Textarea
-                                    id="description"
-                                    value={formData.description}
-                                    onChange={(e) => setFormData(prev => ({...prev, description: e.target.value}))}
-                                    placeholder="Ex: Aula Professor Alexandre"
+                                <Label htmlFor="start_date">Data de Início</Label>
+                                <Input
+                                    id="start_date"
+                                    type="date"
+                                    value={formData.start_date}
+                                    onChange={(e) => setFormData(prev => ({...prev, start_date: e.target.value}))}
                                     required
                                 />
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label htmlFor="start_date">Data de Início</Label>
-                                    <Input
-                                        id="start_date"
-                                        type="date"
-                                        value={formData.start_date}
-                                        onChange={(e) => setFormData(prev => ({...prev, start_date: e.target.value}))}
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="end_date">Data de Fim</Label>
-                                    <Input
-                                        id="end_date"
-                                        type="date"
-                                        value={formData.end_date}
-                                        onChange={(e) => setFormData(prev => ({...prev, end_date: e.target.value}))}
-                                        required
-                                    />
-                                </div>
+                            <div>
+                                <Label htmlFor="end_date">Data de Fim</Label>
+                                <Input
+                                    id="end_date"
+                                    type="date"
+                                    value={formData.end_date}
+                                    onChange={(e) => setFormData(prev => ({...prev, end_date: e.target.value}))}
+                                    required
+                                />
                             </div>
+                        </div>
 
-                            <div className="flex justify-end space-x-2">
-                                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                                    Cancelar
-                                </Button>
-                                <Button type="submit">
-                                    Criar Agenda Fixa
-                                </Button>
-                            </div>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                        <div className="flex justify-end space-x-2">
+                            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                                Cancelar
+                            </Button>
+                            <Button type="submit">
+                                Criar Agenda Fixa
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
-            <div className="grid gap-4">
+            <div className="space-y-3">
                 {schedules.length === 0 ? (
                     <Card>
                         <CardContent className="text-center py-8">
@@ -374,40 +377,40 @@ const AdminRecurring = () => {
                         </CardContent>
                     </Card>
                 ) : (
-                    schedules.map((schedule) => (
-                        <Card key={schedule.id}>
-                            <CardHeader>
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <CardTitle className="flex items-center">
-                                            <MapPin className="h-5 w-5 mr-2 text-green-600"/>
-                                            {schedule.court_name}
-                                        </CardTitle>
-                                        <CardDescription className="mt-2">
-                                            <div className="flex items-center mb-1">
+                    schedules
+                        .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
+                        .map((schedule) => (
+                            <Card key={schedule.id}>
+                                <CardContent className="py-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-6">
+                                            <div className="flex items-center">
+                                                <MapPin className="h-5 w-5 mr-2 text-green-600"/>
+                                                <span className="font-semibold">{schedule.court_name}</span>
+                                            </div>
+                                            <div className="flex items-center text-sm text-gray-600">
                                                 <Clock className="h-4 w-4 mr-1"/>
                                                 {getDayName(schedule.day_of_week)} - {schedule.start_time}
                                             </div>
-                                            <div className="text-sm">
+                                            <div className="text-sm text-gray-500">
                                                 {formatDate(schedule.start_date)} até {formatDate(schedule.end_date)}
                                             </div>
-                                        </CardDescription>
+                                            <div className="text-sm text-gray-700">
+                                                {schedule.description}
+                                            </div>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleDelete(schedule.id)}
+                                            className="text-red-600 hover:text-red-700"
+                                        >
+                                            <Trash2 className="h-4 w-4"/>
+                                        </Button>
                                     </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleDelete(schedule.id)}
-                                        className="text-red-600 hover:text-red-700"
-                                    >
-                                        <Trash2 className="h-4 w-4"/>
-                                    </Button>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-gray-600">{schedule.description}</p>
-                            </CardContent>
-                        </Card>
-                    ))
+                                </CardContent>
+                            </Card>
+                        ))
                 )}
             </div>
         </div>

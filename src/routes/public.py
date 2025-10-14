@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, time, timezone
 from flask import Blueprint, request, jsonify
 
 from src.database import get_db
+from src.database_utils import get_current_date_sql, get_current_time_sql, get_month_comparison_sql
 
 public_bp = Blueprint('public', __name__, url_prefix='/api/public')
 
@@ -229,12 +230,12 @@ def delete_schedule(schedule_id):
 def get_month_schedules():
     """Get all schedules for the current month"""
     now = datetime.now(timezone.utc)
-    year = request.args.get('year', now.year)
-    month = request.args.get('month', now.month)
+    year = int(request.args.get('year', now.year))
+    month = int(request.args.get('month', now.month))
 
     # Get first and last day of the month
     first_day = f"{year}-{month:02d}-01"
-    last_day_num = calendar.monthrange(int(year), int(month))[1]
+    last_day_num = calendar.monthrange(year, month)[1]
     last_day = f"{year}-{month:02d}-{last_day_num:02d}"
 
     db = get_db()
@@ -294,11 +295,16 @@ def get_week_schedules():
 
 @public_bp.route('/whatsapp-message', methods=['GET'])
 def generate_whatsapp_message():
-    """Generate WhatsApp message with current month's future schedules"""
+    """Generate WhatsApp message with selected month's schedules"""
     now = datetime.now(timezone.utc)
-    year = now.year
-    month = now.month
+    year = int(request.args.get('year', now.year))
+    month = int(request.args.get('month', now.month))
     today = now.strftime('%Y-%m-%d')
+    
+    # For selected month, show all schedules if it's not current month, otherwise show future schedules
+    current_month = now.month
+    current_year = now.year
+    show_all = (year != current_year or month != current_month)
 
     # Get month name in Portuguese
     month_names = [
@@ -313,16 +319,21 @@ def generate_whatsapp_message():
     last_day = f"{year}-{month:02d}-{last_day_num:02d}"
 
     db = get_db()
+    
+    # Use appropriate date filter based on whether we're showing current month or another month
+    start_date = first_day if show_all else max(today, first_day)
+    
     schedules = db.execute('''
         SELECT s.*, c.name as court_name, c.type as court_type
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
         WHERE s.date >= ? AND s.date <= ?
         ORDER BY s.date, c.name, s.start_time
-    ''', (today, last_day)).fetchall()
+    ''', (start_date, last_day)).fetchall()
 
     if not schedules:
-        message = f"📅 *Agenda LAPEN - {month_name} {year}*\n\nNenhum jogo agendado para este mês."
+        period_text = "este mês" if not show_all else f"{month_name.lower()} de {year}"
+        message = f"📅 *Agenda LAPEN - {month_name} {year}*\n\nNenhum jogo agendado para {period_text}."
         return jsonify({'message': message})
 
     # Group schedules by date and court
@@ -357,13 +368,15 @@ def generate_whatsapp_message():
                     match_emoji = "🎾"
                 elif schedule['match_type'] == 'Aula':
                     match_emoji = "✍️"
+                elif schedule['match_type'] == 'Torneio':
+                    match_emoji = "🏅"
                 else:
                     match_emoji = "🤝"
                 message_parts.append(
                     f"  🕐 {normalize_time(schedule['start_time'])} - {schedule['player1_name']} vs {schedule['player2_name']} {match_emoji}\n")
 
-    message_parts.extend(["\n\n---\n", f"\n\nPara criar ou alterar seu agendamento, acesse:\n🔗 {request.host_url}",
-                          "\n\n\n🎾 *LAPEN - Liga Penedense de Tênis*"])
+    message_parts.extend(["\n\n---\n", f"Para criar ou alterar seu agendamento, acesse:\n🔗 {request.host_url}",
+                          "\n\n🎾 *LAPEN - Liga Penedense de Tênis*"])
     message = ''.join(message_parts)
 
     return jsonify({'message': message})
@@ -375,36 +388,34 @@ def get_public_dashboard_stats():
     db = get_db()
 
     # Most booked court this month
-    most_booked_court = db.execute('''
+    month_condition = get_month_comparison_sql('s.date')
+    most_booked_court = db.execute(f'''
         SELECT c.name, COUNT(*) as bookings
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
-        WHERE strftime('%Y-%m', s.date) = strftime('%Y-%m', 'now')
+        WHERE {month_condition}
         GROUP BY c.id, c.name
         ORDER BY bookings DESC
         LIMIT 1
     ''').fetchone()
 
     # Total games by type this month
-    game_stats = db.execute('''
+    month_condition = get_month_comparison_sql('date')
+    game_stats = db.execute(f'''
         SELECT match_type, COUNT(*) as count
         FROM schedules
-        WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
+        WHERE {month_condition}
         GROUP BY match_type
     ''').fetchall()
 
     # Top players this month
-    top_players = db.execute('''
-        WITH monthly_schedules AS (
-            SELECT player1_name, player2_name 
-            FROM schedules 
-            WHERE strftime('%Y-%m', date) = strftime('%Y-%m', 'now')
-        )
+    month_condition = get_month_comparison_sql('date')
+    top_players = db.execute(f'''
         SELECT player_name, COUNT(*) as games
         FROM (
-            SELECT player1_name as player_name FROM monthly_schedules
+            SELECT player1_name as player_name FROM schedules WHERE {month_condition}
             UNION ALL
-            SELECT player2_name as player_name FROM monthly_schedules
+            SELECT player2_name as player_name FROM schedules WHERE {month_condition}
         )
         GROUP BY player_name
         ORDER BY games DESC

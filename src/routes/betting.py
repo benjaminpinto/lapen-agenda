@@ -185,7 +185,8 @@ def place_bet():
                 'match': f"{match_info['player1_name']} vs {match_info['player2_name']}",
                 'player': player_name,
                 'amount': f"R$ {amount}",
-                'potential_return': f"R$ {potential_return}"
+                'potential_return': f"R$ {potential_return}",
+                'transaction_id': payment_intent_id
             }
             send_bet_confirmation_email(user['email'], user['name'], bet_details)
         

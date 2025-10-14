@@ -28,7 +28,7 @@ const AdminMatches = () => {
 
     const fetchMatches = async () => {
         try {
-            const response = await fetch('/api/matches/')
+            const response = await fetch('/api/matches/?include_all=true')
             const data = await response.json()
             setMatches(data.matches || [])
         } catch (error) {
@@ -44,6 +44,9 @@ const AdminMatches = () => {
             // For finished matches, get winner info
             if (data.match?.status === 'finished') {
                 const resultResponse = await fetch(`/api/admin/matches/${matchId}/result`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    },
                     credentials: 'include'
                 })
                 if (resultResponse.ok) {
@@ -66,7 +69,8 @@ const AdminMatches = () => {
             const response = await fetch(`/api/admin/matches/${selectedMatch.match_id}/finish`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                 },
                 credentials: 'include',
                 body: JSON.stringify({
@@ -109,6 +113,9 @@ const AdminMatches = () => {
         try {
             const response = await fetch(`/api/admin/matches/${matchToCancel.match_id}/cancel`, {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                },
                 credentials: 'include'
             })
 
@@ -228,7 +235,7 @@ const AdminMatches = () => {
                         </div>
                     )}
 
-                    {match.status === 'upcoming' && (
+                    {match.status === 'upcoming' && match.match_id && (
                         <div className="space-y-2">
                             <Button
                                 onClick={() => {
@@ -314,7 +321,7 @@ const AdminMatches = () => {
                 <div className="lg:col-span-2">
                     {/* Open Matches */}
                     <h2 className="text-xl font-semibold mb-4">Partidas em Aberto</h2>
-                    {matches.filter(m => m.status !== 'finished' && m.status !== 'cancelled').length === 0 ? (
+                    {matches.filter(m => m.match_id && m.status !== 'finished' && m.status !== 'cancelled').length === 0 ? (
                         <Card className="mb-8">
                             <CardContent className="text-center py-8">
                                 <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
@@ -323,7 +330,7 @@ const AdminMatches = () => {
                         </Card>
                     ) : (
                         <div className="mb-8">
-                            {matches.filter(m => m.status !== 'finished' && m.status !== 'cancelled').map(match => (
+                            {matches.filter(m => m.match_id && m.status !== 'finished' && m.status !== 'cancelled').map(match => (
                                 <MatchCard key={match.schedule_id} match={match}/>
                             ))}
                         </div>
@@ -331,7 +338,7 @@ const AdminMatches = () => {
                     
                     {/* Finished Matches */}
                     <h2 className="text-xl font-semibold mb-4">Partidas Encerradas</h2>
-                    {matches.filter(m => m.status === 'finished' || m.status === 'cancelled').length === 0 ? (
+                    {matches.filter(m => m.match_id && (m.status === 'finished' || m.status === 'cancelled')).length === 0 ? (
                         <Card>
                             <CardContent className="text-center py-8">
                                 <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
@@ -339,7 +346,7 @@ const AdminMatches = () => {
                             </CardContent>
                         </Card>
                     ) : (
-                        matches.filter(m => m.status === 'finished' || m.status === 'cancelled')
+                        matches.filter(m => m.match_id && (m.status === 'finished' || m.status === 'cancelled'))
                             .sort((a, b) => new Date(b.date) - new Date(a.date))
                             .map(match => (
                                 <FinishedMatchCard 

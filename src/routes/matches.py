@@ -52,11 +52,12 @@ def get_available_matches():
                                        m.status,
                                        m.betting_enabled,
                                        m.total_pool,
-                                       CASE WHEN b.id IS NOT NULL THEN 1 ELSE 0 END as user_has_bet
+                                       CASE WHEN ub.player_name IS NOT NULL THEN 1 ELSE 0 END as user_has_bet,
+                                       ub.player_name as user_bet_player
                                 FROM schedules s
                                          LEFT JOIN courts c ON s.court_id = c.id
                                          LEFT JOIN matches m ON s.id = m.schedule_id
-                                         LEFT JOIN bets b ON m.id = b.match_id AND b.user_id = ? AND b.status = 'active'
+                                         LEFT JOIN (SELECT match_id, player_name FROM bets WHERE user_id = ? AND status = 'active') ub ON m.id = ub.match_id
                                 ORDER BY s.date, s.start_time
                                 ''', (user_id,))
         else:
@@ -82,6 +83,9 @@ def get_available_matches():
 
         schedules = cursor.fetchall()
         matches = []
+        
+        if schedules and user_id:
+            logger.info(f"First schedule keys: {list(schedules[0].keys()) if hasattr(schedules[0], 'keys') else 'No keys method'}")
 
         for schedule in schedules:
             status = schedule['status'] or 'upcoming'
@@ -96,19 +100,29 @@ def get_available_matches():
                 date = date.strftime('%Y-%m-%d')
 
             # Check if match is at least 1 hour in the future (using UTC)
-            try:
-                from datetime import timezone
-                match_datetime = datetime.strptime(f"{date} {start_time}", '%Y-%m-%d %H:%M')
-                # Assume match time is in local timezone (UTC-3 for Brazil)
-                match_datetime_utc = match_datetime.replace(tzinfo=timezone.utc) + timedelta(hours=3)
-                now_utc = datetime.now(timezone.utc)
-                cutoff_time_utc = now_utc + timedelta(hours=1)
-                if match_datetime_utc <= cutoff_time_utc:
-                    continue  # Skip matches less than 1 hour away
-            except:
-                pass  # If parsing fails, include the match
+            # Skip this check for admin requests
+            include_all = request.args.get('include_all') == 'true'
+            
+            if not include_all:
+                try:
+                    from datetime import timezone
+                    match_datetime = datetime.strptime(f"{date} {start_time}", '%Y-%m-%d %H:%M')
+                    # Assume match time is in local timezone (UTC-3 for Brazil)
+                    match_datetime_utc = match_datetime.replace(tzinfo=timezone.utc) + timedelta(hours=3)
+                    now_utc = datetime.now(timezone.utc)
+                    cutoff_time_utc = now_utc + timedelta(hours=1)
+                    if match_datetime_utc <= cutoff_time_utc:
+                        continue  # Skip matches less than 1 hour away
+                except:
+                    pass  # If parsing fails, include the match
 
             user_has_bet = bool(schedule['user_has_bet'])
+            try:
+                user_bet_player = schedule['user_bet_player'] if user_id else None
+                logger.info(f"Schedule {schedule['id']}: user_bet_player={user_bet_player}, user_has_bet={user_has_bet}")
+            except (KeyError, TypeError) as e:
+                logger.error(f"Error getting user_bet_player: {e}")
+                user_bet_player = None
             
             match_data = {
                 'schedule_id': schedule['id'],
@@ -122,7 +136,8 @@ def get_available_matches():
                 'status': status,
                 'betting_enabled': schedule['betting_enabled'] if schedule['betting_enabled'] is not None else True,
                 'total_pool': float(schedule['total_pool'] or 0),
-                'user_has_bet': user_has_bet
+                'user_has_bet': user_has_bet,
+                'user_bet_player': user_bet_player
             }
             matches.append(match_data)
 

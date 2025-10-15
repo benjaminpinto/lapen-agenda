@@ -450,10 +450,54 @@ const BettingDashboard = () => {
                     )}
                     
                     {match.user_has_bet && (
-                        <div className="text-center p-3 bg-green-50 rounded border border-green-200">
-                            <div className="text-sm text-green-700 font-medium">
-                                ✅ Você já tem uma aposta nesta partida
+                        <div className="space-y-2">
+                            <div className="text-center p-3 bg-green-50 rounded border border-green-200">
+                                <div className="text-sm text-green-700 font-medium">
+                                    ✅ Você já tem uma aposta nesta partida
+                                </div>
                             </div>
+                            {isMobile ? (
+                                <Button
+                                    onClick={handleShare}
+                                    disabled={isSharing}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full"
+                                >
+                                    <Share2 className="h-4 w-4 mr-2"/>
+                                    {isSharing ? 'Compartilhando...' : 'Compartilhar'}
+                                </Button>
+                            ) : (
+                                <>
+                                    <Button
+                                        onClick={() => setShowShareDialog(true)}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="w-full"
+                                    >
+                                        <Share2 className="h-4 w-4 mr-2"/>
+                                        Compartilhar
+                                    </Button>
+                                    <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+                                        <DialogContent className="max-w-md">
+                                            <ShareableMatchCard
+                                                ref={shareRef}
+                                                match={match}
+                                                odds={odds}
+                                                stats={stats}
+                                            />
+                                            <Button
+                                                onClick={handleShare}
+                                                disabled={isSharing}
+                                                className="w-full mt-4"
+                                            >
+                                                <Share2 className="h-4 w-4 mr-2"/>
+                                                {isSharing ? 'Compartilhando...' : 'Compartilhar Imagem'}
+                                            </Button>
+                                        </DialogContent>
+                                    </Dialog>
+                                </>
+                            )}
                         </div>
                     )}
                 </CardContent>

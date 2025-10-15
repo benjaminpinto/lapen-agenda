@@ -339,12 +339,12 @@ def generate_whatsapp_message():
     # Get betting odds for matches with active bets
     match_odds = {}
     for schedule in schedules:
-        match = db.execute('SELECT id FROM matches WHERE schedule_id = ? AND status = "upcoming"', (schedule['id'],)).fetchone()
+        match = db.execute('SELECT id FROM matches WHERE schedule_id = ? AND status = \'upcoming\'', (schedule['id'],)).fetchone()
         if match:
             bets = db.execute('''
                 SELECT player_name, SUM(amount) as total_amount
                 FROM bets
-                WHERE match_id = ? AND status = 'active'
+                WHERE match_id = ? AND status = \'active\'
                 GROUP BY player_name
             ''', (match['id'],)).fetchall()
             

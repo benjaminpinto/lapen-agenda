@@ -55,6 +55,8 @@ def row_to_dict(row):
         return None
     if hasattr(row, 'keys'):
         return {k: row[k] for k in row.keys()}
+    if isinstance(row, (list, tuple)):
+        return dict(enumerate(row))
     return dict(row)
 
 def rows_to_dicts(rows):

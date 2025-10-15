@@ -377,6 +377,10 @@ const BettingDashboard = () => {
                         <div className="space-y-2">
                             <Button
                                 onClick={() => {
+                                    setBetAmount('')
+                                    setSelectedPlayer('')
+                                    setClientSecret(null)
+                                    setShowPayment(false)
                                     setSelectedMatch(match)
                                     // Scroll to betting form
                                     setTimeout(() => {

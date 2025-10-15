@@ -29,10 +29,11 @@ app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 # Initialize cache
-cache = Cache(app, config={
+cache = Cache(config={
     'CACHE_TYPE': 'simple',
     'CACHE_DEFAULT_TIMEOUT': 300
 })
+cache.init_app(app)
 
 # Enable CORS for all routes with credentials support
 CORS(app, supports_credentials=True, origins=['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5001', 'http://127.0.0.1:5001'])

@@ -48,3 +48,15 @@ def get_concat_sql(*args):
 def is_postgres():
     """Check if using PostgreSQL"""
     return bool(os.environ.get('POSTGRES_URL') or os.environ.get('PRISMA_DATABASE_URL'))
+
+def row_to_dict(row):
+    """Convert database row to dictionary (handles both dict-like and tuple rows)"""
+    if row is None:
+        return None
+    if hasattr(row, 'keys'):
+        return {k: row[k] for k in row.keys()}
+    return dict(row)
+
+def rows_to_dicts(rows):
+    """Convert list of database rows to list of dictionaries"""
+    return [row_to_dict(row) for row in rows]

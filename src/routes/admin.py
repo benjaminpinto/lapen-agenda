@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 from src.database import get_db
-from src.database_utils import get_month_comparison_sql
+from src.database_utils import get_month_comparison_sql, row_to_dict, rows_to_dicts
 from src.logger import get_logger
 import base64
 import os
@@ -62,7 +62,7 @@ def verify_password():
 def get_courts():
     db = get_db()
     courts = db.execute('SELECT * FROM courts').fetchall()
-    return jsonify([{k: court[k] for k in court.keys()} for court in courts])
+    return jsonify(rows_to_dicts(courts))
 
 @admin_bp.route('/courts', methods=['POST'])
 @require_admin_auth
@@ -157,7 +157,7 @@ def delete_court(court_id):
 def get_players():
     db = get_db()
     players = db.execute('SELECT * FROM players ORDER BY name').fetchall()
-    return jsonify([{k: player[k] for k in player.keys()} for player in players])
+    return jsonify(rows_to_dicts(players))
 
 @admin_bp.route('/players', methods=['POST'])
 @require_admin_auth
@@ -193,7 +193,7 @@ def get_holidays_blocks():
     # Convert time/date objects to strings for JSON serialization
     serialized_blocks = []
     for block in blocks:
-        block_dict = {k: block[k] for k in block.keys()}
+        block_dict = row_to_dict(block)
         if 'start_time' in block_dict and block_dict['start_time']:
             block_dict['start_time'] = normalize_time(block_dict['start_time'])
         if 'end_time' in block_dict and block_dict['end_time']:
@@ -254,7 +254,7 @@ def get_recurring_schedules():
     # Convert time/date objects to strings for JSON serialization
     serialized_schedules = []
     for schedule in schedules:
-        schedule_dict = {k: schedule[k] for k in schedule.keys()}
+        schedule_dict = row_to_dict(schedule)
         if 'start_time' in schedule_dict:
             schedule_dict['start_time'] = normalize_time(schedule_dict['start_time'])
         if 'end_time' in schedule_dict:
@@ -353,7 +353,7 @@ def get_dashboard_stats():
     ''').fetchall()
     
     return jsonify({
-        'most_booked_court': {k: most_booked_court[k] for k in most_booked_court.keys()} if most_booked_court else None,
-        'game_stats': [{k: stat[k] for k in stat.keys()} for stat in game_stats],
-        'top_players': [{k: player[k] for k in player.keys()} for player in top_players]
+        'most_booked_court': row_to_dict(most_booked_court),
+        'game_stats': rows_to_dicts(game_stats),
+        'top_players': rows_to_dicts(top_players)
     })

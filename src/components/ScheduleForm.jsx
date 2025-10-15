@@ -44,7 +44,7 @@ const ScheduleForm = () => {
 
   const fetchCourts = async () => {
     try {
-      const response = await fetch(`/api/public/courts?_t=${new Date().getTime()}`)
+      const response = await fetch('/api/public/courts')
       if (response.ok) {
         const data = await response.json()
         setCourts(data)
@@ -56,7 +56,7 @@ const ScheduleForm = () => {
 
   const fetchPlayers = async () => {
     try {
-      const response = await fetch(`/api/public/players?_t=${new Date().getTime()}`)
+      const response = await fetch('/api/public/players')
       if (response.ok) {
         const data = await response.json()
         setPlayers(data)

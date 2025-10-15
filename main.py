@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory
 from flask_cors import CORS
+from flask_caching import Cache
 from src.routes.admin import admin_bp
 from src.routes.public import public_bp
 from src.routes.auth import auth_bp
@@ -26,6 +27,12 @@ app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_HTTPONLY'] = True
+
+# Initialize cache
+cache = Cache(app, config={
+    'CACHE_TYPE': 'simple',
+    'CACHE_DEFAULT_TIMEOUT': 300
+})
 
 # Enable CORS for all routes with credentials support
 CORS(app, supports_credentials=True, origins=['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5001', 'http://127.0.0.1:5001'])
@@ -71,8 +78,9 @@ def serve(path):
             return "index.html not found", 404
 
 
-# Export app for Vercel
+# Export app and cache for Vercel
 app = app
+cache = cache
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

@@ -70,35 +70,17 @@ def is_time_blocked(date, start_time, court_id=None):
 @public_bp.route('/courts', methods=['GET'])
 def get_active_courts():
     """Get all active courts"""
-    from main import cache
-    
-    @cache.cached(timeout=60, key_prefix='active_courts')
-    def _get_courts():
-        db = get_db()
-        try:
-            courts = db.execute('SELECT * FROM courts WHERE active = TRUE').fetchall()
-            return rows_to_dicts(courts)
-        finally:
-            db.close()
-    
-    return jsonify(_get_courts())
+    db = get_db()
+    courts = db.execute('SELECT * FROM courts WHERE active = TRUE').fetchall()
+    return jsonify(rows_to_dicts(courts))
 
 
 @public_bp.route('/players', methods=['GET'])
 def get_players_autocomplete():
     """Get all players for autocomplete"""
-    from main import cache
-    
-    @cache.cached(timeout=300, key_prefix='players_list')
-    def _get_players():
-        db = get_db()
-        try:
-            players = db.execute('SELECT name FROM players ORDER BY name').fetchall()
-            return [player[0] if isinstance(player, tuple) else player['name'] for player in players]
-        finally:
-            db.close()
-    
-    return jsonify(_get_players())
+    db = get_db()
+    players = db.execute('SELECT name FROM players ORDER BY name').fetchall()
+    return jsonify([player[0] if isinstance(player, tuple) else player['name'] for player in players])
 
 
 @public_bp.route('/available-times', methods=['GET'])

@@ -2,6 +2,7 @@
 Database utility functions for cross-database compatibility
 """
 import os
+from datetime import time, date, datetime
 
 def get_current_date_sql():
     """Get current date SQL expression for the current database"""
@@ -51,7 +52,6 @@ def is_postgres():
 
 def row_to_dict(row):
     """Convert database row to dictionary (handles both dict-like and tuple rows)"""
-    from datetime import time, date, datetime
     if row is None:
         return None
     if hasattr(row, 'keys'):
@@ -62,6 +62,8 @@ def row_to_dict(row):
                 result[k] = v.strftime('%H:%M')
             elif isinstance(v, date) and not isinstance(v, datetime):
                 result[k] = v.strftime('%Y-%m-%d')
+            elif isinstance(v, datetime):
+                result[k] = v.isoformat()
             else:
                 result[k] = v
         return result

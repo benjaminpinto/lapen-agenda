@@ -241,6 +241,8 @@ const AdminMatches = () => {
                         <div className="space-y-2">
                             <Button
                                 onClick={() => {
+                                    setWinner('')
+                                    setScore('')
                                     setSelectedMatch(match)
                                     // Scroll to finish match form on mobile
                                     if (window.innerWidth < 1024) {
@@ -411,7 +413,7 @@ const AdminMatches = () => {
 
                                     <div>
                                         <Label>Vencedor</Label>
-                                        <Select value={winner} onValueChange={setWinner}>
+                                        <Select key={selectedMatch.match_id} value={winner} onValueChange={setWinner}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Selecione o vencedor"/>
                                             </SelectTrigger>

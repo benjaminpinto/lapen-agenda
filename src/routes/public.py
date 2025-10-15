@@ -77,7 +77,7 @@ def get_active_courts():
         db = get_db()
         try:
             courts = db.execute('SELECT * FROM courts WHERE active = TRUE').fetchall()
-            return [dict(court) for court in courts]
+            return [{k: court[k] for k in court.keys()} for court in courts]
         finally:
             db.close()
     
@@ -94,7 +94,7 @@ def get_players_autocomplete():
         db = get_db()
         try:
             players = db.execute('SELECT name FROM players ORDER BY name').fetchall()
-            return [player["name"] for player in players]
+            return [player[0] if isinstance(player, tuple) else player['name'] for player in players]
         finally:
             db.close()
     
@@ -260,7 +260,7 @@ def get_month_schedules():
     # Convert time objects to strings for JSON serialization
     serialized_schedules = []
     for schedule in schedules:
-        schedule_dict = dict(schedule)
+        schedule_dict = {k: schedule[k] for k in schedule.keys()}
         if 'start_time' in schedule_dict:
             schedule_dict['start_time'] = normalize_time(schedule_dict['start_time'])
         if 'date' in schedule_dict and not isinstance(schedule_dict['date'], str):
@@ -294,7 +294,7 @@ def get_week_schedules():
     # Convert time objects to strings for JSON serialization
     serialized_schedules = []
     for schedule in schedules:
-        schedule_dict = dict(schedule)
+        schedule_dict = {k: schedule[k] for k in schedule.keys()}
         if 'start_time' in schedule_dict:
             schedule_dict['start_time'] = normalize_time(schedule_dict['start_time'])
         if 'date' in schedule_dict and not isinstance(schedule_dict['date'], str):
@@ -465,7 +465,7 @@ def get_public_dashboard_stats():
     ''').fetchall()
 
     return jsonify({
-        'mostBookedCourt': dict(most_booked_court) if most_booked_court else None,
-        'gameStats': [dict(stat) for stat in game_stats],
-        'topPlayers': [dict(player) for player in top_players]
+        'mostBookedCourt': {k: most_booked_court[k] for k in most_booked_court.keys()} if most_booked_court else None,
+        'gameStats': [{k: stat[k] for k in stat.keys()} for stat in game_stats],
+        'topPlayers': [{k: player[k] for k in player.keys()} for player in top_players]
     })

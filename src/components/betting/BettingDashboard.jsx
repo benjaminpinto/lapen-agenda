@@ -234,6 +234,10 @@ const BettingDashboard = () => {
             setIsSharing(true)
 
             try {
+                if (!shareRef.current) {
+                    throw new Error('Elemento não encontrado')
+                }
+
                 const canvas = await html2canvas(shareRef.current, {
                     backgroundColor: '#ffffff',
                     scale: window.devicePixelRatio || 1,
@@ -451,6 +455,14 @@ const BettingDashboard = () => {
                     
                     {match.user_has_bet && (
                         <div className="space-y-2">
+                            <div style={{position: 'absolute', left: '-9999px', top: '0'}}>
+                                <ShareableMatchCard
+                                    ref={shareRef}
+                                    match={match}
+                                    odds={odds}
+                                    stats={stats}
+                                />
+                            </div>
                             <div className="text-center p-3 bg-green-50 rounded border border-green-200">
                                 <div className="text-sm text-green-700 font-medium">
                                     ✅ Você já tem uma aposta nesta partida

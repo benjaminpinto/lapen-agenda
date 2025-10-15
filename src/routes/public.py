@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, time, timezone
 from flask import Blueprint, request, jsonify
 
 from src.database import get_db
-from src.database_utils import get_current_date_sql, get_current_time_sql, get_month_comparison_sql
+from src.database_utils import get_current_date_sql, get_current_time_sql, get_month_comparison_sql, row_to_dict, rows_to_dicts
 
 public_bp = Blueprint('public', __name__, url_prefix='/api/public')
 
@@ -77,7 +77,7 @@ def get_active_courts():
         db = get_db()
         try:
             courts = db.execute('SELECT * FROM courts WHERE active = TRUE').fetchall()
-            return [{k: court[k] for k in court.keys()} for court in courts]
+            return rows_to_dicts(courts)
         finally:
             db.close()
     
@@ -260,7 +260,7 @@ def get_month_schedules():
     # Convert time objects to strings for JSON serialization
     serialized_schedules = []
     for schedule in schedules:
-        schedule_dict = {k: schedule[k] for k in schedule.keys()}
+        schedule_dict = row_to_dict(schedule)
         if 'start_time' in schedule_dict:
             schedule_dict['start_time'] = normalize_time(schedule_dict['start_time'])
         if 'date' in schedule_dict and not isinstance(schedule_dict['date'], str):
@@ -294,7 +294,7 @@ def get_week_schedules():
     # Convert time objects to strings for JSON serialization
     serialized_schedules = []
     for schedule in schedules:
-        schedule_dict = {k: schedule[k] for k in schedule.keys()}
+        schedule_dict = row_to_dict(schedule)
         if 'start_time' in schedule_dict:
             schedule_dict['start_time'] = normalize_time(schedule_dict['start_time'])
         if 'date' in schedule_dict and not isinstance(schedule_dict['date'], str):
@@ -463,9 +463,9 @@ def get_public_dashboard_stats():
         ORDER BY games DESC
         LIMIT 5
     ''').fetchall()
-
+    
     return jsonify({
-        'mostBookedCourt': {k: most_booked_court[k] for k in most_booked_court.keys()} if most_booked_court else None,
-        'gameStats': [{k: stat[k] for k in stat.keys()} for stat in game_stats],
-        'topPlayers': [{k: player[k] for k in player.keys()} for player in top_players]
+        'mostBookedCourt': row_to_dict(most_booked_court),
+        'gameStats': rows_to_dicts(game_stats),
+        'topPlayers': rows_to_dicts(top_players)
     })

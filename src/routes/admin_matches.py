@@ -287,7 +287,7 @@ def get_match_report(match_id):
                 'player1_name': match_info['player1_name'],
                 'player2_name': match_info['player2_name'],
                 'date': match_info['date'],
-                'start_time': match_info['start_time'],
+                'start_time': str(match_info['start_time']) if match_info['start_time'] else None,
                 'status': match_info['status']
             },
             'bets': bets,

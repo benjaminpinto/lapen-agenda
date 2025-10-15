@@ -243,8 +243,10 @@ def get_month_schedules():
     serialized_schedules = []
     for schedule in schedules:
         schedule_dict = row_to_dict(schedule)
-        if 'start_time' in schedule_dict:
+        if 'start_time' in schedule_dict and schedule_dict['start_time']:
             schedule_dict['start_time'] = normalize_time(schedule_dict['start_time'])
+        if 'end_time' in schedule_dict and schedule_dict['end_time']:
+            schedule_dict['end_time'] = normalize_time(schedule_dict['end_time'])
         if 'date' in schedule_dict and not isinstance(schedule_dict['date'], str):
             schedule_dict['date'] = schedule_dict['date'].strftime('%Y-%m-%d')
         serialized_schedules.append(schedule_dict)
@@ -277,8 +279,10 @@ def get_week_schedules():
     serialized_schedules = []
     for schedule in schedules:
         schedule_dict = row_to_dict(schedule)
-        if 'start_time' in schedule_dict:
+        if 'start_time' in schedule_dict and schedule_dict['start_time']:
             schedule_dict['start_time'] = normalize_time(schedule_dict['start_time'])
+        if 'end_time' in schedule_dict and schedule_dict['end_time']:
+            schedule_dict['end_time'] = normalize_time(schedule_dict['end_time'])
         if 'date' in schedule_dict and not isinstance(schedule_dict['date'], str):
             schedule_dict['date'] = schedule_dict['date'].strftime('%Y-%m-%d')
         serialized_schedules.append(schedule_dict)

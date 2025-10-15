@@ -269,6 +269,66 @@ def get_user_bets():
     finally:
         db.close()
 
+@betting_bp.route('/matches/odds', methods=['GET'])
+def get_batch_match_odds():
+    """Get odds for multiple matches in a single query (batch endpoint)"""
+    match_ids_str = request.args.get('match_ids', '')
+    if not match_ids_str:
+        return jsonify({})
+    
+    try:
+        match_ids = [int(id.strip()) for id in match_ids_str.split(',') if id.strip()]
+    except ValueError:
+        return jsonify({'error': 'Invalid match IDs'}), 400
+    
+    if not match_ids:
+        return jsonify({})
+    
+    db = get_db()
+    try:
+        placeholders = ','.join(['?' for _ in match_ids])
+        
+        # Single query to get all bets for all matches
+        cursor = db.execute(f'''
+            SELECT match_id, player_name, SUM(amount) as total_amount, COUNT(*) as bet_count
+            FROM bets
+            WHERE match_id IN ({placeholders}) AND status = 'active'
+            GROUP BY match_id, player_name
+        ''', match_ids)
+        
+        bets = cursor.fetchall()
+        
+        # Build result structure
+        result = {}
+        match_totals = {}
+        
+        for bet in bets:
+            match_id = str(bet['match_id'])
+            if match_id not in result:
+                result[match_id] = {'odds': {}, 'betting_stats': {}}
+                match_totals[match_id] = 0
+            
+            result[match_id]['betting_stats'][bet['player_name']] = {
+                'total_amount': float(bet['total_amount']),
+                'bet_count': bet['bet_count']
+            }
+            match_totals[match_id] += float(bet['total_amount'])
+        
+        # Calculate odds for each match
+        for match_id, data in result.items():
+            total_pool = match_totals[match_id]
+            if len(data['betting_stats']) == 2 and total_pool > 0:
+                for player, stats in data['betting_stats'].items():
+                    data['odds'][player] = round(total_pool / stats['total_amount'], 2)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f'Error fetching batch match odds: {str(e)}')
+        return jsonify({'error': f'Erro ao buscar odds: {str(e)}'}), 500
+    finally:
+        db.close()
+
 @betting_bp.route('/match/<int:match_id>/bets', methods=['GET'])
 def get_match_bets(match_id):
     """Get betting statistics for a match"""

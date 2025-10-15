@@ -1,12 +1,18 @@
 import sqlite3
 import os
+from functools import wraps
+import time
 
 DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'app.db')
 
+# Connection pool for PostgreSQL
+_connection_pool = None
+
 class DatabaseWrapper:
-    def __init__(self, conn, is_postgres=False):
+    def __init__(self, conn, is_postgres=False, pool=None):
         self.conn = conn
         self.is_postgres = is_postgres
+        self.pool = pool
         if is_postgres:
             self.cursor = conn.cursor()
     
@@ -61,7 +67,12 @@ class DatabaseWrapper:
     def close(self):
         if self.is_postgres:
             self.cursor.close()
-        self.conn.close()
+            if self.pool:
+                self.pool.putconn(self.conn)
+            else:
+                self.conn.close()
+        else:
+            self.conn.close()
 
 def init_db():
     postgres_url = os.environ.get('POSTGRES_URL') or os.environ.get('PRISMA_DATABASE_URL')
@@ -90,13 +101,28 @@ def init_db():
         
         conn.close()
 
+def get_connection_pool():
+    """Get or create PostgreSQL connection pool"""
+    global _connection_pool
+    if _connection_pool is None:
+        postgres_url = os.environ.get('POSTGRES_URL') or os.environ.get('PRISMA_DATABASE_URL')
+        if postgres_url:
+            from psycopg2 import pool
+            _connection_pool = pool.SimpleConnectionPool(
+                minconn=1,
+                maxconn=10,
+                dsn=postgres_url
+            )
+    return _connection_pool
+
 def get_db():
     postgres_url = os.environ.get('POSTGRES_URL') or os.environ.get('PRISMA_DATABASE_URL')
     if postgres_url:
         import psycopg2
         from psycopg2.extras import RealDictCursor
-        conn = psycopg2.connect(postgres_url, cursor_factory=RealDictCursor)
-        return DatabaseWrapper(conn, is_postgres=True)
+        conn_pool = get_connection_pool()
+        conn = conn_pool.getconn()
+        return DatabaseWrapper(conn, is_postgres=True, pool=conn_pool)
     else:
         conn = sqlite3.connect(DATABASE)
         conn.row_factory = sqlite3.Row

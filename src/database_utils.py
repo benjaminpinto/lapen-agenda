@@ -58,12 +58,16 @@ def row_to_dict(row):
         result = {}
         for k in row.keys():
             v = row[k]
-            if isinstance(v, time):
-                result[k] = v.strftime('%H:%M')
-            elif isinstance(v, date) and not isinstance(v, datetime):
-                result[k] = v.strftime('%Y-%m-%d')
-            elif isinstance(v, datetime):
+            # Check datetime first since datetime is a subclass of date
+            if isinstance(v, datetime):
                 result[k] = v.isoformat()
+            elif isinstance(v, date):
+                result[k] = v.strftime('%Y-%m-%d')
+            elif isinstance(v, time):
+                result[k] = v.strftime('%H:%M')
+            elif hasattr(v, 'strftime'):
+                # Catch any other time/date types
+                result[k] = str(v)
             else:
                 result[k] = v
         return result

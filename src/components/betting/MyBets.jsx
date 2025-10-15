@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { History, Trophy, DollarSign, Calendar, ArrowLeft, Wallet, TrendingUp, Share2 } from 'lucide-react'
 import ShareableMatchCard from './ShareableMatchCard'
+import ShareableWinCard from './ShareableWinCard'
+import ShareableLossCard from './ShareableLossCard'
 import html2canvas from 'html2canvas'
 
 const MyBets = () => {
@@ -100,6 +102,8 @@ const MyBets = () => {
 
   const BetCard = ({ bet }) => {
     const shareRef = useRef(null)
+    const winShareRef = useRef(null)
+    const lossShareRef = useRef(null)
     const [isSharing, setIsSharing] = useState(false)
     const [showShareDialog, setShowShareDialog] = useState(false)
     const [matchOdds, setMatchOdds] = useState({ odds: {}, stats: {} })
@@ -115,7 +119,20 @@ const MyBets = () => {
     const handleShare = async () => {
       setIsSharing(true)
       try {
-        const canvas = await html2canvas(shareRef.current, {
+        let targetRef = shareRef.current
+        
+        // Use appropriate card based on bet status
+        if (bet.status === 'won') {
+          targetRef = winShareRef.current
+        } else if (bet.status === 'lost') {
+          targetRef = lossShareRef.current
+        }
+
+        if (!targetRef) {
+          throw new Error('Elemento não encontrado')
+        }
+
+        const canvas = await html2canvas(targetRef, {
           backgroundColor: '#ffffff',
           scale: window.devicePixelRatio || 1,
           useCORS: true,
@@ -211,7 +228,7 @@ const MyBets = () => {
             </div>
           </div>
         </CardContent>
-        {bet.match.status === 'upcoming' && (
+        {(bet.match.status === 'upcoming' || bet.status === 'won' || bet.status === 'lost') && (
           <>
             <Button
               onClick={isMobile ? handleShare : () => setShowShareDialog(true)}
@@ -225,16 +242,22 @@ const MyBets = () => {
             {!isMobile && (
               <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
                 <DialogContent className="max-w-md">
-                  <ShareableMatchCard
-                    ref={shareRef}
-                    match={{
-                      ...bet.match,
-                      schedule_id: bet.match.id,
-                      match_id: bet.match.match_id
-                    }}
-                    odds={matchOdds.odds}
-                    stats={matchOdds.stats}
-                  />
+                  {bet.status === 'won' ? (
+                    <ShareableWinCard ref={winShareRef} bet={bet} />
+                  ) : bet.status === 'lost' ? (
+                    <ShareableLossCard ref={lossShareRef} bet={bet} />
+                  ) : (
+                    <ShareableMatchCard
+                      ref={shareRef}
+                      match={{
+                        ...bet.match,
+                        schedule_id: bet.match.id,
+                        match_id: bet.match.match_id
+                      }}
+                      odds={matchOdds.odds}
+                      stats={matchOdds.stats}
+                    />
+                  )}
                   <Button onClick={handleShare} disabled={isSharing} className="w-full mt-4">
                     <Share2 className="h-4 w-4 mr-2" />
                     {isSharing ? 'Compartilhando...' : 'Compartilhar Imagem'}
@@ -243,16 +266,22 @@ const MyBets = () => {
               </Dialog>
             )}
             <div style={{ position: 'absolute', left: '-9999px', top: '0' }}>
-              <ShareableMatchCard
-                ref={shareRef}
-                match={{
-                  ...bet.match,
-                  schedule_id: bet.match.id,
-                  match_id: bet.match.match_id
-                }}
-                odds={matchOdds.odds}
-                stats={matchOdds.stats}
-              />
+              {bet.status === 'won' ? (
+                <ShareableWinCard ref={winShareRef} bet={bet} />
+              ) : bet.status === 'lost' ? (
+                <ShareableLossCard ref={lossShareRef} bet={bet} />
+              ) : (
+                <ShareableMatchCard
+                  ref={shareRef}
+                  match={{
+                    ...bet.match,
+                    schedule_id: bet.match.id,
+                    match_id: bet.match.match_id
+                  }}
+                  odds={matchOdds.odds}
+                  stats={matchOdds.stats}
+                />
+              )}
             </div>
           </>
         )}

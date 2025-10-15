@@ -51,10 +51,20 @@ def is_postgres():
 
 def row_to_dict(row):
     """Convert database row to dictionary (handles both dict-like and tuple rows)"""
+    from datetime import time, date, datetime
     if row is None:
         return None
     if hasattr(row, 'keys'):
-        return {k: row[k] for k in row.keys()}
+        result = {}
+        for k in row.keys():
+            v = row[k]
+            if isinstance(v, time):
+                result[k] = v.strftime('%H:%M')
+            elif isinstance(v, date) and not isinstance(v, datetime):
+                result[k] = v.strftime('%Y-%m-%d')
+            else:
+                result[k] = v
+        return result
     if isinstance(row, (list, tuple)):
         return dict(enumerate(row))
     return dict(row)

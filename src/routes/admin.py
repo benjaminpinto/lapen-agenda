@@ -189,19 +189,7 @@ def delete_player(player_id):
 def get_holidays_blocks():
     db = get_db()
     blocks = db.execute('SELECT * FROM holidays_blocks ORDER BY date').fetchall()
-    
-    # Convert time/date objects to strings for JSON serialization
-    serialized_blocks = []
-    for block in blocks:
-        block_dict = row_to_dict(block)
-        if 'start_time' in block_dict and block_dict['start_time']:
-            block_dict['start_time'] = normalize_time(block_dict['start_time'])
-        if 'end_time' in block_dict and block_dict['end_time']:
-            block_dict['end_time'] = normalize_time(block_dict['end_time'])
-        if 'date' in block_dict and not isinstance(block_dict['date'], str):
-            block_dict['date'] = block_dict['date'].strftime('%Y-%m-%d')
-        serialized_blocks.append(block_dict)
-    return jsonify(serialized_blocks)
+    return jsonify(rows_to_dicts(blocks))
 
 @admin_bp.route('/holidays-blocks', methods=['POST'])
 @require_admin_auth
@@ -250,21 +238,7 @@ def get_recurring_schedules():
         JOIN courts c ON rs.court_id = c.id 
         ORDER BY rs.start_date
     ''').fetchall()
-    
-    # Convert time/date objects to strings for JSON serialization
-    serialized_schedules = []
-    for schedule in schedules:
-        schedule_dict = row_to_dict(schedule)
-        if 'start_time' in schedule_dict:
-            schedule_dict['start_time'] = normalize_time(schedule_dict['start_time'])
-        if 'end_time' in schedule_dict:
-            schedule_dict['end_time'] = normalize_time(schedule_dict['end_time'])
-        if 'start_date' in schedule_dict and not isinstance(schedule_dict['start_date'], str):
-            schedule_dict['start_date'] = schedule_dict['start_date'].strftime('%Y-%m-%d')
-        if 'end_date' in schedule_dict and not isinstance(schedule_dict['end_date'], str):
-            schedule_dict['end_date'] = schedule_dict['end_date'].strftime('%Y-%m-%d')
-        serialized_schedules.append(schedule_dict)
-    return jsonify(serialized_schedules)
+    return jsonify(rows_to_dicts(schedules))
 
 @admin_bp.route('/recurring-schedules', methods=['POST'])
 @require_admin_auth

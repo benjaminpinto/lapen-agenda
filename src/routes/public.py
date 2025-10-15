@@ -239,18 +239,7 @@ def get_month_schedules():
         ORDER BY s.date, s.start_time
     ''', (first_day, last_day)).fetchall()
 
-    # Convert time objects to strings for JSON serialization
-    serialized_schedules = []
-    for schedule in schedules:
-        schedule_dict = row_to_dict(schedule)
-        if 'start_time' in schedule_dict and schedule_dict['start_time']:
-            schedule_dict['start_time'] = normalize_time(schedule_dict['start_time'])
-        if 'end_time' in schedule_dict and schedule_dict['end_time']:
-            schedule_dict['end_time'] = normalize_time(schedule_dict['end_time'])
-        if 'date' in schedule_dict and not isinstance(schedule_dict['date'], str):
-            schedule_dict['date'] = schedule_dict['date'].strftime('%Y-%m-%d')
-        serialized_schedules.append(schedule_dict)
-    return jsonify(serialized_schedules)
+    return jsonify(rows_to_dicts(schedules))
 
 
 @public_bp.route('/schedules/week', methods=['GET'])
@@ -275,18 +264,7 @@ def get_week_schedules():
         ORDER BY s.date, s.start_time
     ''', (start_date, end_date)).fetchall()
 
-    # Convert time objects to strings for JSON serialization
-    serialized_schedules = []
-    for schedule in schedules:
-        schedule_dict = row_to_dict(schedule)
-        if 'start_time' in schedule_dict and schedule_dict['start_time']:
-            schedule_dict['start_time'] = normalize_time(schedule_dict['start_time'])
-        if 'end_time' in schedule_dict and schedule_dict['end_time']:
-            schedule_dict['end_time'] = normalize_time(schedule_dict['end_time'])
-        if 'date' in schedule_dict and not isinstance(schedule_dict['date'], str):
-            schedule_dict['date'] = schedule_dict['date'].strftime('%Y-%m-%d')
-        serialized_schedules.append(schedule_dict)
-    return jsonify(serialized_schedules)
+    return jsonify(rows_to_dicts(schedules))
 
 
 @public_bp.route('/whatsapp-message', methods=['GET'])

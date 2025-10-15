@@ -15,6 +15,7 @@ import html2canvas from 'html2canvas'
 
 const BettingDashboard = () => {
     const [matches, setMatches] = useState([])
+    const [matchOdds, setMatchOdds] = useState({})
     const [selectedMatch, setSelectedMatch] = useState(null)
     const [betAmount, setBetAmount] = useState('')
     const [selectedPlayer, setSelectedPlayer] = useState('')
@@ -30,6 +31,12 @@ const BettingDashboard = () => {
     useEffect(() => {
         fetchMatches()
     }, [])
+
+    useEffect(() => {
+        if (matches.length > 0) {
+            fetchAllMatchOdds()
+        }
+    }, [matches])
 
     const fetchMatches = async () => {
         try {
@@ -51,13 +58,16 @@ const BettingDashboard = () => {
         }
     }
 
-    const fetchMatchOdds = async (matchId) => {
+    const fetchAllMatchOdds = async () => {
         try {
-            const response = await fetch(`/api/betting/match/${matchId}/bets`)
+            const matchIds = matches.filter(m => m.match_id).map(m => m.match_id).join(',')
+            if (!matchIds) return
+            
+            const response = await fetch(`/api/betting/matches/odds?match_ids=${matchIds}`)
             const data = await response.json()
-            return data
+            setMatchOdds(data)
         } catch (error) {
-            return null
+            console.error('Error fetching match odds:', error)
         }
     }
 
@@ -211,22 +221,12 @@ const BettingDashboard = () => {
 
 
     const MatchCard = ({match}) => {
-        const [odds, setOdds] = useState({})
-        const [stats, setStats] = useState({})
         const shareRef = useRef(null)
         const [isSharing, setIsSharing] = useState(false)
         const [showShareDialog, setShowShareDialog] = useState(false)
-
-        useEffect(() => {
-            if (match.match_id) {
-                fetchMatchOdds(match.match_id).then(data => {
-                    if (data) {
-                        setOdds(data.odds || {})
-                        setStats(data.betting_stats || {})
-                    }
-                })
-            }
-        }, [match.match_id])
+        
+        const odds = matchOdds[match.match_id]?.odds || {}
+        const stats = matchOdds[match.match_id]?.betting_stats || {}
 
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 

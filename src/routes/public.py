@@ -70,25 +70,35 @@ def is_time_blocked(date, start_time, court_id=None):
 @public_bp.route('/courts', methods=['GET'])
 def get_active_courts():
     """Get all active courts"""
-    db = get_db()
-    courts = db.execute('SELECT * FROM courts WHERE active = TRUE').fetchall()
-    response = jsonify([dict(court) for court in courts])
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
+    from main import cache
+    
+    @cache.cached(timeout=60, key_prefix='active_courts')
+    def _get_courts():
+        db = get_db()
+        try:
+            courts = db.execute('SELECT * FROM courts WHERE active = TRUE').fetchall()
+            return [dict(court) for court in courts]
+        finally:
+            db.close()
+    
+    return jsonify(_get_courts())
 
 
 @public_bp.route('/players', methods=['GET'])
 def get_players_autocomplete():
     """Get all players for autocomplete"""
-    db = get_db()
-    players = db.execute('SELECT name FROM players ORDER BY name').fetchall()
-    response = jsonify([player["name"] for player in players])
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
+    from main import cache
+    
+    @cache.cached(timeout=300, key_prefix='players_list')
+    def _get_players():
+        db = get_db()
+        try:
+            players = db.execute('SELECT name FROM players ORDER BY name').fetchall()
+            return [player["name"] for player in players]
+        finally:
+            db.close()
+    
+    return jsonify(_get_players())
 
 
 @public_bp.route('/available-times', methods=['GET'])

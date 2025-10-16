@@ -239,7 +239,22 @@ def get_month_schedules():
         ORDER BY s.date, s.start_time
     ''', (first_day, last_day)).fetchall()
 
-    return jsonify(rows_to_dicts(schedules))
+    from datetime import time, date, datetime as dt
+    result = []
+    for s in schedules:
+        d = {}
+        for k in s.keys():
+            v = s[k]
+            if isinstance(v, dt):
+                d[k] = v.isoformat()
+            elif isinstance(v, date):
+                d[k] = v.strftime('%Y-%m-%d')
+            elif isinstance(v, time):
+                d[k] = v.strftime('%H:%M')
+            else:
+                d[k] = v
+        result.append(d)
+    return jsonify(result)
 
 
 @public_bp.route('/schedules/week', methods=['GET'])
@@ -264,7 +279,22 @@ def get_week_schedules():
         ORDER BY s.date, s.start_time
     ''', (start_date, end_date)).fetchall()
 
-    return jsonify(rows_to_dicts(schedules))
+    from datetime import time, date, datetime as dt
+    result = []
+    for s in schedules:
+        d = {}
+        for k in s.keys():
+            v = s[k]
+            if isinstance(v, dt):
+                d[k] = v.isoformat()
+            elif isinstance(v, date):
+                d[k] = v.strftime('%Y-%m-%d')
+            elif isinstance(v, time):
+                d[k] = v.strftime('%H:%M')
+            else:
+                d[k] = v
+        result.append(d)
+    return jsonify(result)
 
 
 @public_bp.route('/whatsapp-message', methods=['GET'])

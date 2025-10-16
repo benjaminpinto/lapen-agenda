@@ -4,6 +4,18 @@ import winnerBackground from '/src/static/images/winner-background.png'
 const ShareableWinCard = forwardRef(({ bet }, ref) => {
   const profit = bet.potential_return - bet.amount
   const profitPercentage = ((profit / bet.amount) * 100).toFixed(0)
+  
+  const winMessages = [
+    "VITÓRIA! 🏆",
+    "GANHOU! 🎉",
+    "SHOW! 😎",
+    "MANDOU BEM! 🔥",
+    "CRAQUE! ⭐",
+    "TOP! 🚀",
+    "ACERTOU! 🎯",
+    "PERFEITO! 💯"
+  ]
+  const randomWinMessage = winMessages[Math.floor(Math.random() * winMessages.length)]
 
   return (
     <div 
@@ -18,7 +30,7 @@ const ShareableWinCard = forwardRef(({ bet }, ref) => {
     >
       {/* Header */}
       <div className="bg-black bg-opacity-60 rounded-lg p-3 text-center">
-        <h1 className="text-2xl font-bold mb-1">🏆 VITÓRIA!</h1>
+        <h1 className="text-2xl font-bold mb-1">{randomWinMessage}</h1>
         <div className="text-sm text-yellow-300">Você ganhou!</div>
       </div>
 

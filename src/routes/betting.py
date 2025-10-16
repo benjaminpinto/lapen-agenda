@@ -217,7 +217,7 @@ def get_user_bets():
         cursor = db.execute('''
             SELECT b.id, b.amount, b.player_name, b.status, b.potential_return, b.created_at,
                    s.date, s.start_time, s.player1_name, s.player2_name, s.match_type,
-                   c.name as court_name, m.status as match_status
+                   c.name as court_name, m.status as match_status, m.id as match_id, s.id as schedule_id
             FROM bets b
             JOIN matches m ON b.match_id = m.id
             JOIN schedules s ON m.schedule_id = s.id
@@ -249,6 +249,8 @@ def get_user_bets():
                 'potential_return': float(row['potential_return'] or 0),
                 'created_at': created_at,
                 'match': {
+                    'id': row['schedule_id'],
+                    'match_id': row['match_id'],
                     'date': date,
                     'start_time': start_time,
                     'player1_name': row['player1_name'],

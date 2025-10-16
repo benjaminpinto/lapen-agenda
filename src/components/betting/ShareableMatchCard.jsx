@@ -19,7 +19,7 @@ const ShareableMatchCard = forwardRef(({ match, odds, stats }, ref) => {
       <div className="bg-black bg-opacity-50 rounded-lg p-4 text-center">
         <h1 className="text-xl font-bold mb-2">🐯 TIGRINHO LAPEN</h1>
         <div className="text-base">
-          {new Date(match.date).toLocaleDateString('pt-BR')} às {match.start_time}
+          {new Date(match.date + 'T00:00:00').toLocaleDateString('pt-BR')} às {match.start_time}
         </div>
       </div>
 

@@ -25,7 +25,7 @@ const ShareableWinCard = forwardRef(({ bet }, ref) => {
       {/* Match Info */}
       <div className="bg-black bg-opacity-60 rounded-lg p-3 text-center">
         <div className="text-xs text-gray-300 mb-1">
-          {new Date(bet.match.date).toLocaleDateString('pt-BR')}
+          {new Date(bet.match.date + 'T00:00:00').toLocaleDateString('pt-BR')}
         </div>
         <div className="text-base font-bold mb-2">
           {bet.match.player1_name} vs {bet.match.player2_name}

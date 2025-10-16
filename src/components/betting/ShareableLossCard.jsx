@@ -6,7 +6,13 @@ const ShareableLossCard = forwardRef(({ bet }, ref) => {
     "Quase! 😅",
     "Na próxima! 💪",
     "Foi por pouco! 🎾",
-    "Aprendizado! 📚"
+    "Aprendizado! 📚",
+    "Azar! 🐈‍⬛",
+    "Que pena! 😔",
+    "Ops! 🤷‍♂️",
+    "Droga! 😤",
+    "Caramba! 😲",
+    "Eita! 😬"
   ]
   const randomMessage = funnyMessages[Math.floor(Math.random() * funnyMessages.length)]
 
@@ -23,8 +29,8 @@ const ShareableLossCard = forwardRef(({ bet }, ref) => {
     >
       {/* Header */}
       <div className="bg-black bg-opacity-60 rounded-lg p-3 text-center">
-        <h1 className="text-2xl font-bold mb-1">😅 {randomMessage}</h1>
-        <div className="text-sm text-gray-300">Não foi dessa vez!</div>
+        <h1 className="text-2xl font-bold mb-1">{randomMessage}</h1>
+        <div className="text-sm text-yellow-300">Não foi dessa vez!</div>
       </div>
 
       {/* Match Info */}
@@ -36,7 +42,7 @@ const ShareableLossCard = forwardRef(({ bet }, ref) => {
           {bet.match.player1_name} vs {bet.match.player2_name}
         </div>
         <div className="text-sm">
-          <span className="text-gray-300">Você apostou em:</span> {bet.player_name}
+          <span className="text-yellow-300">Você apostou em:</span> {bet.player_name}
         </div>
       </div>
 

@@ -113,6 +113,7 @@ const MyBets = () => {
         fetch(`/api/betting/match/${bet.match.match_id}/bets`)
           .then(res => res.json())
           .then(data => setMatchOdds({ odds: data.odds || {}, stats: data.betting_stats || {} }))
+          .catch(err => console.error('Error fetching match odds:', err))
       }
     }, [bet.match.match_id, bet.match.status])
 

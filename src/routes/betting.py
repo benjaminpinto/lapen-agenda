@@ -90,13 +90,14 @@ def place_bet():
     player_name = data.get('player_name')
     amount = data.get('amount')
     payment_intent_id = data.get('payment_intent_id')
+    payment_method = data.get('payment_method', 'card')
     
     # Validate required fields
     if not all([schedule_id, player_name, amount, payment_intent_id]):
         return jsonify({'error': 'Todos os campos são obrigatórios'}), 400
     
     # Confirm payment was successful
-    if not confirm_payment(payment_intent_id):
+    if not confirm_payment(payment_intent_id, payment_method):
         return jsonify({'error': 'Pagamento não confirmado'}), 400
     
     try:

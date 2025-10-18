@@ -174,7 +174,8 @@ const BettingDashboard = () => {
                     schedule_id: currentSelectedMatch.schedule_id,
                     player_name: currentSelectedPlayer,
                     amount: parseFloat(currentBetAmount),
-                    payment_intent_id: clientSecret ? clientSecret.split('_secret_')[0] : paymentData?.payment_id
+                    payment_intent_id: clientSecret ? clientSecret.split('_secret_')[0] : paymentData?.payment_id,
+                    payment_method: paymentData?.payment_id ? 'pix' : 'card'
                 })
             })
 

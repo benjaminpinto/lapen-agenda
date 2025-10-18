@@ -85,8 +85,8 @@ const BettingDashboard = () => {
 
         try {
             // Check if mock mode is active
-            if (import.meta.env.VITE_STRIPE_MOCK_ACTIVE === 'true') {
-                // Mock payment - directly place bet without Stripe
+            if (import.meta.env.VITE_PAYMENT_MOCK_ACTIVE === 'true') {
+                // Mock payment - directly place bet
                 const betResponse = await fetch('/api/betting/place-bet', {
                     method: 'POST',
                     headers: {
@@ -97,7 +97,8 @@ const BettingDashboard = () => {
                         schedule_id: selectedMatch.schedule_id,
                         player_name: selectedPlayer,
                         amount: parseFloat(betAmount),
-                        payment_intent_id: 'mock_pi_' + Date.now()
+                        payment_intent_id: 'mock_' + paymentMethod + '_' + Date.now(),
+                        payment_method: paymentMethod
                     })
                 })
 
@@ -119,7 +120,7 @@ const BettingDashboard = () => {
                     throw new Error(betData.error)
                 }
             } else {
-                // Normal Stripe payment flow
+                // Normal payment flow
                 const paymentResponse = await fetch('/api/betting/create-payment-intent', {
                     method: 'POST',
                     headers: {

@@ -4,6 +4,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
+import MercadoPagoPayment from './MercadoPagoPayment'
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
 
@@ -50,8 +51,7 @@ const CheckoutForm = ({ clientSecret, onSuccess, onError, loading, setLoading, b
         <div className="mb-4">
           <PaymentElement
             options={{
-              layout: 'accordion',
-              paymentMethodOrder: ['pix', 'card', 'boleto', 'apple_pay', 'google_pay']
+              layout: 'accordion'
             }}
           />
         </div>
@@ -74,39 +74,55 @@ const CheckoutForm = ({ clientSecret, onSuccess, onError, loading, setLoading, b
   )
 }
 
-const PaymentForm = ({ clientSecret, onSuccess, onError, betAmount, selectedPlayer, selectedMatch }) => {
+const PaymentForm = ({ paymentData, clientSecret, onSuccess, onError, betAmount, selectedPlayer, selectedMatch, onCancel }) => {
   const [loading, setLoading] = useState(false)
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Pagamento</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Elements 
-          stripe={stripePromise}
-          options={{
-            clientSecret,
-            locale: 'pt-BR',
-            appearance: {
-              theme: 'stripe'
-            }
-          }}
-        >
-          <CheckoutForm 
-            clientSecret={clientSecret}
-            onSuccess={onSuccess}
-            onError={onError}
-            loading={loading}
-            setLoading={setLoading}
-            betAmount={betAmount}
-            selectedPlayer={selectedPlayer}
-            selectedMatch={selectedMatch}
-          />
-        </Elements>
-      </CardContent>
-    </Card>
-  )
+  // Mercado Pago PIX payment
+  if (paymentData?.qr_code) {
+    return (
+      <MercadoPagoPayment
+        paymentData={paymentData}
+        onSuccess={() => onSuccess(setLoading, betAmount, selectedPlayer, selectedMatch)}
+        onCancel={() => onError('Pagamento cancelado')}
+      />
+    )
+  }
+
+  // Stripe card payment
+  if (clientSecret) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Pagamento</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Elements 
+            stripe={stripePromise}
+            options={{
+              clientSecret,
+              locale: 'pt-BR',
+              appearance: {
+                theme: 'stripe'
+              }
+            }}
+          >
+            <CheckoutForm 
+              clientSecret={clientSecret}
+              onSuccess={onSuccess}
+              onError={onError}
+              loading={loading}
+              setLoading={setLoading}
+              betAmount={betAmount}
+              selectedPlayer={selectedPlayer}
+              selectedMatch={selectedMatch}
+            />
+          </Elements>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return null
 }
 
 export default PaymentForm

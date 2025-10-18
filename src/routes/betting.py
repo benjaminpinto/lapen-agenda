@@ -161,7 +161,7 @@ def place_bet():
         cursor = db.execute('''
             SELECT id FROM bets 
             WHERE user_id = ? AND match_id = ? AND status = 'active' AND payment_id != ?
-        ''', (request.user_id, match_id, payment_intent_id))
+        ''', (request.user_id, match_id, str(payment_intent_id)))
         
         if cursor.fetchone():
             return jsonify({'error': 'Você já tem uma aposta ativa nesta partida'}), 400
@@ -170,7 +170,7 @@ def place_bet():
         cursor = db.execute('''
             INSERT INTO bets (user_id, match_id, player_name, amount, status, potential_return, payment_id)
             VALUES (?, ?, ?, ?, 'active', 0, ?)
-        ''', (request.user_id, match_id, player_name, float(amount), payment_intent_id))
+        ''', (request.user_id, match_id, player_name, float(amount), str(payment_intent_id)))
         
         bet_id = cursor.lastrowid
         

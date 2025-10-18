@@ -262,12 +262,17 @@ def get_user_bets():
             if hasattr(start_time, 'strftime'):
                 start_time = start_time.strftime('%H:%M')
             
+            # Recalculate potential return in real-time for active bets
+            potential_return = float(row['potential_return'] or 0)
+            if row['status'] == 'active':
+                potential_return = calculate_potential_return(row['match_id'], row['player_name'], row['amount'])
+            
             bet = {
                 'id': row['id'],
                 'amount': float(row['amount']),
                 'player_name': row['player_name'],
                 'status': row['status'],
-                'potential_return': float(row['potential_return'] or 0),
+                'potential_return': potential_return,
                 'created_at': created_at,
                 'match': {
                     'id': row['schedule_id'],

@@ -75,11 +75,15 @@ const MercadoPagoPayment = ({ paymentData, onSuccess, onCancel }) => {
 
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-800">
-              Após realizar o pagamento, aguarde alguns segundos para a confirmação automática.
+              Após realizar o pagamento, retorne e aguarde alguns segundos para a confirmação automática.
             </p>
           </div>
-
-          <div className="mt-4 flex gap-2">
+          <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
+              <p className="text-sm text-yellow-800">
+              Não saia desta página até que o pagamento seja confirmado.
+            </p>
+          </div>
+          <div className="mt-4">
             <Button onClick={async () => {
               setChecking(true)
               try {
@@ -95,11 +99,8 @@ const MercadoPagoPayment = ({ paymentData, onSuccess, onCancel }) => {
               } finally {
                 setChecking(false)
               }
-            }} className="flex-1" disabled={checking}>
+            }} className="w-full" disabled={checking}>
               {checking ? 'Verificando...' : 'Já Paguei'}
-            </Button>
-            <Button onClick={onCancel} variant="outline" className="flex-1">
-              Cancelar
             </Button>
           </div>
         </div>

@@ -98,12 +98,21 @@ def check_payment_status(payment_id):
     import requests
     
     try:
+        import urllib3
+        
         gateway = MercadoPagoGateway()
+        
+        # Disable SSL verification for local development
+        is_local = os.getenv('FLASK_ENV') == 'development' or os.getenv('ENVIRONMENT') == 'local'
+        if is_local:
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
         headers = {'Authorization': f'Bearer {gateway.access_token}'}
         response = requests.get(
             f'{gateway.base_url}/v1/payments/{payment_id}',
             headers=headers,
-            timeout=30
+            timeout=30,
+            verify=not is_local
         )
         
         if response.status_code == 200:

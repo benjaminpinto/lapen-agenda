@@ -63,7 +63,7 @@ class StripeGateway(PaymentGateway):
     
     def confirm_payment(self, payment_intent_id):
         if self.mock_active:
-            return payment_intent_id.startswith('mock_pi_')
+            return payment_intent_id.startswith('mock_pi_') or payment_intent_id.startswith('mock_card_')
         
         try:
             intent = stripe.PaymentIntent.retrieve(payment_intent_id)
@@ -153,7 +153,7 @@ class MercadoPagoGateway(PaymentGateway):
     
     def confirm_payment(self, payment_intent_id):
         if self.mock_active:
-            return payment_intent_id.startswith('mp_mock_')
+            return payment_intent_id.startswith('mp_mock_') or payment_intent_id.startswith('mock_pix_')
         
         try:
             import requests

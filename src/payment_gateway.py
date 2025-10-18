@@ -112,6 +112,12 @@ class MercadoPagoGateway(PaymentGateway):
             
             import time
             import uuid
+            import urllib3
+            
+            # Disable SSL warnings for local development
+            is_local = os.getenv('FLASK_ENV') == 'development' or os.getenv('ENVIRONMENT') == 'local'
+            if is_local:
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             
             # Generate unique idempotency key for each payment
             idempotency_key = f"{metadata.get('user_id', '')}_{metadata.get('schedule_id', '')}_{int(time.time() * 1000)}_{uuid.uuid4().hex[:8]}" if metadata else f"{int(time.time() * 1000)}_{uuid.uuid4().hex[:8]}"
@@ -134,11 +140,15 @@ class MercadoPagoGateway(PaymentGateway):
                 payment_data['external_reference'] = str(metadata.get('bet_id', ''))
                 payment_data['description'] = metadata.get('description', 'Payment')
             
+            # Disable SSL verification for local development
+            is_local = os.getenv('FLASK_ENV') == 'development' or os.getenv('ENVIRONMENT') == 'local'
+            
             response = requests.post(
                 f'{self.base_url}/v1/payments',
                 json=payment_data,
                 headers=headers,
-                timeout=30
+                timeout=30,
+                verify=not is_local
             )
             
             if response.status_code in [200, 201]:
@@ -164,11 +174,15 @@ class MercadoPagoGateway(PaymentGateway):
         try:
             import requests
             
+            # Disable SSL verification for local development
+            is_local = os.getenv('FLASK_ENV') == 'development' or os.getenv('ENVIRONMENT') == 'local'
+            
             headers = {'Authorization': f'Bearer {self.access_token}'}
             response = requests.get(
                 f'{self.base_url}/v1/payments/{payment_intent_id}',
                 headers=headers,
-                timeout=30
+                timeout=30,
+                verify=not is_local
             )
             
             if response.status_code == 200:
@@ -194,11 +208,15 @@ class MercadoPagoGateway(PaymentGateway):
             if amount:
                 refund_data['amount'] = float(amount)
             
+            # Disable SSL verification for local development
+            is_local = os.getenv('FLASK_ENV') == 'development' or os.getenv('ENVIRONMENT') == 'local'
+            
             response = requests.post(
                 f'{self.base_url}/v1/payments/{payment_intent_id}/refunds',
                 json=refund_data,
                 headers=headers,
-                timeout=30
+                timeout=30,
+                verify=not is_local
             )
             
             if response.status_code == 201:

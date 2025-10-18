@@ -1,108 +1,27 @@
-import stripe
-import os
-from flask import current_app
-
-# Set Stripe API key
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY') or os.environ.get('STRIPE_SECRET_KEY')
+from src.payment_gateway import get_payment_gateway
 
 def create_payment_intent(amount, currency='brl', metadata=None):
-    """Create a Stripe payment intent or mock payment"""
-    from src.logger import get_logger
-    logger = get_logger()
-    
-    mock_active = (os.getenv('STRIPE_MOCK_ACTIVE') or os.environ.get('STRIPE_MOCK_ACTIVE', 'false')).lower() == 'true'
-    logger.info(f'Stripe mock active: {mock_active}, API key set: {bool(stripe.api_key)}')
-    
-    if mock_active:
-        # Mock payment for development
-        mock_id = f"mock_pi_{int(amount * 100)}_{hash(str(metadata))}"
-        return {
-            'success': True,
-            'client_secret': f"mock_secret_{mock_id}",
-            'payment_intent_id': mock_id
-        }
-    
-    try:
-        logger.info(f'Creating PaymentIntent with amount={amount}, currency={currency}')
-        
-        # Create PaymentIntent with minimal parameters first
-        create_params = {
-            'amount': int(amount * 100),
-            'currency': currency
-        }
-        
-        if metadata:
-            create_params['metadata'] = metadata
-            
-        # Add payment methods for BRL currency
-        if currency == 'brl':
-            create_params['payment_method_types'] = ['card']
-        
-        logger.info(f'PaymentIntent params: {create_params}')
-        
-        try:
-            intent = stripe.PaymentIntent.create(**create_params)
-            logger.info(f'PaymentIntent created successfully')
-        except Exception as e:
-            logger.error(f'Error in PaymentIntent creation: {e}')
-            raise e
-        
-        return {
-            'success': True,
-            'client_secret': intent.client_secret,
-            'payment_intent_id': intent.id
-        }
-    except Exception as e:
-        logger.error(f'Error creating PaymentIntent: {e}')
-        return {
-            'success': False,
-            'error': str(e)
-        }
+    """Create a payment intent using gateway based on payment method"""
+    payment_method = metadata.get('payment_method', 'card') if metadata else 'card'
+    gateway = get_payment_gateway(payment_method)
+    return gateway.create_payment_intent(amount, currency, metadata)
 
-def confirm_payment(payment_intent_id):
+def confirm_payment(payment_intent_id, payment_method='card'):
     """Confirm a payment was successful"""
-    mock_active = (os.getenv('STRIPE_MOCK_ACTIVE') or os.environ.get('STRIPE_MOCK_ACTIVE', 'false')).lower() == 'true'
-    if mock_active:
-        # Mock payment confirmation - always return True for mock payments
-        return payment_intent_id.startswith('mock_pi_')
-    
-    try:
-        intent = stripe.PaymentIntent.retrieve(payment_intent_id)
-        return intent.status == 'succeeded'
-    except Exception:
-        return False
+    gateway = get_payment_gateway(payment_method)
+    return gateway.confirm_payment(payment_intent_id)
 
-def refund_payment(payment_intent_id, amount=None):
+def refund_payment(payment_intent_id, amount=None, payment_method='card'):
     """Refund a payment"""
-    mock_active = (os.getenv('STRIPE_MOCK_ACTIVE') or os.environ.get('STRIPE_MOCK_ACTIVE', 'false')).lower() == 'true'
-    if mock_active:
-        # Mock refund for development
-        return {
-            'success': True,
-            'refund_id': f'mock_refund_{payment_intent_id}'
-        }
+    gateway = get_payment_gateway(payment_method)
+    result = gateway.refund_payment(payment_intent_id, amount)
     
-    try:
-        refund = stripe.Refund.create(
-            payment_intent=payment_intent_id,
-            amount=int(amount * 100) if amount else None
-        )
-        
-        # Log refund
-        log_payment_event(payment_intent_id, 'refund_created', refund.status, amount or 0)
-        
-        return {
-            'success': True,
-            'refund_id': refund.id,
-            'status': refund.status
-        }
-    except Exception as e:
-        # Log refund failure
-        log_payment_event(payment_intent_id, 'refund_failed', 'failed', amount or 0, str(e))
-        return {
-            'success': False,
-            'error': str(e)
-        }
+    if result['success']:
+        log_payment_event(payment_intent_id, 'refund_created', result.get('status', 'succeeded'), amount or 0)
+    else:
+        log_payment_event(payment_intent_id, 'refund_failed', 'failed', amount or 0, result.get('error'))
+    
+    return result
 
 def log_payment_event(payment_id, event_type, status, amount, error_message=None, metadata=None):
     """Log payment events to database"""

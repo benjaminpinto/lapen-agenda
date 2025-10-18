@@ -243,7 +243,7 @@ const Home = () => {
                       <span className="font-semibold text-sm">{getDayName(parseInt(dayOfWeek))}</span>
                     </div>
                     <div className="space-y-1">
-                      {schedules.map((schedule) => (
+                      {schedules.sort((a, b) => a.start_time.localeCompare(b.start_time)).map((schedule) => (
                         <div key={schedule.id} className="flex items-center justify-between text-xs">
                           <div className="flex items-center space-x-2">
                             <MapPin className="h-3 w-3 text-green-600" />

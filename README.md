@@ -1,5 +1,13 @@
 # LAPEN Agenda - Tennis Court Management System
 
+## Payment Integration
+
+**Current Gateway:** Mercado Pago (with PIX support)
+
+To switch payment gateways, change the `PAYMENT_GATEWAY` variable in `.env`:
+- `mercadopago` - Mercado Pago with PIX (default)
+- `stripe` - Stripe (PIX not available)
+
 ## Project Structure
 
 ```

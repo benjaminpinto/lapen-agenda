@@ -4,6 +4,7 @@ from src.auth import require_auth
 from src.utils.match_utils import is_match_eligible_for_betting, get_or_create_match, update_match_pool
 from src.utils.odds_calculator import calculate_odds, calculate_potential_return
 from src.utils.payment_processor import create_payment_intent, confirm_payment
+from src.payment_gateway import format_payment_response
 from src.email_service import send_bet_confirmation_email
 from src.logger import get_logger
 from decimal import Decimal
@@ -21,6 +22,7 @@ def create_bet_payment_intent():
     schedule_id = data.get('schedule_id')
     player_name = data.get('player_name')
     amount = data.get('amount')
+    payment_method = data.get('payment_method', 'card')
     
     # Validate required fields
     if not all([schedule_id, player_name, amount]):
@@ -38,15 +40,27 @@ def create_bet_payment_intent():
         logger.info(f'Betting not eligible for schedule {schedule_id}')
         return jsonify({'error': 'Apostas encerradas - menos de 1 hora para o início da partida'}), 400
     
+    # Get user email for Mercado Pago
+    db = get_db()
+    try:
+        cursor = db.execute('SELECT email FROM users WHERE id = ?', (request.user_id,))
+        user = cursor.fetchone()
+        user_email = user['email'] if user else 'test@test.com'
+    finally:
+        db.close()
+    
     # Create payment intent
     try:
         payment_result = create_payment_intent(
             amount=float(amount),
+            currency='brl',
             metadata={
                 'user_id': request.user_id,
                 'schedule_id': schedule_id,
                 'player_name': player_name,
-                'type': 'bet'
+                'type': 'bet',
+                'payment_method': payment_method,
+                'email': user_email
             }
         )
         
@@ -60,10 +74,11 @@ def create_bet_payment_intent():
         logger.error(f'Exception during payment intent creation: {str(e)}')
         return jsonify({'error': f'Erro ao processar pagamento: {str(e)}'}), 500
     
-    return jsonify({
-        'client_secret': payment_result['client_secret'],
-        'payment_intent_id': payment_result['payment_intent_id']
-    })
+    response_data = format_payment_response(payment_result)
+    if not response_data:
+        return jsonify({'error': 'Erro ao formatar resposta do pagamento'}), 500
+    
+    return jsonify(response_data)
 
 @betting_bp.route('/place-bet', methods=['POST'])
 @require_auth

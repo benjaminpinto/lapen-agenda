@@ -91,6 +91,32 @@ def handle_payment_failure(payment_intent):
     finally:
         db.close()
 
+@payments_bp.route('/<string:payment_id>/status', methods=['GET'])
+def check_payment_status(payment_id):
+    """Check payment status (Mercado Pago PIX only)"""
+    from src.payment_gateway import MercadoPagoGateway
+    import requests
+    
+    try:
+        gateway = MercadoPagoGateway()
+        headers = {'Authorization': f'Bearer {gateway.access_token}'}
+        response = requests.get(
+            f'{gateway.base_url}/v1/payments/{payment_id}',
+            headers=headers,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            payment = response.json()
+            status = payment.get('status')
+            logger.info(f'Payment {payment_id}: status={status}, detail={payment.get("status_detail")}')
+            return jsonify({'status': status})
+        
+        return jsonify({'error': f'API error: {response.status_code}'}), 500
+    except Exception as e:
+        logger.error(f'Error checking payment {payment_id}: {e}')
+        return jsonify({'error': str(e)}), 500
+
 @payments_bp.route('/history/<int:user_id>', methods=['GET'])
 def get_payment_history(user_id):
     """Get payment history for a user"""

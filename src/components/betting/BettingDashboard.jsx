@@ -7,7 +7,7 @@ import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Dialog, DialogContent} from '@/components/ui/dialog'
 import {Badge} from '@/components/ui/badge'
-import {CheckCircle, ChevronDown, Clock, Flame, Share2, Star, Trophy, Users, Wallet} from 'lucide-react'
+import {CheckCircle, ChevronDown, Clock, Flame, Share2, Star, Trophy, Users, Wallet, QrCode, CreditCard} from 'lucide-react'
 import ShareableMatchCard from './ShareableMatchCard'
 import FinishedMatchCard from '../shared/FinishedMatchCard'
 import PaymentForm from './PaymentForm'
@@ -20,6 +20,7 @@ const BettingDashboard = () => {
     const [selectedPlayer, setSelectedPlayer] = useState('')
     const [loading, setLoading] = useState(false)
     const [clientSecret, setClientSecret] = useState(null)
+    const [paymentData, setPaymentData] = useState(null)
     const [showPayment, setShowPayment] = useState(false)
     const [activeBetsOpen, setActiveBetsOpen] = useState(false)
     const [availableMatchesOpen, setAvailableMatchesOpen] = useState(true)
@@ -61,7 +62,7 @@ const BettingDashboard = () => {
         }
     }
 
-    const handlePlaceBet = async () => {
+    const handlePlaceBet = async (paymentMethod = 'card') => {
         if (!isAuthenticated) {
             toast({
                 title: "Login necessário",
@@ -128,17 +129,25 @@ const BettingDashboard = () => {
                     body: JSON.stringify({
                         schedule_id: selectedMatch.schedule_id,
                         player_name: selectedPlayer,
-                        amount: parseFloat(betAmount)
+                        amount: parseFloat(betAmount),
+                        payment_method: paymentMethod
                     })
                 })
 
-                const paymentData = await paymentResponse.json()
+                const paymentResult = await paymentResponse.json()
 
                 if (!paymentResponse.ok) {
-                    throw new Error(paymentData.error)
+                    throw new Error(paymentResult.error)
                 }
 
-                setClientSecret(paymentData.client_secret)
+                // Stripe payment
+                if (paymentResult.client_secret) {
+                    setClientSecret(paymentResult.client_secret)
+                }
+                // Mercado Pago payment
+                if (paymentResult.qr_code) {
+                    setPaymentData(paymentResult)
+                }
                 setShowPayment(true)
             }
 
@@ -165,7 +174,7 @@ const BettingDashboard = () => {
                     schedule_id: currentSelectedMatch.schedule_id,
                     player_name: currentSelectedPlayer,
                     amount: parseFloat(currentBetAmount),
-                    payment_intent_id: clientSecret.split('_secret_')[0]
+                    payment_intent_id: clientSecret ? clientSecret.split('_secret_')[0] : paymentData?.payment_id
                 })
             })
 
@@ -180,6 +189,7 @@ const BettingDashboard = () => {
                 setSelectedPlayer('')
                 setSelectedMatch(null)
                 setClientSecret(null)
+                setPaymentData(null)
                 setShowPayment(false)
                 fetchMatches()
                 setTimeout(() => {
@@ -706,17 +716,36 @@ const BettingDashboard = () => {
                                         />
                                     </div>
 
+                                    {!showPayment && (
+                                        <div>
+                                            <Label>Método de Pagamento</Label>
+                                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                                <Button
+                                                    variant="outline"
+                                                    className="flex flex-col items-center py-6 gap-2"
+                                                    onClick={() => handlePlaceBet('pix')}
+                                                    disabled={loading || !selectedPlayer || !betAmount}
+                                                >
+                                                    <QrCode className="w-8 h-8" />
+                                                    <span className="text-sm font-medium">PIX</span>
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    className="flex flex-col items-center py-6 gap-2"
+                                                    onClick={() => handlePlaceBet('card')}
+                                                    disabled={loading || !selectedPlayer || !betAmount}
+                                                >
+                                                    <CreditCard className="w-8 h-8" />
+                                                    <span className="text-sm font-medium">Cartão</span>
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="space-y-2">
-                                        {!showPayment ? (
-                                            <Button
-                                                onClick={handlePlaceBet}
-                                                disabled={loading || !selectedPlayer || !betAmount}
-                                                className="w-full"
-                                            >
-                                                {loading ? 'Processando...' : 'Prosseguir para Pagamento'}
-                                            </Button>
-                                        ) : (
+                                        {showPayment && (
                                             <PaymentForm
+                                                paymentData={paymentData}
                                                 clientSecret={clientSecret}
                                                 onSuccess={handlePaymentSuccess}
                                                 onError={handlePaymentError}
@@ -731,6 +760,7 @@ const BettingDashboard = () => {
                                                 setBetAmount('')
                                                 setSelectedPlayer('')
                                                 setClientSecret(null)
+                                                setPaymentData(null)
                                                 setShowPayment(false)
                                             }}
                                             variant="outline"

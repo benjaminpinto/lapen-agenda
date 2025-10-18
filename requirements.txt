@@ -6,3 +6,4 @@ PyJWT==2.8.0
 bcrypt==4.1.2
 Flask-Mail==0.9.1
 stripe==7.9.0
+mercadopago==2.2.1

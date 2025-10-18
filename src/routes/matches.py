@@ -111,8 +111,9 @@ def get_available_matches():
                     match_datetime_utc = match_datetime.replace(tzinfo=timezone.utc) + timedelta(hours=3)
                     now_utc = datetime.now(timezone.utc)
                     cutoff_time_utc = now_utc + timedelta(hours=1)
-                    if match_datetime_utc <= cutoff_time_utc:
-                        continue  # Skip matches less than 1 hour away
+                    # Skip upcoming matches less than 1 hour away, but include finished/cancelled matches
+                    if status == 'upcoming' and match_datetime_utc <= cutoff_time_utc:
+                        continue
                 except:
                     pass  # If parsing fails, include the match
 

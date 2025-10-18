@@ -80,7 +80,22 @@ const MercadoPagoPayment = ({ paymentData, onSuccess, onCancel }) => {
           </div>
 
           <div className="mt-4 flex gap-2">
-            <Button onClick={onSuccess} className="flex-1" disabled={checking}>
+            <Button onClick={async () => {
+              setChecking(true)
+              try {
+                const response = await fetch(`/api/payments/${paymentData.payment_id}/status`)
+                const data = await response.json()
+                if (data.status === 'approved') {
+                  onSuccess()
+                } else {
+                  alert('Pagamento ainda não confirmado. Por favor, aguarde.')
+                }
+              } catch (error) {
+                alert('Erro ao verificar pagamento')
+              } finally {
+                setChecking(false)
+              }
+            }} className="flex-1" disabled={checking}>
               {checking ? 'Verificando...' : 'Já Paguei'}
             </Button>
             <Button onClick={onCancel} variant="outline" className="flex-1">

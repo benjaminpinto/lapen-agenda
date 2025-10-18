@@ -157,11 +157,11 @@ def place_bet():
         if player_name not in valid_players:
             return jsonify({'error': 'Jogador inválido'}), 400
         
-        # Check if user already has a bet on this match
+        # Check if user already has a bet on this match (excluding this payment)
         cursor = db.execute('''
             SELECT id FROM bets 
-            WHERE user_id = ? AND match_id = ? AND status = 'active'
-        ''', (request.user_id, match_id))
+            WHERE user_id = ? AND match_id = ? AND status = 'active' AND payment_id != ?
+        ''', (request.user_id, match_id, payment_intent_id))
         
         if cursor.fetchone():
             return jsonify({'error': 'Você já tem uma aposta ativa nesta partida'}), 400

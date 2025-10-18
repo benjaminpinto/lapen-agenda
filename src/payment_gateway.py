@@ -110,10 +110,16 @@ class MercadoPagoGateway(PaymentGateway):
         try:
             import requests
             
+            import time
+            import uuid
+            
+            # Generate unique idempotency key for each payment
+            idempotency_key = f"{metadata.get('user_id', '')}_{metadata.get('schedule_id', '')}_{int(time.time() * 1000)}_{uuid.uuid4().hex[:8]}" if metadata else f"{int(time.time() * 1000)}_{uuid.uuid4().hex[:8]}"
+            
             headers = {
                 'Authorization': f'Bearer {self.access_token}',
                 'Content-Type': 'application/json',
-                'X-Idempotency-Key': f"{metadata.get('bet_id', '')}_{int(amount*100)}" if metadata else f"{int(amount*100)}"
+                'X-Idempotency-Key': idempotency_key
             }
             
             payment_data = {

@@ -24,6 +24,14 @@ def calculate_odds(match_id):
         if total_pool == 0:
             return {}
         
+        # Only calculate odds if both players have bets
+        if len(bet_stats) < 2:
+            return {
+                'odds': {},
+                'total_pool': float(total_pool),
+                'payout_pool': 0
+            }
+        
         # Apply 20% house edge
         payout_pool = total_pool * Decimal('0.8')
         

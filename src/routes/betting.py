@@ -262,10 +262,15 @@ def get_user_bets():
             if hasattr(start_time, 'strftime'):
                 start_time = start_time.strftime('%H:%M')
             
-            # Recalculate potential return in real-time for active bets
+            # Recalculate potential return in real-time for active bets (only if odds are available)
             potential_return = float(row['potential_return'] or 0)
             if row['status'] == 'active':
-                potential_return = calculate_potential_return(row['match_id'], row['player_name'], row['amount'])
+                odds_data = calculate_odds(row['match_id'])
+                # Only show potential return if odds exist for this player (both sides have bets)
+                if odds_data and 'odds' in odds_data and row['player_name'] in odds_data['odds']:
+                    potential_return = calculate_potential_return(row['match_id'], row['player_name'], row['amount'])
+                else:
+                    potential_return = 0
             
             bet = {
                 'id': row['id'],

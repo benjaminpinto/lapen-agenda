@@ -218,7 +218,7 @@ const MyBets = () => {
               <div className="text-sm text-gray-500">Retorno Potencial</div>
               <div className="font-semibold flex items-center">
                 <TrendingUp className="h-4 w-4 mr-1" />
-                R$ {bet.potential_return.toFixed(2)}
+                {bet.potential_return > 0 ? `R$ ${bet.potential_return.toFixed(2)}` : 'Odds em cálculo'}
               </div>
             </div>
             <div>

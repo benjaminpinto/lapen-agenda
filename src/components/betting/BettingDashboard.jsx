@@ -724,20 +724,20 @@ const BettingDashboard = () => {
                                             <div className="grid grid-cols-2 gap-2 mt-2">
                                                 <Button
                                                     variant="outline"
-                                                    className="flex flex-col items-center py-6 gap-2"
+                                                    className="flex flex-col items-center justify-center py-6 gap-2 h-24"
                                                     onClick={() => handlePlaceBet('pix')}
                                                     disabled={loading || !selectedPlayer || !betAmount}
                                                 >
-                                                    <QrCode className="w-8 h-8" />
+                                                    <QrCode className="h-8 w-8" />
                                                     <span className="text-sm font-medium">PIX</span>
                                                 </Button>
                                                 <Button
                                                     variant="outline"
-                                                    className="flex flex-col items-center py-6 gap-2"
+                                                    className="flex flex-col items-center justify-center py-6 gap-2 h-24"
                                                     onClick={() => handlePlaceBet('card')}
                                                     disabled={loading || !selectedPlayer || !betAmount}
                                                 >
-                                                    <CreditCard className="w-8 h-8" />
+                                                    <CreditCard className="h-8 w-8" />
                                                     <span className="text-sm font-medium">Cartão</span>
                                                 </Button>
                                             </div>

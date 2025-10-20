@@ -6,6 +6,17 @@ import { useState, useEffect } from 'react'
 const MercadoPagoPayment = ({ paymentData, onSuccess, onCancel }) => {
   const [copied, setCopied] = useState(false)
   const [checking, setChecking] = useState(false)
+  const [deviceId, setDeviceId] = useState(null)
+
+  // Initialize MercadoPago SDK for device ID
+  useEffect(() => {
+    const publicKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY
+    if (publicKey && window.MercadoPago) {
+      const mp = new window.MercadoPago(publicKey)
+      const deviceIdValue = mp.getDeviceId()
+      setDeviceId(deviceIdValue)
+    }
+  }, [])
 
   useEffect(() => {
     const checkPaymentStatus = async () => {

@@ -21,12 +21,17 @@ def mercadopago_webhook():
                 gateway = get_payment_gateway()
                 
                 import requests
+                import os
+                
+                # Disable SSL verification for local development only
+                is_local = os.getenv('FLASK_ENV') == 'development' or os.getenv('ENVIRONMENT') == 'local'
+                
                 headers = {'Authorization': f'Bearer {gateway.access_token}'}
                 response = requests.get(
                     f'{gateway.base_url}/v1/payments/{payment_id}',
                     headers=headers,
                     timeout=30,
-                    verify=False
+                    verify=not is_local
                 )
                 
                 if response.status_code == 200:

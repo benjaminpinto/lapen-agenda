@@ -49,18 +49,33 @@ def create_bet_payment_intent():
     finally:
         db.close()
     
+    # Create temporary bet record to get bet_id
+    db = get_db()
+    try:
+        cursor = db.execute(
+            'INSERT INTO bets (user_id, match_id, player_name, amount, status) VALUES (?, 0, ?, ?, "pending")',
+            (request.user_id, player_name, float(amount))
+        )
+        bet_id = cursor.lastrowid
+        db.commit()
+    finally:
+        db.close()
+    
     # Create payment intent
     try:
         payment_result = create_payment_intent(
             amount=float(amount),
             currency='brl',
             metadata={
+                'bet_id': bet_id,
                 'user_id': request.user_id,
                 'schedule_id': schedule_id,
                 'player_name': player_name,
                 'type': 'bet',
                 'payment_method': payment_method,
-                'email': user_email
+                'email': user_email,
+                'description': f'Aposta - {player_name}',
+                'device_id': data.get('device_id', '')
             }
         )
         

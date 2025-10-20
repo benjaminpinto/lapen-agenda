@@ -125,20 +125,31 @@ class MercadoPagoGateway(PaymentGateway):
             headers = {
                 'Authorization': f'Bearer {self.access_token}',
                 'Content-Type': 'application/json',
-                'X-Idempotency-Key': idempotency_key
+                'X-Idempotency-Key': idempotency_key,
+                'X-meli-session-id': metadata.get('device_id', '') if metadata else ''
             }
+            
+            # Get webhook URL dynamically (Vercel or custom)
+            webhook_url = os.getenv('WEBHOOK_URL')
+            if not webhook_url:
+                # Vercel provides VERCEL_URL
+                vercel_url = os.getenv('VERCEL_URL')
+                if vercel_url:
+                    webhook_url = f'https://{vercel_url}/api/webhooks/mercadopago'
+                else:
+                    webhook_url = 'https://your-domain.com/api/webhooks/mercadopago'
             
             payment_data = {
                 "transaction_amount": float(amount),
                 "payment_method_id": "pix",
+                "notification_url": webhook_url,
+                "external_reference": str(metadata.get('bet_id', f'payment_{int(time.time())}')) if metadata else f'payment_{int(time.time())}',
+                "description": metadata.get('description', 'Pagamento Tigrinho LAPEN') if metadata else 'Pagamento Tigrinho LAPEN',
+                "statement_descriptor": "LAPEN",
                 "payer": {
                     "email": metadata.get('email', 'test_user_123456@testuser.com') if metadata else 'test_user_123456@testuser.com'
                 }
             }
-            
-            if metadata:
-                payment_data['external_reference'] = str(metadata.get('bet_id', ''))
-                payment_data['description'] = metadata.get('description', 'Payment')
             
             # Disable SSL verification for local development
             is_local = os.getenv('FLASK_ENV') == 'development' or os.getenv('ENVIRONMENT') == 'local'

@@ -42,7 +42,26 @@ const BettingDashboard = () => {
             
             const response = await fetch('/api/matches/', { headers })
             const data = await response.json()
-            setMatches(data.matches || [])
+            
+            // Deduplicate matches and aggregate user bets
+            const matchMap = new Map()
+            
+            for (const match of (data.matches || [])) {
+                if (!matchMap.has(match.schedule_id)) {
+                    matchMap.set(match.schedule_id, {
+                        ...match,
+                        user_bet_players: match.user_bet_player ? [match.user_bet_player] : []
+                    })
+                } else {
+                    // Match already exists, add this player to the bet list
+                    const existing = matchMap.get(match.schedule_id)
+                    if (match.user_bet_player && !existing.user_bet_players.includes(match.user_bet_player)) {
+                        existing.user_bet_players.push(match.user_bet_player)
+                    }
+                }
+            }
+            
+            setMatches(Array.from(matchMap.values()))
         } catch (error) {
             toast({
                 title: "Erro",
@@ -339,12 +358,12 @@ const BettingDashboard = () => {
                         {stats[match.player1_name] && stats[match.player2_name] ? (
                             <>
                                 <div className={`text-center p-3 rounded relative ${
-                                    match.user_bet_player === match.player1_name 
+                                    match.user_bet_players?.includes(match.player1_name)
                                         ? 'bg-amber-100 border-2 border-amber-400' 
                                         : 'bg-blue-50'
                                 }`}>
                                     <div className="font-semibold flex items-center justify-center gap-1">
-                                        {match.user_bet_player === match.player1_name && <Star className="h-4 w-4 fill-amber-500 text-amber-500" />}
+                                        {match.user_bet_players?.includes(match.player1_name) && <Star className="h-4 w-4 fill-amber-500 text-amber-500" />}
                                         {match.player1_name}
                                     </div>
                                     <div className="text-sm text-gray-600">
@@ -355,12 +374,12 @@ const BettingDashboard = () => {
                                     </div>
                                 </div>
                                 <div className={`text-center p-3 rounded relative ${
-                                    match.user_bet_player === match.player2_name 
+                                    match.user_bet_players?.includes(match.player2_name)
                                         ? 'bg-amber-100 border-2 border-amber-400' 
                                         : 'bg-green-50'
                                 }`}>
                                     <div className="font-semibold flex items-center justify-center gap-1">
-                                        {match.user_bet_player === match.player2_name && <Star className="h-4 w-4 fill-amber-500 text-amber-500" />}
+                                        {match.user_bet_players?.includes(match.player2_name) && <Star className="h-4 w-4 fill-amber-500 text-amber-500" />}
                                         {match.player2_name}
                                     </div>
                                     <div className="text-sm text-gray-600">
@@ -389,7 +408,7 @@ const BettingDashboard = () => {
                         )}
                     </div>
 
-                    {match.betting_enabled && match.status === 'upcoming' && !match.user_has_bet && (
+                    {match.betting_enabled && match.status === 'upcoming' && (
                         <div className="space-y-2">
                             <Button
                                 onClick={() => {
@@ -409,7 +428,7 @@ const BettingDashboard = () => {
                                 className="w-full"
                                 variant="outline"
                             >
-                                Apostar nesta partida
+                                {match.user_has_bet ? 'Apostar Novamente' : 'Apostar nesta partida'}
                             </Button>
 
                             {isMobile ? (
@@ -462,66 +481,6 @@ const BettingDashboard = () => {
                                     stats={stats}
                                 />
                             </div>
-                        </div>
-                    )}
-                    
-                    {match.user_has_bet && (
-                        <div className="space-y-2">
-                            <div style={{position: 'absolute', left: '-9999px', top: '0'}}>
-                                <ShareableMatchCard
-                                    ref={shareRef}
-                                    match={match}
-                                    odds={odds}
-                                    stats={stats}
-                                />
-                            </div>
-                            <div className="text-center p-3 bg-green-50 rounded border border-green-200">
-                                <div className="text-sm text-green-700 font-medium">
-                                    ✅ Você já tem uma aposta nesta partida
-                                </div>
-                            </div>
-                            {isMobile ? (
-                                <Button
-                                    onClick={handleShare}
-                                    disabled={isSharing}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="w-full"
-                                >
-                                    <Share2 className="h-4 w-4 mr-2"/>
-                                    {isSharing ? 'Compartilhando...' : 'Compartilhar'}
-                                </Button>
-                            ) : (
-                                <>
-                                    <Button
-                                        onClick={() => setShowShareDialog(true)}
-                                        variant="ghost"
-                                        size="sm"
-                                        className="w-full"
-                                    >
-                                        <Share2 className="h-4 w-4 mr-2"/>
-                                        Compartilhar
-                                    </Button>
-                                    <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
-                                        <DialogContent className="max-w-md">
-                                            <ShareableMatchCard
-                                                ref={shareRef}
-                                                match={match}
-                                                odds={odds}
-                                                stats={stats}
-                                            />
-                                            <Button
-                                                onClick={handleShare}
-                                                disabled={isSharing}
-                                                className="w-full mt-4"
-                                            >
-                                                <Share2 className="h-4 w-4 mr-2"/>
-                                                {isSharing ? 'Compartilhando...' : 'Compartilhar Imagem'}
-                                            </Button>
-                                        </DialogContent>
-                                    </Dialog>
-                                </>
-                            )}
                         </div>
                     )}
                 </CardContent>
@@ -558,13 +517,13 @@ const BettingDashboard = () => {
                                 <Flame className="h-5 w-5 text-blue-600"/>
                                 <h2 className="text-xl font-semibold text-blue-900">Partidas Disponíveis</h2>
                                 <Badge className="bg-blue-600 text-white">
-                                    {matches.filter(m => m.status === 'upcoming' && !m.user_has_bet).length}
+                                    {matches.filter(m => m.status === 'upcoming').length}
                                 </Badge>
                             </div>
                             <ChevronDown className={`h-5 w-5 text-blue-600 transition-transform duration-200 ${availableMatchesOpen ? 'rotate-180' : ''}`}/>
                         </button>
                         <div className={`transition-all duration-300 ease-in-out overflow-hidden ${availableMatchesOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                            {matches.filter(m => m.status === 'upcoming' && !m.user_has_bet).length === 0 ? (
+                            {matches.filter(m => m.status === 'upcoming').length === 0 ? (
                                 <Card>
                                     <CardContent className="text-center py-8">
                                         <Users className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
@@ -572,36 +531,12 @@ const BettingDashboard = () => {
                                     </CardContent>
                                 </Card>
                             ) : (
-                                matches.filter(m => m.status === 'upcoming' && !m.user_has_bet).map(match => (
+                                matches.filter(m => m.status === 'upcoming').map(match => (
                                     <MatchCard key={match.schedule_id} match={match}/>
                                 ))
                             )}
                         </div>
                     </div>
-
-                    {/* Active Bets */}
-                    {isAuthenticated && matches.filter(m => m.status === 'upcoming' && m.user_has_bet).length > 0 && (
-                        <div className="mb-8">
-                            <button
-                                onClick={() => setActiveBetsOpen(!activeBetsOpen)}
-                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 rounded-lg transition-all duration-200 border border-amber-200 mb-4"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Clock className="h-5 w-5 text-amber-600"/>
-                                    <h2 className="text-xl font-semibold text-amber-900">Apostas Em Andamento</h2>
-                                    <Badge className="bg-amber-600 text-white">
-                                        {matches.filter(m => m.status === 'upcoming' && m.user_has_bet).length}
-                                    </Badge>
-                                </div>
-                                <ChevronDown className={`h-5 w-5 text-amber-600 transition-transform duration-200 ${activeBetsOpen ? 'rotate-180' : ''}`}/>
-                            </button>
-                            <div className={`transition-all duration-300 ease-in-out overflow-hidden ${activeBetsOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                                {matches.filter(m => m.status === 'upcoming' && m.user_has_bet).map(match => (
-                                    <MatchCard key={match.schedule_id} match={match}/>
-                                ))}
-                            </div>
-                        </div>
-                    )}
 
                     {/* Finished Matches */}
                     <div>

@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useState, useRef} from 'react'
 import {useNavigate, Link} from 'react-router-dom'
 import {useToast} from '@/contexts/ToastContext'
 import {Button} from '@/components/ui/button'
@@ -23,6 +23,7 @@ const AdminMatches = () => {
     const [finishedMatchesOpen, setFinishedMatchesOpen] = useState(false)
     const {toast} = useToast()
     const navigate = useNavigate()
+    const finishFormRef = useRef(null)
 
     useEffect(() => {
         fetchMatches()
@@ -244,15 +245,12 @@ const AdminMatches = () => {
                                     setWinner('')
                                     setScore('')
                                     setSelectedMatch(match)
-                                    // Scroll to finish match form on mobile
-                                    if (window.innerWidth < 1024) {
-                                        setTimeout(() => {
-                                            document.querySelector('.lg\\:col-span-2')?.nextElementSibling?.scrollIntoView({
-                                                behavior: 'smooth',
-                                                block: 'start'
-                                            })
-                                        }, 100)
-                                    }
+                                    setTimeout(() => {
+                                        finishFormRef.current?.scrollIntoView({
+                                            behavior: 'smooth',
+                                            block: 'start'
+                                        })
+                                    }, 100)
                                 }}
                                 className="w-full"
                                 variant="outline"
@@ -394,7 +392,7 @@ const AdminMatches = () => {
                 </div>
 
                 <div>
-                    <Card>
+                    <Card ref={finishFormRef}>
                         <CardHeader>
                             <CardTitle>Finalizar Partida</CardTitle>
                             <CardDescription>

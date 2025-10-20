@@ -143,7 +143,7 @@ class MercadoPagoGateway(PaymentGateway):
                 "transaction_amount": float(amount),
                 "payment_method_id": "pix",
                 "notification_url": webhook_url,
-                "external_reference": str(metadata.get('bet_id', '')) if metadata else '',
+                "external_reference": str(metadata.get('bet_id', f'payment_{int(time.time())}')) if metadata else f'payment_{int(time.time())}',
                 "description": metadata.get('description', 'Pagamento Tigrinho LAPEN') if metadata else 'Pagamento Tigrinho LAPEN',
                 "statement_descriptor": "LAPEN",
                 "payer": {

@@ -1,4 +1,7 @@
 {
+  "buildCommand": "pip install -r requirements.txt && python -m pytest tests/ -v && npm run build",
+  "outputDirectory": "src/static",
+  "installCommand": "pip install -r requirements.txt && npm install",
   "rewrites": [
     {
       "source": "/api/(.*)",

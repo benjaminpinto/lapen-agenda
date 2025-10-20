@@ -150,7 +150,8 @@ const BettingDashboard = () => {
                         schedule_id: selectedMatch.schedule_id,
                         player_name: selectedPlayer,
                         amount: parseFloat(betAmount),
-                        payment_method: paymentMethod
+                        payment_method: paymentMethod,
+                        device_id: window.MP_DEVICE_SESSION_ID || ''
                     })
                 })
 

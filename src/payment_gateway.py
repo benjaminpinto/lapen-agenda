@@ -125,7 +125,8 @@ class MercadoPagoGateway(PaymentGateway):
             headers = {
                 'Authorization': f'Bearer {self.access_token}',
                 'Content-Type': 'application/json',
-                'X-Idempotency-Key': idempotency_key
+                'X-Idempotency-Key': idempotency_key,
+                'X-meli-session-id': metadata.get('device_id', '') if metadata else ''
             }
             
             # Get webhook URL dynamically (Vercel or custom)
@@ -143,7 +144,8 @@ class MercadoPagoGateway(PaymentGateway):
                 "payment_method_id": "pix",
                 "notification_url": webhook_url,
                 "external_reference": str(metadata.get('bet_id', '')) if metadata else '',
-                "description": metadata.get('description', 'Tigrinho LAPEN') if metadata else 'Tigrinho LAPEN',
+                "description": metadata.get('description', 'Pagamento Tigrinho LAPEN') if metadata else 'Pagamento Tigrinho LAPEN',
+                "statement_descriptor": "LAPEN",
                 "payer": {
                     "email": metadata.get('email', 'test_user_123456@testuser.com') if metadata else 'test_user_123456@testuser.com'
                 }

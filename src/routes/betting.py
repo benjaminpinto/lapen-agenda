@@ -8,6 +8,7 @@ from src.payment_gateway import format_payment_response
 from src.email_service import send_bet_confirmation_email
 from src.logger import get_logger
 from decimal import Decimal
+import time
 
 logger = get_logger()
 
@@ -55,12 +56,15 @@ def create_bet_payment_intent():
             amount=float(amount),
             currency='brl',
             metadata={
+                'bet_id': f'{request.user_id}_{schedule_id}_{int(time.time())}',
                 'user_id': request.user_id,
                 'schedule_id': schedule_id,
                 'player_name': player_name,
                 'type': 'bet',
                 'payment_method': payment_method,
-                'email': user_email
+                'email': user_email,
+                'description': f'Aposta - {player_name}',
+                'device_id': data.get('device_id', '')
             }
         )
         

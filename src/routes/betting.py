@@ -53,7 +53,7 @@ def create_bet_payment_intent():
     db = get_db()
     try:
         cursor = db.execute(
-            'INSERT INTO bets (user_id, match_id, player_name, amount, status) VALUES (?, 0, ?, ?, "pending")',
+            "INSERT INTO bets (user_id, match_id, player_name, amount, status) VALUES (?, 0, ?, ?, 'pending')",
             (request.user_id, player_name, float(amount))
         )
         bet_id = cursor.lastrowid

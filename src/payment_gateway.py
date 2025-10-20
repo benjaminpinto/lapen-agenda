@@ -128,17 +128,36 @@ class MercadoPagoGateway(PaymentGateway):
                 'X-Idempotency-Key': idempotency_key
             }
             
+            # Get webhook URL dynamically (Vercel or custom)
+            webhook_url = os.getenv('WEBHOOK_URL')
+            if not webhook_url:
+                # Vercel provides VERCEL_URL
+                vercel_url = os.getenv('VERCEL_URL')
+                if vercel_url:
+                    webhook_url = f'https://{vercel_url}/api/webhooks/mercadopago'
+                else:
+                    webhook_url = 'https://your-domain.com/api/webhooks/mercadopago'
+            
             payment_data = {
                 "transaction_amount": float(amount),
                 "payment_method_id": "pix",
+                "notification_url": webhook_url,
+                "external_reference": str(metadata.get('bet_id', '')) if metadata else '',
+                "description": metadata.get('description', 'Tigrinho LAPEN') if metadata else 'Tigrinho LAPEN',
                 "payer": {
                     "email": metadata.get('email', 'test_user_123456@testuser.com') if metadata else 'test_user_123456@testuser.com'
-                }
+                },
+                "items": [
+                    {
+                        "id": str(metadata.get('bet_id', 'item-1')) if metadata else 'item-1',
+                        "title": metadata.get('description', 'Tigrinho LAPEN') if metadata else 'Tigrinho LAPEN',
+                        "description": metadata.get('description', 'Tigrinho LAPEN') if metadata else 'Tigrinho LAPEN',
+                        "category_id": "services",
+                        "quantity": 1,
+                        "unit_price": float(amount)
+                    }
+                ]
             }
-            
-            if metadata:
-                payment_data['external_reference'] = str(metadata.get('bet_id', ''))
-                payment_data['description'] = metadata.get('description', 'Payment')
             
             # Disable SSL verification for local development
             is_local = os.getenv('FLASK_ENV') == 'development' or os.getenv('ENVIRONMENT') == 'local'

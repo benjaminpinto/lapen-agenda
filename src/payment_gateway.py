@@ -146,17 +146,7 @@ class MercadoPagoGateway(PaymentGateway):
                 "description": metadata.get('description', 'Tigrinho LAPEN') if metadata else 'Tigrinho LAPEN',
                 "payer": {
                     "email": metadata.get('email', 'test_user_123456@testuser.com') if metadata else 'test_user_123456@testuser.com'
-                },
-                "items": [
-                    {
-                        "id": str(metadata.get('bet_id', 'item-1')) if metadata else 'item-1',
-                        "title": metadata.get('description', 'Tigrinho LAPEN') if metadata else 'Tigrinho LAPEN',
-                        "description": metadata.get('description', 'Tigrinho LAPEN') if metadata else 'Tigrinho LAPEN',
-                        "category_id": "services",
-                        "quantity": 1,
-                        "unit_price": float(amount)
-                    }
-                ]
+                }
             }
             
             # Disable SSL verification for local development

@@ -47,9 +47,6 @@ const AdminMatches = () => {
             // For finished matches, get winner info
             if (data.match?.status === 'finished') {
                 const resultResponse = await fetch(`/api/admin/matches/${matchId}/result`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                    },
                     credentials: 'include'
                 })
                 if (resultResponse.ok) {
@@ -72,8 +69,7 @@ const AdminMatches = () => {
             const response = await fetch(`/api/admin/matches/${selectedMatch.match_id}/finish`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    'Content-Type': 'application/json'
                 },
                 credentials: 'include',
                 body: JSON.stringify({
@@ -116,9 +112,6 @@ const AdminMatches = () => {
         try {
             const response = await fetch(`/api/admin/matches/${matchToCancel.match_id}/cancel`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                },
                 credentials: 'include'
             })
 

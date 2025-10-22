@@ -2,7 +2,7 @@ import * as React from "react"
 import {Calendar as CalendarIcon} from "lucide-react"
 import {Calendar} from "@/components/ui/calendar"
 
-const DatePicker = ({value, onChange, placeholder = "Pick a date", disabled, ...props}) => {
+const DatePicker = ({value, onChange, placeholder = "Selecione uma data", disabled, ...props}) => {
     const [isOpen, setIsOpen] = React.useState(false)
     
     // Parse date string to local date object

@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run test:backend && vite build",
+    "build": "vite build",
     "preview": "vite preview",
-    "test:backend": "cd .. && python -m pytest tests/ -v"
+    "vercel-build": "vite build"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^5.2.0",

@@ -7,21 +7,18 @@ from src.utils.match_utils import is_match_eligible_for_betting, get_or_create_m
 class TestMatchUtils(unittest.TestCase):
     
     @patch('src.utils.match_utils.get_db')
-    @patch('src.utils.match_utils.datetime')
-    def test_match_eligible_more_than_1_hour(self, mock_datetime, mock_get_db):
+    def test_match_eligible_more_than_1_hour(self, mock_get_db):
         """Test match is eligible when more than 1 hour away"""
         mock_db = Mock()
         mock_cursor = Mock()
         
-        # Set current time
-        now = datetime(2025, 10, 20, 10, 0, 0, tzinfo=timezone.utc)
-        mock_datetime.now.return_value = now
-        mock_datetime.strptime = datetime.strptime
+        # Match in 4 hours from now
+        now = datetime.now(timezone.utc)
+        match_time = now + timedelta(hours=4)
         
-        # Match at 14:00 (4 hours away)
         mock_cursor.fetchone.return_value = {
-            'date': datetime(2025, 10, 20).date(),
-            'start_time': datetime.strptime('14:00', '%H:%M').time()
+            'date': match_time.date(),
+            'start_time': match_time.time()
         }
         
         mock_db.execute.return_value = mock_cursor
@@ -31,20 +28,20 @@ class TestMatchUtils(unittest.TestCase):
         self.assertTrue(result)
     
     @patch('src.utils.match_utils.get_db')
-    @patch('src.utils.match_utils.datetime')
-    def test_match_not_eligible_less_than_1_hour(self, mock_datetime, mock_get_db):
+    def test_match_not_eligible_less_than_1_hour(self, mock_get_db):
         """Test match is not eligible when less than 1 hour away"""
         mock_db = Mock()
         mock_cursor = Mock()
         
-        now = datetime(2025, 10, 20, 13, 30, 0, tzinfo=timezone.utc)
-        mock_datetime.now.return_value = now
-        mock_datetime.strptime = datetime.strptime
+        # Match in 30 minutes from now (in local time, which gets converted to UTC+3)
+        # Function assumes local time is UTC-3 (Brazil), so it adds 3 hours
+        now_utc = datetime.now(timezone.utc)
+        # To have match in 30 min UTC time, we need local time to be 30min - 3h = -2h30min from now
+        match_local = now_utc - timedelta(hours=2, minutes=30)
         
-        # Match at 14:00 (30 minutes away)
         mock_cursor.fetchone.return_value = {
-            'date': datetime(2025, 10, 20).date(),
-            'start_time': datetime.strptime('14:00', '%H:%M').time()
+            'date': match_local.date(),
+            'start_time': match_local.time()
         }
         
         mock_db.execute.return_value = mock_cursor

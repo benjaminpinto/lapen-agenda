@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
 import stripe
 import os
+import requests
+import time
+import uuid
+import urllib3
 from src.logger import get_logger
 
 logger = get_logger()
@@ -108,12 +112,6 @@ class MercadoPagoGateway(PaymentGateway):
             }
         
         try:
-            import requests
-            
-            import time
-            import uuid
-            import urllib3
-            
             # Disable SSL warnings for local development
             is_local = os.getenv('FLASK_ENV') == 'development' or os.getenv('ENVIRONMENT') == 'local'
             if is_local:
@@ -183,8 +181,6 @@ class MercadoPagoGateway(PaymentGateway):
             return payment_intent_id.startswith('mp_mock_') or payment_intent_id.startswith('mock_pix_')
         
         try:
-            import requests
-            
             # Disable SSL verification for local development
             is_local = os.getenv('FLASK_ENV') == 'development' or os.getenv('ENVIRONMENT') == 'local'
             
@@ -208,8 +204,6 @@ class MercadoPagoGateway(PaymentGateway):
             return {'success': True, 'refund_id': f'mp_refund_{payment_intent_id}'}
         
         try:
-            import requests
-            
             headers = {
                 'Authorization': f'Bearer {self.access_token}',
                 'Content-Type': 'application/json'

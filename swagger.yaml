@@ -1,0 +1,935 @@
+openapi: 3.0.4
+info:
+  title: LAPEN Agenda API
+  description: Tennis Court Management System with Betting Integration
+  version: 1.0.0
+  contact:
+    email: lapen.ptc@gmail.com
+
+servers:
+  - url: http://localhost:5001
+    description: Development server
+
+tags:
+  - name: Public
+    description: Public endpoints for schedules and courts
+  - name: Auth
+    description: User authentication and registration
+  - name: Admin
+    description: Admin panel operations
+  - name: Matches
+    description: Match management
+  - name: Admin Matches
+    description: Admin match operations
+  - name: Betting
+    description: Betting operations
+  - name: Payments
+    description: Payment processing
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    AdminSession:
+      type: apiKey
+      in: cookie
+      name: session
+
+  schemas:
+    Court:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - active
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Quadra 1"
+        type:
+          type: string
+          example: "saibro"
+        description:
+          type: string
+          example: "Quadra principal"
+        active:
+          type: boolean
+          example: true
+        image_url:
+          type: string
+          example: "/images/court_1.jpg"
+
+    Schedule:
+      type: object
+      required:
+        - court_id
+        - date
+        - start_time
+        - player1_name
+        - player2_name
+        - match_type
+      properties:
+        id:
+          type: integer
+          example: 1
+        court_id:
+          type: integer
+          example: 1
+        date:
+          type: string
+          format: date
+          example: "2024-01-15"
+        start_time:
+          type: string
+          example: "09:00"
+        player1_name:
+          type: string
+          example: "João Silva"
+        player2_name:
+          type: string
+          example: "Maria Santos"
+        match_type:
+          type: string
+          enum: [Liga, Amistoso, Aula, Torneio]
+          example: "Liga"
+
+    Match:
+      type: object
+      properties:
+        schedule_id:
+          type: integer
+          example: 1
+        match_id:
+          type: integer
+          example: 1
+        court_name:
+          type: string
+          example: "Quadra 1"
+        date:
+          type: string
+          example: "2024-01-15"
+        start_time:
+          type: string
+          example: "09:00"
+        player1_name:
+          type: string
+          example: "João Silva"
+        player2_name:
+          type: string
+          example: "Maria Santos"
+        match_type:
+          type: string
+          example: "Liga"
+        status:
+          type: string
+          enum: [upcoming, live, finished, cancelled]
+          example: "upcoming"
+        betting_enabled:
+          type: boolean
+          example: true
+        total_pool:
+          type: number
+          format: float
+          example: 150.00
+        user_has_bet:
+          type: boolean
+          example: false
+
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - name
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        name:
+          type: string
+          example: "João Silva"
+        phone:
+          type: string
+          example: "+5511999999999"
+        is_verified:
+          type: boolean
+          example: true
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          example: "Error message description"
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+
+  responses:
+    UnauthorizedError:
+      description: Authentication information is missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Unauthorized"
+    
+    NotFoundError:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Resource not found"
+    
+    BadRequestError:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Invalid request parameters"
+
+paths:
+  /api/public/courts:
+    get:
+      tags:
+        - Public
+      summary: Get all active courts
+      responses:
+        '200':
+          description: List of active courts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Court'
+              example:
+                - id: 1
+                  name: "Quadra 1"
+                  type: "saibro"
+                  description: "Quadra principal"
+                  active: true
+                  image_url: "/images/court_1.jpg"
+
+  /api/public/players:
+    get:
+      tags:
+        - Public
+      summary: Get all players for autocomplete
+      responses:
+        '200':
+          description: List of player names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              example:
+                - "João Silva"
+                - "Maria Santos"
+                - "Pedro Costa"
+
+  /api/public/available-times:
+    get:
+      tags:
+        - Public
+      summary: Get available time slots
+      parameters:
+        - name: court_id
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of available time slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /api/public/schedules:
+    post:
+      tags:
+        - Public
+      summary: Create a new schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - court_id
+                - date
+                - start_time
+                - player1_name
+                - player2_name
+                - match_type
+              properties:
+                court_id:
+                  type: integer
+                date:
+                  type: string
+                  format: date
+                start_time:
+                  type: string
+                player1_name:
+                  type: string
+                player2_name:
+                  type: string
+                match_type:
+                  type: string
+      responses:
+        '200':
+          description: Schedule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+
+  /api/public/schedules/{schedule_id}:
+    put:
+      tags:
+        - Public
+      summary: Update a schedule
+      parameters:
+        - name: schedule_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                player1_name:
+                  type: string
+                player2_name:
+                  type: string
+                match_type:
+                  type: string
+      responses:
+        '200':
+          description: Schedule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      tags:
+        - Public
+      summary: Delete a schedule
+      parameters:
+        - name: schedule_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Schedule deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/public/schedules/month:
+    get:
+      tags:
+        - Public
+      summary: Get monthly schedules
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - name: month
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of schedules
+
+  /api/public/schedules/week:
+    get:
+      tags:
+        - Public
+      summary: Get weekly schedules
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of schedules
+
+  /api/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - name
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+                name:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  token:
+                    type: string
+                  user:
+                    type: object
+
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  token:
+                    type: string
+                  user:
+                    type: object
+
+  /api/auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Get current user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/admin/login:
+    post:
+      tags:
+        - Admin
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Admin login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/admin/courts:
+    get:
+      tags:
+        - Admin
+      summary: Get all courts (admin)
+      security:
+        - AdminSession: []
+      responses:
+        '200':
+          description: List of courts
+    post:
+      tags:
+        - Admin
+      summary: Create a new court
+      security:
+        - AdminSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                description:
+                  type: string
+                active:
+                  type: boolean
+                image:
+                  type: string
+      responses:
+        '200':
+          description: Court created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/admin/courts/{court_id}:
+    put:
+      tags:
+        - Admin
+      summary: Update a court
+      security:
+        - AdminSession: []
+      parameters:
+        - name: court_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Court updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      tags:
+        - Admin
+      summary: Delete a court
+      security:
+        - AdminSession: []
+      parameters:
+        - name: court_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Court deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/admin/players:
+    get:
+      tags:
+        - Admin
+      summary: Get all players
+      security:
+        - AdminSession: []
+      responses:
+        '200':
+          description: List of players
+    post:
+      tags:
+        - Admin
+      summary: Add a new player
+      security:
+        - AdminSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Player added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/matches/:
+    get:
+      tags:
+        - Matches
+      summary: Get available matches
+      parameters:
+        - name: include_all
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of matches
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matches:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Match'
+
+  /api/matches/create:
+    post:
+      tags:
+        - Matches
+      summary: Create a match from schedule
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                schedule_id:
+                  type: integer
+                betting_enabled:
+                  type: boolean
+      responses:
+        '201':
+          description: Match created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  match_id:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/admin/matches/{match_id}/finish:
+    post:
+      tags:
+        - Admin Matches
+      summary: Finish a match and settle bets
+      security:
+        - AdminSession: []
+      parameters:
+        - name: match_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - winner_name
+              properties:
+                winner_name:
+                  type: string
+                score:
+                  type: string
+      responses:
+        '200':
+          description: Match finished successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  total_pool:
+                    type: number
+                  total_winnings:
+                    type: number
+                  winning_bets_count:
+                    type: integer
+
+  /api/admin/matches/{match_id}/cancel:
+    post:
+      tags:
+        - Admin Matches
+      summary: Cancel a match and refund bets
+      security:
+        - AdminSession: []
+      parameters:
+        - name: match_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Match cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  refunded_bets:
+                    type: integer
+
+  /api/betting/create-payment-intent:
+    post:
+      tags:
+        - Betting
+      summary: Create payment intent for bet
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - schedule_id
+                - player_name
+                - amount
+              properties:
+                schedule_id:
+                  type: integer
+                player_name:
+                  type: string
+                amount:
+                  type: number
+                payment_method:
+                  type: string
+                  enum: [card, pix]
+                device_id:
+                  type: string
+      responses:
+        '200':
+          description: Payment intent created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  payment_id:
+                    type: string
+                  qr_code:
+                    type: string
+                  qr_code_base64:
+                    type: string
+                  amount:
+                    type: number
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/betting/place-bet:
+    post:
+      tags:
+        - Betting
+      summary: Place a bet after payment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - schedule_id
+                - player_name
+                - amount
+                - payment_intent_id
+              properties:
+                schedule_id:
+                  type: integer
+                player_name:
+                  type: string
+                amount:
+                  type: number
+                payment_intent_id:
+                  type: string
+                payment_method:
+                  type: string
+      responses:
+        '201':
+          description: Bet placed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  bet_id:
+                    type: integer
+                  amount:
+                    type: number
+                  player:
+                    type: string
+                  potential_return:
+                    type: number
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/betting/my-bets:
+    get:
+      tags:
+        - Betting
+      summary: Get user's betting history
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of user bets
+
+  /api/betting/match/{match_id}/bets:
+    get:
+      tags:
+        - Betting
+      summary: Get betting statistics for a match
+      parameters:
+        - name: match_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Match betting statistics
+
+  /api/payments/{payment_id}/status:
+    get:
+      tags:
+        - Payments
+      summary: Check payment status
+      parameters:
+        - name: payment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment status

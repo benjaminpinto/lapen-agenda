@@ -17,7 +17,7 @@ def normalize_time(time_value):
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
-ADMIN_PASSWORD = 'PTCadmin2025'
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 
 @admin_bp.route('/login', methods=['POST'])
 def login():
@@ -76,16 +76,20 @@ def create_court():
     
     image_url = None
     if image_data:
-        # Save image to static folder
-        image_filename = f"court_{name.replace(' ', '_').lower()}.jpg"
-        image_path = f"src/static/images/{image_filename}"
+        # Sanitize filename to prevent path traversal
+        safe_name = ''.join(c for c in name if c.isalnum() or c in (' ', '_')).strip().replace(' ', '_').lower()
+        image_filename = f"court_{safe_name}.jpg"
+        image_path = os.path.join('src', 'static', 'images', image_filename)
         os.makedirs(os.path.dirname(image_path), exist_ok=True)
         
-        # Decode base64 image
-        image_bytes = base64.b64decode(image_data.split(',')[1])
-        with open(image_path, 'wb') as f:
-            f.write(image_bytes)
-        image_url = f"/images/{image_filename}"
+        try:
+            image_bytes = base64.b64decode(image_data.split(',')[1])
+            with open(image_path, 'wb') as f:
+                f.write(image_bytes)
+            image_url = f"/images/{image_filename}"
+        except Exception as e:
+            logger.error(f'Error saving image: {str(e)}')
+            return jsonify({'success': False, 'message': 'Invalid image data'}), 400
     
     db = get_db()
     try:
@@ -112,16 +116,20 @@ def update_court(court_id):
     
     image_url = None
     if image_data:
-        # Save image to static folder
-        image_filename = f"court_{name.replace(' ', '_').lower()}.jpg"
-        image_path = f"src/static/images/{image_filename}"
+        # Sanitize filename to prevent path traversal
+        safe_name = ''.join(c for c in name if c.isalnum() or c in (' ', '_')).strip().replace(' ', '_').lower()
+        image_filename = f"court_{safe_name}.jpg"
+        image_path = os.path.join('src', 'static', 'images', image_filename)
         os.makedirs(os.path.dirname(image_path), exist_ok=True)
         
-        # Decode base64 image
-        image_bytes = base64.b64decode(image_data.split(',')[1])
-        with open(image_path, 'wb') as f:
-            f.write(image_bytes)
-        image_url = f"/images/{image_filename}"
+        try:
+            image_bytes = base64.b64decode(image_data.split(',')[1])
+            with open(image_path, 'wb') as f:
+                f.write(image_bytes)
+            image_url = f"/images/{image_filename}"
+        except Exception as e:
+            logger.error(f'Error saving image: {str(e)}')
+            return jsonify({'success': False, 'message': 'Invalid image data'}), 400
     
     db = get_db()
     try:

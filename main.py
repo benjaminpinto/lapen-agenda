@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory
 from flask_cors import CORS
+from flasgger import Swagger
 from src.routes.admin import admin_bp
 from src.routes.public import public_bp
 from src.routes.auth import auth_bp
@@ -23,9 +24,9 @@ from src.email_service import init_mail
 from src.logger import setup_logger
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'src', 'static'))
-app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('FLASK_ENV') != 'development'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 # Enable CORS for all routes with credentials support
@@ -54,6 +55,20 @@ app.register_blueprint(admin_matches_bp)
 app.register_blueprint(payments_bp)
 app.register_blueprint(webhooks_bp, url_prefix='/api/webhooks')
 
+# Initialize Swagger (after blueprints, before catch-all route)
+swagger_config = {
+    'headers': [],
+    'specs_route': '/api/docs',
+    'static_url_path': '/flasgger_static',
+    'swagger_ui': True,
+    'openapi': '3.0.4',
+    'specs': [{
+        'endpoint': 'apispec',
+        'route': '/api/docs/apispec.json'
+    }]
+}
+Swagger(app, template_file='swagger.yaml', config=swagger_config)
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
@@ -77,6 +92,6 @@ def serve(path):
 app = app
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=os.getenv('FLASK_ENV') == 'development')
 
 

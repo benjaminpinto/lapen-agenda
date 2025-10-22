@@ -63,27 +63,62 @@ lapen-agenda/
 ### Backend (Flask)
 1. Install Python dependencies: `pip install -r requirements.txt`
 2. Run the Flask server: `python main.py`
+3. Access API documentation: `http://localhost:5001/api/docs`
 
 ### Frontend (React + Vite)
 1. Install Node.js dependencies: `npm install`
 2. Start development server: `npm run dev`
 3. Build for production: `npm run build`
 
-## API Endpoints
+## API Documentation
 
-### Public Routes (`/api/public`)
-- GET `/courts` - Get active courts
-- GET `/players` - Get players for autocomplete
-- GET `/available-times` - Get available time slots
-- POST `/schedules` - Create new schedule
-- PUT `/schedules/<id>` - Update schedule
-- DELETE `/schedules/<id>` - Delete schedule
-- GET `/schedules/month` - Get monthly schedules
-- GET `/schedules/week` - Get weekly schedules
-- GET `/whatsapp-message` - Generate WhatsApp message
+### Interactive API Documentation (Swagger)
+🔗 **Access at:** `http://localhost:5001/api/docs`
 
-### Admin Routes (`/api/admin`)
-- POST `/login` - Admin login
-- POST `/logout` - Admin logout
-- CRUD operations for courts, players, holidays/blocks, and recurring schedules
-- GET `/dashboard` - Dashboard statistics
+The interactive Swagger UI provides:
+- Complete API reference with all endpoints
+- Request/response examples
+- Try-it-out functionality to test endpoints
+- Authentication support (JWT and Admin session)
+
+### Detailed Documentation
+📖 **Full API Reference:** [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
+
+Includes:
+- All 50+ endpoints with examples
+- Authentication methods
+- Data models and schemas
+- Error handling
+- Payment integration details
+
+### Quick Reference
+
+**Public Routes** (`/api/public`)
+- Courts, schedules, players management
+- Available time slots
+- WhatsApp message generation
+
+**Auth Routes** (`/api/auth`)
+- User registration and login
+- Email verification
+- Password management
+
+**Admin Routes** (`/api/admin`)
+- Court and player management
+- Holidays and recurring schedules
+- Dashboard statistics
+
+**Match Routes** (`/api/matches`, `/api/admin/matches`)
+- Match creation and status updates
+- Finish/cancel matches
+- Match reports and statistics
+
+**Betting Routes** (`/api/betting`)
+- Create payment intents
+- Place bets
+- View betting history
+- Match betting statistics
+
+**Payment Routes** (`/api/payments`, `/api/webhooks`)
+- Payment status checks
+- Webhook handlers (Stripe, Mercado Pago)

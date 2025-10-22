@@ -6,10 +6,7 @@ O Agenda LAPEN é um sistema completo de gerenciamento de agendamentos para quad
 
 ## 🚀 Aplicação Implantada
 
-**URL da Aplicação: https://19hninc0e3qz.manus.space
-
-### Credenciais de Acesso Administrativo
-- **Senha:** PTCadmin2025
+**URL da Aplicação: https://lapen-agenda.vercel.app
 
 ## 📋 Funcionalidades Principais
 
@@ -204,5 +201,5 @@ Para suporte técnico ou dúvidas sobre o sistema, entre em contato através dos
 
 ---
 
-**Desenvolvido com ❤️ para o Projeto Tênis Clube**
+**Desenvolvido com ❤️ para a Liga Penedense de Tennis - LAPEN**
 

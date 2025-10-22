@@ -1,124 +1,151 @@
 # LAPEN Agenda - Tennis Court Management System
 
-## Payment Integration
+> Sistema completo de gerenciamento de quadras de tênis com sistema de apostas integrado
 
-**Current Gateway:** Mercado Pago (with PIX support)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Flask](https://img.shields.io/badge/Flask-3.0.0-green.svg)](https://flask.palletsprojects.com/)
+[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-✅ **Fully Optimized:** All 9 Mercado Pago quality recommendations implemented
+## 🎾 Overview
 
-### Features
-- ✅ Device ID tracking for fraud prevention
-- ✅ Complete item details (price, name, quantity, code, description, category)
-- ✅ External reference for payment tracking
-- ✅ Webhook notifications for real-time updates
-- ✅ PIX payment support with QR code
+LAPEN Agenda is a comprehensive tennis court management system featuring:
+- Court scheduling and availability management
+- Match betting system with PIX payments
+- User authentication and admin panel
+- Real-time notifications and WhatsApp integration
+- Complete API with Swagger documentation
 
-### Documentation
-- 📖 [Complete Implementation Guide](MERCADOPAGO_IMPROVEMENTS.md) (English)
-- 📖 [Guia de Implementação](MELHORIAS_MERCADOPAGO.md) (Português)
-- ✅ [Quick Checklist](MERCADOPAGO_CHECKLIST.md)
-- 📋 [Implementation Summary](IMPLEMENTATION_SUMMARY.md)
-- 🔄 [Payment Flow Diagram](PAYMENT_FLOW.md)
-- 🚀 [Deployment Guide](DEPLOYMENT_GUIDE.md)
+## ✨ Key Features
 
-To switch payment gateways, change the `PAYMENT_GATEWAY` variable in `.env`:
-- `mercadopago` - Mercado Pago with PIX (default, fully optimized)
-- `stripe` - Stripe (PIX not available)
+- 🏟️ **Court Management** - Multiple courts with images and availability tracking
+- 📅 **Smart Scheduling** - Weekly/monthly views with conflict prevention
+- 🎲 **Betting System** - Real-time odds, PIX payments, automatic settlement
+- 💳 **Payment Integration** - Mercado Pago with PIX support (fully optimized)
+- 👥 **User System** - Registration, authentication, betting history
+- 🔐 **Admin Panel** - Complete management dashboard
+- 📱 **WhatsApp Integration** - Schedule sharing
+- 📊 **API Documentation** - Interactive Swagger UI
+- 🌐 **Portuguese UI** - Fully localized interface
 
-## Project Structure
+[See complete feature list →](docs/FEATURES.md)
 
-```
-lapen-agenda/
-├── src/
-│   ├── components/           # React components
-│   │   ├── admin/           # Admin panel components
-│   │   ├── ui/              # UI utility components
-│   │   ├── Header.jsx
-│   │   ├── Home.jsx
-│   │   ├── ScheduleForm.jsx
-│   │   └── ScheduleView.jsx
-│   ├── database/            # Database related files
-│   │   └── schema.sql
-│   ├── routes/              # Flask API routes
-│   │   ├── admin.py         # Admin API endpoints
-│   │   └── public.py        # Public API endpoints
-│   ├── static/              # Static files served by Flask
-│   │   ├── images/          # Court images
-│   │   └── index.html       # Production build output
-│   ├── App.jsx              # Main React app component
-│   ├── main.jsx             # React entry point
-│   ├── database.py          # Database connection utilities
-│   ├── index.css            # Global styles
-│   └── App.css              # App-specific styles
-├── main.py                  # Flask application entry point
-├── package.json             # Node.js dependencies
-├── requirements.txt         # Python dependencies
-├── vite.config.js           # Vite configuration
-├── tailwind.config.js       # Tailwind CSS configuration
-└── index.html               # Development HTML template
+## 🚀 Quick Start
+
+```bash
+# Clone repository
+git clone <repository-url>
+cd lapen-agenda
+
+# Setup backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Setup frontend
+npm install
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your credentials
+
+# Run development servers
+python main.py          # Backend (port 5001)
+npm run dev            # Frontend (port 5173)
 ```
 
-## Setup Instructions
+[Detailed setup guide →](docs/SETUP.md)
 
-### Backend (Flask)
-1. Install Python dependencies: `pip install -r requirements.txt`
-2. Run the Flask server: `python main.py`
-3. Access API documentation: `http://localhost:5001/api/docs`
+## 📚 Documentation
 
-### Frontend (React + Vite)
-1. Install Node.js dependencies: `npm install`
-2. Start development server: `npm run dev`
-3. Build for production: `npm run build`
+- 📖 [Setup Guide](docs/SETUP.md) - Installation and configuration
+- 🏗️ [Architecture](docs/ARCHITECTURE.md) - System design and structure
+- ✨ [Features](docs/FEATURES.md) - Complete feature list
+- 🔒 [Security](docs/SECURITY.md) - Security configuration
+- 🔌 [API Documentation](docs/API_DOCUMENTATION.md) - REST API reference
+- 📊 **Interactive API Docs:** http://localhost:5001/api/docs
 
-## API Documentation
+## 🛠️ Technology Stack
 
-### Interactive API Documentation (Swagger)
-🔗 **Access at:** `http://localhost:5001/api/docs`
+**Backend:**
+- Flask 3.0.0
+- SQLite
+- JWT Authentication
+- Mercado Pago SDK
 
-The interactive Swagger UI provides:
-- Complete API reference with all endpoints
-- Request/response examples
-- Try-it-out functionality to test endpoints
-- Authentication support (JWT and Admin session)
+**Frontend:**
+- React 18
+- Vite
+- Tailwind CSS
+- shadcn/ui
 
-### Detailed Documentation
-📖 **Full API Reference:** [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
+[See full architecture →](docs/ARCHITECTURE.md)
 
-Includes:
-- All 50+ endpoints with examples
-- Authentication methods
-- Data models and schemas
-- Error handling
-- Payment integration details
+## 💳 Payment Integration
 
-### Quick Reference
+**Gateway:** Mercado Pago with PIX support
 
-**Public Routes** (`/api/public`)
-- Courts, schedules, players management
-- Available time slots
-- WhatsApp message generation
+✅ **Fully Optimized** - All 9 Mercado Pago quality recommendations implemented:
+- Device ID tracking for fraud prevention
+- Complete item details
+- External reference tracking
+- Webhook notifications
+- PIX QR code generation
 
-**Auth Routes** (`/api/auth`)
-- User registration and login
-- Email verification
-- Password management
+## 🔐 Security
 
-**Admin Routes** (`/api/admin`)
-- Court and player management
-- Holidays and recurring schedules
-- Dashboard statistics
+- Environment-based configuration
+- JWT authentication (7-day expiry)
+- Bcrypt password hashing
+- Secure session cookies
+- Input sanitization
+- CORS protection
 
-**Match Routes** (`/api/matches`, `/api/admin/matches`)
-- Match creation and status updates
-- Finish/cancel matches
-- Match reports and statistics
+[Security configuration →](docs/SECURITY.md)
 
-**Betting Routes** (`/api/betting`)
-- Create payment intents
-- Place bets
-- View betting history
-- Match betting statistics
+## 📝 Environment Variables
 
-**Payment Routes** (`/api/payments`, `/api/webhooks`)
-- Payment status checks
-- Webhook handlers (Stripe, Mercado Pago)
+Required variables in `.env`:
+
+```bash
+ADMIN_PASSWORD=your-admin-password
+SECRET_KEY=your-secret-key-min-32-chars
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MERCADOPAGO_ACCESS_TOKEN=your-token
+MERCADOPAGO_PUBLIC_KEY=your-key
+```
+
+See [.env.example](.env.example) for complete list.
+
+## 🌐 Access Points
+
+- **Frontend:** http://localhost:5173 (dev) / http://localhost:5001 (prod)
+- **API Docs:** http://localhost:5001/api/docs
+- **Admin Panel:** http://localhost:5173/admin
+
+## 📦 Production Build
+
+```bash
+# Build frontend
+npm run build
+
+# Run production server
+FLASK_ENV=production python main.py
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read the documentation before submitting PRs.
+
+## 📄 License
+
+MIT License - see LICENSE file for details.
+
+## 👥 Authors
+
+Benjamin Pinto
+
+---
+
+**Note:** This system is optimized for Brazilian market with PIX payment integration and Portuguese localization.

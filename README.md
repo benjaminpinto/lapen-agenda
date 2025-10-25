@@ -63,6 +63,7 @@ npm run dev            # Frontend (port 5173)
 - ✨ [Features](docs/FEATURES.md) - Complete feature list
 - 🔒 [Security](docs/SECURITY.md) - Security configuration
 - 🔌 [API Documentation](docs/API_DOCUMENTATION.md) - REST API reference
+- 🎾 [LAPEN Member System](docs/QUICK_START_LAPEN.md) - Member approval workflow
 - 📊 **Interactive API Docs:** http://localhost:5001/api/docs
 
 ## 🛠️ Technology Stack

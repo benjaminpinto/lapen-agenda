@@ -50,6 +50,7 @@ nano .env
 - `MAIL_PASSWORD` - Gmail app password
 - `MERCADOPAGO_ACCESS_TOKEN` - Mercado Pago credentials
 - `MERCADOPAGO_PUBLIC_KEY` - Mercado Pago public key
+- `FRONTEND_URL` - Frontend URL for email links (production only, e.g., https://lapen-agenda.vercel.app)
 
 ### 5. Database Initialization
 

@@ -115,6 +115,7 @@ MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
 MERCADOPAGO_ACCESS_TOKEN=your-token
 MERCADOPAGO_PUBLIC_KEY=your-key
+FRONTEND_URL=https://your-domain.com  # Production only
 ```
 
 See [.env.example](.env.example) for complete list.

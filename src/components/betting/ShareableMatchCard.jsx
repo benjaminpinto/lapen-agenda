@@ -42,13 +42,13 @@ const ShareableMatchCard = forwardRef(({ match, odds, stats }, ref) => {
             <div className="text-center">
               <div className="font-semibold text-sm truncate mb-1" style={{ lineHeight: '2' }}>{match.player1_name}</div>
               <div className="text-lg font-bold text-green-400">
-                {odds[match.player1_name] ? `${odds[match.player1_name]}x` : 'N/A'}
+                {odds[match.player1_name] ? `${odds[match.player1_name]}x` : '⏳ Calculando'}
               </div>
             </div>
             <div className="text-center">
               <div className="font-semibold text-sm truncate mb-1" style={{ lineHeight: '2' }}>{match.player2_name}</div>
               <div className="text-lg font-bold text-green-400">
-                {odds[match.player2_name] ? `${odds[match.player2_name]}x` : 'N/A'}
+                {odds[match.player2_name] ? `${odds[match.player2_name]}x` : '⏳ Calculando'}
               </div>
             </div>
           </div>

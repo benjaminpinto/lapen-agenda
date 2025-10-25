@@ -24,6 +24,7 @@ def register():
     password = data['password']
     name = data['name'].strip()
     phone = data.get('phone', '').strip()
+    is_lapen_member = data.get('is_lapen_member', False)
     
     # Validate email format
     if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
@@ -43,9 +44,12 @@ def register():
         password_hash = hash_password(password)
         verification_token = generate_verification_token()
         
+        from datetime import datetime
+        lapen_requested_at = datetime.utcnow() if is_lapen_member else None
+        
         cursor = db.execute(
-            'INSERT INTO users (email, password_hash, name, phone, verification_token) VALUES (?, ?, ?, ?, ?)',
-            (email, password_hash, name, phone, verification_token)
+            'INSERT INTO users (email, password_hash, name, phone, verification_token, is_lapen_member, lapen_requested_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            (email, password_hash, name, phone, verification_token, is_lapen_member, lapen_requested_at)
         )
         db.commit()
         
@@ -61,15 +65,21 @@ def register():
         except Exception as e:
             logger.error(f'Email sending failed for {email}: {e}')
         
+        message = 'Usuário cadastrado com sucesso'
+        if is_lapen_member:
+            message += '. Sua solicitação de membro LAPEN está pendente de aprovação.'
+        
         return jsonify({
-            'message': 'Usuário cadastrado com sucesso',
+            'message': message,
             'token': token,
             'user': {
                 'id': user_id,
                 'email': email,
                 'name': name,
                 'phone': phone,
-                'is_verified': False
+                'is_verified': False,
+                'is_lapen_member': is_lapen_member,
+                'lapen_approved': False
             }
         }), 201
         
@@ -106,7 +116,9 @@ def login():
             'email': user['email'],
             'name': user['name'],
             'phone': user['phone'],
-            'is_verified': user['is_verified']
+            'is_verified': user['is_verified'],
+            'is_lapen_member': user.get('is_lapen_member', False),
+            'lapen_approved': user.get('lapen_approved', False)
         }
     })
 

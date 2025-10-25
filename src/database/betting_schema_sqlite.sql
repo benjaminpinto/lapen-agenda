@@ -9,6 +9,11 @@ CREATE TABLE users (
     phone TEXT,
     is_verified BOOLEAN DEFAULT FALSE,
     verification_token TEXT,
+    is_lapen_member BOOLEAN DEFAULT FALSE,
+    lapen_approved BOOLEAN DEFAULT FALSE,
+    lapen_requested_at DATETIME,
+    lapen_approved_at DATETIME,
+    lapen_approved_by INTEGER REFERENCES users(id),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

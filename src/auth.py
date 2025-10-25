@@ -57,11 +57,41 @@ def require_auth(f):
     
     return decorated_function
 
+def require_approved_lapen_member(f):
+    """Decorator to require approved LAPEN member"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token:
+            return jsonify({'error': 'Autenticação necessária'}), 401
+        
+        if token.startswith('Bearer '):
+            token = token[7:]
+        
+        user_id = verify_token(token)
+        if not user_id:
+            return jsonify({'error': 'Token inválido ou expirado'}), 401
+        
+        user = get_user_by_id(user_id)
+        if not user:
+            return jsonify({'error': 'Usuário não encontrado'}), 404
+        
+        if not user.get('is_lapen_member'):
+            return jsonify({'error': 'Apenas membros LAPEN podem realizar esta ação'}), 403
+        
+        if not user.get('lapen_approved'):
+            return jsonify({'error': 'Sua solicitação de membro LAPEN está pendente de aprovação'}), 403
+        
+        request.user_id = user_id
+        return f(*args, **kwargs)
+    
+    return decorated_function
+
 def get_user_by_id(user_id):
     """Get user by ID"""
     db = get_db()
     try:
-        cursor = db.execute('SELECT id, email, name, phone, is_verified FROM users WHERE id = ?', (user_id,))
+        cursor = db.execute('SELECT id, email, name, phone, is_verified, is_lapen_member, lapen_approved, lapen_requested_at, lapen_approved_at FROM users WHERE id = ?', (user_id,))
         user = cursor.fetchone()
         return dict(user) if user else None
     finally:

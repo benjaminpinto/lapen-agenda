@@ -24,13 +24,19 @@ def send_verification_email(email, name, verification_token):
             print("Mail extension not found")
             return False
         
-        # Get base URL - use frontend URL in development
-        from flask import request
-        base_url = request.host_url
+        # Get base URL - use FRONTEND_URL env var if set, otherwise derive from request
+        base_url = os.getenv('FRONTEND_URL')
         
-        # In development, use frontend port (5173) instead of backend port (5001)
-        if os.getenv('FLASK_ENV') == 'development' and ':5001' in base_url:
-            base_url = base_url.replace(':5001', ':5173')
+        if base_url:
+            # Ensure base_url ends with /
+            if not base_url.endswith('/'):
+                base_url += '/'
+        else:
+            from flask import request
+            base_url = request.host_url
+            # In development, use frontend port (5173) instead of backend port (5001)
+            if os.getenv('FLASK_ENV') == 'development' and ':5001' in base_url:
+                base_url = base_url.replace(':5001', ':5173')
         
         verification_url = f"{base_url}verify?token={verification_token}"
         

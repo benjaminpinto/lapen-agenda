@@ -9,6 +9,11 @@ CREATE TABLE IF NOT EXISTS users (
     phone VARCHAR(20),
     is_verified BOOLEAN DEFAULT FALSE,
     verification_token VARCHAR(255),
+    is_lapen_member BOOLEAN DEFAULT FALSE,
+    lapen_approved BOOLEAN DEFAULT FALSE,
+    lapen_requested_at TIMESTAMP,
+    lapen_approved_at TIMESTAMP,
+    lapen_approved_by INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

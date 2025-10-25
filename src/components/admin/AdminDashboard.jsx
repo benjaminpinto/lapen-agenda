@@ -120,6 +120,18 @@ const AdminDashboard = () => {
                         </CardContent>
                     </Card>
                 </Link>
+
+                <Link to="/admin/lapen-approvals">
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardHeader className="text-center pb-2">
+                            <Users className="h-8 w-8 text-orange-600 mx-auto"/>
+                            <CardTitle className="text-lg">Membros LAPEN</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center">
+                            <Button variant="ghost" size="sm">Aprovar</Button>
+                        </CardContent>
+                    </Card>
+                </Link>
             </div>
 
             {/* Statistics */}

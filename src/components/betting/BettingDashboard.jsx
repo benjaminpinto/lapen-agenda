@@ -368,7 +368,7 @@ const BettingDashboard = () => {
                                         {match.player1_name}
                                     </div>
                                     <div className="text-sm text-gray-600">
-                                        Odds: {odds[match.player1_name] ? `${odds[match.player1_name]}x` : 'N/A'}
+                                        Odds: {odds[match.player1_name] ? `${odds[match.player1_name]}x` : '⏳ Calculando'}
                                     </div>
                                     <div className="text-xs text-gray-500">
                                         Apostas: R$ {stats[match.player1_name]?.total_amount?.toFixed(2) || '0.00'}
@@ -384,7 +384,7 @@ const BettingDashboard = () => {
                                         {match.player2_name}
                                     </div>
                                     <div className="text-sm text-gray-600">
-                                        Odds: {odds[match.player2_name] ? `${odds[match.player2_name]}x` : 'N/A'}
+                                        Odds: {odds[match.player2_name] ? `${odds[match.player2_name]}x` : '⏳ Calculando'}
                                     </div>
                                     <div className="text-xs text-gray-500">
                                         Apostas: R$ {stats[match.player2_name]?.total_amount?.toFixed(2) || '0.00'}

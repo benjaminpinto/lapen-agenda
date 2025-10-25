@@ -1,6 +1,11 @@
 #!/bin/bash
 
 echo "Running backend tests..."
+
+if [ -d ".venv" ]; then
+    source .venv/bin/activate
+fi
+
 python -m pytest tests/ -v --tb=short
 
 if [ $? -eq 0 ]; then

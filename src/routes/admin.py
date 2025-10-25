@@ -319,6 +319,89 @@ def delete_recurring_schedule(schedule_id):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
+# LAPEN Member Management
+@admin_bp.route('/lapen-requests', methods=['GET'])
+@require_admin_auth
+def get_lapen_requests():
+    """Get all pending LAPEN member requests"""
+    db = get_db()
+    status = request.args.get('status', 'pending')
+    
+    if status == 'pending':
+        users = db.execute('''
+            SELECT id, email, name, phone, lapen_requested_at
+            FROM users
+            WHERE is_lapen_member = ? AND lapen_approved = ? AND lapen_approved_at IS NULL
+            ORDER BY lapen_requested_at DESC
+        ''', (True, False)).fetchall()
+    elif status == 'approved':
+        users = db.execute('''
+            SELECT id, email, name, phone, lapen_requested_at, lapen_approved_at
+            FROM users
+            WHERE is_lapen_member = ? AND lapen_approved = ?
+            ORDER BY lapen_approved_at DESC
+        ''', (True, True)).fetchall()
+    elif status == 'rejected':
+        users = db.execute('''
+            SELECT id, email, name, phone, lapen_requested_at, lapen_approved_at
+            FROM users
+            WHERE is_lapen_member = ? AND lapen_approved = ? AND lapen_approved_at IS NOT NULL
+            ORDER BY lapen_approved_at DESC
+        ''', (True, False)).fetchall()
+    else:
+        users = db.execute('''
+            SELECT id, email, name, phone, lapen_requested_at, lapen_approved_at, lapen_approved
+            FROM users
+            WHERE is_lapen_member = ?
+            ORDER BY lapen_requested_at DESC
+        ''', (True,)).fetchall()
+    
+    return jsonify([dict(user) for user in users])
+
+@admin_bp.route('/lapen-approve/<int:user_id>', methods=['POST'])
+@require_admin_auth
+def approve_lapen_member(user_id):
+    """Approve a LAPEN member request"""
+    db = get_db()
+    try:
+        from datetime import datetime
+        db.execute('''
+            UPDATE users
+            SET lapen_approved = ?, lapen_approved_at = ?
+            WHERE id = ? AND is_lapen_member = ?
+        ''', (True, datetime.utcnow(), user_id, True))
+        db.commit()
+        
+        logger.info(f'LAPEN member approved: user_id={user_id}')
+        return jsonify({'success': True, 'message': 'Membro LAPEN aprovado com sucesso'})
+    except Exception as e:
+        logger.error(f'Error approving LAPEN member {user_id}: {str(e)}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        db.close()
+
+@admin_bp.route('/lapen-reject/<int:user_id>', methods=['POST'])
+@require_admin_auth
+def reject_lapen_member(user_id):
+    """Reject a LAPEN member request"""
+    db = get_db()
+    try:
+        from datetime import datetime
+        db.execute('''
+            UPDATE users
+            SET lapen_approved = ?, lapen_approved_at = ?
+            WHERE id = ? AND is_lapen_member = ?
+        ''', (False, datetime.utcnow(), user_id, True))
+        db.commit()
+        
+        logger.info(f'LAPEN member rejected: user_id={user_id}')
+        return jsonify({'success': True, 'message': 'Solicitação rejeitada'})
+    except Exception as e:
+        logger.error(f'Error rejecting LAPEN member {user_id}: {str(e)}')
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        db.close()
+
 # Dashboard statistics
 @admin_bp.route('/dashboard', methods=['GET'])
 @require_admin_auth

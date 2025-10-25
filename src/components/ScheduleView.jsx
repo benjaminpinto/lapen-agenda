@@ -4,6 +4,7 @@ import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
+import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger} from '@/components/ui/alert-dialog'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
@@ -29,6 +30,7 @@ const ScheduleView = () => {
     const [hidePastDates, setHidePastDates] = useState(true)
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+    const [deletingSchedule, setDeletingSchedule] = useState(null)
     const [formData, setFormData] = useState({
         player1_name: '',
         player2_name: '',
@@ -157,12 +159,11 @@ const ScheduleView = () => {
         }
     }
 
-    const handleDelete = async (scheduleId) => {
-        if (!confirm('Tem certeza que deseja excluir este agendamento?')) {
-            return
-        }
-
+    const handleDelete = async () => {
+        if (!deletingSchedule) return
+        
         try {
+            const scheduleId = deletingSchedule.id
             const response = await fetch(`/api/public/schedules/${scheduleId}`, {
                 method: 'DELETE'
             })
@@ -174,6 +175,7 @@ const ScheduleView = () => {
                     title: "Sucesso",
                     description: data.message
                 })
+                setDeletingSchedule(null)
                 fetchSchedules()
             } else {
                 toast({
@@ -394,7 +396,7 @@ const ScheduleView = () => {
                                                                             <Edit className="h-4 w-4"/>
                                                                         </Button>
                                                                         <Button variant="ghost" size="sm"
-                                                                                onClick={() => handleDelete(schedule.id)}>
+                                                                                onClick={() => setDeletingSchedule(schedule)}>
                                                                             <Trash2 className="h-4 w-4"/>
                                                                         </Button>
                                                                     </div>
@@ -424,7 +426,7 @@ const ScheduleView = () => {
                                                                             <Edit className="h-4 w-4"/>
                                                                         </Button>
                                                                         <Button variant="ghost" size="sm"
-                                                                                onClick={() => handleDelete(schedule.id)}>
+                                                                                onClick={() => setDeletingSchedule(schedule)}>
                                                                             <Trash2 className="h-4 w-4"/>
                                                                         </Button>
                                                                     </div>
@@ -601,6 +603,24 @@ const ScheduleView = () => {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={!!deletingSchedule} onOpenChange={(open) => !open && setDeletingSchedule(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir Agendamento</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Tem certeza que deseja excluir este agendamento?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <Button onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                            Excluir
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             {/* WhatsApp Share Dialog */}
             <Dialog open={showWhatsappDialog} onOpenChange={setShowWhatsappDialog}>

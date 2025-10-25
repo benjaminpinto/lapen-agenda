@@ -5,6 +5,7 @@ from flask import Blueprint, request, jsonify
 
 from src.database import get_db
 from src.database_utils import get_current_date_sql, get_current_time_sql, get_month_comparison_sql
+from src.auth import require_approved_lapen_member
 
 public_bp = Blueprint('public', __name__, url_prefix='/api/public')
 
@@ -146,6 +147,7 @@ def get_available_times():
 
 
 @public_bp.route('/schedules', methods=['POST'])
+@require_approved_lapen_member
 def create_schedule():
     """Create a new schedule"""
     data = request.get_json()
@@ -185,6 +187,7 @@ def create_schedule():
 
 
 @public_bp.route('/schedules/<int:schedule_id>', methods=['PUT'])
+@require_approved_lapen_member
 def update_schedule(schedule_id):
     """Update an existing schedule"""
     data = request.get_json()
@@ -215,6 +218,7 @@ def update_schedule(schedule_id):
 
 
 @public_bp.route('/schedules/<int:schedule_id>', methods=['DELETE'])
+@require_approved_lapen_member
 def delete_schedule(schedule_id):
     """Delete a schedule"""
     db = get_db()

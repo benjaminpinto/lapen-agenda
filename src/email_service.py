@@ -24,9 +24,15 @@ def send_verification_email(email, name, verification_token):
             print("Mail extension not found")
             return False
         
-        # Get base URL using same logic as public.py line 378
+        # Get base URL - use frontend URL in development
         from flask import request
-        verification_url = f"{request.host_url}verify?token={verification_token}"
+        base_url = request.host_url
+        
+        # In development, use frontend port (5173) instead of backend port (5001)
+        if os.getenv('FLASK_ENV') == 'development' and ':5001' in base_url:
+            base_url = base_url.replace(':5001', ':5173')
+        
+        verification_url = f"{base_url}verify?token={verification_token}"
         
         msg = Message(
             subject='Confirme sua conta Agenda LAPEN',

@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
-import {Calendar as CalendarIcon, Clock, Users, Trophy, GraduationCap, MedalIcon} from 'lucide-react'
+import {Calendar as CalendarIcon, Clock, Users, Trophy, GraduationCap, MedalIcon, AlertCircle} from 'lucide-react'
 import { useToast } from '@/components/hooks/use-toast'
+import { useAuth } from '@/contexts/AuthContext'
 
 const ScheduleForm = () => {
+  const { canBookCourts, user } = useAuth()
   const [courts, setCourts] = useState([])
   const [players, setPlayers] = useState([])
   const [availableTimes, setAvailableTimes] = useState([])
@@ -116,10 +118,12 @@ const ScheduleForm = () => {
     setLoading(true)
 
     try {
+      const token = localStorage.getItem('auth_token')
       const response = await fetch("/api/public/schedules", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(formData),
       })
@@ -157,6 +161,48 @@ const ScheduleForm = () => {
   const getTodayDate = () => {
     const today = new Date()
     return today.toISOString().split('T')[0]
+  }
+
+  if (!canBookCourts) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-0">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <AlertCircle className="h-6 w-6 mr-2 text-yellow-600" />
+              Acesso Restrito
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {!user ? (
+                  <>
+                    Você precisa estar autenticado como membro LAPEN aprovado para agendar quadras.
+                    <div className="mt-4">
+                      <Link to="/login">
+                        <Button>Fazer Login</Button>
+                      </Link>
+                    </div>
+                  </>
+                ) : user.is_lapen_member && !user.lapen_approved ? (
+                  <>
+                    Sua solicitação de membro LAPEN está pendente de aprovação por um administrador.
+                    Você poderá agendar quadras após a aprovação.
+                  </>
+                ) : (
+                  <>
+                    Apenas membros LAPEN aprovados podem agendar quadras.
+                    Se você é membro da LAPEN, entre em contato com um administrador.
+                  </>
+                )}
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (

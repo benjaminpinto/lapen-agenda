@@ -3,6 +3,10 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+# Set required env vars for tests
+os.environ.setdefault('SECRET_KEY', 'test-secret-key-min-32-characters-long')
+os.environ.setdefault('ADMIN_PASSWORD', 'test-admin-password')
+
 from src.database import get_db
 from src.auth import hash_password, generate_token
 

@@ -126,11 +126,17 @@ const ScheduleView = () => {
         e.preventDefault()
 
         try {
+            const token = localStorage.getItem('auth_token')
+            const headers = {
+                'Content-Type': 'application/json',
+            }
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`
+            }
+            
             const response = await fetch(`/api/public/schedules/${editingSchedule.id}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 body: JSON.stringify(formData),
             })
 
@@ -164,8 +170,15 @@ const ScheduleView = () => {
         
         try {
             const scheduleId = deletingSchedule.id
+            const token = localStorage.getItem('auth_token')
+            const headers = {}
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`
+            }
+            
             const response = await fetch(`/api/public/schedules/${scheduleId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers
             })
 
             const data = await response.json()

@@ -180,9 +180,12 @@ const ScheduleForm = () => {
                 {!user ? (
                   <>
                     Você precisa estar autenticado como membro LAPEN aprovado para agendar quadras.
-                    <div className="mt-4">
+                    <div className="mt-4 flex flex-col sm:flex-row gap-3">
                       <Link to="/login">
-                        <Button>Fazer Login</Button>
+                        <Button className="w-full sm:w-auto">Fazer Login</Button>
+                      </Link>
+                      <Link to="/signup">
+                        <Button variant="outline" className="w-full sm:w-auto">Criar Conta</Button>
                       </Link>
                     </div>
                   </>

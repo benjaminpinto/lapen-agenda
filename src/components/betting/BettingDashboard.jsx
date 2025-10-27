@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from 'react'
+import {Link} from 'react-router-dom'
 import {useAuth} from '@/contexts/AuthContext'
 import {useToast} from '@/contexts/ToastContext'
 import {Button} from '@/components/ui/button'
@@ -586,9 +587,14 @@ const BettingDashboard = () => {
                             {!isAuthenticated ? (
                                 <div className="text-center py-4">
                                     <p className="text-gray-500 mb-4">Você precisa estar logado para apostar</p>
-                                    <Button onClick={() => window.location.href = '/login'}>
-                                        Fazer Login
-                                    </Button>
+                                    <div className="flex flex-col gap-3">
+                                        <Link to="/login">
+                                            <Button className="w-full">Fazer Login</Button>
+                                        </Link>
+                                        <Link to="/signup">
+                                            <Button variant="outline" className="w-full">Criar Conta</Button>
+                                        </Link>
+                                    </div>
                                 </div>
                             ) : selectedMatch ? (
                                 <div className="space-y-4">

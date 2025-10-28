@@ -143,7 +143,7 @@ def place_bet():
             SELECT s.player1_name, s.player2_name, m.betting_enabled, m.status
             FROM schedules s
             JOIN matches m ON s.id = m.schedule_id
-            WHERE s.id = ? AND m.id = ?
+            WHERE s.id = ? AND m.id = ? AND s.deleted_at IS NULL
         ''', (schedule_id, match_id))
         
         match_info = cursor.fetchone()
@@ -308,7 +308,7 @@ def get_match_bets(match_id):
                    m.total_pool, m.status, m.betting_enabled
             FROM matches m
             JOIN schedules s ON m.schedule_id = s.id
-            WHERE m.id = ?
+            WHERE m.id = ? AND s.deleted_at IS NULL
         ''', (match_id,))
         
         match_info = cursor.fetchone()

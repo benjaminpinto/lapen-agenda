@@ -28,8 +28,11 @@ CREATE TABLE schedules (
     player1_name TEXT NOT NULL,
     player2_name TEXT NOT NULL,
     match_type TEXT NOT NULL, -- ENUM: 'Amistoso', 'Liga'
+    deleted_at DATETIME DEFAULT NULL,
     FOREIGN KEY (court_id) REFERENCES courts(id)
 );
+
+CREATE INDEX idx_schedules_deleted_at ON schedules(deleted_at);
 
 CREATE TABLE recurring_schedules (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

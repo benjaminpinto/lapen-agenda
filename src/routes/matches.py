@@ -23,6 +23,9 @@ def get_available_matches():
         current_date = now.strftime('%Y-%m-%d')
         current_time = now.strftime('%H:%M')
 
+        # Check if admin wants to include all (including deleted)
+        include_all = request.args.get('include_all') == 'true'
+        
         # Get user_id from token if provided
         user_id = None
         auth_header = request.headers.get('Authorization')
@@ -38,8 +41,11 @@ def get_available_matches():
             except Exception as e:
                 pass  # Invalid token, continue as non-authenticated
         
+        # For admin include_all, don't filter deleted schedules
+        deleted_filter = '' if include_all else 'WHERE s.deleted_at IS NULL'
+        
         if user_id:
-            cursor = db.execute('''
+            cursor = db.execute(f'''
                                 SELECT s.id,
                                        s.court_id,
                                        s.date,
@@ -58,10 +64,11 @@ def get_available_matches():
                                          LEFT JOIN courts c ON s.court_id = c.id
                                          LEFT JOIN matches m ON s.id = m.schedule_id
                                          LEFT JOIN (SELECT match_id, player_name FROM bets WHERE user_id = ? AND status = 'active') ub ON m.id = ub.match_id
+                                {deleted_filter}
                                 ORDER BY s.date, s.start_time
                                 ''', (user_id,))
         else:
-            cursor = db.execute('''
+            cursor = db.execute(f'''
                                 SELECT s.id,
                                        s.court_id,
                                        s.date,
@@ -78,6 +85,7 @@ def get_available_matches():
                                 FROM schedules s
                                          LEFT JOIN courts c ON s.court_id = c.id
                                          LEFT JOIN matches m ON s.id = m.schedule_id
+                                {deleted_filter}
                                 ORDER BY s.date, s.start_time
                                 ''')
 
@@ -169,7 +177,7 @@ def create_match():
         current_time = get_current_time_sql()
         cursor = db.execute(f'''
             SELECT * FROM schedules 
-            WHERE id = ? AND (date > {current_date} OR (date = {current_date} AND start_time > {current_time}))
+            WHERE id = ? AND deleted_at IS NULL AND (date > {current_date} OR (date = {current_date} AND start_time > {current_time}))
         ''', (schedule_id,))
 
         schedule = cursor.fetchone()

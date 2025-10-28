@@ -77,7 +77,7 @@ def finish_match(match_id):
             SELECT s.player1_name, s.player2_name
             FROM schedules s
             JOIN matches m ON s.id = m.schedule_id
-            WHERE m.id = ?
+            WHERE m.id = ? AND s.deleted_at IS NULL
         ''', (match_id,))
         match_info = cursor.fetchone()
         match_details = {
@@ -251,7 +251,7 @@ def get_match_report(match_id):
             FROM matches m
             JOIN schedules s ON m.schedule_id = s.id
             LEFT JOIN match_results mr ON m.id = mr.match_id
-            WHERE m.id = ?
+            WHERE m.id = ? AND s.deleted_at IS NULL
         ''', (match_id,))
         
         match_info = cursor.fetchone()

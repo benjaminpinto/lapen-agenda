@@ -28,8 +28,11 @@ CREATE TABLE schedules (
     player1_name VARCHAR(255) NOT NULL,
     player2_name VARCHAR(255) NOT NULL,
     match_type VARCHAR(50) NOT NULL,
+    deleted_at TIMESTAMP DEFAULT NULL,
     FOREIGN KEY (court_id) REFERENCES courts(id)
 );
+
+CREATE INDEX idx_schedules_deleted_at ON schedules(deleted_at);
 
 CREATE TABLE recurring_schedules (
     id SERIAL PRIMARY KEY,

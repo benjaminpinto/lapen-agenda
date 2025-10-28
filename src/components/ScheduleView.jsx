@@ -31,6 +31,8 @@ const ScheduleView = () => {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
     const [deletingSchedule, setDeletingSchedule] = useState(null)
+    const [showBetsWarning, setShowBetsWarning] = useState(false)
+    const [isFinishedMatch, setIsFinishedMatch] = useState(false)
     const [formData, setFormData] = useState({
         player1_name: '',
         player2_name: '',
@@ -112,7 +114,12 @@ const ScheduleView = () => {
         }
     }
 
-    const handleEdit = (schedule) => {
+    const handleEdit = async (schedule) => {
+        const hasBets = await checkActiveBets(schedule.id)
+        if (hasBets) {
+            setShowBetsWarning(true)
+            return
+        }
         setEditingSchedule(schedule)
         setFormData({
             player1_name: schedule.player1_name,
@@ -120,6 +127,21 @@ const ScheduleView = () => {
             match_type: schedule.match_type
         })
         setIsEditDialogOpen(true)
+    }
+
+    const checkActiveBets = async (scheduleId) => {
+        try {
+            const response = await fetch(`/api/public/schedules/${scheduleId}/has-bets`)
+            if (response.ok) {
+                const data = await response.json()
+                setIsFinishedMatch(data.is_finished || false)
+                return data.has_bets
+            }
+        } catch (error) {
+            console.error('Error checking bets:', error)
+        }
+        setIsFinishedMatch(false)
+        return false
     }
 
     const handleUpdate = async (e) => {
@@ -153,6 +175,57 @@ const ScheduleView = () => {
                 toast({
                     title: "Erro",
                     description: data.error || "Erro ao atualizar agendamento",
+                    variant: "destructive"
+                })
+            }
+        } catch (error) {
+            toast({
+                title: "Erro",
+                description: "Erro ao conectar com o servidor",
+                variant: "destructive"
+            })
+        }
+    }
+
+    const handleDeleteClick = async (schedule) => {
+        const hasBets = await checkActiveBets(schedule.id)
+        if (hasBets) {
+            if (isFinishedMatch) {
+                // Proceed with soft delete for finished matches
+                await performDelete(schedule.id)
+            } else {
+                setShowBetsWarning(true)
+            }
+            return
+        }
+        setDeletingSchedule(schedule)
+    }
+
+    const performDelete = async (scheduleId) => {
+        try {
+            const token = localStorage.getItem('auth_token')
+            const headers = {}
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`
+            }
+            
+            const response = await fetch(`/api/public/schedules/${scheduleId}`, {
+                method: 'DELETE',
+                headers
+            })
+
+            const data = await response.json()
+
+            if (response.ok && data.success) {
+                toast({
+                    title: "Sucesso",
+                    description: data.message
+                })
+                fetchSchedules()
+            } else {
+                toast({
+                    title: "Erro",
+                    description: data.error || "Erro ao excluir agendamento",
                     variant: "destructive"
                 })
             }
@@ -409,7 +482,7 @@ const ScheduleView = () => {
                                                                             <Edit className="h-4 w-4"/>
                                                                         </Button>
                                                                         <Button variant="ghost" size="sm"
-                                                                                onClick={() => setDeletingSchedule(schedule)}>
+                                                                                onClick={() => handleDeleteClick(schedule)}>
                                                                             <Trash2 className="h-4 w-4"/>
                                                                         </Button>
                                                                     </div>
@@ -439,7 +512,7 @@ const ScheduleView = () => {
                                                                             <Edit className="h-4 w-4"/>
                                                                         </Button>
                                                                         <Button variant="ghost" size="sm"
-                                                                                onClick={() => setDeletingSchedule(schedule)}>
+                                                                                onClick={() => handleDeleteClick(schedule)}>
                                                                             <Trash2 className="h-4 w-4"/>
                                                                         </Button>
                                                                     </div>
@@ -665,6 +738,31 @@ const ScheduleView = () => {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Active Bets Warning Dialog */}
+            <AlertDialog open={showBetsWarning} onOpenChange={setShowBetsWarning}>
+                <AlertDialogContent className="max-w-md mx-4 sm:mx-auto">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            {isFinishedMatch ? 'Partida Finalizada' : 'Apostas Ativas Encontradas'}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {isFinishedMatch ? (
+                                'Esta partida teve apostas ativas e já foi finalizada. Não é possível editar.'
+                            ) : (
+                                <>
+                                    Este agendamento possui apostas ativas e não pode ser editado ou excluído.
+                                    <br/><br/>
+                                    Para modificar este agendamento, entre em contato com um administrador para cancelar as apostas primeiro.
+                                </>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Entendi</AlertDialogCancel>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

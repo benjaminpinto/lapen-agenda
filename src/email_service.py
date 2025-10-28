@@ -157,3 +157,34 @@ def send_bet_settlement_email(email, name, match_details, bet_result, amount):
     except Exception as e:
         print(f"Failed to send bet settlement email: {e}")
         return False
+
+def send_lapen_approval_request_email(user_email, user_name, user_phone):
+    """Send notification to admin when a user requests LAPEN member approval"""
+    try:
+        mail = current_app.extensions.get('mail')
+        if not mail:
+            return False
+        
+        admin_email = current_app.config.get('MAIL_DEFAULT_SENDER')
+        if not admin_email:
+            return False
+        
+        msg = Message(
+            subject='Nova Solicitação de Membro LAPEN',
+            recipients=[admin_email],
+            sender=admin_email,
+            html=f"""
+            <h2>Nova Solicitação de Membro LAPEN</h2>
+            <p>Um novo usuário solicitou aprovação como membro LAPEN:</p>
+            <p><strong>Nome:</strong> {user_name}</p>
+            <p><strong>Email:</strong> {user_email}</p>
+            <p><strong>Telefone:</strong> {user_phone or 'Não informado'}</p>
+            <p>Acesse o painel administrativo para aprovar ou rejeitar esta solicitação.</p>
+            """
+        )
+        
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Failed to send LAPEN approval request email: {e}")
+        return False

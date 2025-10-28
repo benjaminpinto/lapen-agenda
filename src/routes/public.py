@@ -109,7 +109,7 @@ def get_available_times():
     # Get already booked slots
     booked_slots = db.execute('''
         SELECT start_time FROM schedules 
-        WHERE court_id = ? AND date = ?
+        WHERE court_id = ? AND date = ? AND deleted_at IS NULL
     ''', (court_id, date)).fetchall()
     booked_times = [normalize_time(slot['start_time']) for slot in booked_slots]
 
@@ -165,7 +165,7 @@ def create_schedule():
     db = get_db()
     existing = db.execute('''
         SELECT id FROM schedules 
-        WHERE court_id = ? AND date = ? AND start_time = ?
+        WHERE court_id = ? AND date = ? AND start_time = ? AND deleted_at IS NULL
     ''', (court_id, date, start_time)).fetchone()
 
     if existing:
@@ -186,6 +186,21 @@ def create_schedule():
         return jsonify({'error': 'Failed to create schedule'}), 500
 
 
+@public_bp.route('/schedules/<int:schedule_id>/has-bets', methods=['GET'])
+def check_schedule_has_bets(schedule_id):
+    """Check if a schedule has active bets or is finished"""
+    db = get_db()
+    try:
+        match = db.execute('SELECT id, status FROM matches WHERE schedule_id = ?', (schedule_id,)).fetchone()
+        if match:
+            if match['status'] == 'finished':
+                return jsonify({'has_bets': True, 'is_finished': True})
+            active_bets = db.execute("SELECT COUNT(*) as count FROM bets WHERE match_id = ? AND status = 'active'", (match['id'],)).fetchone()
+            return jsonify({'has_bets': active_bets['count'] > 0, 'is_finished': False})
+        return jsonify({'has_bets': False, 'is_finished': False})
+    finally:
+        db.close()
+
 @public_bp.route('/schedules/<int:schedule_id>', methods=['PUT'])
 @require_approved_lapen_member
 def update_schedule(schedule_id):
@@ -205,6 +220,15 @@ def update_schedule(schedule_id):
     if not existing:
         return jsonify({'error': 'Schedule not found'}), 404
 
+    # Check if schedule has active bets or finished match
+    match = db.execute('SELECT id, status FROM matches WHERE schedule_id = ?', (schedule_id,)).fetchone()
+    if match:
+        if match['status'] == 'finished':
+            return jsonify({'error': 'Cannot edit finished match', 'has_bets': True}), 400
+        active_bets = db.execute("SELECT COUNT(*) as count FROM bets WHERE match_id = ? AND status = 'active'", (match['id'],)).fetchone()
+        if active_bets['count'] > 0:
+            return jsonify({'error': 'Cannot edit schedule with active bets', 'has_bets': True}), 400
+
     try:
         db.execute('''
             UPDATE schedules 
@@ -220,8 +244,32 @@ def update_schedule(schedule_id):
 @public_bp.route('/schedules/<int:schedule_id>', methods=['DELETE'])
 @require_approved_lapen_member
 def delete_schedule(schedule_id):
-    """Delete a schedule"""
+    """Soft delete a schedule"""
     db = get_db()
+    
+    # Check if schedule has any bets or finished match
+    match = db.execute('SELECT id, status FROM matches WHERE schedule_id = ?', (schedule_id,)).fetchone()
+    if match:
+        if match['status'] == 'finished':
+            # Soft delete finished matches
+            try:
+                db.execute('UPDATE schedules SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?', (schedule_id,))
+                db.commit()
+                return jsonify({'success': True, 'message': 'Schedule deleted successfully'})
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+        
+        any_bets = db.execute('SELECT COUNT(*) as count FROM bets WHERE match_id = ?', (match['id'],)).fetchone()
+        if any_bets['count'] > 0:
+            # Soft delete instead of hard delete
+            try:
+                db.execute('UPDATE schedules SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?', (schedule_id,))
+                db.commit()
+                return jsonify({'success': True, 'message': 'Schedule deleted successfully'})
+            except Exception as e:
+                return jsonify({'error': str(e)}), 400
+    
+    # No bets, can hard delete
     try:
         db.execute('DELETE FROM schedules WHERE id = ?', (schedule_id,))
         db.commit()
@@ -247,7 +295,7 @@ def get_month_schedules():
         SELECT s.*, c.name as court_name, c.type as court_type
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
-        WHERE s.date >= ? AND s.date <= ?
+        WHERE s.date >= ? AND s.date <= ? AND s.deleted_at IS NULL
         ORDER BY s.date, s.start_time
     ''', (first_day, last_day)).fetchall()
 
@@ -281,7 +329,7 @@ def get_week_schedules():
         SELECT s.*, c.name as court_name, c.type as court_type
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
-        WHERE s.date >= ? AND s.date <= ?
+        WHERE s.date >= ? AND s.date <= ? AND s.deleted_at IS NULL
         ORDER BY s.date, s.start_time
     ''', (start_date, end_date)).fetchall()
 
@@ -331,7 +379,7 @@ def generate_whatsapp_message():
         SELECT s.*, c.name as court_name, c.type as court_type
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
-        WHERE s.date >= ? AND s.date <= ?
+        WHERE s.date >= ? AND s.date <= ? AND s.deleted_at IS NULL
         ORDER BY s.date, c.name, s.start_time
     ''', (start_date, last_day)).fetchall()
 

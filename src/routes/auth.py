@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from src.database import get_db
 from src.auth import hash_password, verify_password, generate_token, generate_verification_token, require_auth, get_user_by_email, get_user_by_id
-from src.email_service import send_verification_email
+from src.email_service import send_verification_email, send_lapen_approval_request_email
 from src.logger import get_logger
 import re
 
@@ -64,6 +64,14 @@ def register():
             logger.info(f'Verification email sent to {email}: {email_sent}')
         except Exception as e:
             logger.error(f'Email sending failed for {email}: {e}')
+        
+        # Send admin notification if user requested LAPEN membership
+        if is_lapen_member:
+            try:
+                admin_notified = send_lapen_approval_request_email(email, name, phone)
+                logger.info(f'Admin notification sent for LAPEN request from {email}: {admin_notified}')
+            except Exception as e:
+                logger.error(f'Admin notification failed for {email}: {e}')
         
         message = 'Usuário cadastrado com sucesso'
         if is_lapen_member:

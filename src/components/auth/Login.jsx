@@ -65,7 +65,7 @@ const Login = () => {
           </div>
           <CardTitle className="text-2xl font-bold">Entrar</CardTitle>
           <CardDescription>
-            Entre na sua conta para apostar
+            Entre na sua conta
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -88,7 +88,12 @@ const Login = () => {
             </div>
 
             <div>
-              <Label htmlFor="password">Senha</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Senha</Label>
+                <Link to="/forgot-password" className="text-xs text-green-600 hover:text-green-500">
+                  Esqueceu a senha?
+                </Link>
+              </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input

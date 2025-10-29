@@ -188,3 +188,43 @@ def send_lapen_approval_request_email(user_email, user_name, user_phone):
     except Exception as e:
         print(f"Failed to send LAPEN approval request email: {e}")
         return False
+
+def send_password_reset_email(email, name, reset_token):
+    """Send password reset email"""
+    try:
+        mail = current_app.extensions.get('mail')
+        if not mail:
+            return False
+        
+        base_url = os.getenv('FRONTEND_URL')
+        if base_url:
+            if not base_url.endswith('/'):
+                base_url += '/'
+        else:
+            from flask import request
+            base_url = request.host_url
+            if os.getenv('FLASK_ENV') == 'development' and ':5001' in base_url:
+                base_url = base_url.replace(':5001', ':5173')
+        
+        reset_url = f"{base_url}reset-password?token={reset_token}"
+        
+        msg = Message(
+            subject='Recuperação de Senha - Agenda LAPEN',
+            recipients=[email],
+            sender=current_app.config['MAIL_DEFAULT_SENDER'],
+            html=f"""
+            <h2>Recuperação de Senha</h2>
+            <p>Olá {name},</p>
+            <p>Recebemos uma solicitação para redefinir sua senha.</p>
+            <p>Clique no link abaixo para criar uma nova senha:</p>
+            <p><a href="{reset_url}">Redefinir Senha</a></p>
+            <p>Este link expira em 1 hora.</p>
+            <p>Se você não solicitou esta recuperação, ignore este email.</p>
+            """
+        )
+        
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Failed to send password reset email: {e}")
+        return False

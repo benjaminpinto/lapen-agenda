@@ -63,6 +63,8 @@ CREATE TABLE IF NOT EXISTS users (
     pix_key VARCHAR(255),
     is_verified BOOLEAN DEFAULT FALSE,
     verification_token VARCHAR(255),
+    reset_token VARCHAR(255),
+    reset_token_expires TIMESTAMP,
     is_lapen_member BOOLEAN DEFAULT FALSE,
     lapen_approved BOOLEAN DEFAULT FALSE,
     lapen_requested_at TIMESTAMP,

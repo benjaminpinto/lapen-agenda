@@ -201,3 +201,79 @@ def change_password():
         return jsonify({'error': f'Falha ao alterar senha: {str(e)}'}), 500
     finally:
         db.close()
+
+@auth_bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    from src.email_service import send_password_reset_email
+    from datetime import datetime, timedelta
+    
+    data = request.get_json()
+    email = data.get('email', '').lower().strip()
+    
+    if not email:
+        return jsonify({'error': 'Email é obrigatório'}), 400
+    
+    user = get_user_by_email(email)
+    if not user:
+        return jsonify({'message': 'Se o email existir, um link de recuperação será enviado'}), 200
+    
+    db = get_db()
+    try:
+        reset_token = generate_verification_token()
+        reset_expires = datetime.utcnow() + timedelta(hours=1)
+        
+        db.execute('UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?',
+                  (reset_token, reset_expires, user['id']))
+        db.commit()
+        
+        send_password_reset_email(email, user['name'], reset_token)
+        logger.info(f'Password reset requested for {email}')
+        
+        return jsonify({'message': 'Se o email existir, um link de recuperação será enviado'}), 200
+    except Exception as e:
+        logger.error(f'Error in forgot password for {email}: {str(e)}')
+        return jsonify({'error': 'Erro ao processar solicitação'}), 500
+    finally:
+        db.close()
+
+@auth_bp.route('/reset-password', methods=['POST'])
+def reset_password():
+    from datetime import datetime
+    
+    data = request.get_json()
+    token = data.get('token')
+    new_password = data.get('password')
+    
+    if not token or not new_password:
+        return jsonify({'error': 'Token e senha são obrigatórios'}), 400
+    
+    if len(new_password) < 6:
+        return jsonify({'error': 'A senha deve ter pelo menos 6 caracteres'}), 400
+    
+    db = get_db()
+    try:
+        cursor = db.execute('SELECT id, reset_token_expires FROM users WHERE reset_token = ?', (token,))
+        user = cursor.fetchone()
+        
+        if not user:
+            return jsonify({'error': 'Token inválido'}), 400
+        
+        expires = user['reset_token_expires']
+        if isinstance(expires, str):
+            expires = datetime.fromisoformat(expires.replace('Z', '+00:00'))
+        
+        if datetime.utcnow() > expires:
+            return jsonify({'error': 'Token expirado'}), 400
+        
+        new_password_hash = hash_password(new_password)
+        db.execute('UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?',
+                  (new_password_hash, user['id']))
+        db.commit()
+        
+        logger.info(f'Password reset successful for user {user["id"]}')
+        return jsonify({'message': 'Senha redefinida com sucesso'}), 200
+    except Exception as e:
+        logger.error(f'Error resetting password: {str(e)}')
+        return jsonify({'error': 'Erro ao redefinir senha'}), 500
+    finally:
+        db.close()

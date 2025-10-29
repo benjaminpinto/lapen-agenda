@@ -63,6 +63,8 @@ CREATE TABLE users (
     pix_key TEXT,
     is_verified BOOLEAN DEFAULT FALSE,
     verification_token TEXT,
+    reset_token TEXT,
+    reset_token_expires DATETIME,
     is_lapen_member BOOLEAN DEFAULT FALSE,
     lapen_approved BOOLEAN DEFAULT FALSE,
     lapen_requested_at DATETIME,

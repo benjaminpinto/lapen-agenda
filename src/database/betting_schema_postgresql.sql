@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
+    pix_key VARCHAR(255),
     is_verified BOOLEAN DEFAULT FALSE,
     verification_token VARCHAR(255),
     is_lapen_member BOOLEAN DEFAULT FALSE,

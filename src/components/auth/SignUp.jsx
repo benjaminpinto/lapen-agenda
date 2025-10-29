@@ -6,13 +6,14 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/contexts/ToastContext'
-import { UserPlus, Mail, Lock, User, Phone } from 'lucide-react'
+import { UserPlus, Mail, Lock, User, Phone, CreditCard } from 'lucide-react'
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
+    pix_key: '',
     password: '',
     confirmPassword: '',
     is_lapen_member: false
@@ -60,6 +61,7 @@ const SignUp = () => {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
+        pix_key: formData.pix_key,
         password: formData.password,
         is_lapen_member: formData.is_lapen_member
       })
@@ -70,7 +72,7 @@ const SignUp = () => {
           title: "Conta criada!",
           description: "Verifique seu email para confirmar sua conta."
         })
-        navigate('/signup-success')
+        navigate('/')
       } else {
         toast({
           title: "Erro",
@@ -151,6 +153,26 @@ const SignUp = () => {
                   onChange={handleChange}
                 />
               </div>
+            </div>
+
+            <div>
+              <Label htmlFor="pix_key">Chave PIX</Label>
+              <div className="relative">
+                <CreditCard className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="pix_key"
+                  name="pix_key"
+                  type="text"
+                  required
+                  className="pl-10"
+                  placeholder="CPF, email, telefone ou chave aleatória"
+                  value={formData.pix_key}
+                  onChange={handleChange}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Usada para receber pagamentos de apostas ganhas
+              </p>
             </div>
 
             <div>

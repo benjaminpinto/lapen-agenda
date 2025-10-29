@@ -7,6 +7,7 @@ CREATE TABLE users (
     password_hash TEXT NOT NULL,
     name TEXT NOT NULL,
     phone TEXT,
+    pix_key TEXT,
     is_verified BOOLEAN DEFAULT FALSE,
     verification_token TEXT,
     is_lapen_member BOOLEAN DEFAULT FALSE,

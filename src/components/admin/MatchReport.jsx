@@ -3,12 +3,19 @@ import {Link, useParams} from 'react-router-dom'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
 import {Button} from '@/components/ui/button'
 import {Badge} from '@/components/ui/badge'
-import {ArrowLeft, Crown, Trophy, Users, Wallet, CheckCircle, XCircle, Clock} from 'lucide-react'
+import {ArrowLeft, Crown, Trophy, Users, Wallet, CheckCircle, XCircle, Clock, Copy} from 'lucide-react'
 
 const MatchReport = () => {
     const {matchId} = useParams()
     const [report, setReport] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [copiedKey, setCopiedKey] = useState(null)
+
+    const copyPixKey = (pixKey) => {
+        navigator.clipboard.writeText(pixKey)
+        setCopiedKey(pixKey)
+        setTimeout(() => setCopiedKey(null), 2000)
+    }
 
     useEffect(() => {
         fetchMatchReport()
@@ -127,6 +134,22 @@ const MatchReport = () => {
                                             <div>
                                                 <div className="font-semibold">{bet.user_name}</div>
                                                 <div className="text-sm text-gray-600">{bet.user_email}</div>
+                                                {bet.user_pix_key && (
+                                                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                                                        <span>PIX: {bet.user_pix_key}</span>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-4 w-4 p-0"
+                                                            onClick={() => copyPixKey(bet.user_pix_key)}
+                                                        >
+                                                            <Copy className="h-3 w-3"/>
+                                                        </Button>
+                                                        {copiedKey === bet.user_pix_key && (
+                                                            <span className="text-green-600 font-medium">✓</span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                             {bet.status === 'refunded' && bet.refund_status && (
                                                 <div className="flex items-center" title={bet.refund_failure_reason || 'Reembolso enviado'}>
@@ -188,6 +211,22 @@ const MatchReport = () => {
                                             <div>
                                                 <div className="font-semibold">{bet.user_name}</div>
                                                 <div className="text-sm text-gray-600">{bet.user_email}</div>
+                                                {bet.user_pix_key && (
+                                                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                                                        <span>PIX: {bet.user_pix_key}</span>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-4 w-4 p-0"
+                                                            onClick={() => copyPixKey(bet.user_pix_key)}
+                                                        >
+                                                            <Copy className="h-3 w-3"/>
+                                                        </Button>
+                                                        {copiedKey === bet.user_pix_key && (
+                                                            <span className="text-green-600 font-medium">✓</span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                             {bet.status === 'refunded' && bet.refund_status && (
                                                 <div className="flex items-center" title={bet.refund_failure_reason || 'Reembolso enviado'}>

@@ -261,7 +261,7 @@ def get_match_report(match_id):
         # Get all bets with user info and refund status
         cursor = db.execute('''
             SELECT b.id, b.amount, b.player_name, b.status, b.potential_return,
-                   u.name as user_name, u.email as user_email, b.payment_id,
+                   u.name as user_name, u.email as user_email, u.pix_key as user_pix_key, b.payment_id,
                    pl.status as refund_status, pl.error_message as failure_reason
             FROM bets b
             JOIN users u ON b.user_id = u.id
@@ -283,6 +283,7 @@ def get_match_report(match_id):
                 'potential_return': float(row['potential_return'] or 0),
                 'user_name': row['user_name'],
                 'user_email': row['user_email'],
+                'user_pix_key': row['user_pix_key'],
                 'refund_status': row['refund_status'],
                 'refund_failure_reason': row['failure_reason']
             }

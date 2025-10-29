@@ -24,6 +24,7 @@ def register():
     password = data['password']
     name = data['name'].strip()
     phone = data.get('phone', '').strip()
+    pix_key = data.get('pix_key', '').strip()
     is_lapen_member = data.get('is_lapen_member', False)
     
     # Validate email format
@@ -48,8 +49,8 @@ def register():
         lapen_requested_at = datetime.utcnow() if is_lapen_member else None
         
         cursor = db.execute(
-            'INSERT INTO users (email, password_hash, name, phone, verification_token, is_lapen_member, lapen_requested_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            (email, password_hash, name, phone, verification_token, is_lapen_member, lapen_requested_at)
+            'INSERT INTO users (email, password_hash, name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            (email, password_hash, name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at)
         )
         db.commit()
         

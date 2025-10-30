@@ -4,10 +4,19 @@
     {
       "source": "/api/(.*)",
       "destination": "/api/index.py"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/manifest.json",
+      "dest": "/manifest.json"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }

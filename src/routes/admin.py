@@ -362,15 +362,27 @@ def get_lapen_requests():
 @require_admin_auth
 def approve_lapen_member(user_id):
     """Approve a LAPEN member request"""
+    from src.email_service import send_lapen_approval_notification_email
     db = get_db()
     try:
         from datetime import datetime
+        
+        cursor = db.execute('SELECT email, name FROM users WHERE id = ?', (user_id,))
+        user = cursor.fetchone()
+        
         db.execute('''
             UPDATE users
             SET lapen_approved = ?, lapen_approved_at = ?
             WHERE id = ? AND is_lapen_member = ?
         ''', (True, datetime.utcnow(), user_id, True))
         db.commit()
+        
+        if user:
+            try:
+                send_lapen_approval_notification_email(user['email'], user['name'])
+                logger.info(f'Approval email sent to {user["email"]}')
+            except Exception as e:
+                logger.error(f'Failed to send approval email: {e}')
         
         logger.info(f'LAPEN member approved: user_id={user_id}')
         return jsonify({'success': True, 'message': 'Membro LAPEN aprovado com sucesso'})

@@ -228,3 +228,30 @@ def send_password_reset_email(email, name, reset_token):
     except Exception as e:
         print(f"Failed to send password reset email: {e}")
         return False
+
+def send_lapen_approval_notification_email(user_email, user_name):
+    """Send notification to user when LAPEN membership is approved"""
+    try:
+        mail = current_app.extensions.get('mail')
+        if not mail:
+            return False
+        
+        msg = Message(
+            subject='Membro LAPEN Aprovado - Agenda LAPEN',
+            recipients=[user_email],
+            sender=current_app.config.get('MAIL_DEFAULT_SENDER'),
+            html=f"""
+            <h2>🎉 Parabéns! Você foi aprovado como Membro LAPEN</h2>
+            <p>Olá {user_name},</p>
+            <p>Sua solicitação para se tornar membro LAPEN foi aprovada!</p>
+            <p>Agora você tem acesso a todos os benefícios e funcionalidades exclusivas para membros LAPEN.</p>
+            <p>Acesse a plataforma e aproveite!</p>
+            <p>Bem-vindo(a) à LAPEN!</p>
+            """
+        )
+        
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Failed to send LAPEN approval notification email: {e}")
+        return False

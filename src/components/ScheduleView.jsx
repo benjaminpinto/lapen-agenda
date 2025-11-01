@@ -11,6 +11,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/c
 import {Textarea} from '@/components/ui/textarea'
 import {BarChart3, Calendar, Clock, Edit, GraduationCap, List, MapPin, Medal, Share2, Trash2, Trophy, Users} from 'lucide-react'
 import {useToast} from '@/components/hooks/use-toast.js'
+import {useAuth} from '@/contexts/AuthContext'
 import WeeklyCalendar from './WeeklyCalendar'
 import MonthSelector from './ui/MonthSelector'
 import MatchTypeBadge from './ui/MatchTypeBadge'
@@ -33,6 +34,7 @@ const ScheduleView = () => {
     const [deletingSchedule, setDeletingSchedule] = useState(null)
     const [showBetsWarning, setShowBetsWarning] = useState(false)
     const [isFinishedMatch, setIsFinishedMatch] = useState(false)
+    const [showAuthRequired, setShowAuthRequired] = useState(false)
     const [formData, setFormData] = useState({
         player1_name: '',
         player2_name: '',
@@ -40,6 +42,7 @@ const ScheduleView = () => {
     })
 
     const {toast} = useToast()
+    const {isAuthenticated} = useAuth()
 
     useEffect(() => {
         fetchSchedules()
@@ -115,6 +118,10 @@ const ScheduleView = () => {
     }
 
     const handleEdit = async (schedule) => {
+        if (!isAuthenticated) {
+            setShowAuthRequired(true)
+            return
+        }
         const hasBets = await checkActiveBets(schedule.id)
         if (hasBets) {
             setShowBetsWarning(true)
@@ -188,6 +195,10 @@ const ScheduleView = () => {
     }
 
     const handleDeleteClick = async (schedule) => {
+        if (!isAuthenticated) {
+            setShowAuthRequired(true)
+            return
+        }
         const hasBets = await checkActiveBets(schedule.id)
         if (hasBets) {
             if (isFinishedMatch) {
@@ -760,6 +771,21 @@ const ScheduleView = () => {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Entendi</AlertDialogCancel>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Authentication Required Dialog */}
+            <AlertDialog open={showAuthRequired} onOpenChange={setShowAuthRequired}>
+                <AlertDialogContent className="max-w-md mx-4 sm:mx-auto">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Login Necessário</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Para editar ou excluir agendamentos, você precisa ser um membro da LAPEN autenticado. Por favor, faça login para continuar.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Fechar</AlertDialogCancel>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

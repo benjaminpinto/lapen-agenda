@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { useToast } from '@/components/hooks/use-toast'
+import { useToast } from '@/contexts/ToastContext'
 
 const PasswordConfirmDialog = ({ open, onOpenChange, onConfirm, title, description }) => {
   const [password, setPassword] = useState('')

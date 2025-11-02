@@ -291,10 +291,10 @@ const MyBets = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8" data-testid="my-bets-page">
       <div className="mb-8">
         <Link to="/betting">
-          <Button variant="outline" size="sm" className="mb-4">
+          <Button data-testid="back-to-betting" variant="outline" size="sm" className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar para Apostas
           </Button>
@@ -304,18 +304,18 @@ const MyBets = () => {
       </div>
 
       {bets.length === 0 ? (
-        <Card>
+        <Card data-testid="empty-bets">
           <CardContent className="text-center py-8">
             <History className="h-12 w-12 mx-auto text-gray-400 mb-4" />
             <h2 className="text-xl font-semibold mb-2">Nenhuma aposta encontrada</h2>
             <p className="text-gray-500 mb-4">Você ainda não fez nenhuma aposta</p>
-            <Button onClick={() => window.location.href = '/betting'}>
+            <Button data-testid="first-bet-button" onClick={() => window.location.href = '/betting'}>
               Fazer Primeira Aposta
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4" data-testid="bets-list">
           {bets.map(bet => <BetCard key={bet.id} bet={bet} />)}
         </div>
       )}

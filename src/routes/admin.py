@@ -27,20 +27,20 @@ def login():
     if password == ADMIN_PASSWORD:
         session['admin_authenticated'] = True
         logger.info('Admin login successful')
-        return jsonify({'success': True, 'message': 'Login successful'})
+        return jsonify({'success': True, 'message': 'Login realizado com sucesso'})
     else:
         logger.warning('Admin login failed - invalid password')
-        return jsonify({'success': False, 'message': 'Invalid password'}), 401
+        return jsonify({'success': False, 'message': 'Senha inválida'}), 401
 
 @admin_bp.route('/logout', methods=['POST'])
 def logout():
     session.pop('admin_authenticated', None)
-    return jsonify({'success': True, 'message': 'Logout successful'})
+    return jsonify({'success': True, 'message': 'Logout realizado com sucesso'})
 
 def require_admin_auth(f):
     def decorated_function(*args, **kwargs):
         if not session.get('admin_authenticated'):
-            return jsonify({'error': 'Admin authentication required'}), 401
+            return jsonify({'error': 'Autenticação de administrador necessária'}), 401
         return f(*args, **kwargs)
     decorated_function.__name__ = f.__name__
     return decorated_function
@@ -54,7 +54,7 @@ def verify_password():
     if password == ADMIN_PASSWORD:
         return jsonify({'success': True})
     else:
-        return jsonify({'success': False, 'message': 'Invalid password'}), 401
+        return jsonify({'success': False, 'message': 'Senha inválida'}), 401
 
 # Courts CRUD
 @admin_bp.route('/courts', methods=['GET'])
@@ -89,7 +89,7 @@ def create_court():
             image_url = f"/images/{image_filename}"
         except Exception as e:
             logger.error(f'Error saving image: {str(e)}')
-            return jsonify({'success': False, 'message': 'Invalid image data'}), 400
+            return jsonify({'success': False, 'message': 'Dados de imagem inválidos'}), 400
     
     db = get_db()
     try:
@@ -99,7 +99,7 @@ def create_court():
         )
         db.commit()
         logger.info(f'Court created: {name}')
-        return jsonify({'success': True, 'message': 'Court created successfully'})
+        return jsonify({'success': True, 'message': 'Quadra criada com sucesso'})
     except Exception as e:
         logger.error(f'Error creating court {name}: {str(e)}')
         return jsonify({'success': False, 'message': str(e)}), 400
@@ -129,7 +129,7 @@ def update_court(court_id):
             image_url = f"/images/{image_filename}"
         except Exception as e:
             logger.error(f'Error saving image: {str(e)}')
-            return jsonify({'success': False, 'message': 'Invalid image data'}), 400
+            return jsonify({'success': False, 'message': 'Dados de imagem inválidos'}), 400
     
     db = get_db()
     try:
@@ -144,7 +144,7 @@ def update_court(court_id):
                 (name, court_type, description, active, court_id)
             )
         db.commit()
-        return jsonify({'success': True, 'message': 'Court updated successfully'})
+        return jsonify({'success': True, 'message': 'Quadra atualizada com sucesso'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
@@ -155,7 +155,7 @@ def delete_court(court_id):
     try:
         db.execute('DELETE FROM courts WHERE id = ?', (court_id,))
         db.commit()
-        return jsonify({'success': True, 'message': 'Court deleted successfully'})
+        return jsonify({'success': True, 'message': 'Quadra excluída com sucesso'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
@@ -177,7 +177,7 @@ def create_player():
     try:
         db.execute('INSERT INTO players (name) VALUES (?)', (name,))
         db.commit()
-        return jsonify({'success': True, 'message': 'Player added successfully'})
+        return jsonify({'success': True, 'message': 'Jogador adicionado com sucesso'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
@@ -188,7 +188,7 @@ def delete_player(player_id):
     try:
         db.execute('DELETE FROM players WHERE id = ?', (player_id,))
         db.commit()
-        return jsonify({'success': True, 'message': 'Player deleted successfully'})
+        return jsonify({'success': True, 'message': 'Jogador excluído com sucesso'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
@@ -233,7 +233,7 @@ def create_holiday_block():
             (date, start_time, end_time, description)
         )
         db.commit()
-        return jsonify({'success': True, 'message': 'Holiday/Block created successfully'})
+        return jsonify({'success': True, 'message': 'Feriado/Bloqueio criado com sucesso'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
@@ -244,7 +244,7 @@ def delete_holiday_block(block_id):
     try:
         db.execute('DELETE FROM holidays_blocks WHERE id = ?', (block_id,))
         db.commit()
-        return jsonify({'success': True, 'message': 'Holiday/Block deleted successfully'})
+        return jsonify({'success': True, 'message': 'Feriado/Bloqueio excluído com sucesso'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
@@ -304,7 +304,7 @@ def create_recurring_schedule():
                     (court_id, day, start_time, end_time, description, start_date, end_date)
                 )
         db.commit()
-        return jsonify({'success': True, 'message': 'Recurring schedule created successfully'})
+        return jsonify({'success': True, 'message': 'Horário recorrente criado com sucesso'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
@@ -315,7 +315,7 @@ def delete_recurring_schedule(schedule_id):
     try:
         db.execute('DELETE FROM recurring_schedules WHERE id = ?', (schedule_id,))
         db.commit()
-        return jsonify({'success': True, 'message': 'Recurring schedule deleted successfully'})
+        return jsonify({'success': True, 'message': 'Horário recorrente excluído com sucesso'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 

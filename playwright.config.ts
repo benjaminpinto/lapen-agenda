@@ -15,7 +15,7 @@ export default defineConfig({
     ['json', { outputFile: 'test-results/results.json' }]
   ],
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: process.env.BASE_URL || 'http://localhost:5173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

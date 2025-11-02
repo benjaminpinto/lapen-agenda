@@ -1,7 +1,7 @@
 import {Link, useNavigate} from 'react-router-dom'
 import {Button} from '@/components/ui/button'
 import {Calendar, Eye, Home, LogIn, LogOut, Menu, Settings, Trophy, UserPlus, X} from 'lucide-react'
-import {useToast} from '@/components/hooks/use-toast'
+import {useToast} from '@/contexts/ToastContext'
 import {useAuth} from '@/contexts/AuthContext'
 import {useState} from 'react'
 

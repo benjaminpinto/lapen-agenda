@@ -6,7 +6,7 @@ import {Textarea} from '@/components/ui/textarea'
 import {Card, CardContent} from '@/components/ui/card'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {ArrowLeft, Calendar, Clock, Plus, Trash2} from 'lucide-react'
-import {useToast} from '@/components/hooks/use-toast'
+import {useToast} from '@/contexts/ToastContext'
 import {Link} from 'react-router-dom'
 
 const AdminHolidays = () => {

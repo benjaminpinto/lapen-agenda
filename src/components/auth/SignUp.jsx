@@ -68,11 +68,7 @@ const SignUp = () => {
 
 
       if (result.success) {
-        toast({
-          title: "Conta criada!",
-          description: "Verifique seu email para confirmar sua conta."
-        })
-        navigate('/')
+        navigate('/signup-success')
       } else {
         toast({
           title: "Erro",

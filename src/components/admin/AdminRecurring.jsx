@@ -8,7 +8,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/c
 import {Card, CardContent} from '@/components/ui/card'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {ArrowLeft, Clock, MapPin, Plus, Trash2} from 'lucide-react'
-import {useToast} from "@/components/hooks/use-toast.js";
+import {useToast} from '@/contexts/ToastContext';
 import {Link} from 'react-router-dom'
 
 const AdminRecurring = () => {

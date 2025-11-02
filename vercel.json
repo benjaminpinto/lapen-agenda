@@ -2,10 +2,8 @@
   "buildCommand": "npm run vercel-build",
   "rewrites": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/:path*",
       "destination": "/api/index.py"
     }
-  ],
-  "cleanUrls": true,
-  "trailingSlash": false
+  ]
 }

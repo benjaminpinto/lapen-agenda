@@ -1,22 +1,29 @@
 import { useToast } from '@/contexts/ToastContext'
+import { X } from 'lucide-react'
 
 export const Toaster = () => {
-  const { toasts } = useToast()
+  const { toasts, removeToast } = useToast()
 
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2">
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`p-4 rounded-lg shadow-lg max-w-sm ${
+          className={`p-4 rounded-lg shadow-lg max-w-sm relative ${
             toast.variant === 'destructive'
               ? 'bg-red-500 text-white'
               : 'bg-green-500 text-white'
           }`}
         >
-          <div className="font-semibold">{toast.title}</div>
+          <button
+            onClick={() => removeToast(toast.id)}
+            className="absolute top-2 right-2 p-1 hover:bg-white/20 rounded transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="font-semibold pr-6">{toast.title}</div>
           {toast.description && (
-            <div className="text-sm opacity-90">{toast.description}</div>
+            <div className="text-sm opacity-90 pr-6">{toast.description}</div>
           )}
         </div>
       ))}

@@ -2,6 +2,20 @@ import os
 from flask_mail import Mail, Message
 from flask import current_app
 
+def send_mail(msg):
+    """Send email or log in development mode"""
+    if os.getenv('FLASK_ENV') == 'development':
+        print(f"\n{'='*60}")
+        print("[DEV MODE] Email NOT sent - Logging only:")
+        print(f"To: {', '.join(msg.recipients)}")
+        print(f"Subject: {msg.subject}")
+        print(f"{'='*60}\n")
+        return
+    
+    mail = current_app.extensions.get('mail')
+    if mail:
+        mail.send(msg)
+
 def init_mail(app):
     """Initialize Flask-Mail with app configuration"""
     app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
@@ -17,24 +31,13 @@ def init_mail(app):
 def send_verification_email(email, name, verification_token):
     """Send email verification"""
     try:
-        print(f"Attempting to send email to {email}")
-        print(f"Default sender: {current_app.config.get('MAIL_DEFAULT_SENDER')}")
-        mail = current_app.extensions.get('mail')
-        if not mail:
-            print("Mail extension not found")
-            return False
-        
-        # Get base URL - use FRONTEND_URL env var if set, otherwise derive from request
         base_url = os.getenv('FRONTEND_URL')
-        
         if base_url:
-            # Ensure base_url ends with /
             if not base_url.endswith('/'):
                 base_url += '/'
         else:
             from flask import request
             base_url = request.host_url
-            # In development, use frontend port (5173) instead of backend port (5001)
             if os.getenv('FLASK_ENV') == 'development' and ':5001' in base_url:
                 base_url = base_url.replace(':5001', ':5173')
         
@@ -52,7 +55,7 @@ def send_verification_email(email, name, verification_token):
             """
         )
         
-        mail.send(msg)
+        send_mail(msg)
         return True
     except Exception as e:
         print(f"Failed to send verification email: {e}")
@@ -61,10 +64,6 @@ def send_verification_email(email, name, verification_token):
 def send_bet_confirmation_email(email, name, bet_details):
     """Send bet confirmation email"""
     try:
-        mail = current_app.extensions.get('mail')
-        if not mail:
-            return False
-        
         potential_return_html = ""
         if bet_details.get('potential_return') and bet_details['potential_return'] != 'R$ 0' and bet_details['potential_return'] != 'R$ 0.00':
             potential_return_html = f"<p><strong>Retorno Potencial:</strong> {bet_details['potential_return']}</p>"
@@ -86,7 +85,7 @@ def send_bet_confirmation_email(email, name, bet_details):
             """
         )
         
-        mail.send(msg)
+        send_mail(msg)
         return True
     except Exception as e:
         print(f"Failed to send bet confirmation email: {e}")
@@ -95,10 +94,6 @@ def send_bet_confirmation_email(email, name, bet_details):
 def send_winner_notification_email(email, name, match_details, payout_amount):
     """Send winner notification email"""
     try:
-        mail = current_app.extensions.get('mail')
-        if not mail:
-            return False
-        
         msg = Message(
             subject='Parabéns! Você ganhou! - Tigrinho LAPEN',
             recipients=[email],
@@ -115,7 +110,7 @@ def send_winner_notification_email(email, name, match_details, payout_amount):
             """
         )
         
-        mail.send(msg)
+        send_mail(msg)
         return True
     except Exception as e:
         print(f"Failed to send winner notification email: {e}")
@@ -124,10 +119,6 @@ def send_winner_notification_email(email, name, match_details, payout_amount):
 def send_bet_settlement_email(email, name, match_details, bet_result, amount):
     """Send bet settlement confirmation email"""
     try:
-        mail = current_app.extensions.get('mail')
-        if not mail:
-            return False
-        
         subject = 'Resultado da Aposta - Tigrinho LAPEN'
         if bet_result == 'won':
             result_text = f"<p style='color: green;'><strong>✅ Sua aposta foi vencedora!</strong></p>"
@@ -152,7 +143,7 @@ def send_bet_settlement_email(email, name, match_details, bet_result, amount):
             """
         )
         
-        mail.send(msg)
+        send_mail(msg)
         return True
     except Exception as e:
         print(f"Failed to send bet settlement email: {e}")
@@ -161,10 +152,6 @@ def send_bet_settlement_email(email, name, match_details, bet_result, amount):
 def send_lapen_approval_request_email(user_email, user_name, user_phone):
     """Send notification to admin when a user requests LAPEN member approval"""
     try:
-        mail = current_app.extensions.get('mail')
-        if not mail:
-            return False
-        
         admin_email = current_app.config.get('MAIL_DEFAULT_SENDER')
         if not admin_email:
             return False
@@ -183,7 +170,7 @@ def send_lapen_approval_request_email(user_email, user_name, user_phone):
             """
         )
         
-        mail.send(msg)
+        send_mail(msg)
         return True
     except Exception as e:
         print(f"Failed to send LAPEN approval request email: {e}")
@@ -192,10 +179,6 @@ def send_lapen_approval_request_email(user_email, user_name, user_phone):
 def send_password_reset_email(email, name, reset_token):
     """Send password reset email"""
     try:
-        mail = current_app.extensions.get('mail')
-        if not mail:
-            return False
-        
         base_url = os.getenv('FRONTEND_URL')
         if base_url:
             if not base_url.endswith('/'):
@@ -223,7 +206,7 @@ def send_password_reset_email(email, name, reset_token):
             """
         )
         
-        mail.send(msg)
+        send_mail(msg)
         return True
     except Exception as e:
         print(f"Failed to send password reset email: {e}")
@@ -232,10 +215,6 @@ def send_password_reset_email(email, name, reset_token):
 def send_lapen_approval_notification_email(user_email, user_name):
     """Send notification to user when LAPEN membership is approved"""
     try:
-        mail = current_app.extensions.get('mail')
-        if not mail:
-            return False
-        
         msg = Message(
             subject='Membro LAPEN Aprovado - Agenda LAPEN',
             recipients=[user_email],
@@ -250,7 +229,7 @@ def send_lapen_approval_notification_email(user_email, user_name):
             """
         )
         
-        mail.send(msg)
+        send_mail(msg)
         return True
     except Exception as e:
         print(f"Failed to send LAPEN approval notification email: {e}")

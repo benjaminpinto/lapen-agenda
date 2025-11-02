@@ -64,6 +64,10 @@ npm run dev            # Frontend (port 5173)
 - 🔒 [Security](docs/SECURITY.md) - Security configuration
 - 🔌 [API Documentation](docs/API_DOCUMENTATION.md) - REST API reference
 - 🎾 [LAPEN Member System](docs/QUICK_START_LAPEN.md) - Member approval workflow
+- 🧪 [Testing Guide](docs/TESTING.md) - Unit and E2E testing
+- 🎭 [Playwright Setup](docs/PLAYWRIGHT_SETUP.md) - E2E testing configuration
+- 📘 [User Manual](docs/Manual%20do%20Usuário%20-%20Agenda%20LAPEN.md) - Complete user guide (Portuguese)
+- 📋 [System Overview](docs/Agenda%20LAPEN%20-%20Sistema%20de%20Gerenciamento%20de%20Quadras%20de%20Tênis.md) - Detailed system documentation (Portuguese)
 - 📊 **Interactive API Docs:** http://localhost:5001/api/docs
 
 ## 🛠️ Technology Stack
@@ -79,6 +83,10 @@ npm run dev            # Frontend (port 5173)
 - Vite
 - Tailwind CSS
 - shadcn/ui
+
+**Testing:**
+- pytest (Unit tests)
+- Playwright (E2E tests)
 
 [See full architecture →](docs/ARCHITECTURE.md)
 
@@ -125,6 +133,21 @@ See [.env.example](.env.example) for complete list.
 - **Frontend:** http://localhost:5173 (dev) / http://localhost:5001 (prod)
 - **API Docs:** http://localhost:5001/api/docs
 - **Admin Panel:** http://localhost:5173/admin
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+pytest tests/ --cov=src
+
+# E2E tests
+npm run test:e2e
+
+# E2E tests with UI
+npm run test:e2e:ui
+```
+
+[Complete testing guide →](docs/TESTING.md)
 
 ## 📦 Production Build
 

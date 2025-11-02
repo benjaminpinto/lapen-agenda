@@ -83,6 +83,7 @@ const Login = () => {
                   placeholder="seu@email.com"
                   value={formData.email}
                   onChange={handleChange}
+                  tabIndex={1}
                 />
               </div>
             </div>
@@ -90,7 +91,7 @@ const Login = () => {
             <div>
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Senha</Label>
-                <Link to="/forgot-password" className="text-xs text-green-600 hover:text-green-500">
+                <Link to="/forgot-password" tabIndex={3} className="text-xs text-green-600 hover:text-green-500">
                   Esqueceu a senha?
                 </Link>
               </div>
@@ -105,6 +106,7 @@ const Login = () => {
                   placeholder="Sua senha"
                   value={formData.password}
                   onChange={handleChange}
+                  tabIndex={2}
                 />
               </div>
             </div>

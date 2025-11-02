@@ -42,6 +42,11 @@ const BettingDashboard = () => {
             }
             
             const response = await fetch('/api/matches/', { headers })
+            
+            if (!response.ok) {
+                throw new Error('Erro ao carregar partidas')
+            }
+            
             const data = await response.json()
             
             // Deduplicate matches and aggregate user bets

@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Plus, Trash2, Users, ArrowLeft } from 'lucide-react'
-import { useToast } from '@/components/hooks/use-toast'
+import { useToast } from '@/contexts/ToastContext'
 import { Link } from 'react-router-dom'
 
 const AdminPlayers = () => {

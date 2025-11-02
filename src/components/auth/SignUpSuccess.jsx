@@ -27,19 +27,11 @@ const SignUpSuccess = () => {
             Clique no link do email para verificar sua conta e começar a apostar.
           </p>
           
-          <div className="space-y-2">
-            <Link to="/login">
-              <Button className="w-full">
-                Fazer Login
-              </Button>
-            </Link>
-            
-            <Link to="/">
-              <Button variant="outline" className="w-full">
-                Voltar ao Início
-              </Button>
-            </Link>
-          </div>
+          <Link to="/">
+            <Button className="w-full">
+              Voltar ao Início
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     </div>

@@ -140,7 +140,7 @@ See [.env.example](.env.example) for complete list.
 # Unit tests
 pytest tests/ --cov=src
 
-# E2E tests
+# E2E tests (local)
 npm run test:e2e
 
 # E2E tests with UI
@@ -148,6 +148,28 @@ npm run test:e2e:ui
 ```
 
 [Complete testing guide →](docs/TESTING.md)
+
+## 🚀 CI/CD Pipeline
+
+**Automated Testing & Deployment:**
+
+1. **Unit Tests** - Run on every push/PR (all branches)
+   - Python unit tests with pytest
+   - Blocks deployment if tests fail
+
+2. **Vercel Deployment**
+   - **Main branch** → Production environment
+   - **Other branches** → Preview environments
+
+3. **E2E Tests** - Triggered after successful preview deployments
+   - Runs Playwright tests against preview URL
+   - Only executes for non-main branches
+   - Results reported back to Vercel
+
+**Workflow:**
+```
+Push → Unit Tests → Vercel Deploy → E2E Tests (preview only)
+```
 
 ## 📦 Production Build
 

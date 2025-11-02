@@ -149,12 +149,47 @@ open htmlcov/index.html
 
 ## CI/CD Integration
 
-Tests run automatically on GitHub Actions:
-- **Unit tests**: On every push and PR
-- **E2E tests**: On every push and PR
-- **Browsers**: Chromium, Mobile Chrome, Mobile Safari
+### Automated Pipeline
 
-See `.github/workflows/test.yml` for configuration.
+**1. Unit Tests** (`.github/workflows/test.yml`)
+- Trigger: Every push and PR (all branches)
+- Runs: Python unit tests with pytest
+- Coverage: Backend logic and utilities
+- Blocks: Deployment if tests fail
+
+**2. Vercel Deployment**
+- **Main branch** → Production environment
+- **Other branches** → Preview environments
+- Automatic deployment after unit tests pass
+
+**3. E2E Tests** (`.github/workflows/e2e-tests.yml`)
+- Trigger: After successful Vercel preview deployment
+- Event: `repository_dispatch` from Vercel
+- Condition: Only runs for preview environments (non-main branches)
+- Browsers: Chromium, Mobile Chrome, Mobile Safari
+- Target: Preview deployment URL
+- Reports: Results sent back to Vercel
+
+**Pipeline Flow:**
+```
+Push to branch → Unit Tests → Vercel Deploy (preview) → E2E Tests → Vercel Check
+```
+
+**Manual E2E Testing** (`.github/workflows/manual-e2e.yml`)
+- Trigger: Manual workflow dispatch
+- Use: Test specific deployment URLs
+- Access: GitHub Actions tab → Manual E2E Tests
+
+### Configuration
+
+**Required GitHub Secrets:**
+- `ADMIN_PASSWORD`: Admin password for E2E tests
+
+**Vercel Settings:**
+- Repository Dispatch: Enabled
+- Deployment Checks: Configured for E2E tests
+
+See workflow files in `.github/workflows/` for detailed configuration.
 
 ## Writing New Tests
 

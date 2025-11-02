@@ -106,19 +106,19 @@ const Home = () => {
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/schedule">
-            <Button size="lg" className="w-full sm:w-auto">
+            <Button data-testid="schedule-button" size="lg" className="w-full sm:w-auto">
               <Calendar className="h-5 w-5 mr-2" />
               Fazer Agendamento
             </Button>
           </Link>
           <Link to="/view">
-            <Button variant="outline" size="lg" className="w-full sm:w-auto">
+            <Button data-testid="view-schedule-button" variant="outline" size="lg" className="w-full sm:w-auto">
               <CalendarDays className="h-5 w-5 mr-2" />
               Ver Agenda
             </Button>
           </Link>
           <Link to="/betting">
-            <Button variant="outline" size="lg" className="w-full sm:w-auto bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 border-amber-300 text-amber-900">
+            <Button data-testid="betting-button" variant="outline" size="lg" className="w-full sm:w-auto bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 border-amber-300 text-amber-900">
               <Trophy className="h-5 w-5 mr-2" />
               Apostar
             </Button>

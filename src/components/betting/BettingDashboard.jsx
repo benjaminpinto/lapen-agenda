@@ -498,7 +498,7 @@ const BettingDashboard = () => {
                     <div className="flex justify-between items-center">
                         <p className="text-gray-600">Aposte nas partidas de tênis da LAPEN</p>
                         {isAuthenticated && (
-                            <Button onClick={() => window.location.href = '/my-bets'} variant="outline" size="sm">
+                            <Button data-testid="my-bets-button" onClick={() => window.location.href = '/my-bets'} variant="outline" size="sm">
                                 Minhas Apostas
                             </Button>
                             )}
@@ -576,7 +576,7 @@ const BettingDashboard = () => {
 
                 {/* Betting Form */}
                 <div>
-                    <Card>
+                    <Card data-testid="betting-form">
                         <CardHeader>
                             <CardTitle>Fazer Aposta</CardTitle>
                             <CardDescription>
@@ -589,10 +589,10 @@ const BettingDashboard = () => {
                                     <p className="text-gray-500 mb-4">Você precisa estar logado para apostar</p>
                                     <div className="flex flex-col gap-3">
                                         <Link to="/login">
-                                            <Button className="w-full">Fazer Login</Button>
+                                            <Button data-testid="login-link" className="w-full">Fazer Login</Button>
                                         </Link>
                                         <Link to="/signup">
-                                            <Button variant="outline" className="w-full">Criar Conta</Button>
+                                            <Button data-testid="signup-link" variant="outline" className="w-full">Criar Conta</Button>
                                         </Link>
                                     </div>
                                 </div>

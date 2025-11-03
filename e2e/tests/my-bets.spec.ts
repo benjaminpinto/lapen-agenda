@@ -12,12 +12,13 @@ test.describe('My Bets Page', () => {
         await page.goto('/my-bets');
         await page.evaluate((token) => localStorage.setItem('auth_token', token), token);
         
-        await Promise.all([
+        const meResponse = await Promise.all([
             page.waitForResponse(resp => resp.url().includes('/api/auth/me')),
             page.reload()
         ]);
-
-        await expect(page.getByTestId('my-bets-page')).toBeVisible();
+        
+        await expect(meResponse[0].status()).toBe(200);
+        await expect(page.getByTestId('my-bets-page')).toBeVisible({timeout: 10000});
         await expect(page.locator('h1:has-text("Minhas Apostas")')).toBeVisible();
     });
 
@@ -29,12 +30,13 @@ test.describe('My Bets Page', () => {
         await page.goto('/my-bets');
         await page.evaluate((token) => localStorage.setItem('auth_token', token), token);
         
-        await Promise.all([
+        const meResponse = await Promise.all([
             page.waitForResponse(resp => resp.url().includes('/api/auth/me')),
             page.reload()
         ]);
-
-        await expect(page.getByTestId('empty-bets')).toBeVisible();
+        
+        await expect(meResponse[0].status()).toBe(200);
+        await expect(page.getByTestId('empty-bets')).toBeVisible({timeout: 10000});
     });
 
     test('should navigate back to betting dashboard', async ({page, request, browserName}) => {
@@ -45,15 +47,14 @@ test.describe('My Bets Page', () => {
         await page.goto('/my-bets');
         await page.evaluate((token) => localStorage.setItem('auth_token', token), token);
         
-        await Promise.all([
+        const meResponse = await Promise.all([
             page.waitForResponse(resp => resp.url().includes('/api/auth/me')),
             page.reload()
         ]);
-
-        await Promise.all([
-            page.waitForURL('/betting'),
-            page.getByTestId('back-to-betting').click()
-        ]);
+        
+        await expect(meResponse[0].status()).toBe(200);
+        await page.getByTestId('back-to-betting').click();
+        await page.waitForURL('/betting', {timeout: 15000});
     });
 
     test('should require authentication', async ({page}) => {

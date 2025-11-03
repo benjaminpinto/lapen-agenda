@@ -7,10 +7,14 @@ on:
 
 permissions:
   contents: write
+  statuses: write
 
 jobs:
   e2e-tests:
-    if: github.event_name == 'repository_dispatch' && github.event.client_payload.environment == 'preview'
+    if: |
+      github.event_name == 'repository_dispatch' && 
+      github.event.client_payload.environment == 'preview' &&
+      !contains(github.event.client_payload.url, 'lapen-agenda-git')
     runs-on: ubuntu-latest
     
     steps:
@@ -27,6 +31,11 @@ jobs:
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
     
+    - name: Debug environment
+      run: |
+        echo "BASE_URL: ${{ github.event.client_payload.url }}"
+        echo "Has bypass secret: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET != '' }}"
+    
     - name: Run Playwright tests
       run: npx playwright test
       env:
@@ -35,6 +44,7 @@ jobs:
         BASE_URL: ${{ github.event.client_payload.url }}
         ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         MAIL_MOCK_ACTIVE: true
+        VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
     
     - name: Cleanup test data
       if: always()
@@ -84,5 +94,5 @@ jobs:
     - name: 'notify vercel'
       uses: 'vercel/repository-dispatch/actions/status@v1'
       with:
-        name:
-          'Vercel - lapen-agenda: E2E Check'
+        name: 'Vercel - lapen-agenda: E2E Check'
+        token: ${{ secrets.PAT_TOKEN }}

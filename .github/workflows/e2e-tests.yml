@@ -30,8 +30,10 @@ jobs:
     - name: Run Playwright tests
       run: npx playwright test
       env:
+        CI: true
         BASE_URL: ${{ github.event.client_payload.url }}
         ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        MAIL_MOCK_ACTIVE: true
     
     - name: Load test report history
       uses: actions/checkout@v3

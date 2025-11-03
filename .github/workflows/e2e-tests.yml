@@ -36,6 +36,7 @@ jobs:
         BASE_URL: ${{ github.event.client_payload.url }}
         ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         MAIL_MOCK_ACTIVE: true
+        VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
     
     - name: Cleanup test data
       if: always()
@@ -85,5 +86,5 @@ jobs:
     - name: 'notify vercel'
       uses: 'vercel/repository-dispatch/actions/status@v1'
       with:
-        name:
-          'Vercel - lapen-agenda: E2E Check'
+        name: 'Vercel - lapen-agenda: E2E Check'
+        token: ${{ secrets.PAT_TOKEN }}

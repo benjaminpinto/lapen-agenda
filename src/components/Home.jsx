@@ -17,11 +17,6 @@ const Home = () => {
   const fetchUpcomingMatches = async () => {
     try {
       const now = new Date()
-      const sevenDaysLater = new Date(now)
-      sevenDaysLater.setDate(now.getDate() + 7)
-      
-      const startDate = now.toISOString().split('T')[0]
-      const endDate = sevenDaysLater.toISOString().split('T')[0]
       
       const response = await fetch(`/api/public/schedules/month?year=${now.getFullYear()}&month=${now.getMonth() + 1}`)
       if (response.ok) {
@@ -29,7 +24,7 @@ const Home = () => {
         const upcoming = data
           .filter(schedule => {
             const scheduleDateTime = new Date(`${schedule.date}T${schedule.start_time}`)
-            return scheduleDateTime >= now && schedule.date <= endDate
+            return scheduleDateTime >= now
           })
           .sort((a, b) => {
             const dateA = new Date(`${a.date}T${a.start_time}`)

@@ -1,15 +1,17 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as os from 'node:os';
-import * as dotenv from 'dotenv';
 
-dotenv.config();
+if (!process.env.CI) {
+  const dotenv = await import('dotenv');
+  dotenv.config();
+}
 
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
-  workers: process.env.CI ? 10 : undefined,
+  workers: process.env.CI ? 6 : undefined,
   reporter: [
     ['html'],
     ['list'],
@@ -38,14 +40,17 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      fullyParallel: true,
     },
     {
       name: 'mobile-chrome',
       use: { ...devices['Pixel 5'] },
+      fullyParallel: true,
     },
     {
       name: 'mobile-safari',
       use: { ...devices['iPhone 12'] },
+      fullyParallel: true,
     },
   ],
   webServer: process.env.CI ? undefined : {

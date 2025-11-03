@@ -1,17 +1,19 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as os from 'node:os';
+import * as dotenv from 'dotenv';
 
-if (!process.env.CI) {
-  const dotenv = await import('dotenv');
+if (!process.env.CI || process.env.CI === 'false') {
   dotenv.config();
 }
+
+console.log('CI:', process.env.CI, 'Workers:', process.env.CI && process.env.CI !== 'false' ? 6 : undefined);
 
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
-  workers: process.env.CI ? 6 : undefined,
+  workers: process.env.CI && process.env.CI !== 'false' ? 6 : undefined,
   reporter: [
     ['html'],
     ['list'],
@@ -53,7 +55,7 @@ export default defineConfig({
       fullyParallel: true,
     },
   ],
-  webServer: process.env.CI ? undefined : {
+  webServer: process.env.CI && process.env.CI !== 'false' ? undefined : {
     command: 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: true,

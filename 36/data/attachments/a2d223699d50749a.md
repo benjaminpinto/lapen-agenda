@@ -1,0 +1,189 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e5]:
+    - link "Allure" [ref=e7]:
+      - /url: "#"
+    - list [ref=e8]:
+      - listitem [ref=e9]:
+        - link " Overview" [ref=e10]:
+          - /url: "#"
+          - generic [ref=e11]: 
+          - generic [ref=e12]: Overview
+      - listitem [ref=e13]:
+        - link " Categories" [ref=e14]:
+          - /url: "#categories"
+          - generic [ref=e15]: 
+          - generic [ref=e16]: Categories
+      - listitem [ref=e17]:
+        - link " Suites" [ref=e18]:
+          - /url: "#suites"
+          - generic [ref=e19]: 
+          - generic [ref=e20]: Suites
+      - listitem [ref=e21]:
+        - link " Graphs" [ref=e22]:
+          - /url: "#graph"
+          - generic [ref=e23]: 
+          - generic [ref=e24]: Graphs
+      - listitem [ref=e25]:
+        - link " Timeline" [ref=e26]:
+          - /url: "#timeline"
+          - generic [ref=e27]: 
+          - generic [ref=e28]: Timeline
+      - listitem [ref=e29]:
+        - link " Behaviors" [ref=e30]:
+          - /url: "#behaviors"
+          - generic [ref=e31]: 
+          - generic [ref=e32]: Behaviors
+      - listitem [ref=e33]:
+        - link " Packages" [ref=e34]:
+          - /url: "#packages"
+          - generic [ref=e35]: 
+          - generic [ref=e36]: Packages
+    - generic [ref=e37]:
+      - button "en" [ref=e39] [cursor=pointer]
+      - generic [ref=e41] [cursor=pointer]:
+        - generic [ref=e42]: 
+        - text: Collapse
+  - generic [ref=e44]:
+    - generic [ref=e45]:
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - heading "Allure Report with history 11/3/2025 18:14:24 - 18:16:32 (2m 07s)" [level=2] [ref=e51]:
+            - text: Allure Report with history 11/3/2025
+            - generic [ref=e52]: 18:14:24 - 18:16:32 (2m 07s)
+          - generic [ref=e53]:
+            - generic [ref=e54]: "114"
+            - generic [ref=e55]: test cases
+        - img [ref=e58]:
+          - generic [ref=e61]: 100%
+      - generic [ref=e64]:
+        - heading "Suites 3 items total" [level=2] [ref=e65]
+        - generic [ref=e66]:
+          - link "chromium 38" [ref=e67]:
+            - /url: "#suites/36c900977e1d8b81a2c6893cc82bfc01"
+            - generic [ref=e68]: chromium
+            - generic [ref=e71]: "38"
+          - link "mobile-chrome 38" [ref=e72]:
+            - /url: "#suites/77e8e8d86348f0544cd7806ccca773cf"
+            - generic [ref=e73]: mobile-chrome
+            - generic [ref=e76]: "38"
+          - link "mobile-safari 38" [ref=e77]:
+            - /url: "#suites/d21a5ef1a2801eb166d54c01a89b2a25"
+            - generic [ref=e78]: mobile-safari
+            - generic [ref=e81]: "38"
+          - link "Show all" [ref=e82]:
+            - /url: "#suites"
+            - generic [ref=e83]: Show all
+      - generic [ref=e86]:
+        - heading "Environment" [level=2] [ref=e87]
+        - generic [ref=e88]:
+          - generic [ref=e89]:
+            - generic [ref=e90]: os_platform
+            - generic [ref=e91]: linux
+          - generic [ref=e92]:
+            - generic [ref=e93]: os_release
+            - generic [ref=e94]: 6.11.0-1018-azure
+          - generic [ref=e95]:
+            - generic [ref=e96]: os_version
+            - generic [ref=e97]: "#18~24.04.1-Ubuntu SMP Sat Jun 28 04:46:03 UTC 2025"
+          - generic [ref=e98]:
+            - generic [ref=e99]: node_version
+            - generic [ref=e100]: v18.20.8
+      - generic [ref=e103]:
+        - heading "Features by stories 114 items total" [level=2] [ref=e104]
+        - link "Show all" [ref=e106]:
+          - /url: "#behaviors"
+          - generic [ref=e107]: Show all
+    - generic [ref=e108]:
+      - generic [ref=e111]:
+        - heading "Trend" [level=2] [ref=e112]
+        - img [ref=e115]:
+          - generic [ref=e116]:
+            - link [ref=e121] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/16/
+            - link [ref=e124] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/17/
+            - link [ref=e127] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/18/
+            - link [ref=e130] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/19/
+            - link [ref=e133] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/20/
+            - link [ref=e136] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/21/
+            - link [ref=e139] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/22/
+            - link [ref=e142] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/23/
+            - link [ref=e145] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/24/
+            - link [ref=e148] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/25/
+            - link [ref=e151] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/26/
+            - link [ref=e154] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/27/
+            - link [ref=e157] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/28/
+            - link [ref=e160] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/29/
+            - link [ref=e163] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/30/
+            - link [ref=e166] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/32/
+            - link [ref=e169] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/33/
+            - link [ref=e172] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/34/
+            - link [ref=e175] [cursor=pointer]:
+              - /url: https://benjaminpinto.github.io/lapen-agenda/35/
+          - generic [ref=e177]:
+            - generic [ref=e180]: "#16"
+            - generic [ref=e182]: "#17"
+            - generic [ref=e184]: "#18"
+            - generic [ref=e186]: "#19"
+            - generic [ref=e188]: "#20"
+            - generic [ref=e190]: "#21"
+            - generic [ref=e192]: "#22"
+            - generic [ref=e194]: "#23"
+            - generic [ref=e196]: "#24"
+            - generic [ref=e198]: "#25"
+            - generic [ref=e200]: "#26"
+            - generic [ref=e202]: "#27"
+            - generic [ref=e204]: "#28"
+            - generic [ref=e206]: "#29"
+            - generic [ref=e208]: "#30"
+            - generic [ref=e210]: "#32"
+            - generic [ref=e212]: "#33"
+            - generic [ref=e214]: "#34"
+            - generic [ref=e216]: "#35"
+          - generic [ref=e217]:
+            - generic [ref=e220]: "0"
+            - generic [ref=e222]: "10"
+            - generic [ref=e224]: "20"
+            - generic [ref=e226]: "30"
+            - generic [ref=e228]: "40"
+            - generic [ref=e230]: "50"
+            - generic [ref=e232]: "60"
+            - generic [ref=e234]: "70"
+            - generic [ref=e236]: "80"
+            - generic [ref=e238]: "90"
+            - generic [ref=e240]: "100"
+            - generic [ref=e242]: "110"
+            - generic [ref=e244]: "120"
+      - generic [ref=e247]:
+        - heading "Categories 0 items total" [level=2] [ref=e248]
+        - link "Show all" [ref=e250]:
+          - /url: "#categories"
+          - generic [ref=e251]: Show all
+      - generic [ref=e254]:
+        - heading "Executors" [level=2] [ref=e255]
+        - generic [ref=e257]:
+          - generic [ref=e258]: GitHub Actions
+          - 'link "GitHub Actions Run #19044745005 " [ref=e261]':
+            - /url: https://github.com/benjaminpinto/lapen-agenda/actions/runs/19044745005
+            - text: "GitHub Actions Run #19044745005"
+            - generic [ref=e262]: 
+```

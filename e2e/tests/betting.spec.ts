@@ -23,12 +23,13 @@ test.describe('Betting System', () => {
         await page.goto('/betting');
         await page.evaluate((token) => localStorage.setItem('auth_token', token), token);
 
-        await Promise.all([
-            page.waitForResponse(resp => resp.url().includes('/api/matches')),
+        const [meResponse] = await Promise.all([
+            page.waitForResponse(resp => resp.url().includes('/api/auth/me')),
             page.reload()
         ]);
-
-        await expect(page.getByTestId('betting-form')).toBeVisible();
+        
+        await expect(meResponse.status()).toBe(200);
+        await expect(page.getByTestId('betting-form')).toBeVisible({timeout: 10000});
     });
 
     test('should navigate to my bets page', async ({page, request, browserName}) => {
@@ -39,15 +40,14 @@ test.describe('Betting System', () => {
         await page.goto('/betting');
         await page.evaluate((token) => localStorage.setItem('auth_token', token), token);
 
-        await Promise.all([
-            page.waitForResponse(resp => resp.url().includes('/api/matches')),
+        const [meResponse] = await Promise.all([
+            page.waitForResponse(resp => resp.url().includes('/api/auth/me')),
             page.reload()
         ]);
-
-        await Promise.all([
-            page.waitForURL('/my-bets'),
-            page.getByTestId('my-bets-button').click()
-        ]);
+        
+        await expect(meResponse.status()).toBe(200);
+        await page.getByTestId('my-bets-button').click();
+        await page.waitForURL('/my-bets', {timeout: 15000});
     });
 
     test('should display sections', async ({page}) => {

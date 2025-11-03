@@ -35,6 +35,13 @@ jobs:
         ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         MAIL_MOCK_ACTIVE: true
     
+    - name: Check allure-results
+      if: always()
+      run: |
+        echo "Checking allure-results directory..."
+        ls -la allure-results/ || echo "allure-results directory not found"
+        echo "File count: $(find allure-results -type f 2>/dev/null | wc -l)"
+    
     - name: Load test report history
       uses: actions/checkout@v3
       if: always()

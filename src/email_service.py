@@ -3,10 +3,10 @@ from flask_mail import Mail, Message
 from flask import current_app
 
 def send_mail(msg):
-    """Send email or log in development mode"""
-    if os.getenv('FLASK_ENV') == 'development':
+    """Send email or log in mock mode"""
+    if os.getenv('MAIL_MOCK_ACTIVE', 'false').lower() == 'true':
         print(f"\n{'='*60}")
-        print("[DEV MODE] Email NOT sent - Logging only:")
+        print("[MOCK MODE] Email NOT sent - Logging only:")
         print(f"To: {', '.join(msg.recipients)}")
         print(f"Subject: {msg.subject}")
         print(f"{'='*60}\n")

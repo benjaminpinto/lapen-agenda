@@ -35,6 +35,10 @@ const config = defineConfig({
     video: 'retain-on-failure',
     actionTimeout: 10000,
     navigationTimeout: 10000,
+    extraHTTPHeaders: process.env.VERCEL_AUTOMATION_BYPASS_SECRET ? {
+      'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+      'x-vercel-set-bypass-cookie': 'samesitenone',
+    } : {},
   },
   projects: [
     {

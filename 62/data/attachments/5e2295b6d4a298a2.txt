@@ -1,0 +1,3 @@
+Testing URL: https://lapen-agenda-cg0l4j6yo-benjamin-pintos-projects.vercel.app
+Has bypass secret: true
+Page loaded successfully - bypass working!

@@ -9,7 +9,10 @@ export async function createUserViaAPI(request: APIRequestContext, userData: {
   is_lapen_member?: boolean;
 }) {
   const response = await request.post('/api/auth/register', {
-    data: userData
+    data: {
+      ...userData,
+      is_lapen_member: userData.is_lapen_member ?? false
+    }
   });
   
   const data = await response.json();

@@ -5,6 +5,9 @@ on:
     types:
       - 'vercel.deployment.success'
 
+permissions:
+  contents: write
+
 jobs:
   e2e-tests:
     if: github.event_name == 'repository_dispatch' && github.event.client_payload.environment == 'preview'
@@ -30,7 +33,31 @@ jobs:
         BASE_URL: ${{ github.event.client_payload.url }}
         ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
     
-    - name: Upload test results
+    - name: Load test report history
+      uses: actions/checkout@v3
+      if: always()
+      continue-on-error: true
+      with:
+        ref: gh-pages
+        path: gh-pages
+    
+    - name: Build Allure report
+      uses: simple-elf/allure-report-action@v1.10
+      if: always()
+      with:
+        gh_pages: gh-pages
+        allure_history: allure-history
+        allure_results: allure-results
+    
+    - name: Publish Allure report to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      if: always()
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_branch: gh-pages
+        publish_dir: allure-history
+    
+    - name: Upload Playwright HTML report
       if: always()
       uses: actions/upload-artifact@v4
       with:

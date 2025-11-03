@@ -67,5 +67,10 @@ dist-ssr/
 /playwright/.cache/
 /e2e-results/
 
+# Allure
+/allure-results/
+/allure-report/
+/.allure/
+
 # Vercel
 .vercel

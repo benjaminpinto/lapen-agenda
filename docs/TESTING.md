@@ -142,10 +142,39 @@ npm run test:e2e:headed
 # View Playwright HTML report
 npm run test:e2e:report
 
+# Generate and view Allure report
+npm run allure:generate  # Generate report from results
+npm run allure:open      # Open generated report
+npm run allure:serve     # Generate and serve in one command
+
 # Unit test coverage
 pytest tests/ --cov=src --cov-report=html
 open htmlcov/index.html
 ```
+
+### Allure Reports
+
+Allure provides enhanced test reporting with:
+- **History Tracking**: Compare test results across runs
+- **Detailed Analytics**: Test duration, flakiness, categories
+- **Rich Attachments**: Screenshots, videos, traces
+- **Environment Info**: OS, Node version, browser details
+- **Trend Graphs**: Success rate over time
+
+**Local Usage:**
+```bash
+# Run tests (generates allure-results/)
+npm run test:e2e
+
+# View interactive report
+npm run allure:serve
+```
+
+**GitHub Pages:**
+Allure reports are automatically published to GitHub Pages after E2E tests run:
+- URL: `https://<username>.github.io/<repo-name>/`
+- History: Preserved across test runs
+- Access: Public (configure repo settings for private)
 
 ## CI/CD Integration
 
@@ -168,7 +197,10 @@ open htmlcov/index.html
 - Condition: Only runs for preview environments (non-main branches)
 - Browsers: Chromium, Mobile Chrome, Mobile Safari
 - Target: Preview deployment URL
-- Reports: Results sent back to Vercel
+- Reports: 
+  - Allure report published to GitHub Pages with history
+  - Playwright HTML report uploaded as artifact
+  - Results sent back to Vercel
 
 **Pipeline Flow:**
 ```

@@ -41,15 +41,10 @@ const BettingDashboard = () => {
                 headers['Authorization'] = `Bearer ${token}`
             }
             
-            const response = await fetch('/api/matches/', { 
+            const response = await fetch(`/api/matches/?t=${Date.now()}`, { 
                 headers,
                 cache: 'no-cache'
             })
-            
-            // 304 means cached data is still valid, just return
-            if (response.status === 304) {
-                return
-            }
             
             if (!response.ok) {
                 throw new Error('Erro ao carregar partidas')

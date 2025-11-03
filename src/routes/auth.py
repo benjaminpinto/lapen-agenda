@@ -55,6 +55,12 @@ def register():
         db.commit()
         
         user_id = cursor.lastrowid
+        if not user_id:
+            cursor = db.execute('SELECT id FROM users WHERE email = ?', (email,))
+            user = cursor.fetchone()
+            user_id = user['id'] if user else None
+            if not user_id:
+                raise Exception('Failed to retrieve user ID after registration')
         token = generate_token(user_id)
         
         logger.info(f'User registered: email={email}, user_id={user_id}')

@@ -1,5 +1,6 @@
 {
   "buildCommand": "npm run vercel-build",
+  "ignoreCommand": "bash -c 'if [ \"$VERCEL_GIT_COMMIT_REF\" = \"gh-pages\" ]; then exit 0; else exit 1; fi'",
   "git": {
     "deploymentEnabled": {
       "gh-pages": false

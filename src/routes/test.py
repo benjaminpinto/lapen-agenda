@@ -10,31 +10,46 @@ test_bp = Blueprint('test', __name__, url_prefix='/api/test')
 
 @test_bp.route('/cleanup', methods=['DELETE'])
 def cleanup_test_data():
-    """Delete test data by email prefix - only available in non-production"""
+    """Delete test data by email prefix or name - only available in non-production"""
     if os.getenv('FLASK_ENV') == 'production':
         return jsonify({'error': 'Not available in production'}), 403
     
     email_prefix = request.args.get('email_prefix', '')
+    name = request.args.get('name', '')
     
-    if not email_prefix:
-        return jsonify({'error': 'email_prefix required'}), 400
+    if not email_prefix and not name:
+        return jsonify({'error': 'email_prefix or name required'}), 400
     
     db = get_db()
     try:
-        # Delete bets for test users
-        cursor = db.execute('''
-            DELETE FROM bets 
-            WHERE user_id IN (SELECT id FROM users WHERE email LIKE ?)
-        ''', (f'{email_prefix}%',))
-        bets_deleted = cursor.rowcount
-        
-        # Delete test users
-        cursor = db.execute('DELETE FROM users WHERE email LIKE ?', (f'{email_prefix}%',))
-        users_deleted = cursor.rowcount
+        if name:
+            # Delete bets for users with matching name
+            cursor = db.execute('''
+                DELETE FROM bets 
+                WHERE user_id IN (SELECT id FROM users WHERE name LIKE ?)
+            ''', (f'%{name}%',))
+            bets_deleted = cursor.rowcount
+            
+            # Delete users with matching name
+            cursor = db.execute('DELETE FROM users WHERE name LIKE ?', (f'%{name}%',))
+            users_deleted = cursor.rowcount
+            
+            logger.info(f'Cleanup: deleted {users_deleted} users and {bets_deleted} bets with name "{name}"')
+        else:
+            # Delete bets for test users
+            cursor = db.execute('''
+                DELETE FROM bets 
+                WHERE user_id IN (SELECT id FROM users WHERE email LIKE ?)
+            ''', (f'{email_prefix}%',))
+            bets_deleted = cursor.rowcount
+            
+            # Delete test users
+            cursor = db.execute('DELETE FROM users WHERE email LIKE ?', (f'{email_prefix}%',))
+            users_deleted = cursor.rowcount
+            
+            logger.info(f'Cleanup: deleted {users_deleted} users and {bets_deleted} bets with prefix "{email_prefix}"')
         
         db.commit()
-        
-        logger.info(f'Cleanup: deleted {users_deleted} users and {bets_deleted} bets with prefix "{email_prefix}"')
         
         return jsonify({
             'message': 'Test data cleaned up',

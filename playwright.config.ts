@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
-import * as os from 'node:os';
 import * as dotenv from 'dotenv';
+import * as os from 'node:os';
 
 if (!process.env.CI || process.env.CI === 'false') {
   dotenv.config();
@@ -57,7 +57,5 @@ const config = defineConfig({
     timeout: 30000,
   },
 });
-
-console.log('[CONFIG] CI:', process.env.CI, 'Workers:', config.workers, 'FullyParallel:', config.fullyParallel);
 
 export default config;

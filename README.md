@@ -153,9 +153,10 @@ npm run allure:serve  # Generate and view report
 ```
 
 **Test Reports:**
-- Allure reports published to GitHub Pages with history tracking
+- 📊 **[View Live Test Reports](https://benjaminpinto.github.io/lapen-agenda)** - Allure reports on GitHub Pages
 - Interactive dashboards with trends and analytics
 - Screenshots, videos, and traces attached automatically
+- History tracking across test runs
 
 [Complete testing guide →](docs/TESTING.md)
 

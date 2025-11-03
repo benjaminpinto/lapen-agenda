@@ -151,7 +151,11 @@ def get_available_matches():
             matches.append(match_data)
 
         logger.info(f'Fetched {len(matches)} matches successfully')
-        return jsonify({'matches': matches})
+        response = jsonify({'matches': matches})
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
 
     except Exception as e:
         logger.error(f'Error fetching matches: {str(e)}')

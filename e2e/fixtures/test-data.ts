@@ -17,7 +17,9 @@ export const testUsers = {
 };
 
 export const testAdmin = {
-  password: process.env.ADMIN_PASSWORD
+  get password() {
+    return process.env.ADMIN_PASSWORD;
+  }
 };
 
 export const testMatch = {

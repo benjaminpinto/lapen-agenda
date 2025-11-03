@@ -10,11 +10,7 @@ test.describe('My Bets Page', () => {
     
     await page.goto('/my-bets');
     await page.evaluate((token) => localStorage.setItem('auth_token', token), token);
-    
-    await Promise.all([
-      page.waitForResponse(resp => resp.url().includes('/api/betting/my-bets')),
-      page.reload()
-    ]);
+    await page.reload();
     
     await expect(page.getByTestId('my-bets-page')).toBeVisible();
     await expect(page.locator('h1:has-text("Minhas Apostas")')).toBeVisible();
@@ -27,11 +23,7 @@ test.describe('My Bets Page', () => {
     
     await page.goto('/my-bets');
     await page.evaluate((token) => localStorage.setItem('auth_token', token), token);
-    
-    await Promise.all([
-      page.waitForResponse(resp => resp.url().includes('/api/betting/my-bets')),
-      page.reload()
-    ]);
+    await page.reload();
     
     await expect(page.getByTestId('empty-bets')).toBeVisible();
   });
@@ -43,11 +35,7 @@ test.describe('My Bets Page', () => {
     
     await page.goto('/my-bets');
     await page.evaluate((token) => localStorage.setItem('auth_token', token), token);
-    
-    await Promise.all([
-      page.waitForResponse(resp => resp.url().includes('/api/betting/my-bets')),
-      page.reload()
-    ]);
+    await page.reload();
     
     await Promise.all([
       page.waitForURL('/betting'),

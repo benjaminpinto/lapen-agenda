@@ -142,19 +142,86 @@ npm run test:e2e:headed
 # View Playwright HTML report
 npm run test:e2e:report
 
+# Generate and view Allure report
+npm run allure:generate  # Generate report from results
+npm run allure:open      # Open generated report
+npm run allure:serve     # Generate and serve in one command
+
 # Unit test coverage
 pytest tests/ --cov=src --cov-report=html
 open htmlcov/index.html
 ```
 
+### Allure Reports
+
+Allure provides enhanced test reporting with:
+- **History Tracking**: Compare test results across runs
+- **Detailed Analytics**: Test duration, flakiness, categories
+- **Rich Attachments**: Screenshots, videos, traces
+- **Environment Info**: OS, Node version, browser details
+- **Trend Graphs**: Success rate over time
+
+**Local Usage:**
+```bash
+# Run tests (generates allure-results/)
+npm run test:e2e
+
+# View interactive report
+npm run allure:serve
+```
+
+**GitHub Pages:**
+Allure reports are automatically published to GitHub Pages after E2E tests run:
+- URL: `https://<username>.github.io/<repo-name>/`
+- History: Preserved across test runs
+- Access: Public (configure repo settings for private)
+
 ## CI/CD Integration
 
-Tests run automatically on GitHub Actions:
-- **Unit tests**: On every push and PR
-- **E2E tests**: On every push and PR
-- **Browsers**: Chromium, Mobile Chrome, Mobile Safari
+### Automated Pipeline
 
-See `.github/workflows/test.yml` for configuration.
+**1. Unit Tests** (`.github/workflows/test.yml`)
+- Trigger: Every push and PR (all branches)
+- Runs: Python unit tests with pytest
+- Coverage: Backend logic and utilities
+- Blocks: Deployment if tests fail
+
+**2. Vercel Deployment**
+- **Main branch** → Production environment
+- **Other branches** → Preview environments
+- Automatic deployment after unit tests pass
+
+**3. E2E Tests** (`.github/workflows/e2e-tests.yml`)
+- Trigger: After successful Vercel preview deployment
+- Event: `repository_dispatch` from Vercel
+- Condition: Only runs for preview environments (non-main branches)
+- Browsers: Chromium, Mobile Chrome, Mobile Safari
+- Target: Preview deployment URL
+- Reports: 
+  - Allure report published to GitHub Pages with history
+  - Playwright HTML report uploaded as artifact
+  - Results sent back to Vercel
+
+**Pipeline Flow:**
+```
+Push to branch → Unit Tests → Vercel Deploy (preview) → E2E Tests → Vercel Check
+```
+
+**Manual E2E Testing** (`.github/workflows/manual-e2e.yml`)
+- Trigger: Manual workflow dispatch
+- Use: Test specific deployment URLs
+- Access: GitHub Actions tab → Manual E2E Tests
+
+### Configuration
+
+**Required GitHub Secrets:**
+- `ADMIN_PASSWORD`: Admin password for E2E tests
+
+**Vercel Settings:**
+- Repository Dispatch: Enabled
+- Deployment Checks: Configured for E2E tests
+
+See workflow files in `.github/workflows/` for detailed configuration.
 
 ## Writing New Tests
 

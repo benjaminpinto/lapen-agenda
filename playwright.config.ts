@@ -6,9 +6,7 @@ if (!process.env.CI || process.env.CI === 'false') {
   dotenv.config();
 }
 
-console.log('CI:', process.env.CI, 'Workers:', process.env.CI && process.env.CI !== 'false' ? 6 : undefined);
-
-export default defineConfig({
+const config = defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -42,17 +40,14 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      fullyParallel: true,
     },
     {
       name: 'mobile-chrome',
       use: { ...devices['Pixel 5'] },
-      fullyParallel: true,
     },
     {
       name: 'mobile-safari',
       use: { ...devices['iPhone 12'] },
-      fullyParallel: true,
     },
   ],
   webServer: process.env.CI && process.env.CI !== 'false' ? undefined : {
@@ -62,3 +57,7 @@ export default defineConfig({
     timeout: 30000,
   },
 });
+
+console.log('[CONFIG] CI:', process.env.CI, 'Workers:', config.workers, 'FullyParallel:', config.fullyParallel);
+
+export default config;

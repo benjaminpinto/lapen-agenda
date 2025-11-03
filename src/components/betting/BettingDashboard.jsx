@@ -41,9 +41,12 @@ const BettingDashboard = () => {
                 headers['Authorization'] = `Bearer ${token}`
             }
             
-            const response = await fetch('/api/matches/', { headers })
+            const response = await fetch('/api/matches/', { 
+                headers,
+                cache: 'no-cache'
+            })
             
-            if (!response.ok) {
+            if (!response.ok && response.status !== 304) {
                 throw new Error('Erro ao carregar partidas')
             }
             

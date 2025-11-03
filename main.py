@@ -19,6 +19,7 @@ from src.routes.betting import betting_bp
 from src.routes.admin_matches import admin_matches_bp
 from src.routes.payments import payments_bp
 from src.routes.webhooks import webhooks_bp
+from src.routes.test import test_bp
 from src.database import init_db
 from src.email_service import init_mail
 from src.logger import setup_logger
@@ -54,6 +55,7 @@ app.register_blueprint(betting_bp)
 app.register_blueprint(admin_matches_bp)
 app.register_blueprint(payments_bp)
 app.register_blueprint(webhooks_bp, url_prefix='/api/webhooks')
+app.register_blueprint(test_bp)
 
 # Initialize Swagger (after blueprints, before catch-all route)
 swagger_config = {

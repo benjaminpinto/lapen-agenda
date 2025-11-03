@@ -36,6 +36,12 @@ jobs:
         ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         MAIL_MOCK_ACTIVE: true
     
+    - name: Cleanup test data
+      if: always()
+      run: npx tsx e2e/cleanup.ts
+      env:
+        BASE_URL: ${{ github.event.client_payload.url }}
+    
     - name: Check allure-results
       if: always()
       run: |

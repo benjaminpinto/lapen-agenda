@@ -58,6 +58,4 @@ const config = defineConfig({
   },
 });
 
-console.log('[CONFIG] CI:', process.env.CI, 'Workers:', config.workers, 'FullyParallel:', config.fullyParallel);
-
 export default config;

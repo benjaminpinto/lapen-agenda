@@ -13,6 +13,7 @@ export async function createUserViaAPI(request: APIRequestContext, userData: {
   });
   
   const data = await response.json();
+  console.debug('[API] POST /api/auth/register ->', { status: response.status(), data });
   return { success: response.ok(), data, token: data.token };
 }
 
@@ -22,6 +23,7 @@ export async function loginViaAPI(request: APIRequestContext, email: string, pas
   });
   
   const data = await response.json();
+  console.debug('[API] POST /api/auth/login ->', { status: response.status(), data });
   return { success: response.ok(), data, token: data.token };
 }
 
@@ -31,5 +33,7 @@ export async function createMatchViaAPI(request: APIRequestContext, token: strin
     data: matchData
   });
   
-  return await response.json();
+  const data = await response.json();
+  console.debug('[API] POST /api/matches/create ->', { status: response.status(), data });
+  return data;
 }

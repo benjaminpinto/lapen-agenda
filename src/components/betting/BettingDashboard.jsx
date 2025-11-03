@@ -46,7 +46,12 @@ const BettingDashboard = () => {
                 cache: 'no-cache'
             })
             
-            if (!response.ok && response.status !== 304) {
+            // 304 means cached data is still valid, just return
+            if (response.status === 304) {
+                return
+            }
+            
+            if (!response.ok) {
                 throw new Error('Erro ao carregar partidas')
             }
             

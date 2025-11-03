@@ -1,0 +1,16 @@
+[API] POST /api/auth/register -> {
+  status: 201,
+  data: {
+    message: 'Usuário cadastrado com sucesso',
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjowLCJleHAiOjE3NjI3ODk1NzZ9.vZwsJtnQZbI8mcz6wYCFduv5qh3CXcZBhnXUqv1xDj8',
+    user: {
+      email: 'chromium.1762184774985.s9202d@example.com',
+      id: 0,
+      is_lapen_member: false,
+      is_verified: false,
+      lapen_approved: false,
+      name: 'Test User',
+      phone: '11999999999'
+    }
+  }
+}

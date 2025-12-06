@@ -18,8 +18,8 @@ test.describe('My Bets Page', () => {
         ]);
         
         await expect(meResponse[0].status()).toBe(200);
-        await expect(page.getByTestId('my-bets-page')).toBeVisible({timeout: 10000});
-        await expect(page.locator('h1:has-text("Minhas Apostas")')).toBeVisible();
+        await expect(page.getByTestId('my-bets-page').first()).toBeVisible({timeout: 10000});
+        await expect(page.locator('h1:has-text("Minhas Apostas")').first()).toBeVisible();
     });
 
     test('should show empty state when no bets', async ({page, request, browserName}) => {
@@ -36,7 +36,7 @@ test.describe('My Bets Page', () => {
         ]);
         
         await expect(meResponse[0].status()).toBe(200);
-        await expect(page.getByTestId('empty-bets')).toBeVisible({timeout: 10000});
+        await expect(page.getByTestId('empty-bets').first()).toBeVisible({timeout: 10000});
     });
 
     test('should navigate back to betting dashboard', async ({page, request, browserName}) => {
@@ -53,12 +53,12 @@ test.describe('My Bets Page', () => {
         ]);
         
         await expect(meResponse[0].status()).toBe(200);
-        await page.getByTestId('back-to-betting').click();
+        await page.getByTestId('back-to-betting').first().click();
         await page.waitForURL('/betting', {timeout: 15000});
     });
 
     test('should require authentication', async ({page}) => {
         await page.goto('/my-bets');
-        await expect(page.locator('text=Login Necessário')).toBeVisible();
+        await expect(page.locator('text=Login Necessário').first()).toBeVisible();
     });
 });

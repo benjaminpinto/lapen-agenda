@@ -1,180 +1,293 @@
-# E2E Tests with Playwright
+# E2E Tests - Quick Reference
 
-## Overview
-Comprehensive end-to-end tests for LAPEN Agenda covering critical user flows and business logic.
-
-## Test Coverage
-
-### Authentication Tests (`auth.spec.ts`)
-- User registration
-- Login/logout
-- Password reset
-- LAPEN member registration with approval
-
-### Betting System Tests (`betting.spec.ts`)
-- View available matches
-- Select match and player
-- Validate bet amounts
-- Payment methods (PIX and Card)
-- View betting odds
-- Navigate to bet history
-
-### Admin Panel Tests (`admin.spec.ts`)
-- Admin login
-- Navigate to courts, matches, reports
-- LAPEN member approvals
-- Access control
-
-### Schedule Tests (`schedule.spec.ts`)
-- View schedules
-- Weekly calendar navigation
-- Filter by court
-- Share schedules
-
-### My Bets Tests (`my-bets.spec.ts`)
-- View bet history
-- Active vs finished bets
-- Potential returns display
-
-### Mobile Tests (`mobile.spec.ts`)
-- Mobile viewport (320px minimum)
-- Touch-friendly buttons (44px minimum)
-- Responsive layouts
-- Mobile betting flow
-
-### Navigation Tests (`navigation.spec.ts`)
-- Route navigation
-- Header visibility
-- Back navigation
-
-## Running Tests
-
-### Install Dependencies
-```bash
-npm install
-npx playwright install
-```
+## 🚀 Running Tests
 
 ### Run All Tests
 ```bash
 npm run test:e2e
 ```
 
-### Run Tests with UI
+### Run Specific Test File
+```bash
+npx playwright test e2e/tests/schedule-management.spec.ts
+npx playwright test e2e/tests/betting-flow.spec.ts
+npx playwright test e2e/tests/admin-matches.spec.ts
+npx playwright test e2e/tests/admin-courts.spec.ts
+npx playwright test e2e/tests/lapen-approval.spec.ts
+```
+
+### Run Tests with UI (Debug Mode)
 ```bash
 npm run test:e2e:ui
 ```
 
 ### Run Tests in Headed Mode
 ```bash
-npm run test:e2e:headed
+npx playwright test --headed
 ```
 
-### Debug Tests
-```bash
-npm run test:e2e:debug
-```
-
-### View Test Report
-```bash
-npm run test:e2e:report
-```
-
-### Run Specific Test File
-```bash
-npx playwright test e2e/tests/auth.spec.ts
-```
-
-### Run Tests on Specific Browser
+### Run Specific Browser
 ```bash
 npx playwright test --project=chromium
 npx playwright test --project=mobile-chrome
+npx playwright test --project=mobile-safari
 ```
 
-## Test Configuration
+---
 
-### Browsers
-- Desktop Chrome (chromium)
-- Mobile Chrome (Pixel 5)
-- Mobile Safari (iPhone 12)
+## 📊 View Reports
 
-### Base URL
-- Development: `http://localhost:5173`
-- Configured in `playwright.config.ts`
+### Allure Report (Recommended)
+```bash
+npm run allure:serve
+```
 
-### Environment Variables
-Tests use `.env.test` for configuration:
-- `ADMIN_PASSWORD`: Admin panel password
-- `PAYMENT_MOCK_ACTIVE`: Enable mock payments
-- Other credentials for test environment
+### Playwright HTML Report
+```bash
+npx playwright show-report
+```
 
-## Test Structure
+### Live Reports
+View test reports on GitHub Pages: https://benjaminpinto.github.io/lapen-agenda
+
+---
+
+## 📁 Test Structure
 
 ```
 e2e/
-├── fixtures/          # Test data and fixtures
-│   └── test-data.ts
-├── helpers/           # Helper functions
-│   ├── auth-helpers.ts
-│   └── db-helpers.ts
-└── tests/            # Test specifications
-    ├── auth.spec.ts
-    ├── betting.spec.ts
-    ├── admin.spec.ts
-    ├── schedule.spec.ts
-    ├── my-bets.spec.ts
-    ├── mobile.spec.ts
-    └── navigation.spec.ts
+├── fixtures/
+│   └── test-data.ts          # Test data constants
+├── helpers/
+│   ├── api-helpers.ts        # API request helpers
+│   ├── auth-helpers.ts       # Authentication helpers
+│   ├── cleanup-helpers.ts    # Test cleanup utilities
+│   ├── db-helpers.ts         # Database helpers
+│   └── schedule-helpers.ts   # Schedule/match/bet helpers
+└── tests/
+    ├── admin.spec.ts              # Admin panel navigation (7 tests)
+    ├── admin-courts.spec.ts       # Court CRUD operations (8 tests) ⭐
+    ├── admin-matches.spec.ts      # Match management (7 tests) ⭐
+    ├── auth.spec.ts               # Authentication flows (8 tests)
+    ├── betting.spec.ts            # Betting UI display (5 tests)
+    ├── betting-flow.spec.ts       # Complete betting flow (10 tests) ⭐
+    ├── lapen-approval.spec.ts     # LAPEN approval workflow (8 tests) ⭐
+    ├── mobile.spec.ts             # Mobile responsiveness (4 tests)
+    ├── my-bets.spec.ts            # My bets page (4 tests)
+    ├── navigation.spec.ts         # Navigation tests (8 tests)
+    ├── schedule.spec.ts           # Schedule navigation (3 tests)
+    └── schedule-management.spec.ts # Schedule CRUD (8 tests) ⭐
 ```
 
-## Best Practices
+⭐ = New in Phase 1 implementation
 
-1. **Unique Test Data**: Use timestamps for unique emails to avoid conflicts
-2. **Cleanup**: Tests should be independent and not rely on previous test state
-3. **Assertions**: Use meaningful assertions with clear error messages
-4. **Waits**: Use Playwright's auto-waiting, avoid hard waits
-5. **Selectors**: Prefer user-facing selectors (text, labels) over CSS classes
-6. **Mobile-First**: Test mobile viewports as per project rules
+---
 
-## CI/CD Integration
+## 🔧 Helper Functions
 
-Tests run automatically on:
-- Push to any branch
-- Pull requests
+### Authentication
+```typescript
+import { loginAdmin, loginUser, registerUser, logout } from '../helpers/auth-helpers';
 
-See `.github/workflows/test.yml` for CI configuration.
+// Admin login
+await loginAdmin(page, testAdmin.password);
 
-## Troubleshooting
+// User login
+await loginUser(page, email, password);
 
-### Tests Failing Locally
-1. Ensure backend is running: `python main.py`
-2. Ensure frontend is running: `npm run dev`
-3. Check database is initialized: `python setup_db.py`
-4. Verify environment variables in `.env.test`
+// User registration
+await registerUser(page, userData);
+```
 
-### Flaky Tests
-- Check network conditions
-- Increase timeout if needed
-- Review test isolation
+### API Helpers
+```typescript
+import { createUserViaAPI, loginViaAPI } from '../helpers/api-helpers';
+import { createScheduleViaAPI, createMatchViaAPI, placeBetViaAPI, approveLapenMember } from '../helpers/schedule-helpers';
 
-### Browser Issues
+// Create user
+const { token } = await createUserViaAPI(request, userData);
+
+// Approve LAPEN member
+await approveLapenMember(request, email);
+
+// Create schedule
+await createScheduleViaAPI(request, token, scheduleData);
+
+// Create match
+const { matchId } = await createMatchViaAPI(request, token, scheduleId);
+
+// Place bet
+await placeBetViaAPI(request, token, betData);
+```
+
+### Test Data
+```typescript
+import { testUsers, testAdmin } from '../fixtures/test-data';
+import { getProjectPrefix, getFutureDate } from '../helpers/cleanup-helpers';
+
+// Unique email per test
+const email = `${getProjectPrefix(browserName)}@example.com`;
+
+// Future date for schedules
+const dateStr = getFutureDate(7); // 7 days from now
+```
+
+---
+
+## 🎯 Test Patterns
+
+### Basic Test Structure
+```typescript
+test.describe('Feature Name', () => {
+  test.beforeEach(async ({ page, request, browserName }) => {
+    // Setup: create users, authenticate, navigate
+  });
+
+  test('should perform action', async ({ page }) => {
+    // Arrange
+    // Act
+    // Assert
+  });
+});
+```
+
+### API-Based Setup (Recommended)
+```typescript
+test.beforeEach(async ({ page, request, browserName }) => {
+  // Create user via API (faster)
+  const email = `${getProjectPrefix(browserName)}@example.com`;
+  const { token } = await createUserViaAPI(request, userData);
+  
+  // Approve LAPEN member if needed
+  await approveLapenMember(request, email);
+  
+  // Navigate and set auth
+  await page.goto('/schedule');
+  await page.evaluate((token) => localStorage.setItem('auth_token', token), token);
+  await page.reload();
+});
+```
+
+### Waiting for Elements
+```typescript
+// Wait for element to be visible
+await expect(page.locator('text=Success')).toBeVisible({ timeout: 10000 });
+
+// Wait for URL change
+await page.waitForURL('/dashboard');
+
+// Wait for API response
+const [response] = await Promise.all([
+  page.waitForResponse(resp => resp.url().includes('/api/endpoint')),
+  page.click('button[type="submit"]')
+]);
+```
+
+---
+
+## 🐛 Debugging
+
+### Run Single Test in Debug Mode
 ```bash
-npx playwright install --with-deps
+npx playwright test e2e/tests/schedule-management.spec.ts --debug
 ```
 
-## Adding New Tests
+### View Test Traces
+```bash
+npx playwright show-trace trace.zip
+```
 
-1. Create test file in `e2e/tests/`
-2. Import fixtures and helpers
-3. Use `test.describe()` for grouping
-4. Add `test.beforeEach()` for setup
-5. Write clear test descriptions
-6. Follow existing patterns
+### Take Screenshots
+```typescript
+await page.screenshot({ path: 'screenshot.png' });
+```
 
-## Project Rules Compliance
+### Console Logs
+```typescript
+page.on('console', msg => console.log(msg.text()));
+```
 
-- ✅ Mobile-first: Tests include mobile viewport validation
-- ✅ Touch targets: Validates 44px minimum button size
-- ✅ Portuguese UI: Tests check for Portuguese text
-- ✅ Critical paths: Authentication, payments, bookings covered
-- ✅ Both databases: Tests work with SQLite (local) and PostgreSQL (production)
+---
+
+## 📝 Writing New Tests
+
+### 1. Choose Test File
+- Admin features → `admin-*.spec.ts`
+- User features → `feature-name.spec.ts`
+- Mobile-specific → `mobile.spec.ts`
+
+### 2. Use Helpers
+- Always use API helpers for setup
+- Use auth helpers for login/logout
+- Use cleanup helpers for unique IDs
+
+### 3. Follow Patterns
+- Use `data-testid` attributes when available
+- Wait for elements properly
+- Clean up test data
+- Use descriptive test names
+
+### 4. Test Checklist
+- [ ] Unique test data (browserName prefix)
+- [ ] Proper authentication
+- [ ] API-based setup where possible
+- [ ] Clear assertions
+- [ ] Error case testing
+- [ ] Mobile responsiveness (if applicable)
+
+---
+
+## 🔍 Common Issues
+
+### Issue: Test fails with "Element not found"
+**Solution:** Add proper wait conditions
+```typescript
+await expect(element).toBeVisible({ timeout: 10000 });
+```
+
+### Issue: Authentication fails
+**Solution:** Ensure token is set and page is reloaded
+```typescript
+await page.evaluate((token) => localStorage.setItem('auth_token', token), token);
+await page.reload();
+```
+
+### Issue: Test data conflicts
+**Solution:** Use unique identifiers
+```typescript
+const email = `${getProjectPrefix(browserName)}@example.com`;
+```
+
+### Issue: LAPEN member cannot schedule
+**Solution:** Approve member before testing
+```typescript
+await approveLapenMember(request, email);
+```
+
+---
+
+## 📚 Documentation
+
+- [E2E Test Plan](../docs/E2E_TEST_PLAN.md) - Complete test scenarios
+- [Implementation Summary](../docs/E2E_IMPLEMENTATION_SUMMARY.md) - What's been implemented
+- [Testing Guide](../docs/TESTING.md) - General testing documentation
+- [Playwright Setup](../docs/PLAYWRIGHT_SETUP.md) - Configuration details
+
+---
+
+## 🎓 Best Practices
+
+1. **Use API for Setup** - Faster and more reliable than UI
+2. **Unique Test Data** - Prevent conflicts with browserName prefix
+3. **Proper Waits** - Use expect().toBeVisible() instead of waitForTimeout
+4. **Clean Assertions** - One assertion per test when possible
+5. **Error Testing** - Test both happy path and error cases
+6. **Mobile First** - Consider mobile viewports
+7. **Portuguese Validation** - Check for Portuguese text in UI
+8. **Cleanup** - Use cleanup helpers to remove test data
+
+---
+
+**Current Coverage:** 55% (79 tests)  
+**Target Coverage:** 80%  
+**Next Phase:** Recurring schedules, holidays/blocks, player management

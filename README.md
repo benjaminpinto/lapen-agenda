@@ -152,13 +152,23 @@ npm run test:e2e:ui
 npm run allure:serve  # Generate and view report
 ```
 
+**Test Coverage:** 55% (79 E2E tests)
+- ✅ Court Management (100%)
+- ✅ LAPEN Approvals (80%)
+- ✅ Betting System (75%)
+- ✅ Match Management (70%)
+- ✅ Schedule Management (44%)
+
 **Test Reports:**
 - 📊 **[View Live Test Reports](https://benjaminpinto.github.io/lapen-agenda)** - Allure reports on GitHub Pages
 - Interactive dashboards with trends and analytics
 - Screenshots, videos, and traces attached automatically
 - History tracking across test runs
 
-[Complete testing guide →](docs/TESTING.md)
+**Documentation:**
+- [Complete Testing Guide](docs/TESTING.md)
+- [E2E Test Plan](docs/E2E_TEST_PLAN.md) - Comprehensive test scenarios
+- [Implementation Summary](docs/E2E_IMPLEMENTATION_SUMMARY.md) - Phase 1 complete ✅
 
 ## 🚀 CI/CD Pipeline
 

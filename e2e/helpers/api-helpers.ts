@@ -40,3 +40,13 @@ export async function createMatchViaAPI(request: APIRequestContext, token: strin
   console.debug('[API] POST /api/matches/create ->', { status: response.status(), data });
   return data;
 }
+
+export async function approveLapenMemberViaAPI(request: APIRequestContext, email: string) {
+  const response = await request.post('/api/test/approve-lapen', {
+    data: { email }
+  });
+  
+  const data = await response.json();
+  console.debug('[API] POST /api/test/approve-lapen ->', { status: response.status(), data });
+  return { success: response.ok(), data };
+}

@@ -62,3 +62,42 @@ def cleanup_test_data():
         return jsonify({'error': str(e)}), 500
     finally:
         db.close()
+
+
+@test_bp.route('/approve-lapen', methods=['POST'])
+def approve_lapen_for_testing():
+    """Approve LAPEN member for testing - only available in non-production"""
+    if os.getenv('FLASK_ENV') == 'production':
+        return jsonify({'error': 'Not available in production'}), 403
+    
+    data = request.get_json()
+    email = data.get('email')
+    
+    if not email:
+        return jsonify({'error': 'email required'}), 400
+    
+    db = get_db()
+    try:
+        from datetime import datetime
+        
+        cursor = db.execute('SELECT id FROM users WHERE email = ?', (email,))
+        user = cursor.fetchone()
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        db.execute('''
+            UPDATE users
+            SET lapen_approved = ?, lapen_approved_at = ?
+            WHERE email = ?
+        ''', (True, datetime.utcnow(), email))
+        db.commit()
+        
+        logger.info(f'Test: LAPEN member approved for {email}')
+        return jsonify({'success': True, 'message': 'LAPEN member approved'})
+    
+    except Exception as e:
+        logger.error(f'Error approving LAPEN member: {str(e)}')
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()

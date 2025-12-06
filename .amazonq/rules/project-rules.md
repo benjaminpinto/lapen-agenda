@@ -61,9 +61,14 @@
 - Verify mobile responsiveness before PR
 - Test on both SQLite and PostgreSQL when touching database code
 - Validate PIX payment flow in sandbox environment
+- When running the tests, avoid using test:e2e script. It serves the report in the end and make the agent stuck
 
 ## Git Rules
 - Descriptive commit messages in English
 - Feature branches from main
 - No direct commits to main
 - Keep commits focused and atomic
+
+## Capabilities
+- Use Context7 to fetch documentation when needed
+- Use Playwright MCP to open the browser and reproduce errors, test flows, and verify whatever is needed

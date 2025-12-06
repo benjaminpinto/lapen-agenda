@@ -6,13 +6,13 @@ import {getProjectPrefix} from '../helpers/cleanup-helpers';
 test.describe('Betting System', () => {
     test('should display betting page', async ({page}) => {
         await page.goto('/betting');
-        await expect(page.locator('h1:has-text("Tigrinho LAPEN 🐯")')).toBeVisible();
+        await expect(page.locator('h1:has-text("Tigrinho LAPEN 🐯")').first()).toBeVisible();
     });
 
     test('should show login prompt for unauthenticated users', async ({page}) => {
         await page.goto('/betting');
-        await expect(page.locator('text=Você precisa estar logado')).toBeVisible();
-        await expect(page.getByTestId('login-link')).toBeVisible();
+        await expect(page.locator('text=Você precisa estar logado').first()).toBeVisible();
+        await expect(page.getByTestId('login-link').first()).toBeVisible();
     });
 
     test('should display betting form when authenticated', async ({page, request, browserName}) => {
@@ -29,7 +29,7 @@ test.describe('Betting System', () => {
         ]);
         
         await expect(meResponse.status()).toBe(200);
-        await expect(page.getByTestId('betting-form')).toBeVisible({timeout: 10000});
+        await expect(page.getByTestId('betting-form').first()).toBeVisible({timeout: 10000});
     });
 
     test('should navigate to my bets page', async ({page, request, browserName}) => {
@@ -46,7 +46,7 @@ test.describe('Betting System', () => {
         ]);
         
         await expect(meResponse.status()).toBe(200);
-        await page.getByTestId('my-bets-button').click();
+        await page.getByTestId('my-bets-button').first().click();
         await page.waitForURL('/my-bets', {timeout: 15000});
     });
 

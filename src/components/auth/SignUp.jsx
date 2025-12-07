@@ -11,6 +11,7 @@ import { UserPlus, Mail, Lock, User, Phone, CreditCard } from 'lucide-react'
 const SignUp = () => {
   const [formData, setFormData] = useState({
     name: '',
+    short_name: '',
     email: '',
     phone: '',
     pix_key: '',
@@ -59,6 +60,7 @@ const SignUp = () => {
     try {
       const result = await register({
         name: formData.name,
+        short_name: formData.short_name,
         email: formData.email,
         phone: formData.phone,
         pix_key: formData.pix_key,
@@ -116,6 +118,26 @@ const SignUp = () => {
                   onChange={handleChange}
                 />
               </div>
+            </div>
+
+            <div>
+              <Label htmlFor="short_name">Nome Curto</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="short_name"
+                  name="short_name"
+                  type="text"
+                  required
+                  className="pl-10"
+                  placeholder="Nome para exibição"
+                  value={formData.short_name}
+                  onChange={handleChange}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Como você quer ser chamado (ex: João Silva)
+              </p>
             </div>
 
             <div>

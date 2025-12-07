@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from src.database import get_db
 from src.database_utils import get_month_comparison_sql
 from src.logger import get_logger
-from src.auth import verify_token, get_user_by_id
+from src.auth import verify_token, get_user_by_id, hash_password
 import base64
 import os
 
@@ -415,3 +415,56 @@ def get_dashboard_stats():
         'game_stats': [dict(stat) for stat in game_stats],
         'top_players': [dict(player) for player in top_players]
     })
+
+# User Management
+@admin_bp.route('/users', methods=['GET'])
+@require_admin_auth
+def get_users():
+    db = get_db()
+    users = db.execute('SELECT id, email, name, short_name, phone, pix_key, is_admin, is_lapen_member, lapen_approved FROM users ORDER BY name').fetchall()
+    return jsonify([dict(user) for user in users])
+
+@admin_bp.route('/users/<int:user_id>', methods=['PUT'])
+@require_admin_auth
+def update_user(user_id):
+    data = request.get_json()
+    db = get_db()
+    try:
+        db.execute('''
+            UPDATE users 
+            SET name = ?, short_name = ?, email = ?, phone = ?, pix_key = ?, is_admin = ?, lapen_approved = ?
+            WHERE id = ?
+        ''', (data['name'], data['short_name'], data['email'], data.get('phone'), data.get('pix_key'), data.get('is_admin', False), data.get('lapen_approved', False), user_id))
+        db.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@admin_bp.route('/users/<int:user_id>/password', methods=['PUT'])
+@require_admin_auth
+def update_user_password(user_id):
+    data = request.get_json()
+    password = data.get('password')
+    
+    if not password or len(password) < 6:
+        return jsonify({'error': 'Senha deve ter pelo menos 6 caracteres'}), 400
+    
+    db = get_db()
+    try:
+        password_hash = hash_password(password)
+        db.execute('UPDATE users SET password_hash = ? WHERE id = ?', (password_hash, user_id))
+        db.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@admin_bp.route('/users/<int:user_id>', methods=['DELETE'])
+@require_admin_auth
+def delete_user(user_id):
+    db = get_db()
+    try:
+        db.execute('DELETE FROM users WHERE id = ?', (user_id,))
+        db.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400

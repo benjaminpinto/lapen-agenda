@@ -113,6 +113,10 @@ export const AuthProvider = ({ children }) => {
     setUser(null)
   }
 
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser)
+  }
+
   const canBookCourts = user && user.is_lapen_member && user.lapen_approved
   const canPlaceBets = !!user
 
@@ -122,6 +126,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateUser,
     isAuthenticated: !!user,
     canBookCourts,
     canPlaceBets

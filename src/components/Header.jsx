@@ -83,7 +83,11 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                         <div className="flex items-center space-x-2">
                             {isAuthenticated ? (
                                 <>
-                                    <span className="text-sm text-gray-600">Olá, {user?.short_name || user?.name}</span>
+                                    <Link to="/profile">
+                                        <Button variant="ghost" size="sm" className="text-sm text-gray-600">
+                                            Olá, {user?.short_name || user?.name}
+                                        </Button>
+                                    </Link>
                                     <Button variant="ghost" size="sm" onClick={() => {
                                         logout();
                                         toast({title: "Logout realizado"});
@@ -159,9 +163,11 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
 
                             {isAuthenticated ? (
                                 <>
-                                    <div className="px-3 py-2 text-sm text-gray-600">
-                                        Olá, {user?.short_name || user?.name}
-                                    </div>
+                                    <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)}>
+                                        <Button variant="ghost" size="sm" className="w-full justify-start">
+                                            Olá, {user?.short_name || user?.name}
+                                        </Button>
+                                    </Link>
                                     <Button
                                         variant="ghost"
                                         size="sm"

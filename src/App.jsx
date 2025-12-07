@@ -25,6 +25,7 @@ import ForgotPassword from './components/auth/ForgotPassword'
 import ResetPassword from './components/auth/ResetPassword'
 import BettingDashboard from './components/betting/BettingDashboard'
 import MyBets from './components/betting/MyBets'
+import Profile from './components/Profile'
 import './App.css'
 
 function App() {
@@ -57,6 +58,7 @@ function App() {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/betting" element={<BettingDashboard />} />
               <Route path="/my-bets" element={<MyBets />} />
+              <Route path="/profile" element={<Profile />} />
               <Route 
                 path="/admin" 
                 element={

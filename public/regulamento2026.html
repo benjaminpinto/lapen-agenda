@@ -137,6 +137,8 @@
             margin: 15px 0;
             font-size: 0.9rem;
             page-break-inside: avoid;
+            display: block;
+            overflow-x: auto;
         }
 
         th {
@@ -235,7 +237,8 @@
 </head>
 <body>
 
-    <div class="no-print">
+    <div class="no-print" style="display: flex; gap: 10px; justify-content: center;">
+        <a href="javascript:history.back()" class="btn-print" style="background-color: #666;"><i class="fas fa-arrow-left"></i> Voltar</a>
         <a href="#" onclick="window.print()" class="btn-print"><i class="fas fa-print"></i> Imprimir Regulamento (PDF)</a>
     </div>
 
@@ -304,7 +307,7 @@
             </ul>
 
             <p><strong>3.3 Tabela de Pontuação:</strong></p>
-            <table style="width: 60%;">
+            <table>
                 <tr><td>Vitória</td><td><strong>100 pontos</strong></td></tr>
                 <tr><td>Derrota</td><td><strong>25 pontos</strong></td></tr>
                 <tr><td>Vitória por W.O.</td><td><strong>132 pontos</strong></td></tr>
@@ -387,7 +390,7 @@
 
             <h3>8. Custos e Taxas</h3>
             <p><strong>8.1 Inscrição Anual:</strong><br>
-            Valor: <strong>R$ 50,00</strong> (Inclui organização, manutenção de infraestrutura do app, e formação de caixa mínimo para eventuais despesas não planejadas).</p>
+            Valor: <strong>R$ 50,00</strong> (Inclui organização, manutenção de infraestrutura do app, e, caso haja saldo, formação de caixa mínimo para eventuais despesas não planejadas).</p>
 
             <p><strong>8.2 Custos Recorrentes:</strong></p>
             <ul>

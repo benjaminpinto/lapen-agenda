@@ -8,7 +8,6 @@ import Home from './components/Home'
 import AdminLogin from './components/admin/AdminLogin'
 import AdminDashboard from './components/admin/AdminDashboard'
 import AdminCourts from './components/admin/AdminCourts'
-import AdminPlayers from './components/admin/AdminPlayers'
 import AdminHolidays from './components/admin/AdminHolidays'
 import AdminRecurring from './components/admin/AdminRecurring'
 import AdminMatches from './components/admin/AdminMatches'
@@ -81,14 +80,7 @@ function App() {
                   <Navigate to="/admin" />
                 } 
               />
-              <Route 
-                path="/admin/players" 
-                element={
-                  isAdminAuthenticated ? 
-                  <AdminPlayers /> : 
-                  <Navigate to="/admin" />
-                } 
-              />
+
               <Route 
                 path="/admin/holidays" 
                 element={

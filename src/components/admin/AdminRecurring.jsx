@@ -44,7 +44,7 @@ const AdminRecurring = () => {
     const fetchSchedules = async () => {
         try {
             const response = await fetch('/api/admin/recurring-schedules', {
-                credentials: 'include'
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
             })
             if (response.ok) {
                 const data = await response.json()
@@ -60,7 +60,7 @@ const AdminRecurring = () => {
     const fetchCourts = async () => {
         try {
             const response = await fetch('/api/admin/courts', {
-                credentials: 'include'
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
             })
             if (response.ok) {
                 const data = await response.json()
@@ -92,7 +92,7 @@ const AdminRecurring = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
                 body: JSON.stringify({
                     ...formData,
                     times: validTimes
@@ -129,7 +129,7 @@ const AdminRecurring = () => {
         try {
             const response = await fetch(`/api/admin/recurring-schedules/${scheduleId}`, {
                 method: 'DELETE',
-                credentials: 'include'
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
             })
 
             const data = await response.json()

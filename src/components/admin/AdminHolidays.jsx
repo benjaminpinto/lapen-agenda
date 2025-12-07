@@ -49,8 +49,8 @@ const AdminHolidays = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                 },
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
                 body: JSON.stringify(formData),
             })
 

@@ -23,9 +23,15 @@ def register():
     email = data['email'].lower().strip()
     password = data['password']
     name = data['name'].strip()
+    short_name = data.get('short_name', '').strip()
     phone = data.get('phone', '').strip()
     pix_key = data.get('pix_key', '').strip()
     is_lapen_member = data.get('is_lapen_member', False)
+    
+    # Auto-generate short_name if not provided (first two names)
+    if not short_name:
+        name_parts = name.split()
+        short_name = ' '.join(name_parts[:2]) if len(name_parts) >= 2 else name
     
     # Validate email format
     if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
@@ -49,8 +55,8 @@ def register():
         lapen_requested_at = datetime.utcnow() if is_lapen_member else None
         
         cursor = db.execute(
-            'INSERT INTO users (email, password_hash, name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            (email, password_hash, name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at)
+            'INSERT INTO users (email, password_hash, name, short_name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            (email, password_hash, name, short_name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at)
         )
         db.commit()
         
@@ -91,6 +97,7 @@ def register():
                 'id': user_id,
                 'email': email,
                 'name': name,
+                'short_name': short_name,
                 'phone': phone,
                 'is_verified': False,
                 'is_lapen_member': is_lapen_member,
@@ -131,6 +138,7 @@ def login():
             'id': user['id'],
             'email': user['email'],
             'name': user['name'],
+            'short_name': user.get('short_name', user['name']),
             'phone': user['phone'],
             'is_verified': user['is_verified'],
             'is_lapen_member': user.get('is_lapen_member', False),

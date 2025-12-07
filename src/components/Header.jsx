@@ -83,7 +83,7 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                         <div className="flex items-center space-x-2">
                             {isAuthenticated ? (
                                 <>
-                                    <span className="text-sm text-gray-600">Olá, {user?.name}</span>
+                                    <span className="text-sm text-gray-600">Olá, {user?.short_name || user?.name}</span>
                                     <Button variant="ghost" size="sm" onClick={() => {
                                         logout();
                                         toast({title: "Logout realizado"});
@@ -160,7 +160,7 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                             {isAuthenticated ? (
                                 <>
                                     <div className="px-3 py-2 text-sm text-gray-600">
-                                        Olá, {user?.name}
+                                        Olá, {user?.short_name || user?.name}
                                     </div>
                                     <Button
                                         variant="ghost"

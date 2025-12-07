@@ -36,6 +36,10 @@ const ScheduleForm = () => {
   useEffect(() => {
     fetchCourts()
     fetchPlayers()
+    // Auto-fill player1 with user's short_name
+    if (user?.short_name) {
+      setFormData(prev => ({ ...prev, player1_name: user.short_name }))
+    }
   }, [])
 
   useEffect(() => {
@@ -84,7 +88,11 @@ const ScheduleForm = () => {
     setFormData(prev => ({ ...prev, [playerField]: value }))
     
     if (value.length > 0) {
-      const suggestions = players.filter(player => 
+      // Include user's short_name in suggestions
+      const allNames = user?.short_name ? [user.short_name, ...players] : players
+      const uniqueNames = [...new Set(allNames)]
+      
+      const suggestions = uniqueNames.filter(player => 
         player.toLowerCase().includes(value.toLowerCase())
       ).slice(0, 5)
       

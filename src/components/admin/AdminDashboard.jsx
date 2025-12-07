@@ -49,7 +49,7 @@ const AdminDashboard = () => {
                     <Button
                         variant="outline"
                         onClick={() => {
-                            sessionStorage.removeItem('admin_authenticated')
+                            localStorage.removeItem('auth_token')
                             window.location.href = '/'
                         }}
                     >

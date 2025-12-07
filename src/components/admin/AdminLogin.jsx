@@ -28,7 +28,6 @@ const AdminLogin = ({ setIsAdminAuthenticated }) => {
         navigate('/')
       } else {
         setIsAdminAuthenticated(true)
-        sessionStorage.setItem('admin_authenticated', 'true')
         navigate('/admin/dashboard')
       }
     }

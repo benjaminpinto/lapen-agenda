@@ -94,7 +94,8 @@ def register():
                 'phone': phone,
                 'is_verified': False,
                 'is_lapen_member': is_lapen_member,
-                'lapen_approved': False
+                'lapen_approved': False,
+                'is_admin': False
             }
         }), 201
         
@@ -133,7 +134,8 @@ def login():
             'phone': user['phone'],
             'is_verified': user['is_verified'],
             'is_lapen_member': user.get('is_lapen_member', False),
-            'lapen_approved': user.get('lapen_approved', False)
+            'lapen_approved': user.get('lapen_approved', False),
+            'is_admin': user.get('is_admin', False)
         }
     })
 

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar, CalendarDays, Clock, Trophy, DollarSign, MapPin, Users, RotateCcw } from 'lucide-react'
+import { Calendar, CalendarDays, Clock, Trophy, DollarSign, MapPin, Users, RotateCcw, FileText, Mail } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import MatchTypeBadge from './ui/MatchTypeBadge'
 
@@ -297,6 +297,36 @@ const Home = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Footer */}
+      <footer className="mt-12 bg-green-50 border-t border-green-200 pt-8 pb-6 -mx-4 sm:-mx-6 px-4 sm:px-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Liga de Tênis de Penedo - LAPEN</h3>
+            <p className="text-sm text-gray-600">Penedo Tênis Clube - PTC</p>
+          </div>
+          
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Contato/Suporte</h3>
+            <a href="mailto:contato@keepquality.com.br" className="text-sm text-gray-600 hover:text-green-600 flex items-center">
+              <Mail className="h-4 w-4 mr-2" />
+              contato@keepquality.com.br
+            </a>
+          </div>
+          
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Documentos</h3>
+            <a href="/regulamento2026.html" target="_blank" rel="noopener noreferrer" className="text-sm text-gray-600 hover:text-green-600 flex items-center">
+              <FileText className="h-4 w-4 mr-2" />
+              Regulamento Ranking 2026
+            </a>
+          </div>
+        </div>
+        
+        <div className="text-center text-sm text-gray-500 pt-4 border-t">
+          © {new Date().getFullYear()} LAPEN - Todos os direitos reservados
+        </div>
+      </footer>
     </div>
   )
 }

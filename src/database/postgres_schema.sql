@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS users (
     lapen_requested_at TIMESTAMP,
     lapen_approved_at TIMESTAMP,
     lapen_approved_by INTEGER REFERENCES users(id),
+    is_admin BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

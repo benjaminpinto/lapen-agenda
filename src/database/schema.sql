@@ -70,6 +70,7 @@ CREATE TABLE users (
     lapen_requested_at DATETIME,
     lapen_approved_at DATETIME,
     lapen_approved_by INTEGER REFERENCES users(id),
+    is_admin BOOLEAN DEFAULT FALSE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

@@ -1,7 +1,8 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify
 from src.database import get_db
 from src.database_utils import get_month_comparison_sql
 from src.logger import get_logger
+from src.auth import verify_token, get_user_by_id
 import base64
 import os
 
@@ -17,44 +18,31 @@ def normalize_time(time_value):
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
-
-@admin_bp.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    password = data.get('password')
-    
-    if password == ADMIN_PASSWORD:
-        session['admin_authenticated'] = True
-        logger.info('Admin login successful')
-        return jsonify({'success': True, 'message': 'Login realizado com sucesso'})
-    else:
-        logger.warning('Admin login failed - invalid password')
-        return jsonify({'success': False, 'message': 'Senha inválida'}), 401
-
-@admin_bp.route('/logout', methods=['POST'])
-def logout():
-    session.pop('admin_authenticated', None)
-    return jsonify({'success': True, 'message': 'Logout realizado com sucesso'})
-
 def require_admin_auth(f):
     def decorated_function(*args, **kwargs):
-        if not session.get('admin_authenticated'):
-            return jsonify({'error': 'Autenticação de administrador necessária'}), 401
+        token = request.headers.get('Authorization')
+        if not token:
+            return jsonify({'error': 'Autenticação necessária'}), 401
+        
+        if token.startswith('Bearer '):
+            token = token[7:]
+        
+        user_id = verify_token(token)
+        if not user_id:
+            return jsonify({'error': 'Token inválido ou expirado'}), 401
+        
+        user = get_user_by_id(user_id)
+        if not user or not user.get('is_admin'):
+            return jsonify({'error': 'Acesso negado'}), 403
+        
+        request.user_id = user_id
         return f(*args, **kwargs)
     decorated_function.__name__ = f.__name__
     return decorated_function
 
-@admin_bp.route('/verify-password', methods=['POST'])
-@require_admin_auth
-def verify_password():
-    data = request.get_json()
-    password = data.get('password')
-    
-    if password == ADMIN_PASSWORD:
-        return jsonify({'success': True})
-    else:
-        return jsonify({'success': False, 'message': 'Senha inválida'}), 401
+@admin_bp.route('/logout', methods=['POST'])
+def logout():
+    return jsonify({'success': True, 'message': 'Logout realizado com sucesso'})
 
 # Courts CRUD
 @admin_bp.route('/courts', methods=['GET'])

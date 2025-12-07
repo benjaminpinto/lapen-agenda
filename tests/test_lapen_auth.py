@@ -15,12 +15,17 @@ def setup_db():
     """Setup test database"""
     db = get_db()
     # Clean up test users
-    db.execute("DELETE FROM users WHERE email LIKE 'test%@lapen.com'")
+    db.execute("DELETE FROM users WHERE email LIKE 'test%@lapen.com' OR email LIKE 'admin%@lapen.com'")
     db.commit()
-    yield db
+    db.close()
+    yield
+    # Cleanup after test
+    db = get_db()
+    db.execute("DELETE FROM users WHERE email LIKE 'test%@lapen.com' OR email LIKE 'admin%@lapen.com'")
+    db.commit()
     db.close()
 
-def create_test_user(email, is_lapen=False, approved=False):
+def create_test_user(email, is_lapen=False, approved=False, is_admin=False):
     """Helper to create test user"""
     from main import app
     
@@ -29,8 +34,8 @@ def create_test_user(email, is_lapen=False, approved=False):
         password_hash = hash_password("test123")
         
         cursor = db.execute(
-            'INSERT INTO users (email, password_hash, name, is_lapen_member, lapen_approved) VALUES (?, ?, ?, ?, ?)',
-            (email, password_hash, "Test User", is_lapen, approved)
+            'INSERT INTO users (email, password_hash, name, is_lapen_member, lapen_approved, is_admin) VALUES (?, ?, ?, ?, ?, ?)',
+            (email, password_hash, "Test User", is_lapen, approved, is_admin)
         )
         db.commit()
         user_id = cursor.lastrowid
@@ -153,14 +158,12 @@ def test_approved_lapen_can_book(setup_db):
 def test_admin_approve_lapen_member(setup_db):
     """Test admin can approve LAPEN member"""
     user_id, _ = create_test_user('test6@lapen.com', is_lapen=True, approved=False)
+    _, admin_token = create_test_user('admin@lapen.com', is_admin=True)
     from main import app
     
     with app.test_client() as client:
-        # Login as admin first
-        with client.session_transaction() as sess:
-            sess['admin_authenticated'] = True
-        
-        response = client.post(f'/api/admin/lapen-approve/{user_id}')
+        response = client.post(f'/api/admin/lapen-approve/{user_id}',
+            headers={'Authorization': f'Bearer {admin_token}'})
         
         assert response.status_code == 200
         assert response.get_json()['success'] == True
@@ -174,13 +177,12 @@ def test_admin_approve_lapen_member(setup_db):
 def test_admin_reject_lapen_member(setup_db):
     """Test admin can reject LAPEN member"""
     user_id, _ = create_test_user('test7@lapen.com', is_lapen=True, approved=False)
+    _, admin_token = create_test_user('admin2@lapen.com', is_admin=True)
     from main import app
     
     with app.test_client() as client:
-        with client.session_transaction() as sess:
-            sess['admin_authenticated'] = True
-        
-        response = client.post(f'/api/admin/lapen-reject/{user_id}')
+        response = client.post(f'/api/admin/lapen-reject/{user_id}',
+            headers={'Authorization': f'Bearer {admin_token}'})
         
         assert response.status_code == 200
         assert response.get_json()['success'] == True
@@ -196,13 +198,12 @@ def test_admin_reject_lapen_member(setup_db):
 def test_admin_list_pending_requests(setup_db):
     """Test admin can list pending LAPEN requests"""
     create_test_user('test8@lapen.com', is_lapen=True, approved=False)
+    _, admin_token = create_test_user('admin3@lapen.com', is_admin=True)
     from main import app
     
     with app.test_client() as client:
-        with client.session_transaction() as sess:
-            sess['admin_authenticated'] = True
-        
-        response = client.get('/api/admin/lapen-requests?status=pending')
+        response = client.get('/api/admin/lapen-requests?status=pending',
+            headers={'Authorization': f'Bearer {admin_token}'})
         
         assert response.status_code == 200
         data = response.get_json()

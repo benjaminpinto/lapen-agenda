@@ -1,6 +1,6 @@
 import {Link, useNavigate} from 'react-router-dom'
 import {Button} from '@/components/ui/button'
-import {Calendar, Eye, Home, LogIn, LogOut, Menu, Settings, Trophy, X} from 'lucide-react'
+import {Calendar, Eye, Home, LogIn, LogOut, Menu, Settings, Trophy, X, Award} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
 import {useAuth} from '@/contexts/AuthContext'
 import {useState} from 'react'
@@ -68,6 +68,13 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                             <Button variant="ghost" size="sm">
                                 <Trophy className="h-4 w-4 mr-2"/>
                                 Apostas
+                            </Button>
+                        </Link>
+
+                        <Link to="/ranking">
+                            <Button variant="ghost" size="sm">
+                                <Award className="h-4 w-4 mr-2"/>
+                                Ranking
                             </Button>
                         </Link>
 
@@ -149,6 +156,13 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                                 <Button variant="ghost" size="sm" className="w-full justify-start">
                                     <Trophy className="h-4 w-4 mr-2"/>
                                     Apostas
+                                </Button>
+                            </Link>
+
+                            <Link to="/ranking" onClick={() => setIsMobileMenuOpen(false)}>
+                                <Button variant="ghost" size="sm" className="w-full justify-start">
+                                    <Award className="h-4 w-4 mr-2"/>
+                                    Ranking
                                 </Button>
                             </Link>
 

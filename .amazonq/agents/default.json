@@ -19,6 +19,18 @@
         "@playwright/mcp@latest"
       ],
       "disabled": false
+    },
+    "n8n-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "supergateway",
+        "--streamableHttp",
+        "https://n8n.keepquality.cloud/mcp-server/http",
+        "--header",
+        "authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4OGEwYmM0ZC02ODJkLTQwYTQtYmRmMC03NmViYjEzNDYwNTIiLCJpc3MiOiJuOG4iLCJhdWQiOiJtY3Atc2VydmVyLWFwaSIsImp0aSI6IjNmNGI0MmE4LTE5NzMtNDJhNC1iNmU2LWE1NmViZWQ0MjY4YiIsImlhdCI6MTc2NTA0ODkwMn0.ClCMWmVARjJ3Sin4uiV_CCAinO0b4oqld75WJN_Vz3M"
+      ],
+      "disabled": false
     }
   },
   "tools": [
@@ -49,7 +61,10 @@
     "@playwright/browser_hover",
     "@playwright/browser_select_option",
     "@playwright/browser_tabs",
-    "@playwright/browser_wait_for"
+    "@playwright/browser_wait_for",
+    "@n8n-mcp/search_workflows",
+    "@n8n-mcp/execute_workflow",
+    "@n8n-mcp/get_workflow_details"
   ],
   "toolAliases": {},
   "allowedTools": [
@@ -79,7 +94,9 @@
     "@playwright/browser_hover",
     "@playwright/browser_select_option",
     "@playwright/browser_tabs",
-    "@playwright/browser_wait_for"
+    "@playwright/browser_wait_for",
+    "@n8n-mcp/search_workflows",
+    "@n8n-mcp/get_workflow_details"
   ],
   "toolsSettings": {
     "use_aws": {

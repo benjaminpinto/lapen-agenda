@@ -82,10 +82,15 @@ def get_active_courts():
 
 @public_bp.route('/players', methods=['GET'])
 def get_players_autocomplete():
-    """Get all players for autocomplete"""
+    """Get all players for autocomplete - deprecated, use /users/short-names"""
+    return jsonify([])
+
+@public_bp.route('/users/short-names', methods=['GET'])
+def get_users_short_names():
+    """Get all users short names for autocomplete"""
     db = get_db()
-    players = db.execute('SELECT name FROM players ORDER BY name').fetchall()
-    response = jsonify([player["name"] for player in players])
+    users = db.execute('SELECT DISTINCT short_name FROM users WHERE short_name IS NOT NULL ORDER BY short_name').fetchall()
+    response = jsonify([user["short_name"] for user in users])
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"

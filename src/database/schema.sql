@@ -10,12 +10,6 @@ CREATE TABLE courts (
     image_url TEXT
 );
 
--- Players table
-CREATE TABLE players (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE NOT NULL
-);
-
 -- Holidays and blocks table
 CREATE TABLE holidays_blocks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

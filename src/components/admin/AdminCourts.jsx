@@ -35,8 +35,9 @@ const AdminCourts = () => {
 
   const fetchCourts = async () => {
     try {
+      const token = localStorage.getItem('auth_token')
       const response = await fetch('/api/admin/courts', {
-        credentials: 'include'
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       })
       if (response.ok) {
         const data = await response.json()
@@ -61,13 +62,14 @@ const AdminCourts = () => {
         : '/api/admin/courts'
       
       const method = editingCourt ? 'PUT' : 'POST'
+      const token = localStorage.getItem('auth_token')
       
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
         },
-        credentials: 'include',
         body: JSON.stringify(formData),
       })
 
@@ -104,9 +106,10 @@ const AdminCourts = () => {
 
   const deleteCourt = async (courtId) => {
     try {
+      const token = localStorage.getItem('auth_token')
       const response = await fetch(`/api/admin/courts/${courtId}`, {
         method: 'DELETE',
-        credentials: 'include'
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       })
 
       const data = await response.json()

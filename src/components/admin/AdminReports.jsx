@@ -16,7 +16,7 @@ const AdminReports = () => {
     const fetchReports = async () => {
         try {
             const response = await fetch('/api/admin/matches/reports', {
-                credentials: 'include'
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
             })
             if (response.ok) {
                 const data = await response.json()

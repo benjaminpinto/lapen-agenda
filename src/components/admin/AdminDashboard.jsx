@@ -15,7 +15,7 @@ const AdminDashboard = () => {
     const fetchDashboardStats = async () => {
         try {
             const response = await fetch('/api/admin/dashboard', {
-                credentials: 'include'
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
             })
             if (response.ok) {
                 const data = await response.json()
@@ -60,24 +60,12 @@ const AdminDashboard = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <Link to="/admin/courts">
                     <Card className="hover:shadow-md transition-shadow cursor-pointer">
                         <CardHeader className="text-center pb-2">
                             <MapPin className="h-8 w-8 text-green-600 mx-auto"/>
                             <CardTitle className="text-lg">Quadras</CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-center">
-                            <Button variant="ghost" size="sm">Gerenciar</Button>
-                        </CardContent>
-                    </Card>
-                </Link>
-
-                <Link to="/admin/players">
-                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                        <CardHeader className="text-center pb-2">
-                            <Users className="h-8 w-8 text-blue-600 mx-auto"/>
-                            <CardTitle className="text-lg">Jogadores</CardTitle>
                         </CardHeader>
                         <CardContent className="text-center">
                             <Button variant="ghost" size="sm">Gerenciar</Button>

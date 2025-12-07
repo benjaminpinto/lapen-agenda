@@ -28,7 +28,7 @@ const AdminHolidays = () => {
     const fetchHolidays = async () => {
         try {
             const response = await fetch('/api/admin/holidays-blocks', {
-                credentials: 'include'
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
             })
             if (response.ok) {
                 const data = await response.json()
@@ -50,7 +50,7 @@ const AdminHolidays = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
                 body: JSON.stringify(formData),
             })
 
@@ -84,7 +84,7 @@ const AdminHolidays = () => {
         try {
             const response = await fetch(`/api/admin/holidays-blocks/${holidayId}`, {
                 method: 'DELETE',
-                credentials: 'include'
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
             })
 
             const data = await response.json()

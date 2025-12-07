@@ -71,21 +71,13 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                             </Button>
                         </Link>
 
-                        {user?.is_admin && (
-                            isAdminAuthenticated ? (
-                                <Link to="/admin/dashboard">
-                                    <Button variant="ghost" size="sm">
-                                        <Settings className="h-4 w-4 mr-2"/>
-                                        Admin
-                                    </Button>
-                                </Link>
-                            ) : (
-                                <Link to="/admin">
-                                    <Button variant="ghost" size="sm">
-                                        <Settings className="h-4 w-4 mr-2"/>
-                                    </Button>
-                                </Link>
-                            )
+                        {(user?.is_admin === true || user?.is_admin === 1) && (
+                            <Link to="/admin">
+                                <Button variant="ghost" size="sm">
+                                    <Settings className="h-4 w-4 mr-2"/>
+                                    Admin
+                                </Button>
+                            </Link>
                         )}
 
                         <div className="flex items-center space-x-2">
@@ -156,22 +148,13 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                                 </Button>
                             </Link>
 
-                            {user?.is_admin && (
-                                isAdminAuthenticated ? (
-                                    <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
-                                        <Button variant="ghost" size="sm" className="w-full justify-start">
-                                            <Settings className="h-4 w-4 mr-2"/>
-                                            Admin
-                                        </Button>
-                                    </Link>
-                                ) : (
-                                    <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)}>
-                                        <Button variant="ghost" size="sm" className="w-full justify-start">
-                                            <Settings className="h-4 w-4 mr-2"/>
-                                            Admin
-                                        </Button>
-                                    </Link>
-                                )
+                            {(user?.is_admin === true || user?.is_admin === 1) && (
+                                <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                                        <Settings className="h-4 w-4 mr-2"/>
+                                        Admin
+                                    </Button>
+                                </Link>
                             )}
 
                             {isAuthenticated ? (

@@ -10,12 +10,6 @@ CREATE TABLE IF NOT EXISTS courts (
     image_url TEXT
 );
 
--- Players table
-CREATE TABLE IF NOT EXISTS players (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL
-);
-
 -- Holidays and blocks table
 CREATE TABLE IF NOT EXISTS holidays_blocks (
     id SERIAL PRIMARY KEY,

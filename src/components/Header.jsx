@@ -1,6 +1,6 @@
 import {Link, useNavigate} from 'react-router-dom'
 import {Button} from '@/components/ui/button'
-import {Calendar, Eye, Home, LogIn, LogOut, Menu, Settings, Trophy, UserPlus, X} from 'lucide-react'
+import {Calendar, Eye, Home, LogIn, LogOut, Menu, Settings, Trophy, X} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
 import {useAuth} from '@/contexts/AuthContext'
 import {useState} from 'react'
@@ -71,19 +71,21 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                             </Button>
                         </Link>
 
-                        {isAdminAuthenticated ? (
-                            <Link to="/admin/dashboard">
-                                <Button variant="ghost" size="sm">
-                                    <Settings className="h-4 w-4 mr-2"/>
-                                    Admin
-                                </Button>
-                            </Link>
-                        ) : (
-                            <Link to="/admin">
-                                <Button variant="ghost" size="sm">
-                                    <Settings className="h-4 w-4 mr-2"/>
-                                </Button>
-                            </Link>
+                        {user?.is_admin && (
+                            isAdminAuthenticated ? (
+                                <Link to="/admin/dashboard">
+                                    <Button variant="ghost" size="sm">
+                                        <Settings className="h-4 w-4 mr-2"/>
+                                        Admin
+                                    </Button>
+                                </Link>
+                            ) : (
+                                <Link to="/admin">
+                                    <Button variant="ghost" size="sm">
+                                        <Settings className="h-4 w-4 mr-2"/>
+                                    </Button>
+                                </Link>
+                            )
                         )}
 
                         <div className="flex items-center space-x-2">
@@ -99,20 +101,12 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                                     </Button>
                                 </>
                             ) : (
-                                <>
-                                    <Link to="/login">
-                                        <Button variant="ghost" size="sm">
-                                            <LogIn className="h-4 w-4 mr-2"/>
-                                            Entrar
-                                        </Button>
-                                    </Link>
-                                    <Link to="/signup">
-                                        <Button variant="outline" size="sm">
-                                            <UserPlus className="h-4 w-4 mr-2"/>
-                                            Criar Conta
-                                        </Button>
-                                    </Link>
-                                </>
+                                <Link to="/login">
+                                    <Button variant="ghost" size="sm">
+                                        <LogIn className="h-4 w-4 mr-2"/>
+                                        Entrar
+                                    </Button>
+                                </Link>
                             )}
 
 
@@ -162,20 +156,22 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                                 </Button>
                             </Link>
 
-                            {isAdminAuthenticated ? (
-                                <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <Button variant="ghost" size="sm" className="w-full justify-start">
-                                        <Settings className="h-4 w-4 mr-2"/>
-                                        Admin
-                                    </Button>
-                                </Link>
-                            ) : (
-                                <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <Button variant="ghost" size="sm" className="w-full justify-start">
-                                        <Settings className="h-4 w-4 mr-2"/>
-                                        Admin
-                                    </Button>
-                                </Link>
+                            {user?.is_admin && (
+                                isAdminAuthenticated ? (
+                                    <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                                        <Button variant="ghost" size="sm" className="w-full justify-start">
+                                            <Settings className="h-4 w-4 mr-2"/>
+                                            Admin
+                                        </Button>
+                                    </Link>
+                                ) : (
+                                    <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                                        <Button variant="ghost" size="sm" className="w-full justify-start">
+                                            <Settings className="h-4 w-4 mr-2"/>
+                                            Admin
+                                        </Button>
+                                    </Link>
+                                )
                             )}
 
                             {isAuthenticated ? (
@@ -198,20 +194,12 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                                     </Button>
                                 </>
                             ) : (
-                                <>
-                                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                                        <Button variant="ghost" size="sm" className="w-full justify-start">
-                                            <LogIn className="h-4 w-4 mr-2"/>
-                                            Entrar
-                                        </Button>
-                                    </Link>
-                                    <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                                        <Button variant="outline" size="sm" className="w-full justify-start">
-                                            <UserPlus className="h-4 w-4 mr-2"/>
-                                            Criar Conta
-                                        </Button>
-                                    </Link>
-                                </>
+                                <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                                        <LogIn className="h-4 w-4 mr-2"/>
+                                        Entrar
+                                    </Button>
+                                </Link>
                             )}
                         </div>
                     </nav>

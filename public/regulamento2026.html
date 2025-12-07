@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regulamento Oficial LAPEN 2026</title>
+    <!-- Fontes: Merriweather (Serifada para texto formal) e Lato (Sans para títulos) -->
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #1a3c34; /* Verde Escuro Institucional */
+            --accent-color: #c5a059; /* Dourado/Bronze suave */
+            --text-color: #2c3e50;
+            --bg-color: #f0f2f5;
+            --paper-color: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Merriweather', serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- Folha A4 na tela --- */
+        .page-container {
+            max-width: 210mm; /* Largura A4 */
+            margin: 40px auto;
+            background-color: var(--paper-color);
+            padding: 25mm 20mm; /* Margens padrão A4 */
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        /* --- Cabeçalho Institucional --- */
+        header {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-box img {
+            width: 100px;
+            height: auto;
+        }
+
+        .header-info {
+            flex: 1;
+        }
+
+        .header-info h1 {
+            font-family: 'Lato', sans-serif;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .header-info h2 {
+            font-family: 'Lato', sans-serif;
+            font-size: 1rem;
+            color: #666;
+            font-weight: 400;
+            text-transform: uppercase;
+        }
+
+        /* --- Introdução Histórica --- */
+        .intro-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--accent-color);
+            padding: 15px 20px;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+            font-style: italic;
+            color: #444;
+        }
+        
+        .intro-box strong {
+            font-family: 'Lato', sans-serif;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            font-style: normal;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* --- Estrutura do Texto --- */
+        h3 {
+            font-family: 'Lato', sans-serif;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 5px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        p {
+            margin-bottom: 12px;
+            text-align: justify;
+            font-size: 10pt;
+        }
+
+        strong {
+            color: #000;
+        }
+
+        ul, ol {
+            margin-bottom: 15px;
+            padding-left: 25px;
+        }
+
+        li {
+            margin-bottom: 5px;
+            font-size: 10pt;
+        }
+
+        /* --- Tabelas Formais --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            page-break-inside: avoid;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-family: 'Lato', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 8px;
+            text-align: left;
+            font-size: 0.8rem;
+        }
+
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* --- Botão de Impressão --- */
+        .no-print {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .btn-print {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            font-family: 'Lato', sans-serif;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        .btn-print:hover {
+            background-color: #0f2620;
+        }
+
+        /* --- OTIMIZAÇÃO PARA IMPRESSÃO (PDF) --- */
+        @media print {
+            @page {
+                size: A4;
+                margin: 1.5cm;
+            }
+
+            body {
+                background-color: white;
+                color: black;
+            }
+
+            .page-container {
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            h3 {
+                border-bottom: 1px solid #000;
+                color: #000;
+                page-break-after: avoid;
+            }
+
+            th {
+                background-color: #ddd !important;
+                color: black !important;
+                border: 1px solid #000;
+            }
+
+            td {
+                border: 1px solid #000;
+            }
+
+            .intro-box {
+                background-color: transparent;
+                border-left: 4px solid #000;
+                color: #000;
+            }
+            
+            /* Evitar quebra de seções importantes */
+            .clause, table, .intro-box {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print">
+        <a href="#" onclick="window.print()" class="btn-print"><i class="fas fa-print"></i> Imprimir Regulamento (PDF)</a>
+    </div>
+
+    <div class="page-container">
+        
+        <header>
+            <div class="logo-box">
+                <img src="/lapen-logo.png" alt="Brasão LAPEN">
+            </div>
+            <div class="header-info">
+                <h1>Regulamento Oficial</h1>
+                <h2>Ranking LAPEN &bull; Temporada 2026</h2>
+            </div>
+        </header>
+
+        <!-- Introdução Histórica e Objetivo -->
+        <section class="intro-box">
+            <p>
+                <strong>LAPEN - Histórico</strong>
+                Criada no final de 2022 pelos tenistas que frequentam o PTC, a Liga de Tênis da cidade de Penedo foi idealizada para movimentar o calendário de atividades no Penedo Tênis Clube.
+            </p>
+            <p style="margin-top: 10px; margin-bottom: 0;">
+                <strong>Objetivo</strong>
+                &bull; Realizar o calendário interno para sócios do Penedo Tênis Clube que sejam membros da LAPEN no ano de 2026.
+            </p>
+        </section>
+
+        <!-- Regulamento na Íntegra -->
+        <article>
+            
+            <h3>1. Estrutura do Ranking</h3>
+            <p><strong>1.1</strong> O <strong>Ranking Lapen 2026</strong> será disputado em formato de pontos corridos, com divisão dinâmica dos tenistas.</p>
+            <p><strong>1.2</strong> O ranking contará com <strong>10 rodadas regulares</strong>, realizadas de janeiro a outubro de 2026.</p>
+            <p><strong>1.3</strong> Em novembro será realizado o <strong>Lapen Finals 2026</strong>, torneio de encerramento sem contagem de pontos para o ranking geral, servindo como a "Copa" do final de ano.</p>
+
+            <h3>2. Dinâmica dos Grupos e Sorteios</h3>
+            <p>Os sorteios mensais respeitarão a colocação atual dos tenistas na tabela (temporada 2025) para garantir o equilíbrio técnico:</p>
+            
+            <p><strong>2.1 Divisão para Sorteio Mensal:</strong><br>
+            A cada mês, a tabela de classificação será dividida em dois blocos para o sorteio dos jogos:</p>
+            <ul>
+                <li><strong>Grupo Elite:</strong> Composto pelos tenistas classificados da <strong>1ª à 8ª posição</strong> no momento do sorteio.</li>
+                <li><strong>Grupo Challenger:</strong> Composto pelos tenistas classificados da <strong>9ª posição em diante</strong>.</li>
+            </ul>
+
+            <p><strong>2.2 Sorteio de Jogos:</strong></p>
+            <ul>
+                <li>Todo mês serão sorteados <strong>2 jogos para cada participante</strong>.</li>
+                <li>Os confrontos do <em>Grupo Elite</em> ocorrerão exclusivamente entre os membros deste grupo.</li>
+                <li>Os confrontos do <em>Grupo Challenger</em> ocorrerão exclusivamente entre os membros deste grupo.</li>
+                <li><em>Nota:</em> Essa divisão é dinâmica. Um jogador pode estar no Elite em março e cair para o Challenger em abril, dependendo do seu desempenho.</li>
+            </ul>
+
+            <h3>3. Formato das Partidas e Pontuação</h3>
+            <p><strong>3.1 Agendamento:</strong></p>
+            <ul>
+                <li>A organização divulga os confrontos no início do mês.</li>
+                <li>O sorteio será automatizado, preferencialmente integrado ao App Agenda, mas podendo ser realizado por meio de outra ferramenta se necessário.</li>
+                <li>Os adversários devem acordar entre si dia e horário dentro do mês vigente.</li>
+            </ul>
+
+            <p><strong>3.2 Regras de Jogo:</strong></p>
+            <ul>
+                <li>Partidas em <strong>2 sets de 6 games</strong> com vantagem.</li>
+                <li>Empate em sets (1x1): Disputa-se um <strong>Super Tie-break</strong> (até 10 pontos) decisivo.</li>
+            </ul>
+
+            <p><strong>3.3 Tabela de Pontuação:</strong></p>
+            <table style="width: 60%;">
+                <tr><td>Vitória</td><td><strong>100 pontos</strong></td></tr>
+                <tr><td>Derrota</td><td><strong>25 pontos</strong></td></tr>
+                <tr><td>Vitória por W.O.</td><td><strong>132 pontos</strong></td></tr>
+                <tr><td>Derrota por W.O.</td><td><strong>0 pontos</strong></td></tr>
+                <tr><td>Set vencido</td><td><strong>+10 pontos</strong></td></tr>
+                <tr><td>Set perdido</td><td><strong>-10 pontos</strong></td></tr>
+                <tr><td>Game vencido</td><td><strong>+1 ponto</strong></td></tr>
+                <tr><td>Game perdido</td><td><strong>-1 ponto</strong></td></tr>
+            </table>
+
+            <h3>4. Pontuação Temporária (Start 2026)</h3>
+            <p>Para evitar distorções no início da temporada e garantir que os sorteios de <strong>Janeiro e Fevereiro</strong> respeitem a meritocracia do ano anterior, serão atribuídos pontos temporários.</p>
+
+            <p><strong>4.1 Regra de Validade:</strong><br>
+            Os pontos abaixo serão somados à pontuação dos jogadores no dia 01 de Janeiro e serão <strong>automaticamente removidos no dia 01 de Março</strong>. A partir de março, valerá apenas a pontuação conquistada em quadra em 2026.</p>
+
+            <p><strong>4.2 Tabela de Pontos Temporários:</strong><br>
+            <em>Baseado no fechamento de 2025, aplicou-se uma escala para manter a hierarquia inicial:</em></p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Classificação Final 2025</th>
+                        <th>Pts Temporários (Jan/Fev)</th>
+                        <th>Objetivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>1º e 2º</td><td>2.500</td><td>Manter no Elite garantido.</td></tr>
+                    <tr><td>3º e 4º</td><td>2.000</td><td>Manter no Elite.</td></tr>
+                    <tr><td>5º e 6º</td><td>1.600</td><td>Manter no Elite.</td></tr>
+                    <tr><td>7º e 8º</td><td>1.200</td><td>Zona de risco do Elite.</td></tr>
+                    <tr><td>9º e 10º</td><td>1.000</td><td>Topo do Challenger (Chance de subir).</td></tr>
+                    <tr><td>11º ao 16º</td><td>800</td><td>Meio de tabela Challenger.</td></tr>
+                    <tr><td>17º em diante / Novos</td><td>0</td><td>Início base.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>5. Regras de W.O. Administrativo</h3>
+            <p>Para coibir a não realização de jogos e proteger o tenista que demonstra disponibilidade:</p>
+
+            <p><strong>5.1 W.O. por falta de agenda:</strong><br>
+            Caso uma partida não ocorra dentro do mês por incompatibilidade de agendas, o jogo não será automaticamente cancelado/zerado. O jogador que se sentir lesado poderá solicitar o <strong>W.O. Administrativo</strong>.</p>
+
+            <p><strong>5.2 Critério de Julgamento:</strong><br>
+            Caso não haja acordo entre os jogadores sobre quem deu causa ao W.O., a organização solicitará os prints das conversas de agendamento.</p>
+            <ul>
+                <li>Receberá a <strong>Vitória por W.O.</strong> (132 pontos) o tenista que comprovar ter oferecido o <strong>maior número de opções distintas</strong> de datas e horários para a realização do jogo.</li>
+                <li>O adversário receberá a Derrota por W.O. (0 pontos).</li>
+            </ul>
+
+            <h3>6. Premiação Anual (Temporada Regular)</h3>
+            <p>Ao final das 10 rodadas (Outubro), antes do Finals ou em cerimônia de premiação única (a definir), serão premiados os melhores desempenhos de consistência do ano:</p>
+
+            <p><strong>6.1 Categoria Elite (Ranking Geral):</strong></p>
+            <ul>
+                <li><strong>Campeão da Temporada:</strong> Troféu para o 1º colocado geral do ranking.</li>
+                <li><strong>Vice-Campeão da Temporada:</strong> Troféu para o 2º colocado geral do ranking.</li>
+            </ul>
+
+            <p><strong>6.2 Categoria Challenger (Ranking de Acesso):</strong><br>
+            <em>Considera-se para esta premiação os tenistas que terminaram o ano fora do Top 8.</em></p>
+            <ul>
+                <li><strong>Campeão Challenger:</strong> Troféu para o 9º colocado geral (o melhor "dos demais").</li>
+                <li><strong>Vice-Campeão Challenger:</strong> Troféu para o 10º colocado geral.</li>
+            </ul>
+
+            <h3>7. Lapen Finals 2026</h3>
+            <p>Torneio de encerramento em Novembro.</p>
+            <p><strong>7.1 Classificação:</strong></p>
+            <ul>
+                <li><strong>Grupo Legends:</strong> Os 8 melhores classificados do ranking final.</li>
+                <li><strong>Grupo Next Gen:</strong> Os classificados da 9ª à 16ª posição.</li>
+            </ul>
+            <p><strong>7.2 Formato:</strong></p>
+            <ul>
+                <li>Fase de grupos (2 subgrupos de 4) seguida de semifinais e finais.</li>
+                <li>Não haverá pontuação para o ranking, apenas a disputa pelos troféus de Campeão e Vice do Finals de cada categoria.</li>
+            </ul>
+
+            <h3>8. Custos e Taxas</h3>
+            <p><strong>8.1 Inscrição Anual:</strong><br>
+            Valor: <strong>R$ 50,00</strong> (Inclui organização, manutenção de infraestrutura do app, e formação de caixa mínimo para eventuais despesas não planejadas).</p>
+
+            <p><strong>8.2 Custos Recorrentes:</strong></p>
+            <ul>
+                <li><strong>Energia (Clube):</strong> R$ 20,00 mensais fixos.</li>
+                <li><strong>Taxa de Boleiro:</strong> R$ 20,00 por jogo. (Divisão de R$ 10,00 para cada tenista).</li>
+            </ul>
+
+            <p><strong>8.3 Arbitragem (Opcional):</strong></p>
+            <ul>
+                <li>Taxa de árbitro profissional (caso haja): R$ 40,00.</li>
+                <li><strong>Árbitro Auxiliar:</strong> Caso ambos os jogadores concordem, qualquer outro tenista do grupo poderá atuar como árbitro da partida, sem custos ou mediante acordo entre as partes, desde que mantenha a imparcialidade.</li>
+            </ul>
+
+            <h3>9. Critérios de Desempate</h3>
+            <p>Ao final das 10 rodadas, em caso de empate na pontuação:</p>
+            <ol>
+                <li>Maior número de vitórias.</li>
+                <li>Maior saldo de sets.</li>
+                <li>Maior saldo de games.</li>
+                <li>Confronto direto (se houver).</li>
+            </ol>
+
+            <h3>10. Casos omissos ou imprevisíveis</h3>
+            <p>Na eventualidade de conflitos, problemas diversos ou outras lides não cobertas no presente documento, cabe à Administração determinar solução que beneficie o maior número de membros ou que seja claramente mais correta e/ou justa.</p>
+
+            <h3>11. Conduta</h3>
+            <p>Todos os participantes devem manter comportamento esportivo e respeitoso durante as partidas.</p>
+
+            <h3>12. Alterações no regulamento</h3>
+            <p>A organização do Ranking Lapen 2026 se reserva o direito de realizar alterações neste regulamento, comunicando previamente todos os participantes.</p>
+
+        </article>
+
+        <footer style="margin-top: 50px; border-top: 1px solid #ccc; padding-top: 20px; font-size: 0.8rem; text-align: center; color: #666;">
+            <p>Documento emitido para a temporada de 2026.<br>Penedo Tênis Clube / Liga de Tênis Penedo</p>
+        </footer>
+
+    </div>
+
+</body>
+</html>

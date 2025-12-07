@@ -116,13 +116,24 @@ const Login = () => {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Não tem uma conta?{' '}
-              <Link to="/signup" className="font-medium text-green-600 hover:text-green-500">
-                Criar conta
-              </Link>
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">ou</span>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-center text-sm text-gray-600 font-medium">
+              Não tem uma conta?
             </p>
+            <Link to="/signup" className="block">
+              <Button variant="outline" className="w-full border-green-600 text-green-600 hover:bg-green-50">
+                Criar nova conta
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

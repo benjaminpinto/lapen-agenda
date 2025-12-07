@@ -53,6 +53,7 @@ CREATE TABLE users (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     name TEXT NOT NULL,
+    short_name TEXT,
     phone TEXT,
     pix_key TEXT,
     is_verified BOOLEAN DEFAULT FALSE,

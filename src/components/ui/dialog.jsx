@@ -65,4 +65,8 @@ const DialogDescription = ({ className = '', ...props }) => (
   <p className={`text-sm text-gray-600 ${className}`} {...props} />
 )
 
-export { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription }
+const DialogFooter = ({ className = '', ...props }) => (
+  <div className={`flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-4 ${className}`} {...props} />
+)
+
+export { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter }

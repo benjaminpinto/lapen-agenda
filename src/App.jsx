@@ -14,6 +14,7 @@ import AdminMatches from './components/admin/AdminMatches'
 import MatchReport from './components/admin/MatchReport'
 import AdminReports from './components/admin/AdminReports'
 import LapenApprovals from './components/admin/LapenApprovals'
+import AdminUsers from './components/admin/AdminUsers'
 import ScheduleForm from './components/ScheduleForm'
 import ScheduleView from './components/ScheduleView'
 import SignUp from './components/auth/SignUp'
@@ -126,6 +127,14 @@ function App() {
                 element={
                   isAdminAuthenticated ? 
                   <LapenApprovals /> : 
+                  <Navigate to="/admin" />
+                } 
+              />
+              <Route 
+                path="/admin/users" 
+                element={
+                  isAdminAuthenticated ? 
+                  <AdminUsers /> : 
                   <Navigate to="/admin" />
                 } 
               />

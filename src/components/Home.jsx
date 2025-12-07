@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar, CalendarDays, Clock, Trophy, DollarSign, MapPin, Users, RotateCcw, FileText, Mail } from 'lucide-react'
+import { Calendar, CalendarDays, Clock, Trophy, DollarSign, MapPin, Users, RotateCcw, FileText, Mail, Instagram } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import MatchTypeBadge from './ui/MatchTypeBadge'
 
@@ -267,7 +267,11 @@ const Home = () => {
           
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Contato/Suporte</h3>
-            <a href="mailto:contato@keepquality.com.br" className="text-sm text-gray-600 hover:text-orange-600 flex items-center">
+            <a href="https://www.instagram.com/tennis_penedo" target="_blank" rel="noopener noreferrer" className="text-sm text-gray-600 hover:text-orange-600 flex items-center">
+              <Instagram className="h-4 w-4 mr-2" />
+              @tennis_penedo
+            </a>
+            <a href="mailto:contato@keepquality.com.br" className="text-sm text-gray-600 hover:text-orange-600 flex items-center mb-2">
               <Mail className="h-4 w-4 mr-2" />
               contato@keepquality.com.br
             </a>

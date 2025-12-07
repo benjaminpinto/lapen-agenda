@@ -316,7 +316,7 @@ const Home = () => {
           
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Documentos</h3>
-            <a href="/regulamento2026.html" target="_blank" rel="noopener noreferrer" className="text-sm text-gray-600 hover:text-green-600 flex items-center">
+            <a href="/regulamento2026.html" className="text-sm text-gray-600 hover:text-green-600 flex items-center">
               <FileText className="h-4 w-4 mr-2" />
               Regulamento Ranking 2026
             </a>

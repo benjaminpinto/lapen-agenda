@@ -28,7 +28,10 @@ const LapenApprovals = () => {
     const fetchRequests = async () => {
         setLoading(true)
         try {
-            const response = await fetch(`/api/admin/lapen-requests?status=${filter}`)
+            const token = localStorage.getItem('auth_token')
+            const response = await fetch(`/api/admin/lapen-requests?status=${filter}`, {
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            })
             if (response.ok) {
                 const data = await response.json()
                 setRequests(data)
@@ -42,8 +45,10 @@ const LapenApprovals = () => {
 
     const handleApprove = async (userId) => {
         try {
+            const token = localStorage.getItem('auth_token')
             const response = await fetch(`/api/admin/lapen-approve/${userId}`, {
-                method: 'POST'
+                method: 'POST',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             })
 
             if (response.ok) {
@@ -73,8 +78,10 @@ const LapenApprovals = () => {
         if (!rejectingUser) return
 
         try {
+            const token = localStorage.getItem('auth_token')
             const response = await fetch(`/api/admin/lapen-reject/${rejectingUser.id}`, {
-                method: 'POST'
+                method: 'POST',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             })
 
             if (response.ok) {

@@ -69,9 +69,9 @@ const AdminMatches = () => {
             const response = await fetch(`/api/admin/matches/${selectedMatch.match_id}/finish`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                 },
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
                 body: JSON.stringify({
                     winner_name: winner,
                     score: score

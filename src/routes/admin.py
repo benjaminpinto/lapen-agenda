@@ -147,39 +147,6 @@ def delete_court(court_id):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 400
 
-# Players CRUD
-@admin_bp.route('/players', methods=['GET'])
-@require_admin_auth
-def get_players():
-    db = get_db()
-    players = db.execute('SELECT * FROM players ORDER BY name').fetchall()
-    return jsonify([dict(player) for player in players])
-
-@admin_bp.route('/players', methods=['POST'])
-@require_admin_auth
-def create_player():
-    data = request.get_json()
-    name = data.get('name')
-    
-    db = get_db()
-    try:
-        db.execute('INSERT INTO players (name) VALUES (?)', (name,))
-        db.commit()
-        return jsonify({'success': True, 'message': 'Jogador adicionado com sucesso'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 400
-
-@admin_bp.route('/players/<int:player_id>', methods=['DELETE'])
-@require_admin_auth
-def delete_player(player_id):
-    db = get_db()
-    try:
-        db.execute('DELETE FROM players WHERE id = ?', (player_id,))
-        db.commit()
-        return jsonify({'success': True, 'message': 'Jogador excluído com sucesso'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 400
-
 # Holidays/Blocks CRUD
 @admin_bp.route('/holidays-blocks', methods=['GET'])
 def get_holidays_blocks():

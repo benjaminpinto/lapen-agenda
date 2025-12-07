@@ -20,7 +20,7 @@ const PasswordConfirmDialog = ({ open, onOpenChange, onConfirm, title, descripti
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` },
         body: JSON.stringify({ password }),
       })
 

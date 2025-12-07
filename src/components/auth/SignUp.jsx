@@ -31,6 +31,19 @@ const SignUp = () => {
     })
   }
 
+  const formatPhoneDisplay = (value) => {
+    const numbers = value.replace(/\D/g, '')
+    if (numbers.length <= 10) {
+      return numbers.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').replace(/-$/, '')
+    }
+    return numbers.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').replace(/-$/, '')
+  }
+
+  const handlePhoneChange = (e) => {
+    const numbers = e.target.value.replace(/\D/g, '')
+    setFormData({ ...formData, phone: numbers })
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -167,8 +180,9 @@ const SignUp = () => {
                   type="tel"
                   className="pl-10"
                   placeholder="(11) 99999-9999"
-                  value={formData.phone}
-                  onChange={handleChange}
+                  value={formatPhoneDisplay(formData.phone)}
+                  onChange={handlePhoneChange}
+                  maxLength={15}
                 />
               </div>
             </div>

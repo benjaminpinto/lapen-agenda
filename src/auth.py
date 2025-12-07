@@ -91,7 +91,7 @@ def get_user_by_id(user_id):
     """Get user by ID"""
     db = get_db()
     try:
-        cursor = db.execute('SELECT id, email, name, short_name, phone, is_verified, is_lapen_member, lapen_approved, lapen_requested_at, lapen_approved_at, is_admin FROM users WHERE id = ?', (user_id,))
+        cursor = db.execute('SELECT id, email, name, short_name, phone, pix_key, is_verified, is_lapen_member, lapen_approved, lapen_requested_at, lapen_approved_at, is_admin FROM users WHERE id = ?', (user_id,))
         user = cursor.fetchone()
         return dict(user) if user else None
     finally:

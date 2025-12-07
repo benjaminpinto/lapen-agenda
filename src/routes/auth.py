@@ -156,6 +156,27 @@ def get_current_user():
     
     return jsonify({'user': user})
 
+@auth_bp.route('/profile', methods=['PUT'])
+@require_auth
+def update_profile():
+    data = request.get_json()
+    db = get_db()
+    
+    try:
+        db.execute('''
+            UPDATE users 
+            SET name = ?, short_name = ?, email = ?, phone = ?, pix_key = ?
+            WHERE id = ?
+        ''', (data['name'], data['short_name'], data['email'], data.get('phone'), data.get('pix_key'), request.user_id))
+        db.commit()
+        
+        user = get_user_by_id(request.user_id)
+        return jsonify({'user': user})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+    finally:
+        db.close()
+
 @auth_bp.route('/verify', methods=['POST'])
 def verify_email():
     data = request.get_json()
@@ -198,8 +219,12 @@ def change_password():
     if len(new_password) < 6:
         return jsonify({'error': 'A nova senha deve ter pelo menos 6 caracteres'}), 400
     
-    user = get_user_by_id(request.user_id)
-    if not user or not verify_password(current_password, user['password_hash']):
+    user_info = get_user_by_id(request.user_id)
+    if not user_info:
+        return jsonify({'error': 'Usuário não encontrado'}), 404
+    
+    user = get_user_by_email(user_info['email'])
+    if not verify_password(current_password, user['password_hash']):
         return jsonify({'error': 'Senha atual incorreta'}), 400
     
     db = get_db()

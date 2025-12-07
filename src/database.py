@@ -88,6 +88,12 @@ def init_db():
             with open(payment_schema, "r") as f:
                 conn.executescript(f.read())
         
+        # Load ranking schema
+        ranking_schema = os.path.join(os.path.dirname(__file__), "database", "migrations", "ranking_schema_sqlite.sql")
+        if os.path.exists(ranking_schema):
+            with open(ranking_schema, "r") as f:
+                conn.executescript(f.read())
+        
         conn.close()
 
 def get_db():

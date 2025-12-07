@@ -31,14 +31,6 @@ import './App.css'
 function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
 
-  useEffect(() => {
-    // Check if admin is already authenticated (session storage)
-    const adminAuth = sessionStorage.getItem('admin_authenticated')
-    if (adminAuth === 'true') {
-      setIsAdminAuthenticated(true)
-    }
-  }, [])
-
   return (
     <ToastProvider>
       <AuthProvider>

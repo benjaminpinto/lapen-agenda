@@ -122,34 +122,34 @@ const Home = () => {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <Card className="p-3">
+        <Card className="p-3 bg-white border-orange-200 hover:shadow-md transition-shadow">
           <div className="text-center">
-            <Calendar className="h-8 w-8 text-green-600 mx-auto mb-2" />
-            <h3 className="font-semibold text-sm mb-1">Agendamento Fácil</h3>
+            <Calendar className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-sm mb-1 text-gray-900">Agendamento Fácil</h3>
             <p className="text-xs text-gray-600">Rápido e intuitivo</p>
           </div>
         </Card>
 
-        <Card className="p-3">
+        <Card className="p-3 bg-white border-amber-200 hover:shadow-md transition-shadow">
           <div className="text-center">
-            <Clock className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-            <h3 className="font-semibold text-sm mb-1">Horários Flexíveis</h3>
+            <Clock className="h-8 w-8 text-amber-600 mx-auto mb-2" />
+            <h3 className="font-semibold text-sm mb-1 text-gray-900">Horários Flexíveis</h3>
             <p className="text-xs text-gray-600">07:30 às 22:30</p>
           </div>
         </Card>
 
-        <Card className="p-3">
+        <Card className="p-3 bg-white border-yellow-200 hover:shadow-md transition-shadow">
           <div className="text-center">
             <Trophy className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
-            <h3 className="font-semibold text-sm mb-1">Liga e Amistosos</h3>
+            <h3 className="font-semibold text-sm mb-1 text-gray-900">Liga e Amistosos</h3>
             <p className="text-xs text-gray-600">Organize partidas</p>
           </div>
         </Card>
 
-        <Card className="p-3">
+        <Card className="p-3 bg-white border-orange-300 hover:shadow-md transition-shadow">
           <div className="text-center">
-            <DollarSign className="h-8 w-8 text-green-600 mx-auto mb-2" />
-            <h3 className="font-semibold text-sm mb-1">Apostas Esportivas</h3>
+            <DollarSign className="h-8 w-8 text-orange-700 mx-auto mb-2" />
+            <h3 className="font-semibold text-sm mb-1 text-gray-900">Apostas Esportivas</h3>
             <p className="text-xs text-gray-600">Aposte e acompanhe</p>
           </div>
         </Card>
@@ -157,15 +157,15 @@ const Home = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 sm:mb-12">
         {/* Upcoming Matches */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Trophy className="h-5 w-5 mr-2 text-blue-600" />
+        <Card className="border-orange-200">
+          <CardHeader className="bg-gradient-to-r from-orange-100 to-amber-50 rounded-t-lg">
+            <CardTitle className="flex items-center text-orange-800">
+              <Trophy className="h-5 w-5 mr-2" />
               Próximas Partidas
             </CardTitle>
-            <CardDescription>Jogos agendados para os próximos dias</CardDescription>
+            <CardDescription className="text-orange-700">Jogos agendados para os próximos dias</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-3">
             {Object.keys(upcomingMatches).length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">Nenhuma partida agendada</p>
             ) : (
@@ -178,16 +178,16 @@ const Home = () => {
                   }, {})
                   
                   return (
-                    <div key={date} className="border rounded-lg p-3 bg-blue-50 border-blue-200">
+                    <div key={date} className="border rounded-lg p-3 bg-amber-50 border-amber-200">
                       <div className="flex items-center space-x-2 mb-2">
-                        <Calendar className="h-4 w-4 text-blue-600" />
-                        <span className="font-semibold text-sm">{formatDate(date)}</span>
+                        <Calendar className="h-4 w-4 text-orange-600" />
+                        <span className="font-semibold text-sm text-gray-900">{formatDate(date)}</span>
                       </div>
                       <div className="space-y-2">
                         {Object.entries(courtGroups).map(([courtName, courtMatches]) => (
-                          <div key={courtName} className="border-l-4 border-green-500 pl-2">
-                            <div className="text-xs font-semibold text-green-700 mb-1 flex items-center">
-                              <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                          <div key={courtName} className="border-l-4 border-orange-600 pl-2">
+                            <div className="text-xs font-semibold text-orange-700 mb-1 flex items-center">
+                              <div className="w-2 h-2 bg-orange-600 rounded-full mr-1"></div>
                               {courtName}
                             </div>
                             <div className="space-y-1">
@@ -218,30 +218,30 @@ const Home = () => {
         </Card>
 
         {/* Recurring Classes */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <RotateCcw className="h-5 w-5 mr-2 text-orange-600" />
+        <Card className="border-amber-200">
+          <CardHeader className="bg-gradient-to-r from-amber-100 to-yellow-50 rounded-t-lg">
+            <CardTitle className="flex items-center text-amber-800">
+              <RotateCcw className="h-5 w-5 mr-2" />
               Aulas e Eventos Recorrentes
             </CardTitle>
-            <CardDescription>Horários fixos semanais</CardDescription>
+            <CardDescription className="text-amber-700">Horários fixos semanais</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-3">
             {Object.keys(recurringSchedules).length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-4">Nenhum evento recorrente</p>
             ) : (
               <div className="space-y-3">
                 {Object.entries(recurringSchedules).map(([dayOfWeek, schedules]) => (
-                  <div key={dayOfWeek} className="border rounded-lg p-3 bg-orange-50 border-orange-200">
+                  <div key={dayOfWeek} className="border rounded-lg p-3 bg-yellow-50 border-yellow-200">
                     <div className="flex items-center space-x-2 mb-2">
-                      <Clock className="h-4 w-4 text-orange-600" />
-                      <span className="font-semibold text-sm">{getDayName(parseInt(dayOfWeek))}</span>
+                      <Clock className="h-4 w-4 text-amber-600" />
+                      <span className="font-semibold text-sm text-gray-900">{getDayName(parseInt(dayOfWeek))}</span>
                     </div>
                     <div className="space-y-1">
                       {schedules.sort((a, b) => a.start_time.localeCompare(b.start_time)).map((schedule) => (
                         <div key={schedule.id} className="flex items-center justify-between text-xs">
                           <div className="flex items-center space-x-2">
-                            <MapPin className="h-3 w-3 text-green-600" />
+                            <MapPin className="h-3 w-3 text-amber-600" />
                             <span className="text-gray-700">{schedule.court_name}</span>
                             <span className="text-gray-600">• {schedule.description}</span>
                           </div>
@@ -257,49 +257,8 @@ const Home = () => {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Como funciona?</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
-                <span className="text-green-600 font-bold">1</span>
-              </div>
-              <h3 className="font-semibold mb-2">Escolha a Quadra</h3>
-              <p className="text-gray-600">Selecione entre quadras de saibro ou rápida</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
-                <span className="text-blue-600 font-bold">2</span>
-              </div>
-              <h3 className="font-semibold mb-2">Defina Data e Horário</h3>
-              <p className="text-gray-600">Veja os horários disponíveis em tempo real</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-purple-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
-                <span className="text-purple-600 font-bold">3</span>
-              </div>
-              <h3 className="font-semibold mb-2">Confirme o Agendamento</h3>
-              <p className="text-gray-600">Adicione os jogadores e confirme</p>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-amber-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
-                <span className="text-amber-600 font-bold">4</span>
-              </div>
-              <h3 className="font-semibold mb-2">Aposte nas Partidas</h3>
-              <p className="text-gray-600">Faça suas apostas nos jogos agendados</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Footer */}
-      <footer className="mt-12 bg-green-50 border-t border-green-200 pt-8 pb-6 -mx-4 sm:-mx-6 px-4 sm:px-6">
+      <footer className="mt-12 bg-stone-100 border-t border-stone-300 pt-8 pb-6 -mx-4 sm:-mx-6 px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Liga de Tênis de Penedo - LAPEN</h3>
@@ -308,7 +267,7 @@ const Home = () => {
           
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Contato/Suporte</h3>
-            <a href="mailto:contato@keepquality.com.br" className="text-sm text-gray-600 hover:text-green-600 flex items-center">
+            <a href="mailto:contato@keepquality.com.br" className="text-sm text-gray-600 hover:text-orange-600 flex items-center">
               <Mail className="h-4 w-4 mr-2" />
               contato@keepquality.com.br
             </a>
@@ -316,7 +275,7 @@ const Home = () => {
           
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Documentos</h3>
-            <a href="/regulamento2026.html" className="text-sm text-gray-600 hover:text-green-600 flex items-center">
+            <a href="/regulamento2026.html" className="text-sm text-gray-600 hover:text-orange-600 flex items-center">
               <FileText className="h-4 w-4 mr-2" />
               Regulamento Ranking 2026
             </a>

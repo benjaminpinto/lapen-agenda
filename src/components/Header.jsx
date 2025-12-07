@@ -15,12 +15,12 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
         try {
             const response = await fetch('/api/admin/logout', {
                 method: 'POST',
-                credentials: 'include'
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
             })
 
             if (response.ok) {
                 setIsAdminAuthenticated(false)
-                sessionStorage.removeItem('admin_authenticated')
+                logout()
                 navigate('/')
                 toast({
                     title: "Logout realizado",
@@ -37,7 +37,7 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
             <div className="container mx-auto px-4 py-4">
                 <div className="flex items-center justify-between">
                     <Link to="/" className="flex items-center space-x-2">
-                        <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-green-600"/>
+                        <span className="text-2xl sm:text-4xl">🎾</span>
                         <h1 className="text-lg sm:text-2xl font-bold text-gray-900">Agenda LAPEN</h1>
                     </Link>
 

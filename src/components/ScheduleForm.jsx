@@ -62,7 +62,7 @@ const ScheduleForm = () => {
 
   const fetchPlayers = async () => {
     try {
-      const response = await fetch(`/api/public/players?_t=${new Date().getTime()}`)
+      const response = await fetch(`/api/public/users/short-names?_t=${new Date().getTime()}`)
       if (response.ok) {
         const data = await response.json()
         setPlayers(data)

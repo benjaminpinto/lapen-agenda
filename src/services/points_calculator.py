@@ -37,24 +37,31 @@ class PointsCalculator:
     
     @staticmethod
     def parse_score(score_str):
-        """Parse score string like '6-4, 6-3' into sets and games"""
+        """Parse score string like '6-4, 6-3' or '6-4, 4-6, 10-8' (super tiebreak)"""
         if not score_str:
             return 0, 0, 0, 0
         
         sets = score_str.split(', ')
         p1_sets = p2_sets = p1_games = p2_games = 0
         
-        for set_score in sets:
+        for idx, set_score in enumerate(sets):
             try:
                 games = set_score.split('-')
                 g1, g2 = int(games[0]), int(games[1])
-                p1_games += g1
-                p2_games += g2
                 
-                if g1 > g2:
-                    p1_sets += 1
+                # Third set is super tiebreak (10 points), counts as games only
+                if idx == 2:
+                    p1_games += g1
+                    p2_games += g2
                 else:
-                    p2_sets += 1
+                    # Regular sets
+                    p1_games += g1
+                    p2_games += g2
+                    
+                    if g1 > g2:
+                        p1_sets += 1
+                    else:
+                        p2_sets += 1
             except (ValueError, IndexError):
                 continue
         

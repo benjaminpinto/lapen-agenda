@@ -47,9 +47,13 @@ class RankingConfigService:
         return config
     
     @staticmethod
-    def set_config(season_id, config_dict):
+    def set_config(season_id, config_dict, db=None):
         """Set configuration for a season"""
-        db = get_db()
+        should_close = False
+        if db is None:
+            db = get_db()
+            should_close = True
+        
         for key, value in config_dict.items():
             data_type = 'string'
             if isinstance(value, int):
@@ -64,7 +68,10 @@ class RankingConfigService:
                 INSERT OR REPLACE INTO ranking_season_config (season_id, key, value, data_type)
                 VALUES (?, ?, ?, ?)
             ''', (season_id, key, str(value), data_type))
-        db.commit()
+        
+        if should_close:
+            db.commit()
+            db.close()
     
     @staticmethod
     def get_temp_points_for_position(season_id, position):

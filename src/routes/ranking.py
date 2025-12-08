@@ -68,18 +68,22 @@ def create_season():
         season_id = cursor.lastrowid
         
         # Set default configuration
-        RankingConfigService.set_config(season_id, RankingConfigService.DEFAULT_CONFIG)
+        RankingConfigService.set_config(season_id, RankingConfigService.DEFAULT_CONFIG, db)
         
         db.commit()
+        db.close()
         return jsonify({'success': True, 'season_id': season_id})
     except Exception as e:
+        db.close()
         return jsonify({'error': str(e)}), 400
 
 @ranking_bp.route('/seasons', methods=['GET'])
 def get_seasons():
     db = get_db()
     seasons = db.execute('SELECT * FROM ranking_seasons ORDER BY year DESC').fetchall()
-    return jsonify([dict(season) for season in seasons])
+    result = [dict(season) for season in seasons]
+    db.close()
+    return jsonify(result)
 
 @ranking_bp.route('/seasons/<int:year>', methods=['GET'])
 def get_season(year):
@@ -132,7 +136,7 @@ def get_leaderboard(year):
         SELECT rp.*, u.name, u.short_name
         FROM ranking_participants rp
         JOIN users u ON rp.user_id = u.id
-        WHERE rp.season_id = ?
+        WHERE rp.season_id = ? AND rp.is_active = 1
         ORDER BY rp.position ASC
     '''
     
@@ -229,17 +233,18 @@ def submit_match_result(match_id):
                   match['season_id'], player_id))
         
         # Update positions after match result
-        _update_positions(match['season_id'])
+        _update_positions(db, match['season_id'])
         
         db.commit()
+        db.close()
         return jsonify({'success': True})
     except Exception as e:
         logger.error(f'Error submitting match result: {str(e)}')
+        db.close()
         return jsonify({'error': str(e)}), 400
 
-def _update_positions(season_id):
+def _update_positions(db, season_id):
     """Update participant positions based on total points"""
-    db = get_db()
     participants = db.execute('''
         SELECT user_id, (total_points + temp_points) as total
         FROM ranking_participants
@@ -262,7 +267,7 @@ def get_user_stats(user_id, year):
         return jsonify({'error': 'Temporada não encontrada'}), 404
     
     participant = db.execute('''
-        SELECT rp.*, u.name FROM ranking_participants rp
+        SELECT rp.*, u.short_name as name FROM ranking_participants rp
         JOIN users u ON rp.user_id = u.id
         WHERE rp.season_id = ? AND rp.user_id = ?
     ''', (season['id'], user_id)).fetchone()
@@ -277,7 +282,7 @@ def get_user_stats(user_id, year):
 def get_my_matches():
     db = get_db()
     matches = db.execute('''
-        SELECT rm.*, rr.round_number, u1.name as player1_name, u2.name as player2_name, uw.name as winner_name
+        SELECT rm.*, rr.round_number, u1.short_name as player1_name, u2.short_name as player2_name, uw.short_name as winner_name
         FROM ranking_matches rm
         JOIN ranking_rounds rr ON rm.round_id = rr.id
         JOIN users u1 ON rm.player1_id = u1.id
@@ -286,6 +291,21 @@ def get_my_matches():
         WHERE rm.player1_id = ? OR rm.player2_id = ?
         ORDER BY rr.round_number DESC, rm.created_at DESC
     ''', (request.user_id, request.user_id)).fetchall()
+    return jsonify([dict(match) for match in matches])
+
+@ranking_bp.route('/all-open-matches', methods=['GET'])
+@require_auth
+def get_all_open_matches():
+    db = get_db()
+    matches = db.execute('''
+        SELECT rm.*, rr.round_number, u1.short_name as player1_name, u2.short_name as player2_name, u1.id as player1_id, u2.id as player2_id
+        FROM ranking_matches rm
+        JOIN ranking_rounds rr ON rm.round_id = rr.id
+        JOIN users u1 ON rm.player1_id = u1.id
+        JOIN users u2 ON rm.player2_id = u2.id
+        WHERE rr.status = 'open'
+        ORDER BY rr.round_number DESC, rm.created_at DESC
+    ''').fetchall()
     return jsonify([dict(match) for match in matches])
 
 @ranking_bp.route('/matches/<int:match_id>/wo', methods=['POST'])
@@ -319,7 +339,7 @@ def set_wo_result(match_id):
             UPDATE ranking_matches
             SET status = ?, winner_id = ?, wo_type = ?, points_p1 = ?, points_p2 = ?, score = ?
             WHERE id = ?
-        ''', ('wo', winner_id, 'admin', points_p1, points_p2, f'W.O. - {comment}', match_id))
+        ''', ('completed', winner_id, 'admin', points_p1, points_p2, f'W.O. - {comment}', match_id))
         
         # Update participant stats
         for player_id, is_winner, points in [
@@ -333,10 +353,12 @@ def set_wo_result(match_id):
                 WHERE season_id = ? AND user_id = ?
             ''', (points, match['season_id'], player_id))
         
-        _update_positions(match['season_id'])
+        _update_positions(db, match['season_id'])
         db.commit()
+        db.close()
         return jsonify({'success': True})
     except Exception as e:
+        db.close()
         return jsonify({'error': str(e)}), 400
 
 @ranking_bp.route('/seasons/<int:year>/participants', methods=['POST'])
@@ -363,6 +385,51 @@ def add_participant(year):
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+
+@ranking_bp.route('/seasons/<int:year>/participants/<int:user_id>/toggle', methods=['PUT'])
+@require_admin_auth
+def toggle_participant(year, user_id):
+    db = get_db()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE year = ?', (year,)).fetchone()
+    if not season:
+        return jsonify({'error': 'Temporada não encontrada'}), 404
+    
+    try:
+        participant = db.execute(
+            'SELECT is_active FROM ranking_participants WHERE season_id = ? AND user_id = ?',
+            (season['id'], user_id)
+        ).fetchone()
+        
+        if not participant:
+            return jsonify({'error': 'Participante não encontrado'}), 404
+        
+        new_status = not participant['is_active']
+        db.execute(
+            'UPDATE ranking_participants SET is_active = ? WHERE season_id = ? AND user_id = ?',
+            (new_status, season['id'], user_id)
+        )
+        db.commit()
+        return jsonify({'success': True, 'is_active': new_status})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@ranking_bp.route('/seasons/<int:year>/all-participants', methods=['GET'])
+@require_admin_auth
+def get_all_participants(year):
+    db = get_db()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE year = ?', (year,)).fetchone()
+    if not season:
+        return jsonify({'error': 'Temporada não encontrada'}), 404
+    
+    participants = db.execute('''
+        SELECT rp.*, u.name, u.short_name
+        FROM ranking_participants rp
+        JOIN users u ON rp.user_id = u.id
+        WHERE rp.season_id = ?
+        ORDER BY rp.position ASC
+    ''', (season['id'],)).fetchall()
+    
+    return jsonify([dict(p) for p in participants])
 
 # Rounds Management
 @ranking_bp.route('/rounds', methods=['POST'])
@@ -394,6 +461,78 @@ def generate_draw(round_id):
         return jsonify({'success': True, 'matches': matches})
     except Exception as e:
         logger.error(f'Error generating draw: {str(e)}')
+        return jsonify({'error': str(e)}), 400
+
+@ranking_bp.route('/rounds/<int:round_id>/draw', methods=['DELETE'])
+@require_admin_auth
+def cancel_draw(round_id):
+    db = get_db()
+    try:
+        # Check if any matches have results
+        completed = db.execute(
+            'SELECT COUNT(*) as count FROM ranking_matches WHERE round_id = ? AND status = "completed"',
+            (round_id,)
+        ).fetchone()
+        
+        if completed['count'] > 0:
+            return jsonify({'error': 'Não é possível cancelar sorteio com resultados registrados'}), 400
+        
+        # Delete matches and draw history
+        db.execute('DELETE FROM ranking_matches WHERE round_id = ?', (round_id,))
+        db.execute('DELETE FROM ranking_draws WHERE round_id = ?', (round_id,))
+        db.execute('UPDATE ranking_rounds SET status = ? WHERE id = ?', ('pending', round_id))
+        db.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f'Error canceling draw: {str(e)}')
+        return jsonify({'error': str(e)}), 400
+
+@ranking_bp.route('/rounds/<int:round_id>/open', methods=['PUT'])
+@require_admin_auth
+def open_round(round_id):
+    db = get_db()
+    try:
+        round_info = db.execute('SELECT season_id, status FROM ranking_rounds WHERE id = ?', (round_id,)).fetchone()
+        if not round_info:
+            return jsonify({'error': 'Rodada não encontrada'}), 404
+        
+        if round_info['status'] != 'drawn':
+            return jsonify({'error': 'Rodada precisa estar sorteada'}), 400
+        
+        # Close any open rounds in the same season
+        db.execute('UPDATE ranking_rounds SET status = ? WHERE season_id = ? AND status = ?', 
+                   ('closed', round_info['season_id'], 'open'))
+        
+        # Open this round
+        db.execute('UPDATE ranking_rounds SET status = ? WHERE id = ?', ('open', round_id))
+        db.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f'Error opening round: {str(e)}')
+        return jsonify({'error': str(e)}), 400
+
+@ranking_bp.route('/rounds/<int:round_id>/close', methods=['PUT'])
+@require_admin_auth
+def close_round(round_id):
+    db = get_db()
+    try:
+        # Check if all matches have results
+        pending = db.execute(
+            'SELECT COUNT(*) as count FROM ranking_matches WHERE round_id = ? AND status = "scheduled"',
+            (round_id,)
+        ).fetchone()
+        
+        if pending['count'] > 0:
+            return jsonify({'error': f'{pending["count"]} partida(s) ainda sem resultado'}), 400
+        
+        db.execute('UPDATE ranking_rounds SET status = ? WHERE id = ?', ('closed', round_id))
+        db.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f'Error closing round: {str(e)}')
         return jsonify({'error': str(e)}), 400
 
 # Missing routes
@@ -437,7 +576,7 @@ def get_rounds(season_id):
 def get_round_matches(round_id):
     db = get_db()
     matches = db.execute('''
-        SELECT rm.*, u1.name as player1_name, u2.name as player2_name, uw.name as winner_name
+        SELECT rm.*, u1.short_name as player1_name, u2.short_name as player2_name, uw.short_name as winner_name
         FROM ranking_matches rm
         JOIN users u1 ON rm.player1_id = u1.id
         JOIN users u2 ON rm.player2_id = u2.id
@@ -450,7 +589,7 @@ def get_round_matches(round_id):
 def get_match(match_id):
     db = get_db()
     match = db.execute('''
-        SELECT rm.*, u1.name as player1_name, u2.name as player2_name, uw.name as winner_name
+        SELECT rm.*, u1.short_name as player1_name, u2.short_name as player2_name, uw.short_name as winner_name
         FROM ranking_matches rm
         JOIN users u1 ON rm.player1_id = u1.id
         JOIN users u2 ON rm.player2_id = u2.id

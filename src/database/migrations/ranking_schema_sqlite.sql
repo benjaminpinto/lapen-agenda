@@ -38,7 +38,7 @@ CREATE TABLE ranking_rounds (
     month INTEGER NOT NULL,
     year INTEGER NOT NULL,
     draw_date DATETIME,
-    status TEXT CHECK (status IN ('pending', 'drawn', 'in_progress', 'completed')) DEFAULT 'pending',
+    status TEXT CHECK (status IN ('pending', 'drawn', 'open', 'closed')) DEFAULT 'pending',
     is_finals BOOLEAN DEFAULT FALSE,
     UNIQUE(season_id, round_number)
 );
@@ -59,6 +59,7 @@ CREATE TABLE ranking_participants (
     wo_wins INTEGER DEFAULT 0,
     wo_losses INTEGER DEFAULT 0,
     position INTEGER,
+    is_active BOOLEAN DEFAULT TRUE,
     UNIQUE(season_id, user_id)
 );
 

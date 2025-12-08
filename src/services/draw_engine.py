@@ -23,11 +23,11 @@ class DrawEngine:
         config = RankingConfigService.get_config(round_info['season_id'])
         elite_cutoff = config['elite_cutoff']
         
-        # Get participants ordered by position
+        # Get active participants ordered by position
         participants = db.execute('''
             SELECT rp.*, u.name FROM ranking_participants rp
             JOIN users u ON rp.user_id = u.id
-            WHERE rp.season_id = ?
+            WHERE rp.season_id = ? AND rp.is_active = 1
             ORDER BY rp.position ASC
         ''', (round_info['season_id'],)).fetchall()
         
@@ -64,12 +64,13 @@ class DrawEngine:
     
     @staticmethod
     def _generate_group_matches(players, group_type, round_id):
-        """Generate matches within a group avoiding recent pairings"""
+        """Generate 2 matches per player within a group"""
         if len(players) < 2:
             return []
         
         db = get_db()
         matches = []
+        player_ids = [p['user_id'] for p in players]
         
         # Get recent pairings to avoid
         recent_pairings = db.execute('''
@@ -90,32 +91,52 @@ class DrawEngine:
             recent_pairs.add((min(pair['player1_id'], pair['player2_id']), 
                             max(pair['player1_id'], pair['player2_id'])))
         
-        # Simple pairing algorithm
-        available_players = list(players)
-        random.shuffle(available_players)
+        # Track matches per player
+        player_matches = {pid: [] for pid in player_ids}
         
-        while len(available_players) >= 2:
-            player1 = available_players.pop(0)
-            best_opponent = None
-            
-            # Find best opponent (not recently played)
-            for i, player2 in enumerate(available_players):
-                pair_key = (min(player1['user_id'], player2['user_id']), 
-                           max(player1['user_id'], player2['user_id']))
+        # Generate 2 matches per player
+        for player_id in player_ids:
+            while len(player_matches[player_id]) < 2:
+                # Find opponent who also needs matches and hasn't played this player
+                best_opponent = None
+                for opponent_id in player_ids:
+                    if opponent_id == player_id:
+                        continue
+                    if opponent_id in player_matches[player_id]:
+                        continue
+                    if player_id in player_matches[opponent_id]:
+                        continue
+                    if len(player_matches[opponent_id]) >= 2:
+                        continue
+                    
+                    pair_key = (min(player_id, opponent_id), max(player_id, opponent_id))
+                    if pair_key not in recent_pairs:
+                        best_opponent = opponent_id
+                        break
                 
-                if pair_key not in recent_pairs:
-                    best_opponent = available_players.pop(i)
+                # If no fresh opponent, find any available
+                if not best_opponent:
+                    for opponent_id in player_ids:
+                        if opponent_id == player_id:
+                            continue
+                        if opponent_id in player_matches[player_id]:
+                            continue
+                        if player_id in player_matches[opponent_id]:
+                            continue
+                        if len(player_matches[opponent_id]) >= 2:
+                            continue
+                        best_opponent = opponent_id
+                        break
+                
+                if best_opponent:
+                    matches.append({
+                        'player1_id': player_id,
+                        'player2_id': best_opponent,
+                        'group_type': group_type
+                    })
+                    player_matches[player_id].append(best_opponent)
+                    player_matches[best_opponent].append(player_id)
+                else:
                     break
-            
-            # If no fresh opponent, take first available
-            if not best_opponent and available_players:
-                best_opponent = available_players.pop(0)
-            
-            if best_opponent:
-                matches.append({
-                    'player1_id': player1['user_id'],
-                    'player2_id': best_opponent['user_id'],
-                    'group_type': group_type
-                })
         
         return matches

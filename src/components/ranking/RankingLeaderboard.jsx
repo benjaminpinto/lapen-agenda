@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Trophy, Medal, Award } from 'lucide-react'
 
@@ -45,42 +44,40 @@ const RankingLeaderboard = () => {
     }
   }
 
-  const PlayerRow = ({ player, index, group }) => (
-    <div className="flex items-center justify-between p-4 border-b last:border-b-0 hover:bg-gray-50">
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center justify-center w-8 h-8">
-          {getPositionIcon(player.position) || (
-            <span className="text-sm font-medium text-gray-600">
-              {player.position}
-            </span>
-          )}
+  const PlayerRow = ({ player, index, group }) => {
+    const totalPoints = (player.total_points || 0) + (player.temp_points || 0)
+    return (
+      <div className="flex items-center justify-between p-4 border-b last:border-b-0 hover:bg-gray-50">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-center w-8 h-8">
+            {getPositionIcon(index + 1) || (
+              <span className="text-sm font-medium text-gray-600">
+                {index + 1}
+              </span>
+            )}
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">
+              {player.short_name || player.name}
+            </p>
+            <p className="text-sm text-gray-500">
+              {player.wins || 0}V - {player.losses || 0}D
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="font-medium text-gray-900">
-            {player.short_name || player.name}
+        <div className="text-right">
+          <p className="text-lg font-bold text-gray-900">
+            {totalPoints}
           </p>
-          <p className="text-sm text-gray-500">
-            {player.wins}V - {player.losses}D
-          </p>
-        </div>
-      </div>
-      <div className="text-right">
-        <p className="text-lg font-bold text-gray-900">
-          {player.total_points + player.temp_points}
-        </p>
-        <div className="flex space-x-1">
-          {player.temp_points > 0 && (
+          {(player.temp_points || 0) > 0 && (
             <Badge variant="secondary" className="text-xs">
               +{player.temp_points} temp
             </Badge>
           )}
-          <Badge variant={group === 'elite' ? 'default' : 'outline'} className="text-xs">
-            {group === 'elite' ? 'Elite' : 'Challenger'}
-          </Badge>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   if (loading) {
     return (
@@ -99,66 +96,67 @@ const RankingLeaderboard = () => {
         <p className="text-gray-600 mt-2">Sistema de pontuação anual</p>
       </div>
 
-      <Tabs defaultValue="elite" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="elite">Elite ({leaderboard.elite.length})</TabsTrigger>
-          <TabsTrigger value="challenger">Challenger ({leaderboard.challenger.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="elite">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
                 <Trophy className="h-5 w-5 text-yellow-500" />
-                <span>Grupo Elite</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {leaderboard.elite.length > 0 ? (
-                leaderboard.elite.map((player, index) => (
+                <span>Elite</span>
+              </div>
+              <Badge variant="default">{leaderboard.elite.length} jogadores</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {leaderboard.elite.length > 0 ? (
+              <div>
+                {leaderboard.elite.map((player, index) => (
                   <PlayerRow 
                     key={player.user_id} 
                     player={player} 
                     index={index} 
                     group="elite" 
                   />
-                ))
-              ) : (
-                <div className="p-6 text-center text-gray-500">
-                  Nenhum jogador no grupo Elite
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center text-gray-500">
+                Nenhum jogador no grupo Elite
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-        <TabsContent value="challenger">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
                 <Award className="h-5 w-5 text-blue-500" />
-                <span>Grupo Challenger</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {leaderboard.challenger.length > 0 ? (
-                leaderboard.challenger.map((player, index) => (
+                <span>Challenger</span>
+              </div>
+              <Badge variant="outline">{leaderboard.challenger.length} jogadores</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {leaderboard.challenger.length > 0 ? (
+              <div>
+                {leaderboard.challenger.map((player, index) => (
                   <PlayerRow 
                     key={player.user_id} 
                     player={player} 
                     index={index} 
                     group="challenger" 
                   />
-                ))
-              ) : (
-                <div className="p-6 text-center text-gray-500">
-                  Nenhum jogador no grupo Challenger
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center text-gray-500">
+                Nenhum jogador no grupo Challenger
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

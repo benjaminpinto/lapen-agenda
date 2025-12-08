@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Settings, Users, Calendar } from 'lucide-react'
+import { Plus, Settings, Users, Calendar, ArrowLeft } from 'lucide-react'
 import { useToast } from '@/contexts/ToastContext'
 
 const AdminRanking = () => {
+  const navigate = useNavigate()
   const [seasons, setSeasons] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -24,7 +26,12 @@ const AdminRanking = () => {
 
   const fetchSeasons = async () => {
     try {
-      const response = await fetch('/api/ranking/seasons')
+      const token = localStorage.getItem('auth_token')
+      const response = await fetch('/api/ranking/seasons', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setSeasons(data)
@@ -38,7 +45,7 @@ const AdminRanking = () => {
 
   const createSeason = async () => {
     try {
-      const token = localStorage.getItem('adminToken')
+      const token = localStorage.getItem('auth_token')
       const response = await fetch('/api/ranking/seasons', {
         method: 'POST',
         headers: {
@@ -96,6 +103,10 @@ const AdminRanking = () => {
 
   return (
     <div className="space-y-6">
+      <Button variant="outline" onClick={() => navigate('/admin/dashboard')}>
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Voltar ao Dashboard
+      </Button>
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Gerenciar Ranking</h1>
         <Button onClick={() => setShowCreateForm(true)}>
@@ -165,15 +176,15 @@ const AdminRanking = () => {
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => window.location.href = `/admin/ranking/config/${season.year}`}>
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/config/${season.year}`)}>
                     <Settings className="h-4 w-4 mr-2" />
                     Configurar
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => window.location.href = `/admin/ranking/participants/${season.year}`}>
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/participants/${season.year}`)}>
                     <Users className="h-4 w-4 mr-2" />
                     Participantes
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => window.location.href = `/admin/ranking/rounds/${season.year}`}>
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/rounds/${season.year}`)}>
                     <Calendar className="h-4 w-4 mr-2" />
                     Rodadas
                   </Button>

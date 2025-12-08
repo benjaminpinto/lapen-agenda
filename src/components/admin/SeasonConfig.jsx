@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/contexts/ToastContext'
-import { useParams } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 
 const SeasonConfig = () => {
+  const navigate = useNavigate()
   const { year } = useParams()
   const [config, setConfig] = useState({})
   const [loading, setLoading] = useState(true)
@@ -32,7 +34,7 @@ const SeasonConfig = () => {
 
   const saveConfig = async () => {
     try {
-      const token = localStorage.getItem('adminToken')
+      const token = localStorage.getItem('auth_token')
       const response = await fetch(`/api/ranking/seasons/${year}/config`, {
         method: 'PUT',
         headers: {
@@ -60,6 +62,10 @@ const SeasonConfig = () => {
 
   return (
     <div className="space-y-6">
+      <Button variant="outline" onClick={() => navigate('/admin/ranking')}>
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Voltar
+      </Button>
       <h1 className="text-2xl font-bold">Configuração {year}</h1>
       
       <Card>

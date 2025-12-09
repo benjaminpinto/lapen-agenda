@@ -3,9 +3,10 @@
 -- Ranking seasons table
 CREATE TABLE ranking_seasons (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    year INTEGER UNIQUE NOT NULL,
+    year INTEGER NOT NULL,
     start_date TEXT NOT NULL,
     end_date TEXT NOT NULL,
+    description TEXT DEFAULT '',
     status TEXT CHECK (status IN ('draft', 'active', 'finished')) DEFAULT 'draft',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -82,6 +83,7 @@ CREATE TABLE ranking_matches (
     points_p1 INTEGER DEFAULT 0,
     points_p2 INTEGER DEFAULT 0,
     played_at DATETIME,
+    added_by INTEGER REFERENCES users(id),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

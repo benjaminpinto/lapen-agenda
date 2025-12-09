@@ -58,13 +58,17 @@ def create_season():
     year = data.get('year')
     start_date = data.get('start_date')
     end_date = data.get('end_date')
+    description = data.get('description', '')
+    
+    if not year or not start_date or not end_date:
+        return jsonify({'error': 'Ano, data de início e data de fim são obrigatórios'}), 400
     
     db = get_db()
     try:
         cursor = db.execute('''
-            INSERT INTO ranking_seasons (year, start_date, end_date)
-            VALUES (?, ?, ?)
-        ''', (year, start_date, end_date))
+            INSERT INTO ranking_seasons (year, start_date, end_date, description)
+            VALUES (?, ?, ?, ?)
+        ''', (year, start_date, end_date, description))
         season_id = cursor.lastrowid
         
         # Set default configuration
@@ -81,35 +85,34 @@ def create_season():
 def get_seasons():
     db = get_db()
     seasons = db.execute('SELECT * FROM ranking_seasons ORDER BY year DESC').fetchall()
-    result = [dict(season) for season in seasons]
     db.close()
-    return jsonify(result)
+    return jsonify([dict(s) for s in seasons])
 
-@ranking_bp.route('/seasons/<int:year>', methods=['GET'])
-def get_season(year):
+@ranking_bp.route('/seasons/<int:season_id>', methods=['GET'])
+def get_season(season_id):
     db = get_db()
-    season = db.execute('SELECT * FROM ranking_seasons WHERE year = ?', (year,)).fetchone()
+    season = db.execute('SELECT * FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
     if not season:
         return jsonify({'error': 'Temporada não encontrada'}), 404
     return jsonify(dict(season))
 
 # Configuration Management
-@ranking_bp.route('/seasons/<int:year>/config', methods=['GET'])
-def get_season_config(year):
+@ranking_bp.route('/seasons/<int:season_id>/config', methods=['GET'])
+def get_season_config(season_id):
     db = get_db()
-    season = db.execute('SELECT id FROM ranking_seasons WHERE year = ?', (year,)).fetchone()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
     if not season:
         return jsonify({'error': 'Temporada não encontrada'}), 404
     
     config = RankingConfigService.get_config(season['id'])
     return jsonify(config)
 
-@ranking_bp.route('/seasons/<int:year>/config', methods=['PUT'])
+@ranking_bp.route('/seasons/<int:season_id>/config', methods=['PUT'])
 @require_admin_auth
-def update_season_config(year):
+def update_season_config(season_id):
     data = request.get_json()
     db = get_db()
-    season = db.execute('SELECT id FROM ranking_seasons WHERE year = ?', (year,)).fetchone()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
     if not season:
         return jsonify({'error': 'Temporada não encontrada'}), 404
     
@@ -120,12 +123,12 @@ def update_season_config(year):
         return jsonify({'error': str(e)}), 400
 
 # Leaderboard
-@ranking_bp.route('/leaderboard/<int:year>', methods=['GET'])
-def get_leaderboard(year):
+@ranking_bp.route('/leaderboard/<int:season_id>', methods=['GET'])
+def get_leaderboard(season_id):
     group = request.args.get('group', 'all')
     db = get_db()
     
-    season = db.execute('SELECT id FROM ranking_seasons WHERE year = ?', (year,)).fetchone()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
     if not season:
         return jsonify({'error': 'Temporada não encontrada'}), 404
     
@@ -208,10 +211,10 @@ def submit_match_result(match_id):
         db.execute('''
             UPDATE ranking_matches
             SET status = ?, winner_id = ?, score = ?, sets_p1 = ?, sets_p2 = ?,
-                games_p1 = ?, games_p2 = ?, points_p1 = ?, points_p2 = ?, played_at = ?
+                games_p1 = ?, games_p2 = ?, points_p1 = ?, points_p2 = ?, played_at = ?, added_by = ?
             WHERE id = ?
         ''', ('completed', winner_id, score, p1_sets, p2_sets, p1_games, p2_games,
-              points_p1, points_p2, datetime.utcnow(), match_id))
+              points_p1, points_p2, datetime.utcnow(), request.user_id, match_id))
         
         # Update participant stats
         for player_id, is_winner, sets_won, sets_lost, games_won, games_lost, points in [
@@ -259,10 +262,10 @@ def _update_positions(db, season_id):
             WHERE season_id = ? AND user_id = ?
         ''', (i + 1, season_id, participant['user_id']))
 
-@ranking_bp.route('/stats/<int:user_id>/<int:year>', methods=['GET'])
-def get_user_stats(user_id, year):
+@ranking_bp.route('/stats/<int:user_id>/<int:season_id>', methods=['GET'])
+def get_user_stats(user_id, season_id):
     db = get_db()
-    season = db.execute('SELECT id FROM ranking_seasons WHERE year = ?', (year,)).fetchone()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
     if not season:
         return jsonify({'error': 'Temporada não encontrada'}), 404
     
@@ -360,14 +363,15 @@ def set_wo_result(match_id):
         db.close()
         return jsonify({'error': str(e)}), 400
 
-@ranking_bp.route('/seasons/<int:year>/participants', methods=['POST'])
+@ranking_bp.route('/seasons/<int:season_id>/participants', methods=['POST'])
 @require_admin_auth
-def add_participant(year):
+def add_participant(season_id):
     data = request.get_json()
     user_id = data.get('user_id')
+    previous_position = data.get('previous_position')
     
     db = get_db()
-    season = db.execute('SELECT id FROM ranking_seasons WHERE year = ?', (year,)).fetchone()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
     if not season:
         return jsonify({'error': 'Temporada não encontrada'}), 404
     
@@ -376,20 +380,27 @@ def add_participant(year):
         max_pos = db.execute('SELECT MAX(position) as max_pos FROM ranking_participants WHERE season_id = ?', (season['id'],)).fetchone()
         position = (max_pos['max_pos'] or 0) + 1
         
+        # Calculate temp points if previous position provided
+        temp_points = 0
+        if previous_position:
+            temp_points = RankingConfigService.get_temp_points_for_position(season['id'], previous_position)
+        
         db.execute('''
-            INSERT INTO ranking_participants (season_id, user_id, position)
-            VALUES (?, ?, ?)
-        ''', (season['id'], user_id, position))
+            INSERT INTO ranking_participants (season_id, user_id, position, temp_points)
+            VALUES (?, ?, ?, ?)
+        ''', (season['id'], user_id, position, temp_points))
+        
+        _update_positions(db, season['id'])
         db.commit()
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-@ranking_bp.route('/seasons/<int:year>/participants/<int:user_id>/toggle', methods=['PUT'])
+@ranking_bp.route('/seasons/<int:season_id>/participants/<int:user_id>/toggle', methods=['PUT'])
 @require_admin_auth
-def toggle_participant(year, user_id):
+def toggle_participant(season_id, user_id):
     db = get_db()
-    season = db.execute('SELECT id FROM ranking_seasons WHERE year = ?', (year,)).fetchone()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
     if not season:
         return jsonify({'error': 'Temporada não encontrada'}), 404
     
@@ -412,11 +423,11 @@ def toggle_participant(year, user_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-@ranking_bp.route('/seasons/<int:year>/all-participants', methods=['GET'])
+@ranking_bp.route('/seasons/<int:season_id>/all-participants', methods=['GET'])
 @require_admin_auth
-def get_all_participants(year):
+def get_all_participants(season_id):
     db = get_db()
-    season = db.execute('SELECT id FROM ranking_seasons WHERE year = ?', (year,)).fetchone()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
     if not season:
         return jsonify({'error': 'Temporada não encontrada'}), 404
     
@@ -500,6 +511,11 @@ def open_round(round_id):
         if round_info['status'] != 'drawn':
             return jsonify({'error': 'Rodada precisa estar sorteada'}), 400
         
+        # Check if season is active
+        season = db.execute('SELECT status FROM ranking_seasons WHERE id = ?', (round_info['season_id'],)).fetchone()
+        if season['status'] != 'active':
+            return jsonify({'error': 'Temporada precisa estar ativa'}), 400
+        
         # Close any open rounds in the same season
         db.execute('UPDATE ranking_rounds SET status = ? WHERE season_id = ? AND status = ?', 
                    ('closed', round_info['season_id'], 'open'))
@@ -535,23 +551,77 @@ def close_round(round_id):
         logger.error(f'Error closing round: {str(e)}')
         return jsonify({'error': str(e)}), 400
 
-# Missing routes
-@ranking_bp.route('/seasons/<int:year>/temp-points-rules', methods=['GET'])
-def get_temp_points_rules(year):
+@ranking_bp.route('/seasons/<int:season_id>/open', methods=['PUT'])
+@require_admin_auth
+def open_season(season_id):
     db = get_db()
-    season = db.execute('SELECT id FROM ranking_seasons WHERE year = ?', (year,)).fetchone()
+    try:
+        season = db.execute('SELECT status FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
+        if not season:
+            return jsonify({'error': 'Temporada não encontrada'}), 404
+        
+        if season['status'] != 'draft':
+            return jsonify({'error': 'Apenas temporadas em rascunho podem ser abertas'}), 400
+        
+        # Check if there's already an active season
+        active = db.execute('SELECT COUNT(*) as count FROM ranking_seasons WHERE status = "active"').fetchone()
+        if active['count'] > 0:
+            return jsonify({'error': 'Já existe uma temporada ativa. Finalize-a antes de abrir outra'}), 400
+        
+        db.execute('UPDATE ranking_seasons SET status = ? WHERE id = ?', ('active', season_id))
+        db.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f'Error opening season: {str(e)}')
+        return jsonify({'error': str(e)}), 400
+
+@ranking_bp.route('/seasons/<int:season_id>/close', methods=['PUT'])
+@require_admin_auth
+def close_season(season_id):
+    db = get_db()
+    try:
+        season = db.execute('SELECT status FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
+        if not season:
+            return jsonify({'error': 'Temporada não encontrada'}), 404
+        
+        if season['status'] != 'active':
+            return jsonify({'error': 'Apenas temporadas ativas podem ser finalizadas'}), 400
+        
+        # Check if there are open rounds
+        open_rounds = db.execute(
+            'SELECT COUNT(*) as count FROM ranking_rounds WHERE season_id = ? AND status = "open"',
+            (season_id,)
+        ).fetchone()
+        
+        if open_rounds['count'] > 0:
+            return jsonify({'error': 'Feche todas as rodadas antes de finalizar a temporada'}), 400
+        
+        db.execute('UPDATE ranking_seasons SET status = ? WHERE id = ?', ('finished', season_id))
+        db.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f'Error closing season: {str(e)}')
+        return jsonify({'error': str(e)}), 400
+
+# Missing routes
+@ranking_bp.route('/seasons/<int:season_id>/temp-points-rules', methods=['GET'])
+def get_temp_points_rules(season_id):
+    db = get_db()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
     if not season:
         return jsonify({'error': 'Temporada não encontrada'}), 404
     
     rules = db.execute('SELECT * FROM ranking_temp_points_rules WHERE season_id = ? ORDER BY position_min', (season['id'],)).fetchall()
     return jsonify([dict(rule) for rule in rules])
 
-@ranking_bp.route('/seasons/<int:year>/temp-points-rules', methods=['POST'])
+@ranking_bp.route('/seasons/<int:season_id>/temp-points-rules', methods=['POST'])
 @require_admin_auth
-def create_temp_points_rules(year):
+def create_temp_points_rules(season_id):
     data = request.get_json()
     db = get_db()
-    season = db.execute('SELECT id FROM ranking_seasons WHERE year = ?', (year,)).fetchone()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
     if not season:
         return jsonify({'error': 'Temporada não encontrada'}), 404
     
@@ -561,6 +631,61 @@ def create_temp_points_rules(year):
                 INSERT INTO ranking_temp_points_rules (season_id, position_min, position_max, points, label)
                 VALUES (?, ?, ?, ?, ?)
             ''', (season['id'], rule['position_min'], rule['position_max'], rule['points'], rule.get('label')))
+        db.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@ranking_bp.route('/seasons/<int:season_id>/temp-points-rules', methods=['DELETE'])
+@require_admin_auth
+def delete_temp_points_rules(season_id):
+    db = get_db()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
+    if not season:
+        return jsonify({'error': 'Temporada não encontrada'}), 404
+    
+    try:
+        db.execute('DELETE FROM ranking_temp_points_rules WHERE season_id = ?', (season['id'],))
+        db.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@ranking_bp.route('/seasons/<int:season_id>/expire-temp-points', methods=['POST'])
+@require_admin_auth
+def expire_temp_points(season_id):
+    from src.services.temp_points_manager import TempPointsManager
+    db = get_db()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
+    if not season:
+        return jsonify({'error': 'Temporada não encontrada'}), 404
+    
+    try:
+        TempPointsManager.expire_temp_points(season['id'])
+        _update_positions(db, season['id'])
+        db.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@ranking_bp.route('/seasons/<int:season_id>/participants/<int:user_id>/temp-points', methods=['PUT'])
+@require_admin_auth
+def update_participant_temp_points(season_id, user_id):
+    data = request.get_json()
+    temp_points = data.get('temp_points', 0)
+    
+    db = get_db()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE id = ?', (season_id,)).fetchone()
+    if not season:
+        return jsonify({'error': 'Temporada não encontrada'}), 404
+    
+    try:
+        db.execute('''
+            UPDATE ranking_participants
+            SET temp_points = ?
+            WHERE season_id = ? AND user_id = ?
+        ''', (temp_points, season['id'], user_id))
+        _update_positions(db, season['id'])
         db.commit()
         return jsonify({'success': True})
     except Exception as e:
@@ -599,3 +724,24 @@ def get_match(match_id):
     if not match:
         return jsonify({'error': 'Partida não encontrada'}), 404
     return jsonify(dict(match))
+
+@ranking_bp.route('/recent-results', methods=['GET'])
+def get_recent_results():
+    limit = request.args.get('limit', 20, type=int)
+    db = get_db()
+    results = db.execute('''
+        SELECT rm.*, rr.round_number, rr.month,
+               u1.short_name as player1_name, u2.short_name as player2_name, 
+               uw.short_name as winner_name,
+               ua.short_name as added_by_name, ua.id as added_by_id
+        FROM ranking_matches rm
+        JOIN ranking_rounds rr ON rm.round_id = rr.id
+        JOIN users u1 ON rm.player1_id = u1.id
+        JOIN users u2 ON rm.player2_id = u2.id
+        LEFT JOIN users uw ON rm.winner_id = uw.id
+        LEFT JOIN users ua ON rm.added_by = ua.id
+        WHERE rm.status = 'completed'
+        ORDER BY rm.played_at DESC
+        LIMIT ?
+    ''', (limit,)).fetchall()
+    return jsonify([dict(r) for r in results])

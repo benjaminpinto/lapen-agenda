@@ -64,10 +64,12 @@ class RankingConfigService:
                 data_type = 'boolean'
                 value = str(value).lower()
             
+            # Use INSERT ... ON CONFLICT for PostgreSQL compatibility
             db.execute('''
-                INSERT OR REPLACE INTO ranking_season_config (season_id, key, value, data_type)
+                INSERT INTO ranking_season_config (season_id, key, value, data_type)
                 VALUES (?, ?, ?, ?)
-            ''', (season_id, key, str(value), data_type))
+                ON CONFLICT (season_id, key) DO UPDATE SET value = ?, data_type = ?
+            ''', (season_id, key, str(value), data_type, str(value), data_type))
         
         if should_close:
             db.commit()

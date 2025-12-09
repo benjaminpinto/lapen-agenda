@@ -1,6 +1,9 @@
 -- Migrate existing data from match_statistics and ranking_matches to match_statistics_unified
 -- Run this AFTER creating match_statistics_unified table
 
+-- Clear existing data (in case of re-run)
+TRUNCATE match_statistics_unified;
+
 -- Step 1: Migrate from match_statistics (scheduled matches)
 INSERT INTO match_statistics_unified (
     schedule_id,
@@ -66,7 +69,7 @@ SELECT
     uw.short_name as winner_name,
     rm.score,
     'Ranking' as match_type,
-    COALESCE(rm.played_at::date, s.date) as match_date,
+    COALESCE(rm.played_at::date, s.date, CURRENT_DATE) as match_date,
     rr.season_id,
     rm.added_by,
     COALESCE(rm.played_at, rm.created_at) as created_at

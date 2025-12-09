@@ -4,22 +4,23 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar, CheckCircle } from 'lucide-react'
 
-const RankingMatches = () => {
+const RankingMatches = ({ seasonId }) => {
   const [matches, setMatches] = useState({ elite: [], challenger: [] })
   const [filter, setFilter] = useState('scheduled')
   const [loading, setLoading] = useState(true)
-  const [currentYear] = useState(new Date().getFullYear())
   const [roundTitle, setRoundTitle] = useState('Partidas')
 
   useEffect(() => {
-    fetchMatches()
-  }, [])
+    if (seasonId) {
+      fetchMatches()
+    }
+  }, [seasonId])
 
   const fetchMatches = async () => {
     try {
       const [matchesRes, leaderboardRes] = await Promise.all([
         fetch(`/api/ranking/all-open-matches`),
-        fetch(`/api/ranking/leaderboard/${currentYear}`)
+        fetch(`/api/ranking/leaderboard/${seasonId}`)
       ])
       
       if (matchesRes.ok && leaderboardRes.ok) {

@@ -203,7 +203,7 @@ const RankingLeaderboard = () => {
         </Card>
       </div>
 
-      <RankingMatches />
+      <RankingMatches seasonId={selectedSeason} />
     </div>
   )
 }

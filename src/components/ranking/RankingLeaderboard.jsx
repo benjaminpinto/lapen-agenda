@@ -1,23 +1,46 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Trophy, Medal, Award } from 'lucide-react'
 import RankingMatches from './RankingMatches'
 
 const RankingLeaderboard = () => {
   const [leaderboard, setLeaderboard] = useState({ elite: [], challenger: [] })
   const [loading, setLoading] = useState(true)
-  const [currentYear] = useState(new Date().getFullYear())
+  const [seasons, setSeasons] = useState([])
+  const [selectedSeason, setSelectedSeason] = useState(null)
 
   useEffect(() => {
-    fetchLeaderboard()
+    fetchSeasons()
   }, [])
 
+  useEffect(() => {
+    if (selectedSeason) {
+      fetchLeaderboard()
+    }
+  }, [selectedSeason])
+
+  const fetchSeasons = async () => {
+    try {
+      const response = await fetch('/api/ranking/seasons')
+      if (response.ok) {
+        const data = await response.json()
+        setSeasons(data)
+        const active = data.find(s => s.status === 'active') || data[0]
+        if (active) setSelectedSeason(active.id)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar temporadas:', error)
+    }
+  }
+
   const fetchLeaderboard = async () => {
+    setLoading(true)
     try {
       const [eliteResponse, challengerResponse] = await Promise.all([
-        fetch(`/api/ranking/leaderboard/${currentYear}?group=elite`),
-        fetch(`/api/ranking/leaderboard/${currentYear}?group=challenger`)
+        fetch(`/api/ranking/leaderboard/${selectedSeason}?group=elite`),
+        fetch(`/api/ranking/leaderboard/${selectedSeason}?group=challenger`)
       ])
 
       if (eliteResponse.ok && challengerResponse.ok) {
@@ -90,11 +113,32 @@ const RankingLeaderboard = () => {
     )
   }
 
+  const currentSeason = seasons.find(s => s.id === selectedSeason)
+  const getSeasonLabel = (season) => {
+    return season.description ? `${season.year} - ${season.description}` : season.year
+  }
+
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900">Ranking LAPEN {currentYear}</h1>
-        <p className="text-gray-600 mt-2">Sistema de pontuação anual</p>
+        <h1 className="text-3xl font-bold text-gray-900">Ranking LAPEN</h1>
+        <div className="flex items-center justify-center gap-2 mt-3">
+          <span className="text-sm text-gray-500">Temporada:</span>
+          <Select value={selectedSeason?.toString()} onValueChange={(v) => setSelectedSeason(parseInt(v))}>
+            <SelectTrigger className="w-auto min-w-[200px] h-8 text-sm">
+              <SelectValue>
+                {currentSeason && getSeasonLabel(currentSeason)}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {seasons.map(season => (
+                <SelectItem key={season.id} value={season.id.toString()}>
+                  {getSeasonLabel(season)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

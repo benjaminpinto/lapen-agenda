@@ -1050,3 +1050,69 @@ paths:
                     type: array
                     items:
                       type: string
+
+  /api/statistics/opponents/{player_name}:
+    get:
+      tags:
+        - Statistics
+      summary: Get opponents for a specific player
+      parameters:
+        - name: player_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of opponents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  opponents:
+                    type: array
+                    items:
+                      type: string
+
+  /api/statistics/general:
+    get:
+      tags:
+        - Statistics
+      summary: Get general statistics for all matches
+      responses:
+        '200':
+          description: General statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_matches:
+                    type: integer
+                    example: 150
+                  total_players:
+                    type: integer
+                    example: 25
+                  match_types:
+                    type: object
+                    additionalProperties:
+                      type: integer
+                    example:
+                      Ranking: 80
+                      Amistoso: 50
+                      Liga: 20
+                  top_players:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        wins:
+                          type: integer
+                        matches:
+                          type: integer
+                        win_rate:
+                          type: number
+                          format: float

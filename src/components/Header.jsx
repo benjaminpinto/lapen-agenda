@@ -71,7 +71,7 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                             </Button>
                         </Link>
 
-                        <Link to="/statistics">
+                        <Link to="/statistics" onClick={() => navigate('/statistics', { replace: true })}>
                             <Button variant="ghost" size="sm">
                                 <BarChart3 className="h-4 w-4 mr-2"/>
                                 Estatísticas
@@ -159,7 +159,7 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                                 </Button>
                             </Link>
 
-                            <Link to="/statistics" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Link to="/statistics" onClick={() => { navigate('/statistics', { replace: true }); setIsMobileMenuOpen(false); }}>
                                 <Button variant="ghost" size="sm" className="w-full justify-start">
                                     <BarChart3 className="h-4 w-4 mr-2"/>
                                     Estatísticas

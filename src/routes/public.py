@@ -164,7 +164,7 @@ def create_schedule():
     match_type = data.get('match_type')
 
     if not all([court_id, date, start_time, player1_name, player2_name, match_type]):
-        return jsonify({'error': 'All fields are required'}), 400
+        return jsonify({'error': 'Todos os campos são obrigatórios'}), 400
 
     # Check if slot is still available
     db = get_db()
@@ -174,11 +174,11 @@ def create_schedule():
     ''', (court_id, date, start_time)).fetchone()
 
     if existing:
-        return jsonify({'error': 'Time slot is no longer available'}), 400
+        return jsonify({'error': 'Horário não está mais disponível'}), 400
 
     # Check if time is blocked
     if is_time_blocked(date, start_time, court_id):
-        return jsonify({'error': 'Time slot is blocked'}), 400
+        return jsonify({'error': 'Horário está bloqueado'}), 400
 
     try:
         db.execute('''
@@ -186,9 +186,9 @@ def create_schedule():
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (court_id, date, start_time, player1_name, player2_name, match_type))
         db.commit()
-        return jsonify({'success': True, 'message': 'Schedule created successfully'})
+        return jsonify({'success': True, 'message': 'Agendamento criado com sucesso'})
     except Exception:
-        return jsonify({'error': 'Failed to create schedule'}), 500
+        return jsonify({'error': 'Falha ao criar agendamento'}), 500
 
 
 @public_bp.route('/schedules/<int:schedule_id>/has-bets', methods=['GET'])
@@ -216,23 +216,23 @@ def update_schedule(schedule_id):
     match_type = data.get('match_type')
 
     if not all([player1_name, player2_name, match_type]):
-        return jsonify({'error': 'All fields are required'}), 400
+        return jsonify({'error': 'Todos os campos são obrigatórios'}), 400
 
     db = get_db()
 
     # Check if schedule exists
     existing = db.execute('SELECT id FROM schedules WHERE id = ?', (schedule_id,)).fetchone()
     if not existing:
-        return jsonify({'error': 'Schedule not found'}), 404
+        return jsonify({'error': 'Agendamento não encontrado'}), 404
 
     # Check if schedule has active bets or finished match
     match = db.execute('SELECT id, status FROM matches WHERE schedule_id = ?', (schedule_id,)).fetchone()
     if match:
         if match['status'] == 'finished':
-            return jsonify({'error': 'Cannot edit finished match', 'has_bets': True}), 400
+            return jsonify({'error': 'Não é possível editar partida finalizada', 'has_bets': True}), 400
         active_bets = db.execute("SELECT COUNT(*) as count FROM bets WHERE match_id = ? AND status = 'active'", (match['id'],)).fetchone()
         if active_bets['count'] > 0:
-            return jsonify({'error': 'Cannot edit schedule with active bets', 'has_bets': True}), 400
+            return jsonify({'error': 'Não é possível editar agendamento com apostas ativas', 'has_bets': True}), 400
 
     try:
         db.execute('''
@@ -241,9 +241,9 @@ def update_schedule(schedule_id):
             WHERE id = ?
         ''', (player1_name, player2_name, match_type, schedule_id))
         db.commit()
-        return jsonify({'success': True, 'message': 'Schedule updated successfully'})
+        return jsonify({'success': True, 'message': 'Agendamento atualizado com sucesso'})
     except Exception:
-        return jsonify({'error': 'Failed to update schedule'}), 500
+        return jsonify({'error': 'Falha ao atualizar agendamento'}), 500
 
 
 @public_bp.route('/schedules/<int:schedule_id>', methods=['DELETE'])
@@ -260,7 +260,7 @@ def delete_schedule(schedule_id):
             try:
                 db.execute('UPDATE schedules SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?', (schedule_id,))
                 db.commit()
-                return jsonify({'success': True, 'message': 'Schedule deleted successfully'})
+                return jsonify({'success': True, 'message': 'Agendamento excluído com sucesso'})
             except Exception as e:
                 return jsonify({'error': str(e)}), 400
         
@@ -270,7 +270,7 @@ def delete_schedule(schedule_id):
             try:
                 db.execute('UPDATE schedules SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?', (schedule_id,))
                 db.commit()
-                return jsonify({'success': True, 'message': 'Schedule deleted successfully'})
+                return jsonify({'success': True, 'message': 'Agendamento excluído com sucesso'})
             except Exception as e:
                 return jsonify({'error': str(e)}), 400
     
@@ -278,7 +278,7 @@ def delete_schedule(schedule_id):
     try:
         db.execute('DELETE FROM schedules WHERE id = ?', (schedule_id,))
         db.commit()
-        return jsonify({'success': True, 'message': 'Schedule deleted successfully'})
+        return jsonify({'success': True, 'message': 'Agendamento excluído com sucesso'})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 

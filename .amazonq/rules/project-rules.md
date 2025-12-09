@@ -2,6 +2,7 @@
 
 ## Database Rules
 - All database implementations or changes MUST be compatible with both SQLite (local) and PostgreSQL (Vercel production)
+- **Local SQLite database file is named `app.db` (NOT lapen_agenda.db)**
 - Use SQLAlchemy ORM abstractions to ensure cross-database compatibility
 - Avoid database-specific SQL syntax; use SQLAlchemy expressions
 - Test migrations on both SQLite and PostgreSQL before committing
@@ -23,6 +24,18 @@
 - Ensure accessibility (WCAG 2.1 AA minimum)
 - Loading states for all async operations
 - Clear error messages in Portuguese
+- NEVER use browser alert(), confirm(), or prompt() - always use shadcn/ui Dialog components
+
+## Color Palette (Clay Court Theme)
+- Primary colors inspired by clay tennis courts
+- Brown 600: #92400e - Primary emphasis
+- Brown 500: #a16207 - Secondary emphasis
+- Brown 400: #ca8a04 - Tertiary emphasis
+- Orange 600: #ea580c - Accents, highlights
+- Amber 500: #f59e0b - Interactive elements
+- Amber 400: #fbbf24 - Subtle highlights
+- Use these colors consistently across statistics, charts, and UI elements
+- Avoid bright blues, purples, or greens that clash with the clay court theme
 
 ## Backend Rules
 - Follow Flask best practices and existing route patterns
@@ -67,3 +80,6 @@
 - Feature branches from main
 - No direct commits to main
 - Keep commits focused and atomic
+
+## Debugging
+- When fixing UI issues, always use Playwright MCP to reproduce the issue and investigate instead of trying to guess stuff

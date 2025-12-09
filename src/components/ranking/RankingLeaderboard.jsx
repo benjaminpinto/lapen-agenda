@@ -28,10 +28,17 @@ const RankingLeaderboard = () => {
         const data = await response.json()
         setSeasons(data)
         const active = data.find(s => s.status === 'active') || data[0]
-        if (active) setSelectedSeason(active.id)
+        if (active) {
+          setSelectedSeason(active.id)
+        } else {
+          setLoading(false)
+        }
+      } else {
+        setLoading(false)
       }
     } catch (error) {
       console.error('Erro ao carregar temporadas:', error)
+      setLoading(false)
     }
   }
 
@@ -108,6 +115,19 @@ const RankingLeaderboard = () => {
       <Card>
         <CardContent className="p-6">
           <div className="text-center">Carregando ranking...</div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (seasons.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-gray-500">
+            <p className="text-lg font-medium mb-2">Nenhuma temporada disponível</p>
+            <p className="text-sm">Entre em contato com o administrador para criar uma temporada.</p>
+          </div>
         </CardContent>
       </Card>
     )

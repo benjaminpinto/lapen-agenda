@@ -9,7 +9,7 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 
 const SeasonConfig = () => {
   const navigate = useNavigate()
-  const { year } = useParams()
+  const { id } = useParams()
   const [config, setConfig] = useState({})
   const [tempRules, setTempRules] = useState([])
   const [loading, setLoading] = useState(true)
@@ -18,11 +18,11 @@ const SeasonConfig = () => {
   useEffect(() => {
     fetchConfig()
     fetchTempRules()
-  }, [year])
+  }, [id])
 
   const fetchConfig = async () => {
     try {
-      const response = await fetch(`/api/ranking/seasons/${year}/config`)
+      const response = await fetch(`/api/ranking/seasons/${id}/config`)
       if (response.ok) {
         const data = await response.json()
         setConfig(data)
@@ -36,7 +36,7 @@ const SeasonConfig = () => {
 
   const fetchTempRules = async () => {
     try {
-      const response = await fetch(`/api/ranking/seasons/${year}/temp-points-rules`)
+      const response = await fetch(`/api/ranking/seasons/${id}/temp-points-rules`)
       if (response.ok) {
         const data = await response.json()
         setTempRules(data)
@@ -49,7 +49,7 @@ const SeasonConfig = () => {
   const saveConfig = async () => {
     try {
       const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/seasons/${year}/config`, {
+      const response = await fetch(`/api/ranking/seasons/${id}/config`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -89,11 +89,11 @@ const SeasonConfig = () => {
   const saveTempRules = async () => {
     try {
       const token = localStorage.getItem('auth_token')
-      await fetch(`/api/ranking/seasons/${year}/temp-points-rules`, {
+      await fetch(`/api/ranking/seasons/${id}/temp-points-rules`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })
-      const response = await fetch(`/api/ranking/seasons/${year}/temp-points-rules`, {
+      const response = await fetch(`/api/ranking/seasons/${id}/temp-points-rules`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ const SeasonConfig = () => {
         <ArrowLeft className="h-4 w-4 mr-2" />
         Voltar
       </Button>
-      <h1 className="text-2xl font-bold">Configuração {year}</h1>
+      <h1 className="text-2xl font-bold">Configuração da Temporada</h1>
       
       <Card>
         <CardHeader>

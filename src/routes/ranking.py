@@ -481,8 +481,8 @@ def cancel_draw(round_id):
     try:
         # Check if any matches have results
         completed = db.execute(
-            'SELECT COUNT(*) as count FROM ranking_matches WHERE round_id = ? AND status = "completed"',
-            (round_id,)
+            'SELECT COUNT(*) as count FROM ranking_matches WHERE round_id = ? AND status = ?',
+            (round_id, 'completed')
         ).fetchone()
         
         if completed['count'] > 0:
@@ -536,8 +536,8 @@ def close_round(round_id):
     try:
         # Check if all matches have results
         pending = db.execute(
-            'SELECT COUNT(*) as count FROM ranking_matches WHERE round_id = ? AND status = "scheduled"',
-            (round_id,)
+            'SELECT COUNT(*) as count FROM ranking_matches WHERE round_id = ? AND status = ?',
+            (round_id, 'scheduled')
         ).fetchone()
         
         if pending['count'] > 0:
@@ -564,7 +564,7 @@ def open_season(season_id):
             return jsonify({'error': 'Apenas temporadas em rascunho podem ser abertas'}), 400
         
         # Check if there's already an active season
-        active = db.execute('SELECT COUNT(*) as count FROM ranking_seasons WHERE status = "active"').fetchone()
+        active = db.execute('SELECT COUNT(*) as count FROM ranking_seasons WHERE status = ?', ('active',)).fetchone()
         if active['count'] > 0:
             return jsonify({'error': 'Já existe uma temporada ativa. Finalize-a antes de abrir outra'}), 400
         
@@ -590,8 +590,8 @@ def close_season(season_id):
         
         # Check if there are open rounds
         open_rounds = db.execute(
-            'SELECT COUNT(*) as count FROM ranking_rounds WHERE season_id = ? AND status = "open"',
-            (season_id,)
+            'SELECT COUNT(*) as count FROM ranking_rounds WHERE season_id = ? AND status = ?',
+            (season_id, 'open')
         ).fetchone()
         
         if open_rounds['count'] > 0:

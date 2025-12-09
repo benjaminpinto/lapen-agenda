@@ -101,8 +101,25 @@ def get_db():
     if postgres_url:
         import psycopg2
         from psycopg2.extras import RealDictCursor
-        conn = psycopg2.connect(postgres_url, cursor_factory=RealDictCursor)
-        return DatabaseWrapper(conn, is_postgres=True)
+        import time
+        
+        # Retry connection up to 3 times
+        for attempt in range(3):
+            try:
+                conn = psycopg2.connect(
+                    postgres_url,
+                    cursor_factory=RealDictCursor,
+                    connect_timeout=10,
+                    keepalives=1,
+                    keepalives_idle=30,
+                    keepalives_interval=10,
+                    keepalives_count=5
+                )
+                return DatabaseWrapper(conn, is_postgres=True)
+            except psycopg2.OperationalError as e:
+                if attempt == 2:
+                    raise
+                time.sleep(0.5 * (attempt + 1))
     else:
         conn = sqlite3.connect(DATABASE)
         conn.row_factory = sqlite3.Row

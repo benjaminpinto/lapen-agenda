@@ -170,7 +170,7 @@ function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
                 } 
               />
               <Route 
-                path="/admin/ranking/config/:year" 
+                path="/admin/ranking/config/:id" 
                 element={
                   isAdminAuthenticated ? 
                   <SeasonConfig /> : 
@@ -178,7 +178,7 @@ function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
                 } 
               />
               <Route 
-                path="/admin/ranking/participants/:year" 
+                path="/admin/ranking/participants/:id" 
                 element={
                   isAdminAuthenticated ? 
                   <SeasonParticipants /> : 
@@ -186,7 +186,7 @@ function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
                 } 
               />
               <Route 
-                path="/admin/ranking/rounds/:year" 
+                path="/admin/ranking/rounds/:id" 
                 element={
                   isAdminAuthenticated ? 
                   <SeasonRounds /> : 

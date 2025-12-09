@@ -11,7 +11,7 @@ import { ArrowLeft, UserX, UserCheck, Clock, Edit2 } from 'lucide-react'
 
 const SeasonParticipants = () => {
   const navigate = useNavigate()
-  const { year } = useParams()
+  const { id } = useParams()
   const [participants, setParticipants] = useState([])
   const [availableUsers, setAvailableUsers] = useState([])
   const [tempRules, setTempRules] = useState([])
@@ -27,13 +27,13 @@ const SeasonParticipants = () => {
   useEffect(() => {
     fetchData()
     fetchTempRules()
-  }, [year])
+  }, [id])
 
   const fetchData = async () => {
     try {
       const token = localStorage.getItem('auth_token')
       const [participantsRes, usersRes] = await Promise.all([
-        fetch(`/api/ranking/seasons/${year}/all-participants`, {
+        fetch(`/api/ranking/seasons/${id}/all-participants`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch('/api/admin/users', {
@@ -59,7 +59,7 @@ const SeasonParticipants = () => {
 
   const fetchTempRules = async () => {
     try {
-      const response = await fetch(`/api/ranking/seasons/${year}/temp-points-rules`)
+      const response = await fetch(`/api/ranking/seasons/${id}/temp-points-rules`)
       if (response.ok) {
         const data = await response.json()
         setTempRules(data)
@@ -78,7 +78,7 @@ const SeasonParticipants = () => {
   const addParticipant = async () => {
     try {
       const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/seasons/${year}/participants`, {
+      const response = await fetch(`/api/ranking/seasons/${id}/participants`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ const SeasonParticipants = () => {
   const toggleParticipant = async (userId, isActive) => {
     try {
       const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/seasons/${year}/participants/${userId}/toggle`, {
+      const response = await fetch(`/api/ranking/seasons/${id}/participants/${userId}/toggle`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -126,7 +126,7 @@ const SeasonParticipants = () => {
   const expireAllTempPoints = async () => {
     try {
       const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/seasons/${year}/expire-temp-points`, {
+      const response = await fetch(`/api/ranking/seasons/${id}/expire-temp-points`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -146,7 +146,7 @@ const SeasonParticipants = () => {
   const updateTempPoints = async (userId) => {
     try {
       const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/seasons/${year}/participants/${userId}/temp-points`, {
+      const response = await fetch(`/api/ranking/seasons/${id}/participants/${userId}/temp-points`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -179,7 +179,7 @@ const SeasonParticipants = () => {
         Voltar
       </Button>
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Participantes {year}</h1>
+        <h1 className="text-2xl font-bold">Participantes da Temporada</h1>
         <Button variant="outline" onClick={() => setShowExpireDialog(true)}>
           <Clock className="h-4 w-4 mr-2" />
           Expirar Pontos Temp.

@@ -269,19 +269,19 @@ const SeasonRounds = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <Button variant="outline" onClick={() => navigate('/admin/ranking')}>
+    <div className="space-y-4 sm:space-y-6">
+      <Button variant="outline" onClick={() => navigate('/admin/ranking')} className="w-full sm:w-auto">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Voltar
       </Button>
-      <h1 className="text-2xl font-bold">Rodadas da Temporada</h1>
+      <h1 className="text-xl sm:text-2xl font-bold">Rodadas da Temporada</h1>
       
       <Card>
         <CardHeader>
           <CardTitle>Nova Rodada</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Rodada #{rounds.length + 1} - Selecione o mês</label>
               <Select value={newRound.month} onValueChange={(value) => setNewRound({ ...newRound, month: value })}>
@@ -310,7 +310,7 @@ const SeasonRounds = () => {
               />
             </div>
           </div>
-          <Button onClick={createRound}>Criar Rodada</Button>
+          <Button onClick={createRound} className="w-full sm:w-auto">Criar Rodada</Button>
         </CardContent>
       </Card>
 
@@ -318,42 +318,42 @@ const SeasonRounds = () => {
         {rounds.map(round => (
           <Card key={round.id}>
             <CardContent className="p-4">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center">
                 <div>
                   <h3 className="font-semibold">
                     Rodada {round.round_number}{round.description ? ` - ${round.description}` : ''}
                   </h3>
                   <p className="text-sm text-gray-600">{months.find(m => m.value === round.month)?.label || `Mês ${round.month}`}</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   {getStatusBadge(round.status)}
                   {round.status === 'pending' && (
-                    <Button size="sm" onClick={() => generateDraw(round.id)}>
+                    <Button size="sm" onClick={() => generateDraw(round.id)} className="w-full sm:w-auto">
                       Sortear
                     </Button>
                   )}
                   {round.status === 'drawn' && (
                     <>
-                      <Button size="sm" onClick={() => openRound(round.id)}>
+                      <Button size="sm" onClick={() => openRound(round.id)} className="w-full sm:w-auto">
                         Abrir Rodada
                       </Button>
                       <Button size="sm" variant="destructive" onClick={() => {
                         setRoundToCancel(round.id)
                         setCancelDialogOpen(true)
-                      }}>
+                      }} className="w-full sm:w-auto">  
                         Cancelar Sorteio
                       </Button>
                     </>
                   )}
                   {round.status === 'open' && (
-                    <Button size="sm" variant="outline" onClick={() => closeRound(round.id)}>
+                    <Button size="sm" variant="outline" onClick={() => closeRound(round.id)} className="w-full sm:w-auto">
                       Fechar Rodada
                     </Button>
                   )}
                   <Button size="sm" variant="outline" onClick={() => {
                     setSelectedRound(round.id)
                     fetchMatches(round.id)
-                  }}>
+                  }} className="w-full sm:w-auto">
                     Ver Partidas
                   </Button>
                 </div>
@@ -371,14 +371,16 @@ const SeasonRounds = () => {
           <CardContent>
             <div className="space-y-2">
               {matches.map(match => (
-                <div key={match.id} className="flex justify-between items-center p-2 border rounded">
-                  <div>
+                <div key={match.id} className="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center p-2 border rounded">
+                  <div className="flex flex-col gap-1">
                     <span className="font-medium">{match.player1_name} vs {match.player2_name}</span>
-                    <Badge className="ml-2">{match.group_type}</Badge>
-                    {match.score && <span className="ml-2 text-sm">{match.score}</span>}
-                    {match.winner_name && <span className="ml-2 text-sm text-green-600">Vencedor: {match.winner_name}</span>}
+                    <div className="flex flex-wrap gap-2">
+                      <Badge>{match.group_type}</Badge>
+                      {match.score && <span className="text-sm">{match.score}</span>}
+                      {match.winner_name && <span className="text-sm text-green-600">Vencedor: {match.winner_name}</span>}
+                    </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Badge variant={match.status === 'completed' ? 'default' : 'secondary'}>
                       {match.status === 'completed' ? 'Finalizada' : 'Pendente'}
                     </Badge>
@@ -387,13 +389,13 @@ const SeasonRounds = () => {
                         <Button size="sm" onClick={() => {
                           setSelectedMatch(match)
                           setShowResultForm(true)
-                        }}>
+                        }} className="w-full sm:w-auto">
                           Registrar Resultado
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => {
                           setSelectedMatch(match)
                           setShowResultForm(false)
-                        }}>
+                        }} className="w-full sm:w-auto">
                           W.O.
                         </Button>
                       </>

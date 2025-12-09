@@ -162,15 +162,25 @@ def submit_match_result(match_id):
     
     db = get_db()
     
-    # Get match details
+    # Get match details with season and round status
     match = db.execute('''
-        SELECT rm.*, rr.season_id FROM ranking_matches rm
+        SELECT rm.*, rr.season_id, rr.status as round_status, rs.status as season_status
+        FROM ranking_matches rm
         JOIN ranking_rounds rr ON rm.round_id = rr.id
+        JOIN ranking_seasons rs ON rr.season_id = rs.id
         WHERE rm.id = ?
     ''', (match_id,)).fetchone()
     
     if not match:
         return jsonify({'error': 'Partida não encontrada'}), 404
+    
+    # Verify season is active
+    if match['season_status'] != 'active':
+        return jsonify({'error': 'Temporada não está ativa'}), 400
+    
+    # Verify round is open
+    if match['round_status'] != 'open':
+        return jsonify({'error': 'Rodada não está aberta'}), 400
     
     # Verify user can submit result
     if request.user_id not in [match['player1_id'], match['player2_id']]:
@@ -319,13 +329,23 @@ def set_wo_result(match_id):
     
     db = get_db()
     match = db.execute('''
-        SELECT rm.*, rr.season_id FROM ranking_matches rm
+        SELECT rm.*, rr.season_id, rr.status as round_status, rs.status as season_status
+        FROM ranking_matches rm
         JOIN ranking_rounds rr ON rm.round_id = rr.id
+        JOIN ranking_seasons rs ON rr.season_id = rs.id
         WHERE rm.id = ?
     ''', (match_id,)).fetchone()
     
     if not match:
         return jsonify({'error': 'Partida não encontrada'}), 404
+    
+    # Verify season is active
+    if match['season_status'] != 'active':
+        return jsonify({'error': 'Temporada não está ativa'}), 400
+    
+    # Verify round is open
+    if match['round_status'] != 'open':
+        return jsonify({'error': 'Rodada não está aberta'}), 400
     
     try:
         # Calculate W.O. points

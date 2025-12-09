@@ -7,8 +7,6 @@ import { useToast } from '@/components/hooks/use-toast'
 import { useAuth } from '@/contexts/AuthContext'
 import { Calendar, Clock } from 'lucide-react'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001'
-
 export default function AddMatchResult() {
   const [pastMatches, setPastMatches] = useState([])
   const [userMatches, setUserMatches] = useState([])
@@ -32,7 +30,7 @@ export default function AddMatchResult() {
 
   const fetchPastMatches = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/statistics/past-matches`)
+      const response = await fetch('/api/statistics/past-matches')
       const data = await response.json()
       const matches = data.matches || []
       
@@ -108,7 +106,7 @@ export default function AddMatchResult() {
 
     setLoading(true)
     try {
-      const response = await fetch(`${API_URL}/api/statistics/match-result`, {
+      const response = await fetch('/api/statistics/match-result', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

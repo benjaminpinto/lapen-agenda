@@ -7,8 +7,6 @@ import { Trophy, TrendingUp, Target, Award, ChevronDown, ChevronUp, Users, Flame
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import RecentResults from '../ranking/RecentResults'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001'
-
 export default function Statistics() {
   const [players, setPlayers] = useState([])
   const [opponents, setOpponents] = useState([])
@@ -41,7 +39,7 @@ export default function Statistics() {
 
   const fetchPlayers = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/statistics/players`)
+      const response = await fetch('/api/statistics/players')
       const data = await response.json()
       setPlayers(data.players || [])
     } catch (error) {
@@ -51,7 +49,7 @@ export default function Statistics() {
 
   const fetchSeasons = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/ranking/seasons`)
+      const response = await fetch('/api/ranking/seasons')
       const data = await response.json()
       setSeasons(data)
     } catch (error) {
@@ -66,8 +64,8 @@ export default function Statistics() {
   const fetchGeneralStats = async () => {
     try {
       const url = selectedSeason 
-        ? `${API_URL}/api/statistics/general?season=${selectedSeason}`
-        : `${API_URL}/api/statistics/general`
+        ? `/api/statistics/general?season=${selectedSeason}`
+        : '/api/statistics/general'
       const response = await fetch(url)
       const data = await response.json()
       setGeneralStats(data)
@@ -84,7 +82,7 @@ export default function Statistics() {
 
   const fetchOpponents = async (playerName) => {
     try {
-      const response = await fetch(`${API_URL}/api/statistics/opponents/${encodeURIComponent(playerName)}`)
+      const response = await fetch(`/api/statistics/opponents/${encodeURIComponent(playerName)}`)
       const data = await response.json()
       setOpponents(data.opponents || [])
     } catch (error) {
@@ -114,7 +112,7 @@ export default function Statistics() {
       if (player2) params.append('player2', player2)
       if (matchType) params.append('match_type', matchType)
 
-      const response = await fetch(`${API_URL}/api/statistics/player?${params}`)
+      const response = await fetch(`/api/statistics/player?${params}`)
       const data = await response.json()
       setStats(data)
       setIsFilterOpen(false)

@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './contexts/AuthContext'
 import { Toaster } from '@/components/ui/toaster'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
@@ -32,6 +33,8 @@ import MyBets from './components/betting/MyBets'
 import Profile from './components/Profile'
 import RankingLeaderboard from './components/ranking/RankingLeaderboard'
 import MyMatches from './components/ranking/MyMatches'
+import Statistics from './components/statistics/Statistics'
+import AddMatchResult from './components/statistics/AddMatchResult'
 import './App.css'
 
 function App() {
@@ -40,7 +43,23 @@ function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <Router>
+        <AuthWrapper>
+          <Router isAdminAuthenticated={isAdminAuthenticated} setIsAdminAuthenticated={setIsAdminAuthenticated} />
+        </AuthWrapper>
+      </AuthProvider>
+    </ToastProvider>
+  )
+}
+
+function AuthWrapper({ children }) {
+  return children
+}
+
+function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
+  const { isAuthenticated, loading } = useAuth()
+  
+  return (
+    <BrowserRouter>
         <div className="min-h-screen bg-slate-50">
           <Header isAdminAuthenticated={isAdminAuthenticated} setIsAdminAuthenticated={setIsAdminAuthenticated} />
           <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-7xl">
@@ -59,6 +78,8 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/ranking" element={<RankingLeaderboard />} />
               <Route path="/ranking/my-matches" element={<MyMatches />} />
+              <Route path="/statistics" element={<Statistics />} />
+              <Route path="/statistics/add-result" element={loading ? <div>Carregando...</div> : (isAuthenticated ? <AddMatchResult /> : <Navigate to="/login" />)} />
               <Route 
                 path="/admin" 
                 element={
@@ -176,9 +197,7 @@ function App() {
           </main>
         </div>
         <Toaster />
-      </Router>
-    </AuthProvider>
-  </ToastProvider>
+    </BrowserRouter>
   )
 }
 

@@ -279,12 +279,12 @@ const ScheduleForm = () => {
                   }}
                   className={`p-3 border-2 rounded-lg flex items-center gap-2 transition-all ${
                     formData.match_type === 'Liga'
-                      ? 'border-green-600 bg-green-50'
+                      ? 'border-yellow-800 bg-yellow-100'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   <Trophy className={`h-5 w-5 ${
-                    formData.match_type === 'Liga' ? 'text-green-600' : 'text-gray-400'
+                    formData.match_type === 'Liga' ? 'text-yellow-800' : 'text-gray-400'
                   }`} />
                   <span className="font-medium text-sm">Liga</span>
                 </button>
@@ -303,12 +303,12 @@ const ScheduleForm = () => {
                   }}
                   className={`p-3 border-2 rounded-lg flex items-center gap-2 transition-all ${
                     formData.match_type === 'Amistoso'
-                      ? 'border-blue-600 bg-blue-50'
+                      ? 'border-orange-600 bg-orange-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   <Users className={`h-5 w-5 ${
-                    formData.match_type === 'Amistoso' ? 'text-blue-600' : 'text-gray-400'
+                    formData.match_type === 'Amistoso' ? 'text-orange-600' : 'text-gray-400'
                   }`} />
                   <span className="font-medium text-sm">Amistoso</span>
                 </button>
@@ -327,12 +327,12 @@ const ScheduleForm = () => {
                   }}
                   className={`p-3 border-2 rounded-lg flex items-center gap-2 transition-all ${
                     formData.match_type === 'Torneio'
-                      ? 'border-yellow-600 bg-yellow-50'
+                      ? 'border-yellow-500 bg-yellow-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   <MedalIcon className={`h-5 w-5 ${
-                    formData.match_type === 'Torneio' ? 'text-yellow-600' : 'text-gray-400'
+                    formData.match_type === 'Torneio' ? 'text-yellow-500' : 'text-gray-400'
                   }`} />
                   <span className="font-medium text-sm">Torneio</span>
                 </button>
@@ -359,7 +359,16 @@ const ScheduleForm = () => {
                     }
                   }} required>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione a partida" />
+                      <SelectValue placeholder="Selecione a partida">
+                        {selectedMatch && (() => {
+                          const match = rankingMatches.find(m => m.id.toString() === selectedMatch)
+                          if (match) {
+                            const isMyMatch = match.player1_id === user?.id || match.player2_id === user?.id
+                            return `${isMyMatch ? '⭐ ' : ''}${match.player1_name} vs ${match.player2_name} - Rodada ${match.round_number}`
+                          }
+                          return "Selecione a partida"
+                        })()}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {rankingMatches.map((match) => {

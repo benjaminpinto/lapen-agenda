@@ -403,7 +403,7 @@ def get_dashboard_stats():
             SELECT player1_name as player_name FROM schedules WHERE {month_condition} AND deleted_at IS NULL
             UNION ALL
             SELECT player2_name as player_name FROM schedules WHERE {month_condition} AND deleted_at IS NULL
-        )
+        ) AS players
         GROUP BY player_name
         ORDER BY games DESC
         LIMIT 5

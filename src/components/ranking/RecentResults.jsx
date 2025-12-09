@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft, CheckCircle, User, Clock } from 'lucide-react'
+import BackButton from '@/components/ui/BackButton'
+import { CheckCircle, User, Clock } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -137,10 +137,9 @@ const RecentResults = ({ onBack }) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
-        </Button>
+        <div onClick={onBack}>
+          <BackButton to="#" label="Voltar" />
+        </div>
         <h1 className="text-2xl font-bold">Resultados Recentes</h1>
       </div>
 

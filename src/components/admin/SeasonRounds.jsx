@@ -12,7 +12,7 @@ import MatchResultForm from './MatchResultForm'
 
 const SeasonRounds = () => {
   const navigate = useNavigate()
-  const { year } = useParams()
+  const { id } = useParams()
   const [rounds, setRounds] = useState([])
   const [matches, setMatches] = useState([])
   const [selectedRound, setSelectedRound] = useState(null)
@@ -39,12 +39,12 @@ const SeasonRounds = () => {
   ]
 
   useEffect(() => {
-    if (year) fetchRounds()
-  }, [year])
+    if (id) fetchRounds()
+  }, [id])
 
   const fetchRounds = async () => {
     try {
-      const seasonRes = await fetch(`/api/ranking/seasons/${year}`)
+      const seasonRes = await fetch(`/api/ranking/seasons/${id}`)
       if (seasonRes.ok) {
         const season = await seasonRes.json()
         const roundsRes = await fetch(`/api/ranking/rounds/${season.id}`)
@@ -80,7 +80,7 @@ const SeasonRounds = () => {
     }
 
     try {
-      const seasonRes = await fetch(`/api/ranking/seasons/${year}`)
+      const seasonRes = await fetch(`/api/ranking/seasons/${id}`)
       const season = await seasonRes.json()
       
       const nextRoundNumber = rounds.length + 1
@@ -96,7 +96,7 @@ const SeasonRounds = () => {
           season_id: season.id,
           round_number: nextRoundNumber,
           month: parseInt(newRound.month),
-          year: parseInt(year),
+          year: season.year,
           description: newRound.description
         })
       })
@@ -274,7 +274,7 @@ const SeasonRounds = () => {
         <ArrowLeft className="h-4 w-4 mr-2" />
         Voltar
       </Button>
-      <h1 className="text-2xl font-bold">Rodadas {year}</h1>
+      <h1 className="text-2xl font-bold">Rodadas da Temporada</h1>
       
       <Card>
         <CardHeader>

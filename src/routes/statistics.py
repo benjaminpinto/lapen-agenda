@@ -128,7 +128,7 @@ def get_player_statistics():
         
         ranking_matches_list = []
         if not match_type or match_type == 'Ranking':
-            ranking_conditions = ['rm.status = "completed" AND (u1.short_name = ? OR u2.short_name = ?)']
+            ranking_conditions = ["rm.status = 'completed' AND (u1.short_name = ? OR u2.short_name = ?)"]
             ranking_params = [player1, player1]
             
             if player2:
@@ -289,13 +289,17 @@ def get_recent_statistics_results():
 @statistics_bp.route('/general', methods=['GET'])
 def get_general_statistics():
     """Get general statistics for all matches"""
-    season_id = request.args.get('season')
+    season_filter = request.args.get('season')
     db = get_db()
     try:
-        schedule_matches = db.execute('SELECT * FROM match_statistics').fetchall()
-        
-        if season_id:
-            ranking_query = '''
+        # Handle virtual 'amistosos' season
+        if season_filter == 'amistosos':
+            schedule_matches = db.execute('SELECT * FROM match_statistics').fetchall()
+            ranking_matches = []
+        elif season_filter:
+            # Specific ranking season
+            schedule_matches = []
+            ranking_matches = db.execute('''
                 SELECT rm.played_at as match_date, u1.short_name as player1_name, 
                        u2.short_name as player2_name, uw.short_name as winner_name,
                        rm.sets_p1 as player1_sets, rm.sets_p2 as player2_sets,
@@ -307,9 +311,10 @@ def get_general_statistics():
                 JOIN users uw ON rm.winner_id = uw.id
                 JOIN ranking_rounds rr ON rm.round_id = rr.id
                 WHERE rm.status = 'completed' AND rr.season_id = ?
-            '''
-            ranking_matches = db.execute(ranking_query, (season_id,)).fetchall()
+            ''', (season_filter,)).fetchall()
         else:
+            # All matches
+            schedule_matches = db.execute('SELECT * FROM match_statistics').fetchall()
             ranking_matches = db.execute('''
                 SELECT rm.played_at as match_date, u1.short_name as player1_name, 
                        u2.short_name as player2_name, uw.short_name as winner_name,

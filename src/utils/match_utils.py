@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from src.database import get_db
+from src.database_utils import insert_and_get_id
 
 def is_match_eligible_for_betting(schedule_id):
     """Check if a match is eligible for betting (at least 1 hour before match)"""
@@ -57,13 +58,13 @@ def get_or_create_match(schedule_id):
         if not is_match_eligible_for_betting(schedule_id):
             return None
         
-        cursor = db.execute('''
+        match_id = insert_and_get_id(db, '''
             INSERT INTO matches (schedule_id, status, betting_enabled, total_pool, house_edge)
             VALUES (?, 'upcoming', ?, 0.00, 0.20)
         ''', (schedule_id, True))
         
         db.commit()
-        return cursor.lastrowid
+        return match_id
         
     except Exception:
         return None

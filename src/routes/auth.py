@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from src.database import get_db
+from src.database_utils import insert_and_get_id
 from src.auth import hash_password, verify_password, generate_token, generate_verification_token, require_auth, get_user_by_email, get_user_by_id
 from src.email_service import send_verification_email, send_lapen_approval_request_email
 from src.logger import get_logger
@@ -54,19 +55,11 @@ def register():
         from datetime import datetime
         lapen_requested_at = datetime.utcnow() if is_lapen_member else None
         
-        cursor = db.execute(
+        user_id = insert_and_get_id(db,
             'INSERT INTO users (email, password_hash, name, short_name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             (email, password_hash, name, short_name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at)
         )
         db.commit()
-        
-        user_id = cursor.lastrowid
-        if not user_id:
-            cursor = db.execute('SELECT id FROM users WHERE email = ?', (email,))
-            user = cursor.fetchone()
-            user_id = user['id'] if user else None
-            if not user_id:
-                raise Exception('Failed to retrieve user ID after registration')
         token = generate_token(user_id)
         
         logger.info(f'User registered: email={email}, user_id={user_id}')

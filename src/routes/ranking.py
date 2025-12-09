@@ -6,6 +6,7 @@ from src.services.ranking_config import RankingConfigService
 from src.services.points_calculator import PointsCalculator
 from src.services.draw_engine import DrawEngine
 from src.logger import get_logger
+from src.database_utils import insert_and_get_id
 
 logger = get_logger()
 ranking_bp = Blueprint('ranking', __name__, url_prefix='/api/ranking')
@@ -65,11 +66,10 @@ def create_season():
     
     db = get_db()
     try:
-        cursor = db.execute('''
+        season_id = insert_and_get_id(db, '''
             INSERT INTO ranking_seasons (year, start_date, end_date, description)
             VALUES (?, ?, ?, ?)
         ''', (year, start_date, end_date, description))
-        season_id = cursor.lastrowid
         
         # Set default configuration
         RankingConfigService.set_config(season_id, RankingConfigService.DEFAULT_CONFIG, db)

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
+import BackButton from '@/components/ui/BackButton'
 import {Calendar as CalendarIcon, Clock, Users, Trophy, GraduationCap, MedalIcon, AlertCircle} from 'lucide-react'
 import { useToast } from '@/contexts/ToastContext'
 import { useAuth } from '@/contexts/AuthContext'
@@ -248,6 +249,7 @@ const ScheduleForm = () => {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-0">
+      <BackButton to="/view" label="Voltar para Agenda" />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">

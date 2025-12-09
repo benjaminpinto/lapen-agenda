@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/hooks/use-toast'
 import { useAuth } from '@/contexts/AuthContext'
+import BackButton from '@/components/ui/BackButton'
 import { Calendar, Clock } from 'lucide-react'
 
 export default function AddMatchResult() {
@@ -140,6 +141,7 @@ export default function AddMatchResult() {
 
   return (
     <div className="space-y-6" data-testid="add-match-result-page">
+      <BackButton to="/statistics" label="Voltar para Estatísticas" />
       <h1 className="text-3xl font-bold">Adicionar Resultado</h1>
 
       {!selectedMatch ? (

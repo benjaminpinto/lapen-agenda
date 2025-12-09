@@ -24,7 +24,7 @@ class RankingConfigService:
         """Get configuration for a season with defaults"""
         db = get_db()
         config_rows = db.execute(
-            'SELECT key, value, data_type FROM ranking_season_config WHERE season_id = ?',
+            'SELECT key, value, data_type FROM ranking_season_config WHERE season_id = %s',
             (season_id,)
         ).fetchall()
         
@@ -67,8 +67,8 @@ class RankingConfigService:
             # Use INSERT ... ON CONFLICT for PostgreSQL compatibility
             db.execute('''
                 INSERT INTO ranking_season_config (season_id, key, value, data_type)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT (season_id, key) DO UPDATE SET value = ?, data_type = ?
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (season_id, key) DO UPDATE SET value = %s, data_type = %s
             ''', (season_id, key, str(value), data_type, str(value), data_type))
         
         if should_close:
@@ -81,7 +81,7 @@ class RankingConfigService:
         db = get_db()
         rule = db.execute('''
             SELECT points FROM ranking_temp_points_rules
-            WHERE season_id = ? AND position_min <= ? AND position_max >= ?
+            WHERE season_id = %s AND position_min <= %s AND position_max >= %s
             ORDER BY position_min
             LIMIT 1
         ''', (season_id, position, position)).fetchone()

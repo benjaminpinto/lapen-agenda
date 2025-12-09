@@ -1,12 +1,12 @@
 # LAPEN Agenda - Project Rules
 
 ## Database Rules
-- All database implementations or changes MUST be compatible with both SQLite (local) and PostgreSQL (Vercel production)
-- **Local SQLite database file is named `app.db` (NOT lapen_agenda.db)**
-- Use SQLAlchemy ORM abstractions to ensure cross-database compatibility
-- Avoid database-specific SQL syntax; use SQLAlchemy expressions
-- Test migrations on both SQLite and PostgreSQL before committing
-- Use proper data types that work across both databases (e.g., Text instead of VARCHAR with specific lengths)
+- **PostgreSQL ONLY** - SQLite support has been removed
+- Use PostgreSQL-specific features when beneficial (RETURNING, array types, JSON, etc.)
+- Use `%s` placeholders for query parameters (not `?`)
+- DATABASE_URL environment variable is required
+- Local development uses Docker PostgreSQL (see docker-compose.yml)
+- Migrations are in `src/database/migrations/*_postgres.sql`
 
 ## Frontend Rules
 - Mobile-first approach: design and implement for mobile screens first, then scale up
@@ -72,7 +72,7 @@
 ## Testing Rules
 - Test critical paths: authentication, payments, bookings
 - Verify mobile responsiveness before PR
-- Test on both SQLite and PostgreSQL when touching database code
+- Use Docker PostgreSQL for local testing
 - Validate PIX payment flow in sandbox environment
 
 ## Git Rules

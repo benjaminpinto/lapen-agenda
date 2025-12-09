@@ -13,7 +13,7 @@ class WOResolver:
         match = db.execute('''
             SELECT rm.*, rr.season_id FROM ranking_matches rm
             JOIN ranking_rounds rr ON rm.round_id = rr.id
-            WHERE rm.id = ?
+            WHERE rm.id = %s
         ''', (match_id,)).fetchone()
         
         if not match:
@@ -23,7 +23,7 @@ class WOResolver:
         logs = db.execute('''
             SELECT user_id, COUNT(*) as proposal_count
             FROM match_scheduling_logs
-            WHERE match_id = ?
+            WHERE match_id = %s
             GROUP BY user_id
         ''', (match_id,)).fetchall()
         
@@ -58,8 +58,8 @@ class WOResolver:
         # Update match
         db.execute('''
             UPDATE ranking_matches
-            SET status = ?, winner_id = ?, wo_type = ?, points_p1 = ?, points_p2 = ?
-            WHERE id = ?
+            SET status = %s, winner_id = %s, wo_type = %s, points_p1 = %s, points_p2 = %s
+            WHERE id = %s
         ''', ('wo', winner_id, 'admin', points_p1, points_p2, match_id))
         
         # Update participant stats
@@ -70,8 +70,8 @@ class WOResolver:
             wo_field = 'wo_wins' if is_winner else 'wo_losses'
             db.execute(f'''
                 UPDATE ranking_participants
-                SET total_points = total_points + ?, {wo_field} = {wo_field} + 1
-                WHERE season_id = ? AND user_id = ?
+                SET total_points = total_points + %s, {wo_field} = {wo_field} + 1
+                WHERE season_id = %s AND user_id = %s
             ''', (points, match['season_id'], player_id))
         
         db.commit()

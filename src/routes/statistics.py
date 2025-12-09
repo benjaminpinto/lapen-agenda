@@ -26,14 +26,14 @@ def add_match_result():
     db = get_db()
     try:
         if schedule_id:
-            schedule = db.execute('SELECT * FROM schedules WHERE id = ? AND deleted_at IS NULL', (schedule_id,)).fetchone()
+            schedule = db.execute('SELECT * FROM schedules WHERE id = %s AND deleted_at IS NULL', (schedule_id,)).fetchone()
             if not schedule:
                 return jsonify({'error': 'Partida não encontrada'}), 404
 
             db.execute('''
                 INSERT INTO match_statistics (schedule_id, player1_name, player2_name, winner_name,
                     player1_sets, player2_sets, player1_games, player2_games, match_type, match_date, added_by)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (schedule_id, schedule['player1_name'], schedule['player2_name'], winner_name,
                   player1_sets, player2_sets, player1_games, player2_games, schedule['match_type'], schedule['date'], request.user_id))
         
@@ -45,7 +45,7 @@ def add_match_result():
                 JOIN users u1 ON rm.player1_id = u1.id
                 JOIN users u2 ON rm.player2_id = u2.id
                 JOIN ranking_rounds rr ON rm.round_id = rr.id
-                WHERE rm.id = ?
+                WHERE rm.id = %s
             ''', (ranking_match_id,)).fetchone()
             
             if not match:
@@ -68,9 +68,9 @@ def add_match_result():
             
             db.execute('''
                 UPDATE ranking_matches
-                SET status = ?, winner_id = ?, score = ?, sets_p1 = ?, sets_p2 = ?,
-                    games_p1 = ?, games_p2 = ?, points_p1 = ?, points_p2 = ?, played_at = ?, added_by = ?
-                WHERE id = ?
+                SET status = %s, winner_id = %s, score = %s, sets_p1 = %s, sets_p2 = %s,
+                    games_p1 = %s, games_p2 = %s, points_p1 = %s, points_p2 = %s, played_at = %s, added_by = %s
+                WHERE id = %s
             ''', ('completed', winner_id, score, player1_sets, player2_sets, player1_games, player2_games,
                   points_p1, points_p2, datetime.utcnow(), request.user_id, ranking_match_id))
             
@@ -80,14 +80,14 @@ def add_match_result():
             ]:
                 db.execute('''
                     UPDATE ranking_participants
-                    SET total_points = total_points + ?,
-                        wins = wins + ?,
-                        losses = losses + ?,
-                        sets_won = sets_won + ?,
-                        sets_lost = sets_lost + ?,
-                        games_won = games_won + ?,
-                        games_lost = games_lost + ?
-                    WHERE season_id = ? AND user_id = ?
+                    SET total_points = total_points + %s,
+                        wins = wins + %s,
+                        losses = losses + %s,
+                        sets_won = sets_won + %s,
+                        sets_lost = sets_lost + %s,
+                        games_won = games_won + %s,
+                        games_lost = games_lost + %s
+                    WHERE season_id = %s AND user_id = %s
                 ''', (points, 1 if is_winner else 0, 0 if is_winner else 1,
                       sets_won, sets_lost, games_won, games_lost,
                       match['season_id'], player_id))
@@ -112,15 +112,15 @@ def get_player_statistics():
 
     db = get_db()
     try:
-        conditions = ['(player1_name = ? OR player2_name = ?)']
+        conditions = ['(player1_name = %s OR player2_name = %s)']
         params = [player1, player1]
 
         if player2:
-            conditions.append('((player1_name = ? AND player2_name = ?) OR (player1_name = ? AND player2_name = ?))')
+            conditions.append('((player1_name = %s AND player2_name = %s) OR (player1_name = %s AND player2_name = %s))')
             params.extend([player1, player2, player2, player1])
 
         if match_type:
-            conditions.append('match_type = ?')
+            conditions.append('match_type = %s')
             params.append(match_type)
 
         query = f'SELECT * FROM match_statistics WHERE {" AND ".join(conditions)} ORDER BY match_date DESC'
@@ -128,11 +128,11 @@ def get_player_statistics():
         
         ranking_matches_list = []
         if not match_type or match_type == 'Ranking':
-            ranking_conditions = ["rm.status = 'completed' AND (u1.short_name = ? OR u2.short_name = ?)"]
+            ranking_conditions = ["rm.status = 'completed' AND (u1.short_name = %s OR u2.short_name = %s)"]
             ranking_params = [player1, player1]
             
             if player2:
-                ranking_conditions.append('((u1.short_name = ? AND u2.short_name = ?) OR (u1.short_name = ? AND u2.short_name = ?))')
+                ranking_conditions.append('((u1.short_name = %s AND u2.short_name = %s) OR (u1.short_name = %s AND u2.short_name = %s))')
                 ranking_params.extend([player1, player2, player2, player1])
             
             ranking_query = f'''
@@ -242,21 +242,21 @@ def get_player_opponents(player_name):
         opponents = db.execute('''
             SELECT DISTINCT 
                 CASE 
-                    WHEN player1_name = ? THEN player2_name
+                    WHEN player1_name = %s THEN player2_name
                     ELSE player1_name
                 END as opponent
             FROM match_statistics
-            WHERE player1_name = ? OR player2_name = ?
+            WHERE player1_name = %s OR player2_name = %s
             UNION
             SELECT DISTINCT 
                 CASE 
-                    WHEN u1.short_name = ? THEN u2.short_name
+                    WHEN u1.short_name = %s THEN u2.short_name
                     ELSE u1.short_name
                 END as opponent
             FROM ranking_matches rm
             JOIN users u1 ON rm.player1_id = u1.id
             JOIN users u2 ON rm.player2_id = u2.id
-            WHERE rm.status = 'completed' AND (u1.short_name = ? OR u2.short_name = ?)
+            WHERE rm.status = 'completed' AND (u1.short_name = %s OR u2.short_name = %s)
             ORDER BY opponent
         ''', (player_name, player_name, player_name, player_name, player_name, player_name)).fetchall()
         return jsonify({'opponents': [o['opponent'] for o in opponents]})
@@ -277,7 +277,7 @@ def get_recent_statistics_results():
             FROM match_statistics ms
             LEFT JOIN users u ON ms.added_by = u.id
             ORDER BY ms.created_at DESC
-            LIMIT ?
+            LIMIT %s
         ''', (limit,)).fetchall()
         return jsonify([dict(r) for r in results])
     except Exception as e:
@@ -310,7 +310,7 @@ def get_general_statistics():
                 JOIN users u2 ON rm.player2_id = u2.id
                 JOIN users uw ON rm.winner_id = uw.id
                 JOIN ranking_rounds rr ON rm.round_id = rr.id
-                WHERE rm.status = 'completed' AND rr.season_id = ?
+                WHERE rm.status = 'completed' AND rr.season_id = %s
             ''', (season_filter,)).fetchall()
         else:
             # All matches

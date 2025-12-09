@@ -9,7 +9,7 @@ def calculate_odds(match_id):
         cursor = db.execute('''
             SELECT player_name, SUM(amount) as total_amount
             FROM bets
-            WHERE match_id = ? AND status = 'active'
+            WHERE match_id = %s AND status = 'active'
             GROUP BY player_name
         ''', (match_id,))
         

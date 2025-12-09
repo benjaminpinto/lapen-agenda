@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify
 
 from src.auth import require_auth
 from src.database import get_db
-from src.database_utils import get_current_date_sql, get_current_time_sql
+from src.database_utils import get_current_date_sql, get_current_time_sql, insert_and_get_id
 from src.logger import get_logger
 
 logger = get_logger()
@@ -196,13 +196,12 @@ def create_match():
             return jsonify({'error': 'Partida já existe para esta agenda'}), 400
 
         # Create match
-        cursor = db.execute('''
+        match_id = insert_and_get_id(db, '''
                             INSERT INTO matches (schedule_id, status, betting_enabled, total_pool, house_edge)
                             VALUES (?, 'upcoming', ?, 0.00, 0.20)
                             ''', (schedule_id, data.get('betting_enabled', True)))
 
         db.commit()
-        match_id = cursor.lastrowid
 
         logger.info(f'Match created: schedule_id={schedule_id}, match_id={match_id}')
         return jsonify({

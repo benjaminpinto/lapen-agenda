@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from src.database import get_db
+from src.database_utils import insert_and_get_id
 from src.auth import require_auth
 from src.utils.match_utils import is_match_eligible_for_betting, get_or_create_match, update_match_pool
 from src.utils.odds_calculator import calculate_odds, calculate_potential_return
@@ -162,12 +163,10 @@ def place_bet():
             return jsonify({'error': 'Jogador inválido'}), 400
         
         # Create bet record with temporary potential return
-        cursor = db.execute('''
+        bet_id = insert_and_get_id(db, '''
             INSERT INTO bets (user_id, match_id, player_name, amount, status, potential_return, payment_id)
             VALUES (?, ?, ?, ?, 'active', 0, ?)
         ''', (request.user_id, match_id, player_name, float(amount), str(payment_intent_id)))
-        
-        bet_id = cursor.lastrowid
         
         # Update match total pool
         update_match_pool(match_id, float(amount))

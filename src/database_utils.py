@@ -48,3 +48,12 @@ def get_concat_sql(*args):
 def is_postgres():
     """Check if using PostgreSQL"""
     return bool(os.environ.get('POSTGRES_URL') or os.environ.get('PRISMA_DATABASE_URL'))
+
+def insert_and_get_id(db, query, params):
+    """Insert row and return ID (cross-database compatible)"""
+    if db.is_postgres:
+        cursor = db.execute(query + ' RETURNING id', params)
+        return cursor.fetchone()['id']
+    else:
+        cursor = db.execute(query, params)
+        return cursor.lastrowid

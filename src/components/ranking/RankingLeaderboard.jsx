@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Trophy, Medal, Award } from 'lucide-react'
+import RankingMatches from './RankingMatches'
 
 const RankingLeaderboard = () => {
   const [leaderboard, setLeaderboard] = useState({ elite: [], challenger: [] })
@@ -90,7 +91,7 @@ const RankingLeaderboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900">Ranking LAPEN {currentYear}</h1>
         <p className="text-gray-600 mt-2">Sistema de pontuação anual</p>
@@ -157,6 +158,8 @@ const RankingLeaderboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      <RankingMatches />
     </div>
   )
 }

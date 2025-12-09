@@ -294,11 +294,10 @@ def get_my_matches():
     return jsonify([dict(match) for match in matches])
 
 @ranking_bp.route('/all-open-matches', methods=['GET'])
-@require_auth
 def get_all_open_matches():
     db = get_db()
     matches = db.execute('''
-        SELECT rm.*, rr.round_number, u1.short_name as player1_name, u2.short_name as player2_name, u1.id as player1_id, u2.id as player2_id
+        SELECT rm.*, rr.round_number, rr.month, u1.short_name as player1_name, u2.short_name as player2_name, u1.id as player1_id, u2.id as player2_id
         FROM ranking_matches rm
         JOIN ranking_rounds rr ON rm.round_id = rr.id
         JOIN users u1 ON rm.player1_id = u1.id
@@ -441,13 +440,14 @@ def create_round():
     month = data.get('month')
     year = data.get('year')
     is_finals = data.get('is_finals', False)
+    description = data.get('description', '')
     
     db = get_db()
     try:
         db.execute('''
-            INSERT INTO ranking_rounds (season_id, round_number, month, year, is_finals)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (season_id, round_number, month, year, is_finals))
+            INSERT INTO ranking_rounds (season_id, round_number, month, year, is_finals, description)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (season_id, round_number, month, year, is_finals, description))
         db.commit()
         return jsonify({'success': True})
     except Exception as e:

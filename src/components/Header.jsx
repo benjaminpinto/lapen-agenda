@@ -1,6 +1,6 @@
 import {Link, useNavigate} from 'react-router-dom'
 import {Button} from '@/components/ui/button'
-import {Calendar, Eye, Home, LogIn, LogOut, Menu, Settings, Trophy, X, Award} from 'lucide-react'
+import {Calendar, Eye, Home, LogIn, LogOut, Menu, Settings, Trophy, X, Award, BarChart3} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
 import {useAuth} from '@/contexts/AuthContext'
 import {useState} from 'react'
@@ -50,17 +50,10 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                             </Button>
                         </Link>
 
-                        <Link to="/schedule">
-                            <Button variant="ghost" size="sm">
-                                <Calendar className="h-4 w-4 mr-2"/>
-                                Agendar
-                            </Button>
-                        </Link>
-
                         <Link to="/view">
                             <Button variant="ghost" size="sm">
-                                <Eye className="h-4 w-4 mr-2"/>
-                                Ver Agenda
+                                <Calendar className="h-4 w-4 mr-2"/>
+                                Agenda
                             </Button>
                         </Link>
 
@@ -75,6 +68,13 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                             <Button variant="ghost" size="sm">
                                 <Award className="h-4 w-4 mr-2"/>
                                 Ranking
+                            </Button>
+                        </Link>
+
+                        <Link to="/statistics">
+                            <Button variant="ghost" size="sm">
+                                <BarChart3 className="h-4 w-4 mr-2"/>
+                                Estatísticas
                             </Button>
                         </Link>
 
@@ -138,17 +138,10 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                                 </Button>
                             </Link>
 
-                            <Link to="/schedule" onClick={() => setIsMobileMenuOpen(false)}>
-                                <Button variant="ghost" size="sm" className="w-full justify-start">
-                                    <Calendar className="h-4 w-4 mr-2"/>
-                                    Agendar
-                                </Button>
-                            </Link>
-
                             <Link to="/view" onClick={() => setIsMobileMenuOpen(false)}>
                                 <Button variant="ghost" size="sm" className="w-full justify-start">
-                                    <Eye className="h-4 w-4 mr-2"/>
-                                    Ver Agenda
+                                    <Calendar className="h-4 w-4 mr-2"/>
+                                    Agenda
                                 </Button>
                             </Link>
 
@@ -163,6 +156,13 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                                 <Button variant="ghost" size="sm" className="w-full justify-start">
                                     <Award className="h-4 w-4 mr-2"/>
                                     Ranking
+                                </Button>
+                            </Link>
+
+                            <Link to="/statistics" onClick={() => setIsMobileMenuOpen(false)}>
+                                <Button variant="ghost" size="sm" className="w-full justify-start">
+                                    <BarChart3 className="h-4 w-4 mr-2"/>
+                                    Estatísticas
                                 </Button>
                             </Link>
 

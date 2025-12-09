@@ -91,7 +91,7 @@ const RecentResults = ({ onBack }) => {
                 <span className="text-sm text-gray-500">W.O.</span>
               ) : (
                 <div className="text-xs font-mono">
-                  {isRanking ? (
+                  {result.score ? (
                     result.score.split(', ').map((set, i) => (
                       <div key={i}>{set.replace('-', ' - ')}</div>
                     ))

@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useToast } from '@/components/hooks/use-toast'
 import { useAuth } from '@/contexts/AuthContext'
 import BackButton from '@/components/ui/BackButton'
+import MatchResultForm from '@/components/shared/MatchResultForm'
 import { Calendar, Clock } from 'lucide-react'
 
 export default function AddMatchResult() {
@@ -13,13 +11,6 @@ export default function AddMatchResult() {
   const [userMatches, setUserMatches] = useState([])
   const [otherMatches, setOtherMatches] = useState([])
   const [selectedMatch, setSelectedMatch] = useState(null)
-  const [winnerName, setWinnerName] = useState('')
-  const [set1Player1, setSet1Player1] = useState('')
-  const [set1Player2, setSet1Player2] = useState('')
-  const [set2Player1, setSet2Player1] = useState('')
-  const [set2Player2, setSet2Player2] = useState('')
-  const [set3Player1, setSet3Player1] = useState('')
-  const [set3Player2, setSet3Player2] = useState('')
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const { user } = useAuth()
@@ -57,53 +48,18 @@ export default function AddMatchResult() {
 
   const selectMatch = (match) => {
     setSelectedMatch(match)
-    setWinnerName('')
-    setSet1Player1('')
-    setSet1Player2('')
-    setSet2Player1('')
-    setSet2Player2('')
-    setSet3Player1('')
-    setSet3Player2('')
   }
 
-  const calculateStats = () => {
-    const sets = [
-      [set1Player1, set1Player2],
-      [set2Player1, set2Player2],
-      [set3Player1, set3Player2]
-    ].filter(([p1, p2]) => p1 && p2)
-
-    let player1Sets = 0
-    let player2Sets = 0
-    let player1Games = 0
-    let player2Games = 0
-
-    sets.forEach(([p1, p2]) => {
-      const g1 = parseInt(p1) || 0
-      const g2 = parseInt(p2) || 0
+  const handleFormSubmit = async ({ score, winner_name }) => {
+    const scoreParts = score.split(', ').map(s => s.split('-').map(Number))
+    let player1Sets = 0, player2Sets = 0, player1Games = 0, player2Games = 0
+    
+    scoreParts.forEach(([g1, g2]) => {
       player1Games += g1
       player2Games += g2
       if (g1 > g2) player1Sets++
       else if (g2 > g1) player2Sets++
     })
-
-    return { player1Sets, player2Sets, player1Games, player2Games }
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    
-    if (!selectedMatch || !winnerName) {
-      toast({ title: 'Preencha todos os campos obrigatórios', variant: 'destructive' })
-      return
-    }
-
-    if (!set1Player1 || !set1Player2 || !set2Player1 || !set2Player2) {
-      toast({ title: 'Preencha os resultados dos 2 primeiros sets', variant: 'destructive' })
-      return
-    }
-
-    const stats = calculateStats()
 
     setLoading(true)
     try {
@@ -116,11 +72,12 @@ export default function AddMatchResult() {
         body: JSON.stringify({
           schedule_id: selectedMatch.match_type === 'Ranking' ? null : selectedMatch.id,
           ranking_match_id: selectedMatch.match_type === 'Ranking' ? selectedMatch.id : null,
-          winner_name: winnerName,
-          player1_sets: stats.player1Sets,
-          player2_sets: stats.player2Sets,
-          player1_games: stats.player1Games,
-          player2_games: stats.player2Games
+          winner_name: winner_name,
+          player1_sets: player1Sets,
+          player2_sets: player2Sets,
+          player1_games: player1Games,
+          player2_games: player2Games,
+          score: score
         })
       })
 
@@ -251,122 +208,11 @@ export default function AddMatchResult() {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label className="text-base font-semibold">Set 1</Label>
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                  <div>
-                    <Label className="text-sm">{selectedMatch.player1_name}</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={set1Player1}
-                      onChange={(e) => setSet1Player1(e.target.value)}
-                      data-testid="set1-player1-input"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm">{selectedMatch.player2_name}</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={set1Player2}
-                      onChange={(e) => setSet1Player2(e.target.value)}
-                      data-testid="set1-player2-input"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-base font-semibold">Set 2</Label>
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                  <div>
-                    <Label className="text-sm">{selectedMatch.player1_name}</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={set2Player1}
-                      onChange={(e) => setSet2Player1(e.target.value)}
-                      data-testid="set2-player1-input"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm">{selectedMatch.player2_name}</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={set2Player2}
-                      onChange={(e) => setSet2Player2(e.target.value)}
-                      data-testid="set2-player2-input"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-base font-semibold">Super Tie Break (opcional)</Label>
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                  <div>
-                    <Label className="text-sm">{selectedMatch.player1_name}</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={set3Player1}
-                      onChange={(e) => setSet3Player1(e.target.value)}
-                      data-testid="set3-player1-input"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm">{selectedMatch.player2_name}</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={set3Player2}
-                      onChange={(e) => setSet3Player2(e.target.value)}
-                      data-testid="set3-player2-input"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <Label>Vencedor</Label>
-                <div className="space-y-2 mt-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="winner"
-                      value={selectedMatch.player1_name}
-                      checked={winnerName === selectedMatch.player1_name}
-                      onChange={(e) => setWinnerName(e.target.value)}
-                      data-testid="winner-player1-radio"
-                    />
-                    <span>{selectedMatch.player1_name}</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="winner"
-                      value={selectedMatch.player2_name}
-                      checked={winnerName === selectedMatch.player2_name}
-                      onChange={(e) => setWinnerName(e.target.value)}
-                      data-testid="winner-player2-radio"
-                    />
-                    <span>{selectedMatch.player2_name}</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" onClick={() => setSelectedMatch(null)}>
-                  Voltar
-                </Button>
-                <Button type="submit" disabled={loading} data-testid="submit-result-btn">
-                  {loading ? 'Salvando...' : 'Salvar Resultado'}
-                </Button>
-              </div>
-            </form>
+            <MatchResultForm
+              match={selectedMatch}
+              onSubmit={handleFormSubmit}
+              onCancel={() => setSelectedMatch(null)}
+            />
           </CardContent>
         </Card>
       )}

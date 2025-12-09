@@ -57,3 +57,12 @@ def insert_and_get_id(db, query, params):
     else:
         cursor = db.execute(query, params)
         return cursor.lastrowid
+
+def row_to_dict(row):
+    """Convert database row to JSON-serializable dict"""
+    from datetime import date, time, datetime
+    result = dict(row)
+    for key, value in result.items():
+        if isinstance(value, (date, time, datetime)):
+            result[key] = str(value)
+    return result

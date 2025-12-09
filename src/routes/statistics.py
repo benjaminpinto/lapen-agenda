@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from src.auth import require_auth
 from src.database import get_db
+from src.database_utils import row_to_dict
 from src.logger import get_logger
 
 logger = get_logger()
@@ -199,7 +200,7 @@ def get_past_matches():
             WHERE rm.status = 'scheduled'
         ''').fetchall()
         
-        all_matches = [dict(m) for m in schedule_matches] + [dict(m) for m in ranking_matches]
+        all_matches = [row_to_dict(m) for m in schedule_matches] + [row_to_dict(m) for m in ranking_matches]
         return jsonify({'matches': all_matches})
     except Exception as e:
         logger.error(f'Error fetching past matches: {str(e)}')

@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from src.database import get_db
-from src.database_utils import insert_and_get_id
 
 def is_match_eligible_for_betting(schedule_id):
     """Check if a match is eligible for betting (at least 1 hour before match)"""
@@ -11,7 +10,7 @@ def is_match_eligible_for_betting(schedule_id):
     try:
         cursor = db.execute('''
             SELECT date, start_time FROM schedules 
-            WHERE id = ?
+            WHERE id = %s
         ''', (schedule_id,))
         
         schedule = cursor.fetchone()
@@ -48,7 +47,7 @@ def get_or_create_match(schedule_id):
     db = get_db()
     try:
         # Check if match already exists
-        cursor = db.execute('SELECT id FROM matches WHERE schedule_id = ?', (schedule_id,))
+        cursor = db.execute('SELECT id FROM matches WHERE schedule_id = %s', (schedule_id,))
         existing_match = cursor.fetchone()
         
         if existing_match:
@@ -58,10 +57,12 @@ def get_or_create_match(schedule_id):
         if not is_match_eligible_for_betting(schedule_id):
             return None
         
-        match_id = insert_and_get_id(db, '''
+        cursor = db.cursor()
+        cursor.execute('''
             INSERT INTO matches (schedule_id, status, betting_enabled, total_pool, house_edge)
-            VALUES (?, 'upcoming', ?, 0.00, 0.20)
+            VALUES (%s, 'upcoming', %s, 0.00, 0.20) RETURNING id
         ''', (schedule_id, True))
+        match_id = cursor.fetchone()['id']
         
         db.commit()
         return match_id
@@ -77,8 +78,8 @@ def update_match_pool(match_id, amount):
     try:
         db.execute('''
             UPDATE matches 
-            SET total_pool = total_pool + ? 
-            WHERE id = ?
+            SET total_pool = total_pool + %s 
+            WHERE id = %s
         ''', (amount, match_id))
         db.commit()
         return True

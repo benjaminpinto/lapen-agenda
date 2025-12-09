@@ -22,6 +22,6 @@ class TempPointsManager:
         db.execute('''
             UPDATE ranking_participants 
             SET temp_points = 0 
-            WHERE season_id = ?
+            WHERE season_id = %s
         ''', (season_id,))
         db.commit()

@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify
 from src.database import get_db
-from src.database_utils import insert_and_get_id
 from src.auth import require_auth
 from src.utils.match_utils import is_match_eligible_for_betting, get_or_create_match, update_match_pool
 from src.utils.odds_calculator import calculate_odds, calculate_potential_return
@@ -45,7 +44,7 @@ def create_bet_payment_intent():
     # Get user email for Mercado Pago
     db = get_db()
     try:
-        cursor = db.execute('SELECT email FROM users WHERE id = ?', (request.user_id,))
+        cursor = db.execute('SELECT email FROM users WHERE id = %s', (request.user_id,))
         user = cursor.fetchone()
         user_email = user['email'] if user else 'test@test.com'
     finally:
@@ -124,7 +123,7 @@ def place_bet():
         if match_id:
             db = get_db()
             try:
-                db.execute('UPDATE matches SET betting_enabled = ? WHERE id = ?', (False, match_id))
+                db.execute('UPDATE matches SET betting_enabled = %s WHERE id = %s', (False, match_id))
                 db.commit()
             except:
                 pass
@@ -144,7 +143,7 @@ def place_bet():
             SELECT s.player1_name, s.player2_name, m.betting_enabled, m.status
             FROM schedules s
             JOIN matches m ON s.id = m.schedule_id
-            WHERE s.id = ? AND m.id = ? AND s.deleted_at IS NULL
+            WHERE s.id = %s AND m.id = %s AND s.deleted_at IS NULL
         ''', (schedule_id, match_id))
         
         match_info = cursor.fetchone()
@@ -163,10 +162,12 @@ def place_bet():
             return jsonify({'error': 'Jogador inválido'}), 400
         
         # Create bet record with temporary potential return
-        bet_id = insert_and_get_id(db, '''
+        cursor = db.cursor()
+        cursor.execute('''
             INSERT INTO bets (user_id, match_id, player_name, amount, status, potential_return, payment_id)
-            VALUES (?, ?, ?, ?, 'active', 0, ?)
+            VALUES (%s, %s, %s, %s, 'active', 0, %s) RETURNING id
         ''', (request.user_id, match_id, player_name, float(amount), str(payment_intent_id)))
+        bet_id = cursor.fetchone()['id']
         
         # Update match total pool
         update_match_pool(match_id, float(amount))
@@ -174,7 +175,7 @@ def place_bet():
         # Recalculate potential returns for all bets on this match (including the new one)
         cursor = db.execute('''
             SELECT id, amount, player_name FROM bets 
-            WHERE match_id = ? AND status = 'active'
+            WHERE match_id = %s AND status = 'active'
         ''', (match_id,))
         
         all_bets = cursor.fetchall()
@@ -182,7 +183,7 @@ def place_bet():
         for bet in all_bets:
             new_potential_return = calculate_potential_return(match_id, bet['player_name'], bet['amount'])
             db.execute('''
-                UPDATE bets SET potential_return = ? WHERE id = ?
+                UPDATE bets SET potential_return = %s WHERE id = %s
             ''', (new_potential_return, bet['id']))
             # Store the potential return for the new bet
             if bet['id'] == bet_id:
@@ -191,7 +192,7 @@ def place_bet():
         db.commit()
         
         # Get user info for email
-        cursor = db.execute('SELECT name, email FROM users WHERE id = ?', (request.user_id,))
+        cursor = db.execute('SELECT name, email FROM users WHERE id = %s', (request.user_id,))
         user = cursor.fetchone()
         
         # Send confirmation email (don't fail if email fails)
@@ -237,7 +238,7 @@ def get_user_bets():
             JOIN matches m ON b.match_id = m.id
             JOIN schedules s ON m.schedule_id = s.id
             JOIN courts c ON s.court_id = c.id
-            WHERE b.user_id = ?
+            WHERE b.user_id = %s
             ORDER BY b.created_at DESC
         ''', (request.user_id,))
         
@@ -307,7 +308,7 @@ def get_match_bets(match_id):
                    m.total_pool, m.status, m.betting_enabled
             FROM matches m
             JOIN schedules s ON m.schedule_id = s.id
-            WHERE m.id = ? AND s.deleted_at IS NULL
+            WHERE m.id = %s AND s.deleted_at IS NULL
         ''', (match_id,))
         
         match_info = cursor.fetchone()
@@ -318,7 +319,7 @@ def get_match_bets(match_id):
         cursor = db.execute('''
             SELECT player_name, COUNT(*) as bet_count, SUM(amount) as total_amount
             FROM bets
-            WHERE match_id = ?
+            WHERE match_id = %s
             GROUP BY player_name
         ''', (match_id,))
         
@@ -373,7 +374,7 @@ def cancel_bet(bet_id):
             SELECT b.id, b.amount, b.match_id, m.status as match_status
             FROM bets b
             JOIN matches m ON b.match_id = m.id
-            WHERE b.id = ? AND b.user_id = ? AND b.status = 'active'
+            WHERE b.id = %s AND b.user_id = %s AND b.status = 'active'
         ''', (bet_id, request.user_id))
         
         bet = cursor.fetchone()
@@ -384,7 +385,7 @@ def cancel_bet(bet_id):
             return jsonify({'error': 'Não é possível cancelar aposta de partida em andamento'}), 400
         
         # Cancel bet
-        db.execute('UPDATE bets SET status = ? WHERE id = ?', ('refunded', bet_id))
+        db.execute('UPDATE bets SET status = %s WHERE id = %s', ('refunded', bet_id))
         
         # Update match pool
         update_match_pool(bet['match_id'], -float(bet['amount']))

@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/contexts/ToastContext'
-import { Mail, ArrowLeft } from 'lucide-react'
+import BackButton from '@/components/ui/BackButton'
+import { Mail } from 'lucide-react'
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('')
@@ -68,12 +68,7 @@ const ForgotPassword = () => {
               <p className="text-sm text-gray-600 text-center">
                 Se o email existir em nosso sistema, você receberá um link para redefinir sua senha.
               </p>
-              <Link to="/login">
-                <Button className="w-full" variant="outline">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Voltar para login
-                </Button>
-              </Link>
+              <BackButton to="/login" label="Voltar para login" className="w-full" />
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -99,10 +94,7 @@ const ForgotPassword = () => {
               </Button>
 
               <div className="text-center">
-                <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">
-                  <ArrowLeft className="inline mr-1 h-3 w-3" />
-                  Voltar para login
-                </Link>
+                <BackButton to="/login" label="Voltar para login" className="w-full" />
               </div>
             </form>
           )}

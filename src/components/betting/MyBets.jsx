@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/contexts/ToastContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { History, Trophy, DollarSign, Calendar, ArrowLeft, Wallet, TrendingUp, Share2 } from 'lucide-react'
+import BackButton from '@/components/ui/BackButton'
+import { History, Trophy, DollarSign, Calendar, Wallet, TrendingUp, Share2 } from 'lucide-react'
 import ShareableMatchCard from './ShareableMatchCard'
 import ShareableWinCard from './ShareableWinCard'
 import ShareableLossCard from './ShareableLossCard'
@@ -293,12 +293,7 @@ const MyBets = () => {
   return (
     <div className="container mx-auto px-4 py-8" data-testid="my-bets-page">
       <div className="mb-8">
-        <Link to="/betting">
-          <Button data-testid="back-to-betting" variant="outline" size="sm" className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar para Apostas
-          </Button>
-        </Link>
+        <BackButton to="/betting" label="Voltar para Apostas" />
         <h1 className="text-3xl font-bold mb-2">Minhas Apostas</h1>
         <p className="text-gray-600">Histórico das suas apostas</p>
       </div>

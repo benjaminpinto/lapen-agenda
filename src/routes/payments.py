@@ -47,13 +47,13 @@ def handle_payment_success(payment_intent):
         # Update bet status if exists
         db.execute('''
             UPDATE bets SET status = 'confirmed' 
-            WHERE payment_id = ? AND status = 'pending'
+            WHERE payment_id = %s AND status = 'pending'
         ''', (payment_id,))
         
         # Log payment success
         db.execute('''
             INSERT INTO payment_logs (payment_id, event_type, status, amount, metadata)
-            VALUES (?, 'payment_success', 'succeeded', ?, ?)
+            VALUES (%s, 'payment_success', 'succeeded', %s, %s)
         ''', (payment_id, payment_intent.get('amount', 0) / 100, str(payment_intent.get('metadata', {}))))
         
         db.commit()
@@ -74,13 +74,13 @@ def handle_payment_failure(payment_intent):
         # Update bet status
         db.execute('''
             UPDATE bets SET status = 'failed' 
-            WHERE payment_id = ? AND status = 'pending'
+            WHERE payment_id = %s AND status = 'pending'
         ''', (payment_id,))
         
         # Log payment failure
         db.execute('''
             INSERT INTO payment_logs (payment_id, event_type, status, amount, error_message)
-            VALUES (?, 'payment_failed', 'failed', ?, ?)
+            VALUES (%s, 'payment_failed', 'failed', %s, %s)
         ''', (payment_id, payment_intent.get('amount', 0) / 100, payment_intent.get('last_payment_error', {}).get('message', 'Unknown error')))
         
         db.commit()
@@ -137,7 +137,7 @@ def get_payment_history(user_id):
             FROM bets b
             JOIN matches m ON b.match_id = m.id
             JOIN schedules s ON m.schedule_id = s.id
-            WHERE b.user_id = ?
+            WHERE b.user_id = %s
             ORDER BY b.created_at DESC
         ''', (user_id,))
         

@@ -4,7 +4,6 @@ from flask import Blueprint, request, jsonify
 
 from src.auth import require_auth
 from src.database import get_db
-from src.database_utils import get_current_date_sql, get_current_time_sql, insert_and_get_id
 from src.logger import get_logger
 
 logger = get_logger()
@@ -63,7 +62,7 @@ def get_available_matches():
                                 FROM schedules s
                                          LEFT JOIN courts c ON s.court_id = c.id
                                          LEFT JOIN matches m ON s.id = m.schedule_id
-                                         LEFT JOIN (SELECT match_id, player_name FROM bets WHERE user_id = ? AND status = 'active') ub ON m.id = ub.match_id
+                                         LEFT JOIN (SELECT match_id, player_name FROM bets WHERE user_id = %s AND status = 'active') ub ON m.id = ub.match_id
                                 {deleted_filter}
                                 ORDER BY s.date, s.start_time
                                 ''', (user_id,))
@@ -177,11 +176,11 @@ def create_match():
     db = get_db()
     try:
         # Check if schedule exists and is in the future
-        current_date = get_current_date_sql()
-        current_time = get_current_time_sql()
+        current_date = CURRENT_DATE
+        current_time = CURRENT_TIME
         cursor = db.execute(f'''
             SELECT * FROM schedules 
-            WHERE id = ? AND deleted_at IS NULL AND (date > {current_date} OR (date = {current_date} AND start_time > {current_time}))
+            WHERE id = %s AND deleted_at IS NULL AND (date > {current_date} OR (date = {current_date} AND start_time > {current_time}))
         ''', (schedule_id,))
 
         schedule = cursor.fetchone()
@@ -189,17 +188,19 @@ def create_match():
             return jsonify({'error': 'Agenda não encontrada ou já passou'}), 404
 
         # Check if match already exists
-        cursor = db.execute('SELECT id FROM matches WHERE schedule_id = ?', (schedule_id,))
+        cursor = db.execute('SELECT id FROM matches WHERE schedule_id = %s', (schedule_id,))
         existing_match = cursor.fetchone()
 
         if existing_match:
             return jsonify({'error': 'Partida já existe para esta agenda'}), 400
 
         # Create match
-        match_id = insert_and_get_id(db, '''
-                            INSERT INTO matches (schedule_id, status, betting_enabled, total_pool, house_edge)
-                            VALUES (?, 'upcoming', ?, 0.00, 0.20)
-                            ''', (schedule_id, data.get('betting_enabled', True)))
+        cursor = db.cursor()
+        cursor.execute('''
+            INSERT INTO matches (schedule_id, status, betting_enabled, total_pool, house_edge)
+            VALUES (%s, 'upcoming', %s, 0.00, 0.20) RETURNING id
+        ''', (schedule_id, data.get('betting_enabled', True)))
+        match_id = cursor.fetchone()['id']
 
         db.commit()
 
@@ -222,14 +223,14 @@ def toggle_betting(match_id):
     """Enable/disable betting for a match"""
     db = get_db()
     try:
-        cursor = db.execute('SELECT betting_enabled FROM matches WHERE id = ?', (match_id,))
+        cursor = db.execute('SELECT betting_enabled FROM matches WHERE id = %s', (match_id,))
         match = cursor.fetchone()
 
         if not match:
             return jsonify({'error': 'Partida não encontrada'}), 404
 
         new_status = not match['betting_enabled']
-        db.execute('UPDATE matches SET betting_enabled = ? WHERE id = ?', (new_status, match_id))
+        db.execute('UPDATE matches SET betting_enabled = %s WHERE id = %s', (new_status, match_id))
         db.commit()
 
         logger.info(f'Betting toggled for match {match_id}: {new_status}')
@@ -258,11 +259,11 @@ def update_match_status(match_id):
 
     db = get_db()
     try:
-        cursor = db.execute('SELECT id FROM matches WHERE id = ?', (match_id,))
+        cursor = db.execute('SELECT id FROM matches WHERE id = %s', (match_id,))
         if not cursor.fetchone():
             return jsonify({'error': 'Partida não encontrada'}), 404
 
-        db.execute('UPDATE matches SET status = ? WHERE id = ?', (status, match_id))
+        db.execute('UPDATE matches SET status = %s WHERE id = %s', (status, match_id))
         db.commit()
 
         logger.info(f'Match status updated: match_id={match_id}, status={status}')

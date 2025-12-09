@@ -76,6 +76,7 @@ export default function Statistics() {
 
   const getSelectedSeasonLabel = () => {
     if (!selectedSeason) return 'Todas as temporadas'
+    if (selectedSeason === 'amistosos') return 'Amistosos'
     const season = seasons.find(s => s.id.toString() === selectedSeason)
     return season ? getSeasonLabel(season) : selectedSeason
   }
@@ -270,6 +271,7 @@ export default function Statistics() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Todas as temporadas</SelectItem>
+                <SelectItem value="amistosos">Amistosos</SelectItem>
                 {seasons.map(s => (
                   <SelectItem key={s.id} value={s.id.toString()}>
                     {getSeasonLabel(s)}

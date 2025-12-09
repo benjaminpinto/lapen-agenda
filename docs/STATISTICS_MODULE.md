@@ -67,6 +67,38 @@ Get statistics for specific players with filters
   }
   ```
 
+#### GET `/general`
+Get general statistics for all matches
+- **Response:**
+  ```json
+  {
+    "total_matches": 150,
+    "total_players": 25,
+    "match_types": {
+      "Ranking": 80,
+      "Amistoso": 50,
+      "Liga": 20
+    },
+    "top_players": [
+      {
+        "name": "Player A",
+        "wins": 45,
+        "matches": 60,
+        "win_rate": 75.0
+      }
+    ]
+  }
+  ```
+
+#### GET `/opponents/<player_name>`
+Get list of opponents for a specific player
+- **Response:**
+  ```json
+  {
+    "opponents": ["Player B", "Player C", "Player D"]
+  }
+  ```
+
 #### GET `/past-matches`
 Get past scheduled matches without results
 - **Auth:** Required
@@ -102,11 +134,16 @@ Get list of all players from match statistics
 - `data-testid="match-type-select"`
 - `data-testid="fetch-stats-btn"`
 - `data-testid="share-stats-btn"`
+- `data-testid="general-stats-card"`
+- `data-testid="match-types-chart-card"`
+- `data-testid="top-players-card"`
+- `data-testid="top-player-{idx}"`
 - `data-testid="head-to-head-card"`
 - `data-testid="total-matches-card"`
 - `data-testid="wins-card"`
 - `data-testid="sets-card"`
 - `data-testid="games-card"`
+- `data-testid="additional-stats-card"`
 - `data-testid="matches-history-card"`
 
 #### `/statistics/add-result` - Add Match Result
@@ -155,11 +192,15 @@ Updated `swagger.yaml` with:
 
 ### Viewing Statistics
 1. User navigates to `/statistics`
-2. Selects Player 1 (required)
-3. Optionally selects Player 2 for head-to-head
-4. Optionally filters by match type
-5. Clicks "Buscar Estatísticas"
-6. Views comprehensive statistics and match history
+2. **Initial View:** Sees general statistics (total matches, players, top 5)
+3. Selects Player 1 (required)
+4. Optionally selects Player 2 for head-to-head
+5. Optionally filters by match type
+6. Clicks "Buscar Estatísticas"
+7. Views comprehensive statistics including:
+   - Basic stats (matches, wins, sets, games)
+   - Additional stats (streaks, averages, close matches)
+   - Match history
 
 ### Head-to-Head Comparison
 1. Select both Player 1 and Player 2
@@ -176,13 +217,21 @@ Updated `swagger.yaml` with:
 - Share via WhatsApp/social media
 - Implementation placeholder exists in `shareStats()` function
 
-### Additional Statistics
-- Win streaks
-- Performance by court type
-- Monthly/yearly trends
-- Tournament-specific statistics
-- Average games per set
-- Tiebreak statistics
+### Additional Statistics ✅ IMPLEMENTED
+- ✅ Win streaks (max win streak, max loss streak, current streak)
+- ✅ Average games per set
+- ✅ Close matches (tiebreaks)
+- Performance by court type (pending)
+- Monthly/yearly trends (pending)
+- Tournament-specific statistics (pending)
+
+### General Statistics ✅ IMPLEMENTED
+- ✅ Total matches across all players
+- ✅ Total players in the system
+- ✅ Match distribution by type (Ranking, Amistoso, Liga) - **Pie Chart Visualization**
+- ✅ Top 5 players by wins and win rate
+- ✅ Displayed on initial page load (no filters)
+- ✅ High-quality Recharts pie chart with percentages and color coding
 
 ## Testing
 

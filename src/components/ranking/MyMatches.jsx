@@ -2,15 +2,17 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Calendar, Clock, Trophy } from 'lucide-react'
+import { Calendar, Clock, Trophy, History } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import MatchResultForm from './MatchResultForm'
+import RecentResults from './RecentResults'
 import { useToast } from '@/contexts/ToastContext'
 
 const MyMatches = () => {
   const [matches, setMatches] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedMatch, setSelectedMatch] = useState(null)
+  const [showRecentResults, setShowRecentResults] = useState(false)
   const { user } = useAuth()
   const { showToast } = useToast()
 
@@ -87,6 +89,10 @@ const MyMatches = () => {
     )
   }
 
+  if (showRecentResults) {
+    return <RecentResults onBack={() => setShowRecentResults(false)} />
+  }
+
   if (selectedMatch) {
     return (
       <MatchResultForm
@@ -99,7 +105,13 @@ const MyMatches = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Minhas Partidas</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Minhas Partidas</h1>
+        <Button variant="outline" size="sm" onClick={() => setShowRecentResults(true)}>
+          <History className="h-4 w-4 mr-2" />
+          Últimos Resultados
+        </Button>
+      </div>
 
       {matches.length > 0 ? (
         <div className="space-y-4">

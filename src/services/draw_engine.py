@@ -18,7 +18,7 @@ class DrawEngine:
         ''', (round_id,)).fetchone()
         
         if not round_info:
-            raise ValueError("Round not found")
+            raise ValueError("Rodada não encontrada")
         
         config = RankingConfigService.get_config(round_info['season_id'])
         elite_cutoff = config['elite_cutoff']
@@ -32,7 +32,7 @@ class DrawEngine:
         ''', (round_info['season_id'],)).fetchall()
         
         if len(participants) < 2:
-            raise ValueError("Not enough participants for draw")
+            raise ValueError("Participantes insuficientes para realizar o sorteio")
         
         # Split into Elite and Challenger groups
         elite_players = participants[:elite_cutoff]

@@ -16,9 +16,10 @@ const AdminRanking = () => {
   const [newSeason, setNewSeason] = useState({
     year: new Date().getFullYear(),
     start_date: '',
-    end_date: ''
+    end_date: '',
+    description: ''
   })
-  const { showToast } = useToast()
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchSeasons()
@@ -43,6 +44,49 @@ const AdminRanking = () => {
     }
   }
 
+  const openSeason = async (seasonId) => {
+    try {
+      const token = localStorage.getItem('auth_token')
+      const response = await fetch(`/api/ranking/seasons/${seasonId}/open`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        toast({ title: 'Temporada aberta com sucesso' })
+        fetchSeasons()
+      } else {
+        toast({ title: data.error || 'Erro ao abrir temporada', variant: 'destructive' })
+      }
+    } catch (error) {
+      toast({ title: 'Erro ao abrir temporada', variant: 'destructive' })
+    }
+  }
+
+  const closeSeason = async (seasonId) => {
+    try {
+      const token = localStorage.getItem('auth_token')
+      const response = await fetch(`/api/ranking/seasons/${seasonId}/close`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        toast({ title: 'Temporada finalizada com sucesso' })
+        fetchSeasons()
+      } else {
+        toast({ title: data.error, variant: 'destructive' })
+      }
+    } catch (error) {
+      console.error('Error closing season:', error)
+      toast({ title: 'Erro ao finalizar temporada', variant: 'destructive' })
+    }
+  }
+
   const createSeason = async () => {
     try {
       const token = localStorage.getItem('auth_token')
@@ -56,20 +100,21 @@ const AdminRanking = () => {
       })
 
       if (response.ok) {
-        showToast('Temporada criada com sucesso', 'success')
+        toast({ title: 'Temporada criada com sucesso' })
         setShowCreateForm(false)
         setNewSeason({
           year: new Date().getFullYear() + 1,
           start_date: '',
-          end_date: ''
+          end_date: '',
+          description: ''
         })
         fetchSeasons()
       } else {
         const error = await response.json()
-        showToast(error.error || 'Erro ao criar temporada', 'error')
+        toast({ title: error.error || 'Erro ao criar temporada', variant: 'destructive' })
       }
     } catch (error) {
-      showToast('Erro ao criar temporada', 'error')
+      toast({ title: 'Erro ao criar temporada', variant: 'destructive' })
     }
   }
 
@@ -121,7 +166,7 @@ const AdminRanking = () => {
             <CardTitle>Criar Nova Temporada</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="year">Ano</Label>
                 <Input
@@ -129,6 +174,16 @@ const AdminRanking = () => {
                   type="number"
                   value={newSeason.year}
                   onChange={(e) => setNewSeason({...newSeason, year: parseInt(e.target.value)})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Descrição (opcional)</Label>
+                <Input
+                  id="description"
+                  type="text"
+                  placeholder="Ex: Finals, Qualificatórias"
+                  value={newSeason.description}
+                  onChange={(e) => setNewSeason({...newSeason, description: e.target.value})}
                 />
               </div>
               <div>
@@ -166,7 +221,9 @@ const AdminRanking = () => {
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="text-lg font-semibold">Temporada {season.year}</h3>
+                  <h3 className="text-lg font-semibold">
+                    Temporada {season.year}{season.description ? ` - ${season.description}` : ''}
+                  </h3>
                   <p className="text-sm text-gray-600">
                     {new Date(season.start_date).toLocaleDateString('pt-BR')} - {' '}
                     {new Date(season.end_date).toLocaleDateString('pt-BR')}
@@ -176,15 +233,25 @@ const AdminRanking = () => {
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/config/${season.year}`)}>
+                  {season.status === 'draft' && (
+                    <Button size="sm" onClick={() => openSeason(season.id)}>
+                      Abrir Temporada
+                    </Button>
+                  )}
+                  {season.status === 'active' && (
+                    <Button size="sm" variant="destructive" onClick={() => closeSeason(season.id)}>
+                      Finalizar Temporada
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/config/${season.id}`)}>
                     <Settings className="h-4 w-4 mr-2" />
                     Configurar
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/participants/${season.year}`)}>
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/participants/${season.id}`)}>
                     <Users className="h-4 w-4 mr-2" />
                     Participantes
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/rounds/${season.year}`)}>
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/rounds/${season.id}`)}>
                     <Calendar className="h-4 w-4 mr-2" />
                     Rodadas
                   </Button>

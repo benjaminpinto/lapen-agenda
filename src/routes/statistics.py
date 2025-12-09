@@ -31,10 +31,10 @@ def add_match_result():
 
             db.execute('''
                 INSERT INTO match_statistics (schedule_id, player1_name, player2_name, winner_name,
-                    player1_sets, player2_sets, player1_games, player2_games, match_type, match_date)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    player1_sets, player2_sets, player1_games, player2_games, match_type, match_date, added_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (schedule_id, schedule['player1_name'], schedule['player2_name'], winner_name,
-                  player1_sets, player2_sets, player1_games, player2_games, schedule['match_type'], schedule['date']))
+                  player1_sets, player2_sets, player1_games, player2_games, schedule['match_type'], schedule['date'], request.user_id))
         
         elif ranking_match_id:
             from datetime import datetime
@@ -68,10 +68,10 @@ def add_match_result():
             db.execute('''
                 UPDATE ranking_matches
                 SET status = ?, winner_id = ?, score = ?, sets_p1 = ?, sets_p2 = ?,
-                    games_p1 = ?, games_p2 = ?, points_p1 = ?, points_p2 = ?, played_at = ?
+                    games_p1 = ?, games_p2 = ?, points_p1 = ?, points_p2 = ?, played_at = ?, added_by = ?
                 WHERE id = ?
             ''', ('completed', winner_id, score, player1_sets, player2_sets, player1_games, player2_games,
-                  points_p1, points_p2, datetime.utcnow(), ranking_match_id))
+                  points_p1, points_p2, datetime.utcnow(), request.user_id, ranking_match_id))
             
             for player_id, is_winner, sets_won, sets_lost, games_won, games_lost, points in [
                 (match['player1_id'], winner_id == match['player1_id'], player1_sets, player2_sets, player1_games, player2_games, points_p1),
@@ -261,6 +261,145 @@ def get_player_opponents(player_name):
         return jsonify({'opponents': [o['opponent'] for o in opponents]})
     except Exception as e:
         logger.error(f'Error fetching opponents: {str(e)}')
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+@statistics_bp.route('/recent-results', methods=['GET'])
+def get_recent_statistics_results():
+    """Get recent match statistics results with audit log"""
+    limit = request.args.get('limit', 20, type=int)
+    db = get_db()
+    try:
+        results = db.execute('''
+            SELECT ms.*, u.short_name as added_by_name, u.id as added_by_id
+            FROM match_statistics ms
+            LEFT JOIN users u ON ms.added_by = u.id
+            ORDER BY ms.created_at DESC
+            LIMIT ?
+        ''', (limit,)).fetchall()
+        return jsonify([dict(r) for r in results])
+    except Exception as e:
+        logger.error(f'Error fetching recent statistics results: {str(e)}')
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+@statistics_bp.route('/general', methods=['GET'])
+def get_general_statistics():
+    """Get general statistics for all matches"""
+    season_id = request.args.get('season')
+    db = get_db()
+    try:
+        schedule_matches = db.execute('SELECT * FROM match_statistics').fetchall()
+        
+        if season_id:
+            ranking_query = '''
+                SELECT rm.played_at as match_date, u1.short_name as player1_name, 
+                       u2.short_name as player2_name, uw.short_name as winner_name,
+                       rm.sets_p1 as player1_sets, rm.sets_p2 as player2_sets,
+                       rm.games_p1 as player1_games, rm.games_p2 as player2_games,
+                       'Ranking' as match_type
+                FROM ranking_matches rm
+                JOIN users u1 ON rm.player1_id = u1.id
+                JOIN users u2 ON rm.player2_id = u2.id
+                JOIN users uw ON rm.winner_id = uw.id
+                JOIN ranking_rounds rr ON rm.round_id = rr.id
+                WHERE rm.status = 'completed' AND rr.season_id = ?
+            '''
+            ranking_matches = db.execute(ranking_query, (season_id,)).fetchall()
+        else:
+            ranking_matches = db.execute('''
+                SELECT rm.played_at as match_date, u1.short_name as player1_name, 
+                       u2.short_name as player2_name, uw.short_name as winner_name,
+                       rm.sets_p1 as player1_sets, rm.sets_p2 as player2_sets,
+                       rm.games_p1 as player1_games, rm.games_p2 as player2_games,
+                       'Ranking' as match_type
+                FROM ranking_matches rm
+                JOIN users u1 ON rm.player1_id = u1.id
+                JOIN users u2 ON rm.player2_id = u2.id
+                JOIN users uw ON rm.winner_id = uw.id
+                WHERE rm.status = 'completed'
+            ''').fetchall()
+        
+        all_matches = list(schedule_matches) + list(ranking_matches)
+        
+        if not all_matches:
+            return jsonify({
+                'total_matches': 0,
+                'total_players': 0,
+                'total_sets': 0,
+                'total_games': 0,
+                'super_tiebreaks': 0,
+                'match_types': {},
+                'top_players': []
+            })
+        
+        players_stats = {}
+        match_types = {}
+        total_sets = 0
+        total_games = 0
+        super_tiebreaks = 0
+        
+        for match in all_matches:
+            match_types[match['match_type']] = match_types.get(match['match_type'], 0) + 1
+            total_sets += match['player1_sets'] + match['player2_sets']
+            total_games += match['player1_games'] + match['player2_games']
+            
+            if match['player1_sets'] == match['player2_sets'] == 1:
+                super_tiebreaks += 1
+            
+            for player in [match['player1_name'], match['player2_name']]:
+                if player not in players_stats:
+                    players_stats[player] = {'wins': 0, 'matches': 0, 'current_streak': 0, 'max_streak': 0}
+                players_stats[player]['matches'] += 1
+                if match['winner_name'] == player:
+                    players_stats[player]['wins'] += 1
+        
+        for player in players_stats:
+            player_matches = sorted(
+                [m for m in all_matches if player in [m['player1_name'], m['player2_name']]],
+                key=lambda x: x['match_date'] or '',
+                reverse=True
+            )
+            current_streak = 0
+            max_streak = 0
+            for match in player_matches:
+                if match['winner_name'] == player:
+                    current_streak += 1
+                    max_streak = max(max_streak, current_streak)
+                else:
+                    break
+            players_stats[player]['current_streak'] = current_streak
+            players_stats[player]['max_streak'] = max_streak
+        
+        top_players = sorted(
+            [{'name': p, 'wins': s['wins'], 'matches': s['matches'], 
+              'win_rate': (s['wins'] / s['matches'] * 100) if s['matches'] > 0 else 0}
+             for p, s in players_stats.items()],
+            key=lambda x: (x['wins'], x['win_rate']),
+            reverse=True
+        )[:5]
+        
+        top_streaks = sorted(
+            [{'name': p, 'current_streak': s['current_streak'], 'max_streak': s['max_streak']}
+             for p, s in players_stats.items()],
+            key=lambda x: x['current_streak'],
+            reverse=True
+        )[:5]
+        
+        return jsonify({
+            'total_matches': len(all_matches),
+            'total_players': len(players_stats),
+            'total_sets': total_sets,
+            'total_games': total_games,
+            'super_tiebreaks': super_tiebreaks,
+            'match_types': match_types,
+            'top_players': top_players,
+            'top_streaks': top_streaks
+        })
+    except Exception as e:
+        logger.error(f'Error fetching general statistics: {str(e)}')
         return jsonify({'error': str(e)}), 500
     finally:
         db.close()

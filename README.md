@@ -11,10 +11,13 @@
 
 LAPEN Agenda is a comprehensive tennis court management system featuring:
 - Court scheduling and availability management
-- Match betting system with PIX payments
+- Match betting system with PIX payments (Mercado Pago)
+- Ranking system with automated draws and points calculation
+- Statistics module with player performance tracking
 - User authentication and admin panel
 - Real-time notifications and WhatsApp integration
 - Complete API with Swagger documentation
+- E2E testing with Playwright and Allure reporting
 
 ## ✨ Key Features
 
@@ -22,20 +25,38 @@ LAPEN Agenda is a comprehensive tennis court management system featuring:
 - 📅 **Smart Scheduling** - Weekly/monthly views with conflict prevention
 - 🎲 **Betting System** - Real-time odds, PIX payments, automatic settlement
 - 💳 **Payment Integration** - Mercado Pago with PIX support (fully optimized)
-- 👥 **User System** - Registration, authentication, betting history
+- 🏆 **Ranking System** - Annual seasons, monthly rounds, automated draws, Elite/Challenger groups
+- 📊 **Statistics Module** - Player performance, head-to-head records, leaderboards
+- 👥 **User System** - Registration, authentication, LAPEN member approval, betting history
 - 🔐 **Admin Panel** - Complete management dashboard
 - 📱 **WhatsApp Integration** - Schedule sharing
-- 📊 **API Documentation** - Interactive Swagger UI
+- 📡 **API Documentation** - Interactive Swagger UI (60+ endpoints)
 - 🌐 **Portuguese UI** - Fully localized interface
+- 🧪 **E2E Testing** - Playwright tests with Allure reporting
 
 [See complete feature list →](docs/FEATURES.md)
 
 ## 🚀 Quick Start
 
+### Docker (Recommended)
+
 ```bash
 # Clone repository
 git clone <repository-url>
 cd lapen-agenda
+
+# Start with Docker
+docker-compose up -d
+
+# Access application
+http://localhost:5001
+```
+
+### Manual Setup
+
+```bash
+# Requires PostgreSQL running locally
+export DATABASE_URL=postgresql://user:password@localhost:5432/lapen_agenda
 
 # Setup backend
 python -m venv .venv
@@ -46,7 +67,7 @@ pip install -r requirements.txt
 npm install
 
 # Configure environment
-cp .env.example .env
+cp .env.docker .env
 # Edit .env with your credentials
 
 # Run development servers
@@ -64,31 +85,45 @@ npm run dev            # Frontend (port 5173)
 - 🔒 [Security](docs/SECURITY.md) - Security configuration
 - 🔌 [API Documentation](docs/API_DOCUMENTATION.md) - REST API reference
 - 🎾 [LAPEN Member System](docs/QUICK_START_LAPEN.md) - Member approval workflow
+- 🏆 [Ranking System](docs/RANKING_IMPLEMENTATION_PLAN.md) - Ranking implementation details
+- 📊 [Statistics Module](docs/STATISTICS_MODULE.md) - Statistics implementation
 - 🧪 [Testing Guide](docs/TESTING.md) - Unit and E2E testing
 - 🎭 [Playwright Setup](docs/PLAYWRIGHT_SETUP.md) - E2E testing configuration
-- 📊 [Allure Reporting](docs/ALLURE_REPORTING.md) - Test reporting and analytics
+- 📈 [Allure Reporting](docs/ALLURE_REPORTING.md) - Test reporting and analytics
 - 📘 [User Manual](docs/Manual%20do%20Usuário%20-%20Agenda%20LAPEN.md) - Complete user guide (Portuguese)
 - 📋 [System Overview](docs/Agenda%20LAPEN%20-%20Sistema%20de%20Gerenciamento%20de%20Quadras%20de%20Tênis.md) - Detailed system documentation (Portuguese)
-- 📊 **Interactive API Docs:** http://localhost:5001/api/docs
+- 🔗 **Interactive API Docs:** http://localhost:5001/api/docs
 
 ## 🛠️ Technology Stack
 
 **Backend:**
-- Flask 3.0.0
-- SQLite
+- Flask 3.0.0 (Python 3.9+)
+- PostgreSQL 15
+- Gunicorn (production)
 - JWT Authentication
-- Mercado Pago SDK
+- Mercado Pago SDK (PIX)
+- Stripe SDK (Cards)
+- Flask-Mail (Gmail SMTP)
+- Flasgger (OpenAPI 3.0.4)
 
 **Frontend:**
-- React 18
-- Vite
-- Tailwind CSS
-- shadcn/ui
+- React 18.3.1
+- Vite 6.0.1
+- Tailwind CSS 3.4.17
+- shadcn/ui (Radix UI)
+- Recharts 3.5.1
+- React Router 6.28.0
 
 **Testing:**
 - pytest (Unit tests)
-- Playwright (E2E tests)
-- Allure Report (Test reporting)
+- Playwright 1.48.0 (E2E tests)
+- Allure 2.34.1 (Test reporting)
+
+**Infrastructure:**
+- Vercel (Hosting)
+- Docker + Docker Compose
+- GitHub Actions (CI/CD)
+- Nginx (Production proxy)
 
 [See full architecture →](docs/ARCHITECTURE.md)
 
@@ -107,10 +142,14 @@ npm run dev            # Frontend (port 5173)
 
 - Environment-based configuration
 - JWT authentication (7-day expiry)
-- Bcrypt password hashing
-- Secure session cookies
+- Bcrypt password hashing (12 rounds)
+- Secure session cookies (HTTP-only, SameSite=Lax)
 - Input sanitization
-- CORS protection
+- CORS protection (restricted origins)
+- SQL parameterization
+- Webhook signature verification
+- Device ID tracking (fraud prevention)
+- Path traversal protection
 
 [Security configuration →](docs/SECURITY.md)
 
@@ -119,13 +158,21 @@ npm run dev            # Frontend (port 5173)
 Required variables in `.env`:
 
 ```bash
+DATABASE_URL=postgresql://user:password@localhost:5432/lapen_agenda
 ADMIN_PASSWORD=your-admin-password
 SECRET_KEY=your-secret-key-min-32-chars
 MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
 MERCADOPAGO_ACCESS_TOKEN=your-token
 MERCADOPAGO_PUBLIC_KEY=your-key
+```
+
+Optional variables:
+```bash
 FRONTEND_URL=https://your-domain.com  # Production only
+STRIPE_SECRET_KEY=your-stripe-key
+STRIPE_PUBLISHABLE_KEY=your-stripe-public-key
+FLASK_ENV=development  # or production
 ```
 
 See [.env.example](.env.example) for complete list.
@@ -134,7 +181,8 @@ See [.env.example](.env.example) for complete list.
 
 - **Frontend:** http://localhost:5173 (dev) / http://localhost:5001 (prod)
 - **API Docs:** http://localhost:5001/api/docs
-- **Admin Panel:** http://localhost:5173/admin
+- **Admin Panel:** http://localhost:5173/admin (dev) / http://localhost:5001/admin (prod)
+- **PostgreSQL:** localhost:5432 (Docker)
 
 ## 🧪 Testing
 
@@ -178,19 +226,37 @@ npm run allure:serve  # Generate and view report
    - Allure reports published to GitHub Pages
    - Results reported back to Vercel
 
-**Workflow:**
+**Pipeline Flow:**
 ```
-Push → Unit Tests → Vercel Deploy → E2E Tests (preview only)
+Push to branch → Unit Tests → Vercel Deploy → E2E Tests (preview only) → Allure Report → Vercel Check
+                                    ├─ main → Production
+                                    └─ other → Preview
 ```
 
-## 📦 Production Build
+## 📦 Production Deployment
+
+### Docker (Recommended)
+
+```bash
+# Configure production environment
+cp .env.production.example .env.production
+# Edit .env.production with your credentials
+
+# Start production stack
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+[See Docker documentation →](README.docker.md)
+
+### Manual
 
 ```bash
 # Build frontend
 npm run build
 
-# Run production server
-FLASK_ENV=production python main.py
+# Run with Gunicorn
+export FLASK_ENV=production
+gunicorn --config gunicorn.conf.py main:app
 ```
 
 ## 🤝 Contributing
@@ -208,3 +274,10 @@ Benjamin Pinto
 ---
 
 **Note:** This system is optimized for Brazilian market with PIX payment integration and Portuguese localization.
+
+## 📚 Additional Documentation
+
+- 🎯 [Ranking System](docs/RANKING_IMPLEMENTATION_PLAN.md) - Detailed ranking system documentation
+- 📊 [Statistics Module](docs/STATISTICS_MODULE.md) - Statistics implementation details
+- 👨‍💼 [User Manual (Portuguese)](docs/Manual%20do%20Usuário%20-%20Agenda%20LAPEN.md) - Complete user guide
+- 📝 [System Overview (Portuguese)](docs/Agenda%20LAPEN%20-%20Sistema%20de%20Gerenciamento%20de%20Quadras%20de%20Tênis.md) - Detailed system documentation

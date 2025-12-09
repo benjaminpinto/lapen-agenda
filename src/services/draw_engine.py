@@ -14,7 +14,7 @@ class DrawEngine:
         round_info = db.execute('''
             SELECT r.*, s.id as season_id FROM ranking_rounds r
             JOIN ranking_seasons s ON r.season_id = s.id
-            WHERE r.id = ?
+            WHERE r.id = %s
         ''', (round_id,)).fetchone()
         
         if not round_info:
@@ -27,7 +27,7 @@ class DrawEngine:
         participants = db.execute('''
             SELECT rp.*, u.name FROM ranking_participants rp
             JOIN users u ON rp.user_id = u.id
-            WHERE rp.season_id = ? AND rp.is_active = 1
+            WHERE rp.season_id = %s AND rp.is_active = true
             ORDER BY rp.position ASC
         ''', (round_info['season_id'],)).fetchall()
         
@@ -47,17 +47,17 @@ class DrawEngine:
         for match in all_matches:
             db.execute('''
                 INSERT INTO ranking_matches (round_id, player1_id, player2_id, group_type)
-                VALUES (?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s)
             ''', (round_id, match['player1_id'], match['player2_id'], match['group_type']))
             
             # Save draw history
             db.execute('''
                 INSERT INTO ranking_draws (round_id, player1_id, player2_id, group_type)
-                VALUES (?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s)
             ''', (round_id, match['player1_id'], match['player2_id'], match['group_type']))
         
         # Update round status
-        db.execute('UPDATE ranking_rounds SET status = ? WHERE id = ?', ('drawn', round_id))
+        db.execute('UPDATE ranking_rounds SET status = %s WHERE id = %s', ('drawn', round_id))
         db.commit()
         
         return all_matches
@@ -78,10 +78,10 @@ class DrawEngine:
             WHERE round_id IN (
                 SELECT id FROM ranking_rounds 
                 WHERE season_id = (
-                    SELECT season_id FROM ranking_rounds WHERE id = ?
+                    SELECT season_id FROM ranking_rounds WHERE id = %s
                 )
                 AND round_number >= (
-                    SELECT round_number - 2 FROM ranking_rounds WHERE id = ?
+                    SELECT round_number - 2 FROM ranking_rounds WHERE id = %s
                 )
             )
         ''', (round_id, round_id)).fetchall()

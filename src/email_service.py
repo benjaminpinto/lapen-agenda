@@ -41,7 +41,7 @@ def send_verification_email(email, name, verification_token):
             if os.getenv('FLASK_ENV') == 'development' and ':5001' in base_url:
                 base_url = base_url.replace(':5001', ':5173')
         
-        verification_url = f"{base_url}verify?token={verification_token}"
+        verification_url = f"{base_url}verify%stoken={verification_token}"
         
         msg = Message(
             subject='Confirme sua conta Agenda LAPEN',
@@ -189,7 +189,7 @@ def send_password_reset_email(email, name, reset_token):
             if os.getenv('FLASK_ENV') == 'development' and ':5001' in base_url:
                 base_url = base_url.replace(':5001', ':5173')
         
-        reset_url = f"{base_url}reset-password?token={reset_token}"
+        reset_url = f"{base_url}reset-password%stoken={reset_token}"
         
         msg = Message(
             subject='Recuperação de Senha - Agenda LAPEN',

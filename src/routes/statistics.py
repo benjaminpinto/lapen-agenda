@@ -187,7 +187,7 @@ def get_past_matches():
             SELECT s.id, s.date, s.start_time, s.player1_name, s.player2_name, s.match_type
             FROM schedules s
             LEFT JOIN match_statistics ms ON s.id = ms.schedule_id
-            WHERE s.deleted_at IS NULL AND ms.id IS NULL AND s.date < date('now')
+            WHERE s.deleted_at IS NULL AND ms.id IS NULL AND s.date <= CURRENT_DATE
         ''').fetchall()
         
         ranking_matches = db.execute('''
@@ -365,7 +365,7 @@ def get_general_statistics():
         for player in players_stats:
             player_matches = sorted(
                 [m for m in all_matches if player in [m['player1_name'], m['player2_name']]],
-                key=lambda x: x['match_date'] or '',
+                key=lambda x: str(x['match_date']) if x['match_date'] else '',
                 reverse=True
             )
             current_streak = 0

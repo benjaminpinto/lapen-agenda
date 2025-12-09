@@ -18,7 +18,7 @@ const SeasonRounds = () => {
   const [selectedRound, setSelectedRound] = useState(null)
   const [selectedMatch, setSelectedMatch] = useState(null)
   const [showResultForm, setShowResultForm] = useState(false)
-  const [newRound, setNewRound] = useState({ month: '' })
+  const [newRound, setNewRound] = useState({ month: '', description: '' })
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [roundToCancel, setRoundToCancel] = useState(null)
   const { toast } = useToast()
@@ -96,13 +96,14 @@ const SeasonRounds = () => {
           season_id: season.id,
           round_number: nextRoundNumber,
           month: parseInt(newRound.month),
-          year: parseInt(year)
+          year: parseInt(year),
+          description: newRound.description
         })
       })
 
       if (response.ok) {
         toast({ title: 'Rodada criada', variant: 'default' })
-        setNewRound({ month: '' })
+        setNewRound({ month: '', description: '' })
         fetchRounds()
       } else {
         const error = await response.json()
@@ -279,23 +280,35 @@ const SeasonRounds = () => {
         <CardHeader>
           <CardTitle>Nova Rodada</CardTitle>
         </CardHeader>
-        <CardContent className="flex gap-4 items-end">
-          <div className="flex-1">
-            <label className="text-sm font-medium mb-2 block">Rodada #{rounds.length + 1} - Selecione o mês</label>
-            <Select value={newRound.month} onValueChange={(value) => setNewRound({ month: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o mês">
-                  {newRound.month ? months.find(m => m.value.toString() === newRound.month)?.label : 'Selecione o mês'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {months.map(month => (
-                  <SelectItem key={month.value} value={month.value.toString()}>
-                    {month.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Rodada #{rounds.length + 1} - Selecione o mês</label>
+              <Select value={newRound.month} onValueChange={(value) => setNewRound({ ...newRound, month: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o mês">
+                    {newRound.month ? months.find(m => m.value.toString() === newRound.month)?.label : 'Selecione o mês'}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map(month => (
+                    <SelectItem key={month.value} value={month.value.toString()}>
+                      {month.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Descrição (opcional)</label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border rounded-md"
+                placeholder="Ex: Fase de grupos"
+                value={newRound.description}
+                onChange={(e) => setNewRound({ ...newRound, description: e.target.value })}
+              />
+            </div>
           </div>
           <Button onClick={createRound}>Criar Rodada</Button>
         </CardContent>
@@ -307,7 +320,9 @@ const SeasonRounds = () => {
             <CardContent className="p-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="font-semibold">Rodada {round.round_number}</h3>
+                  <h3 className="font-semibold">
+                    Rodada {round.round_number}{round.description ? ` - ${round.description}` : ''}
+                  </h3>
                   <p className="text-sm text-gray-600">{months.find(m => m.value === round.month)?.label || `Mês ${round.month}`}</p>
                 </div>
                 <div className="flex gap-2">
@@ -351,7 +366,7 @@ const SeasonRounds = () => {
       {selectedRound && matches.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Partidas</CardTitle>
+            <CardTitle>Partidas - Rodada {rounds.find(r => r.id === selectedRound)?.round_number}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">

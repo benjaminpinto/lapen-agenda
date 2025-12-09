@@ -25,6 +25,8 @@ tags:
     description: Betting operations
   - name: Payments
     description: Payment processing
+  - name: Statistics
+    description: Match statistics and player performance
 
 components:
   securitySchemes:
@@ -933,3 +935,118 @@ paths:
       responses:
         '200':
           description: Payment status
+
+  /api/statistics/match-result:
+    post:
+      tags:
+        - Statistics
+      summary: Add match result
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - winner_name
+              properties:
+                schedule_id:
+                  type: integer
+                ranking_match_id:
+                  type: integer
+                winner_name:
+                  type: string
+                player1_sets:
+                  type: integer
+                player2_sets:
+                  type: integer
+                player1_games:
+                  type: integer
+                player2_games:
+                  type: integer
+      responses:
+        '201':
+          description: Result added successfully
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/statistics/player:
+    get:
+      tags:
+        - Statistics
+      summary: Get player statistics
+      parameters:
+        - name: player1
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: player2
+          in: query
+          schema:
+            type: string
+        - name: match_type
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Player statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_matches:
+                    type: integer
+                  wins:
+                    type: integer
+                  losses:
+                    type: integer
+                  sets_won:
+                    type: integer
+                  sets_lost:
+                    type: integer
+                  games_won:
+                    type: integer
+                  games_lost:
+                    type: integer
+                  head_to_head:
+                    type: object
+                  matches:
+                    type: array
+
+  /api/statistics/past-matches:
+    get:
+      tags:
+        - Statistics
+      summary: Get past matches without results
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of past matches
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/statistics/players:
+    get:
+      tags:
+        - Statistics
+      summary: Get all players from statistics
+      responses:
+        '200':
+          description: List of players
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      type: string

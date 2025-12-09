@@ -147,14 +147,14 @@ const AdminRanking = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <Button variant="outline" onClick={() => navigate('/admin/dashboard')}>
+    <div className="space-y-4 sm:space-y-6">
+      <Button variant="outline" onClick={() => navigate('/admin/dashboard')} className="w-full sm:w-auto">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Voltar ao Dashboard
       </Button>
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Gerenciar Ranking</h1>
-        <Button onClick={() => setShowCreateForm(true)}>
+      <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center">
+        <h1 className="text-xl sm:text-2xl font-bold">Gerenciar Ranking</h1>
+        <Button onClick={() => setShowCreateForm(true)} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Nova Temporada
         </Button>
@@ -218,10 +218,10 @@ const AdminRanking = () => {
       <div className="grid gap-4">
         {seasons.map((season) => (
           <Card key={season.id}>
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold">
+                  <h3 className="text-base sm:text-lg font-semibold">
                     Temporada {season.year}{season.description ? ` - ${season.description}` : ''}
                   </h3>
                   <p className="text-sm text-gray-600">
@@ -232,26 +232,26 @@ const AdminRanking = () => {
                     {getStatusBadge(season.status)}
                   </div>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   {season.status === 'draft' && (
-                    <Button size="sm" onClick={() => openSeason(season.id)}>
+                    <Button size="sm" onClick={() => openSeason(season.id)} className="w-full sm:w-auto">
                       Abrir Temporada
                     </Button>
                   )}
                   {season.status === 'active' && (
-                    <Button size="sm" variant="destructive" onClick={() => closeSeason(season.id)}>
+                    <Button size="sm" variant="destructive" onClick={() => closeSeason(season.id)} className="w-full sm:w-auto">
                       Finalizar Temporada
                     </Button>
                   )}
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/config/${season.id}`)}>
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/config/${season.id}`)} className="w-full sm:w-auto">
                     <Settings className="h-4 w-4 mr-2" />
                     Configurar
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/participants/${season.id}`)}>
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/participants/${season.id}`)} className="w-full sm:w-auto">
                     <Users className="h-4 w-4 mr-2" />
                     Participantes
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/rounds/${season.id}`)}>
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/rounds/${season.id}`)} className="w-full sm:w-auto">
                     <Calendar className="h-4 w-4 mr-2" />
                     Rodadas
                   </Button>

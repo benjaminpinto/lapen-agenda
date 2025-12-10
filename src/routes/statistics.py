@@ -115,34 +115,45 @@ def get_player_statistics():
         return jsonify({'error': 'Jogador obrigatório'}), 400
     
     db = get_db()
-    conditions = ['(player1_name = %s OR player2_name = %s)']
-    params = [player1, player1]
+    
+    # Get player IDs from names
+    p1_user = db.execute('SELECT id, short_name FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player1, player1)).fetchone()
+    if not p1_user:
+        return jsonify({'error': 'Jogador não encontrado'}), 404
+    
+    conditions = ['(m.player1_id = %s OR m.player2_id = %s)']
+    params = [p1_user['id'], p1_user['id']]
     
     if player2:
-        conditions.append('((player1_name = %s AND player2_name = %s) OR (player1_name = %s AND player2_name = %s))')
-        params.extend([player1, player2, player2, player1])
+        p2_user = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player2, player2)).fetchone()
+        if p2_user:
+            conditions.append('((m.player1_id = %s AND m.player2_id = %s) OR (m.player1_id = %s AND m.player2_id = %s))')
+            params.extend([p1_user['id'], p2_user['id'], p2_user['id'], p1_user['id']])
     
     if match_type:
-        conditions.append('match_type = %s')
+        conditions.append('m.match_type = %s')
         params.append(match_type)
     
     matches = db.execute(f'''
-        SELECT * FROM match_statistics_unified 
+        SELECT m.*, u1.short_name as current_player1_name, u2.short_name as current_player2_name
+        FROM match_statistics_unified m
+        LEFT JOIN users u1 ON m.player1_id = u1.id
+        LEFT JOIN users u2 ON m.player2_id = u2.id
         WHERE {" AND ".join(conditions)} 
-        ORDER BY match_date DESC
+        ORDER BY m.match_date DESC
     ''', params).fetchall()
     
     stats = {
         'total_matches': len(matches),
-        'wins': sum(1 for m in matches if m['winner_name'] == player1),
-        'losses': len(matches) - sum(1 for m in matches if m['winner_name'] == player1),
+        'wins': sum(1 for m in matches if m['winner_id'] == p1_user['id']),
+        'losses': len(matches) - sum(1 for m in matches if m['winner_id'] == p1_user['id']),
         'matches': []
     }
     
     sets_won = sets_lost = games_won = games_lost = 0
     for match in matches:
         parsed = parse_score(match['score'])
-        is_p1 = match['player1_name'] == player1
+        is_p1 = match['player1_id'] == p1_user['id']
         
         sets_won += parsed['p1_sets'] if is_p1 else parsed['p2_sets']
         sets_lost += parsed['p2_sets'] if is_p1 else parsed['p1_sets']
@@ -150,8 +161,8 @@ def get_player_statistics():
         games_lost += parsed['p2_games'] if is_p1 else parsed['p1_games']
         
         stats['matches'].append({
-            'player1_name': match['player1_name'],
-            'player2_name': match['player2_name'],
+            'player1_name': match.get('current_player1_name') or match['player1_name'],
+            'player2_name': match.get('current_player2_name') or match['player2_name'],
             'winner_name': match['winner_name'],
             'score': match['score'],
             'match_type': match['match_type'],
@@ -169,12 +180,12 @@ def get_player_statistics():
         'games_lost': games_lost
     })
     
-    if player2:
+    if player2 and p2_user:
         stats['head_to_head'] = {
-            'player1': player1,
-            'player2': player2,
-            'player1_wins': sum(1 for m in matches if m['winner_name'] == player1),
-            'player2_wins': sum(1 for m in matches if m['winner_name'] == player2)
+            'player1': p1_user['short_name'],
+            'player2': p2_user['short_name'] if 'short_name' in p2_user else player2,
+            'player1_wins': sum(1 for m in matches if m['winner_id'] == p1_user['id']),
+            'player2_wins': sum(1 for m in matches if m['winner_id'] == p2_user['id'])
         }
     
     db.close()
@@ -216,11 +227,12 @@ def get_past_matches():
 @statistics_bp.route('/players', methods=['GET'])
 def get_all_players():
     db = get_db()
+    # Only show registered users (with IDs), exclude guests
     players = db.execute('''
-        SELECT DISTINCT player1_name as name FROM match_statistics_unified
-        UNION
-        SELECT DISTINCT player2_name as name FROM match_statistics_unified
-        ORDER BY name
+        SELECT DISTINCT u.short_name as name 
+        FROM match_statistics_unified m
+        JOIN users u ON (m.player1_id = u.id OR m.player2_id = u.id)
+        ORDER BY u.short_name
     ''').fetchall()
     db.close()
     return jsonify({'players': [p['name'] for p in players]})
@@ -228,16 +240,20 @@ def get_all_players():
 @statistics_bp.route('/opponents/<player_name>', methods=['GET'])
 def get_player_opponents(player_name):
     db = get_db()
+    
+    # Get player ID
+    player = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player_name, player_name)).fetchone()
+    if not player:
+        db.close()
+        return jsonify({'opponents': []})
+    
     opponents = db.execute('''
-        SELECT DISTINCT 
-            CASE 
-                WHEN player1_name = %s THEN player2_name
-                ELSE player1_name
-            END as opponent
-        FROM match_statistics_unified
-        WHERE player1_name = %s OR player2_name = %s
-        ORDER BY opponent
-    ''', (player_name, player_name, player_name)).fetchall()
+        SELECT DISTINCT u.short_name as opponent
+        FROM match_statistics_unified m
+        JOIN users u ON (CASE WHEN m.player1_id = %s THEN m.player2_id ELSE m.player1_id END) = u.id
+        WHERE m.player1_id = %s OR m.player2_id = %s
+        ORDER BY u.short_name
+    ''', (player['id'], player['id'], player['id'])).fetchall()
     db.close()
     return jsonify({'opponents': [o['opponent'] for o in opponents]})
 
@@ -294,38 +310,40 @@ def get_general_statistics():
         
         match_types[match['match_type']] = match_types.get(match['match_type'], 0) + 1
         
-        for player in [match['player1_name'], match['player2_name']]:
-            if player not in players_stats:
-                players_stats[player] = {'wins': 0, 'matches': 0, 'current_streak': 0}
-            players_stats[player]['matches'] += 1
-            if match['winner_name'] == player:
-                players_stats[player]['wins'] += 1
+        # Only count registered users (with IDs), skip guests
+        for player_id, player_name in [(match['player1_id'], match['player1_name']), (match['player2_id'], match['player2_name'])]:
+            if player_id:  # Skip guests (NULL IDs)
+                if player_id not in players_stats:
+                    players_stats[player_id] = {'name': player_name, 'wins': 0, 'matches': 0, 'current_streak': 0}
+                players_stats[player_id]['matches'] += 1
+                if match['winner_id'] == player_id:
+                    players_stats[player_id]['wins'] += 1
     
-    for player in players_stats:
+    for player_id in players_stats:
         player_matches = sorted(
-            [m for m in matches if player in [m['player1_name'], m['player2_name']]],
+            [m for m in matches if player_id in [m['player1_id'], m['player2_id']]],
             key=lambda x: x['match_date'],
             reverse=True
         )
         streak = 0
         for match in player_matches:
-            if match['winner_name'] == player:
+            if match['winner_id'] == player_id:
                 streak += 1
             else:
                 break
-        players_stats[player]['current_streak'] = streak
+        players_stats[player_id]['current_streak'] = streak
     
     top_players = sorted(
-        [{'name': p, 'wins': s['wins'], 'matches': s['matches'],
+        [{'name': s['name'], 'wins': s['wins'], 'matches': s['matches'],
           'win_rate': (s['wins'] / s['matches'] * 100) if s['matches'] > 0 else 0}
-         for p, s in players_stats.items()],
+         for s in players_stats.values()],
         key=lambda x: (x['wins'], x['win_rate']),
         reverse=True
     )[:5]
     
     top_streaks = sorted(
-        [{'name': p, 'current_streak': s['current_streak'], 'max_streak': s['current_streak']}
-         for p, s in players_stats.items()],
+        [{'name': s['name'], 'current_streak': s['current_streak'], 'max_streak': s['current_streak']}
+         for s in players_stats.values()],
         key=lambda x: x['current_streak'],
         reverse=True
     )[:5]

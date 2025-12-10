@@ -179,11 +179,16 @@ def create_schedule():
     if is_time_blocked(date, start_time, court_id):
         return jsonify({'error': 'Horário está bloqueado'}), 400
 
+    # Get player IDs if they are registered users
+    p1_user = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player1_name, player1_name)).fetchone()
+    p2_user = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player2_name, player2_name)).fetchone()
+    
     try:
         db.execute('''
-            INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, match_type)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        ''', (court_id, date, start_time, player1_name, player2_name, match_type))
+            INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, player1_id, player2_id, match_type)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (court_id, date, start_time, player1_name, player2_name, 
+              p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None, match_type))
         db.commit()
         return jsonify({'success': True, 'message': 'Agendamento criado com sucesso'})
     except Exception:
@@ -233,12 +238,16 @@ def update_schedule(schedule_id):
         if active_bets['count'] > 0:
             return jsonify({'error': 'Não é possível editar agendamento com apostas ativas', 'has_bets': True}), 400
 
+    # Get player IDs if they are registered users
+    p1_user = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player1_name, player1_name)).fetchone()
+    p2_user = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player2_name, player2_name)).fetchone()
+    
     try:
         db.execute('''
             UPDATE schedules 
-            SET player1_name = %s, player2_name = %s, match_type = %s
+            SET player1_name = %s, player2_name = %s, player1_id = %s, player2_id = %s, match_type = %s
             WHERE id = %s
-        ''', (player1_name, player2_name, match_type, schedule_id))
+        ''', (player1_name, player2_name, p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None, match_type, schedule_id))
         db.commit()
         return jsonify({'success': True, 'message': 'Agendamento atualizado com sucesso'})
     except Exception:

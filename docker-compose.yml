@@ -32,6 +32,7 @@ services:
       - .:/app
       - /app/node_modules
       - /app/.venv
+      - /app/dist
     restart: unless-stopped
 
 volumes:

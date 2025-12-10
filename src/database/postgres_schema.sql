@@ -20,7 +20,32 @@ CREATE TABLE IF NOT EXISTS holidays_blocks (
     description TEXT
 );
 
--- Schedules table
+-- Users table for authentication (must be before schedules due to foreign keys)
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    short_name VARCHAR(255),
+    phone VARCHAR(20),
+    pix_key VARCHAR(255),
+    is_verified BOOLEAN DEFAULT FALSE,
+    verification_token VARCHAR(255),
+    reset_token VARCHAR(255),
+    reset_token_expires TIMESTAMP,
+    is_lapen_member BOOLEAN DEFAULT FALSE,
+    lapen_approved BOOLEAN DEFAULT FALSE,
+    lapen_requested_at TIMESTAMP,
+    lapen_approved_at TIMESTAMP,
+    lapen_approved_by INTEGER REFERENCES users(id),
+    is_admin BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- Schedules table (after users table)
 CREATE TABLE IF NOT EXISTS schedules (
     id SERIAL PRIMARY KEY,
     court_id INTEGER NOT NULL,
@@ -51,31 +76,6 @@ CREATE TABLE IF NOT EXISTS recurring_schedules (
     end_date DATE NOT NULL,
     FOREIGN KEY (court_id) REFERENCES courts(id)
 );
-
--- Users table for authentication
-CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    short_name VARCHAR(255),
-    phone VARCHAR(20),
-    pix_key VARCHAR(255),
-    is_verified BOOLEAN DEFAULT FALSE,
-    verification_token VARCHAR(255),
-    reset_token VARCHAR(255),
-    reset_token_expires TIMESTAMP,
-    is_lapen_member BOOLEAN DEFAULT FALSE,
-    lapen_approved BOOLEAN DEFAULT FALSE,
-    lapen_requested_at TIMESTAMP,
-    lapen_approved_at TIMESTAMP,
-    lapen_approved_by INTEGER REFERENCES users(id),
-    is_admin BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- Matches table to link schedules with betting
 CREATE TABLE IF NOT EXISTS matches (

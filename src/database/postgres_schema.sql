@@ -273,6 +273,34 @@ CREATE INDEX IF NOT EXISTS idx_ranking_matches_players ON ranking_matches(player
 CREATE INDEX IF NOT EXISTS idx_ranking_draws_round ON ranking_draws(round_id);
 CREATE INDEX IF NOT EXISTS idx_match_scheduling_logs_match ON match_scheduling_logs(match_id);
 
+-- Unified match statistics table
+CREATE TABLE IF NOT EXISTS match_statistics_unified (
+    id SERIAL PRIMARY KEY,
+    schedule_id INTEGER REFERENCES schedules(id),
+    ranking_match_id INTEGER REFERENCES ranking_matches(id),
+    player1_id INTEGER REFERENCES users(id),
+    player2_id INTEGER REFERENCES users(id),
+    player1_name VARCHAR(255) NOT NULL,
+    player2_name VARCHAR(255) NOT NULL,
+    winner_id INTEGER REFERENCES users(id),
+    winner_name VARCHAR(255) NOT NULL,
+    score TEXT NOT NULL,
+    match_type VARCHAR(50) NOT NULL,
+    match_date DATE NOT NULL,
+    season_id INTEGER REFERENCES ranking_seasons(id),
+    added_by INTEGER REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CHECK (schedule_id IS NOT NULL OR ranking_match_id IS NOT NULL),
+    CHECK (schedule_id IS NULL OR ranking_match_id IS NULL)
+);
+
+CREATE INDEX IF NOT EXISTS idx_match_stats_unified_players ON match_statistics_unified(player1_id, player2_id);
+CREATE INDEX IF NOT EXISTS idx_match_stats_unified_names ON match_statistics_unified(player1_name, player2_name);
+CREATE INDEX IF NOT EXISTS idx_match_stats_unified_date ON match_statistics_unified(match_date);
+CREATE INDEX IF NOT EXISTS idx_match_stats_unified_type ON match_statistics_unified(match_type);
+CREATE INDEX IF NOT EXISTS idx_match_stats_unified_season ON match_statistics_unified(season_id) WHERE season_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_match_stats_unified_ranking ON match_statistics_unified(ranking_match_id) WHERE ranking_match_id IS NOT NULL;
+
 -- Update trigger for users table
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$

@@ -41,7 +41,7 @@ jobs:
       env:
         DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_lapen_agenda
       run: |
-        python -c "from src.database import get_db; db = get_db(); cursor = db.cursor(); cursor.execute(open('src/database/postgres_schema.sql').read()); db.commit(); db.close()"
+        python -c "from src.database import get_db; db = get_db(); cursor = db.cursor(); cursor.execute(open('src/database/postgres_schema.sql').read()); cursor.execute('INSERT INTO courts (id, name, type, description, active) VALUES (1, \'Test Court\', \'Saibro\', \'Test court for CI\', true)'); db.commit(); db.close()"
     
     - name: Run unit tests
       env:

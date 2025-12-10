@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS courts (
     image_url TEXT
 );
 
+CREATE INDEX IF NOT EXISTS idx_courts_active ON courts(active);
+
 -- Holidays and blocks table
 CREATE TABLE IF NOT EXISTS holidays_blocks (
     id SERIAL PRIMARY KEY,
@@ -19,6 +21,8 @@ CREATE TABLE IF NOT EXISTS holidays_blocks (
     end_time TIME,
     description TEXT
 );
+
+CREATE INDEX IF NOT EXISTS idx_holidays_date ON holidays_blocks(date);
 
 -- Users table for authentication (must be before schedules due to foreign keys)
 CREATE TABLE IF NOT EXISTS users (
@@ -63,6 +67,9 @@ CREATE TABLE IF NOT EXISTS schedules (
 CREATE INDEX IF NOT EXISTS idx_schedules_deleted_at ON schedules(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_schedules_player1_id ON schedules(player1_id);
 CREATE INDEX IF NOT EXISTS idx_schedules_player2_id ON schedules(player2_id);
+CREATE INDEX IF NOT EXISTS idx_schedules_court_date ON schedules(court_id, date);
+CREATE INDEX IF NOT EXISTS idx_schedules_date_time ON schedules(date, start_time);
+CREATE INDEX IF NOT EXISTS idx_schedules_date ON schedules(date);
 
 -- Recurring schedules table
 CREATE TABLE IF NOT EXISTS recurring_schedules (
@@ -76,6 +83,9 @@ CREATE TABLE IF NOT EXISTS recurring_schedules (
     end_date DATE NOT NULL,
     FOREIGN KEY (court_id) REFERENCES courts(id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_recurring_day_dates ON recurring_schedules(day_of_week, start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_recurring_court ON recurring_schedules(court_id);
 
 -- Matches table to link schedules with betting
 CREATE TABLE IF NOT EXISTS matches (
@@ -91,6 +101,7 @@ CREATE TABLE IF NOT EXISTS matches (
 
 CREATE INDEX IF NOT EXISTS idx_matches_schedule_id ON matches(schedule_id);
 CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status);
+CREATE INDEX IF NOT EXISTS idx_matches_status_schedule ON matches(status, schedule_id);
 
 -- Bets table to store individual bets
 CREATE TABLE IF NOT EXISTS bets (
@@ -110,6 +121,10 @@ CREATE TABLE IF NOT EXISTS bets (
 CREATE INDEX IF NOT EXISTS idx_bets_user_id ON bets(user_id);
 CREATE INDEX IF NOT EXISTS idx_bets_match_id ON bets(match_id);
 CREATE INDEX IF NOT EXISTS idx_bets_status ON bets(status);
+CREATE INDEX IF NOT EXISTS idx_bets_match_user ON bets(match_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_bets_match_status ON bets(match_id, status);
+CREATE INDEX IF NOT EXISTS idx_bets_user_status ON bets(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_bets_player ON bets(player_name);
 
 -- Match results table to store outcomes
 CREATE TABLE IF NOT EXISTS match_results (
@@ -139,29 +154,6 @@ CREATE TABLE IF NOT EXISTS payment_logs (
 
 CREATE INDEX IF NOT EXISTS idx_payment_logs_payment_id ON payment_logs(payment_id);
 CREATE INDEX IF NOT EXISTS idx_payment_logs_event_type ON payment_logs(event_type);
-
--- Match statistics table
-CREATE TABLE IF NOT EXISTS match_statistics (
-    id SERIAL PRIMARY KEY,
-    schedule_id INTEGER NOT NULL,
-    player1_name VARCHAR(255) NOT NULL,
-    player2_name VARCHAR(255) NOT NULL,
-    winner_name VARCHAR(255) NOT NULL,
-    player1_sets INTEGER NOT NULL DEFAULT 0,
-    player2_sets INTEGER NOT NULL DEFAULT 0,
-    player1_games INTEGER NOT NULL DEFAULT 0,
-    player2_games INTEGER NOT NULL DEFAULT 0,
-    match_type VARCHAR(50) NOT NULL,
-    match_date DATE NOT NULL,
-    added_by INTEGER REFERENCES users(id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (schedule_id) REFERENCES schedules(id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_match_statistics_player1 ON match_statistics(player1_name);
-CREATE INDEX IF NOT EXISTS idx_match_statistics_player2 ON match_statistics(player2_name);
-CREATE INDEX IF NOT EXISTS idx_match_statistics_match_type ON match_statistics(match_type);
-CREATE INDEX IF NOT EXISTS idx_match_statistics_date ON match_statistics(match_date);
 
 -- Ranking seasons table
 CREATE TABLE IF NOT EXISTS ranking_seasons (
@@ -303,6 +295,7 @@ CREATE INDEX IF NOT EXISTS idx_match_stats_unified_names ON match_statistics_uni
 CREATE INDEX IF NOT EXISTS idx_match_stats_unified_date ON match_statistics_unified(match_date);
 CREATE INDEX IF NOT EXISTS idx_match_stats_unified_type ON match_statistics_unified(match_type);
 CREATE INDEX IF NOT EXISTS idx_match_stats_unified_season ON match_statistics_unified(season_id) WHERE season_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_match_stats_unified_schedule ON match_statistics_unified(schedule_id) WHERE schedule_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_match_stats_unified_ranking ON match_statistics_unified(ranking_match_id) WHERE ranking_match_id IS NOT NULL;
 
 -- Update trigger for users table

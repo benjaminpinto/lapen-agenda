@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/components/hooks/use-toast'
-import { Trophy, TrendingUp, Target, Award, ChevronDown, ChevronUp, Users, Flame, BarChart3, History } from 'lucide-react'
+import { Trophy, TrendingUp, Target, Award, ChevronDown, ChevronUp, Users, Flame, BarChart3, History, Skull, Heart } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import RecentResults from '../ranking/RecentResults'
 
@@ -168,13 +168,40 @@ export default function Statistics() {
       return Math.abs(p1Sets - p2Sets) === 1 && Math.abs(p1Games - p2Games) <= 2
     }).length
 
+    // Calculate best/worst opponents
+    const opponentStats = {}
+    matches.forEach(m => {
+      const opponent = m.player1_name === player1 ? m.player2_name : m.player1_name
+      if (!opponentStats[opponent]) opponentStats[opponent] = { wins: 0, losses: 0 }
+      if (m.winner_name === player1) opponentStats[opponent].wins++
+      else opponentStats[opponent].losses++
+    })
+
+    let bestOpponent = null
+    let worstOpponent = null
+    let maxWins = 0
+    let maxLosses = 0
+
+    Object.entries(opponentStats).forEach(([opponent, record]) => {
+      if (record.wins > maxWins) {
+        maxWins = record.wins
+        bestOpponent = { name: opponent, wins: record.wins, losses: record.losses }
+      }
+      if (record.losses > maxLosses) {
+        maxLosses = record.losses
+        worstOpponent = { name: opponent, wins: record.wins, losses: record.losses }
+      }
+    })
+
     return {
       maxWinStreak,
       maxLossStreak,
       currentStreak,
       currentStreakType,
       avgGamesPerSet,
-      tiebreaks
+      tiebreaks,
+      bestOpponent,
+      worstOpponent
     }
   }
 
@@ -245,7 +272,6 @@ export default function Statistics() {
                   <SelectItem value="">Todos</SelectItem>
                   <SelectItem value="Ranking">Ranking</SelectItem>
                   <SelectItem value="Amistoso">Amistoso</SelectItem>
-                  <SelectItem value="Liga">Liga</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -486,12 +512,49 @@ export default function Statistics() {
           {(() => {
             const additionalStats = calculateAdditionalStats(stats)
             return additionalStats && (
-              <Card data-testid="additional-stats-card">
-                <CardHeader>
-                  <CardTitle>Estatísticas Adicionais</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <>
+                {!player2 && (additionalStats.bestOpponent || additionalStats.worstOpponent) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {additionalStats.bestOpponent && (
+                      <Card data-testid="best-opponent-card" className="bg-green-50">
+                        <CardContent className="pt-4 pb-3">
+                          <div className="flex items-center gap-3">
+                            <Skull className="h-5 w-5 text-green-600 flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="text-xs font-semibold text-green-700">Carrasco do(a)</div>
+                              <div className="text-lg font-bold">{additionalStats.bestOpponent.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {additionalStats.bestOpponent.wins}V - {additionalStats.bestOpponent.losses}D
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                    {additionalStats.worstOpponent && (
+                      <Card data-testid="worst-opponent-card" className="bg-red-50">
+                        <CardContent className="pt-4 pb-3">
+                          <div className="flex items-center gap-3">
+                            <Heart className="h-5 w-5 text-red-600 flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="text-xs font-semibold text-red-700">Freguês do(a)</div>
+                              <div className="text-lg font-bold">{additionalStats.worstOpponent.name}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {additionalStats.worstOpponent.wins}V - {additionalStats.worstOpponent.losses}D
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
+                <Card data-testid="additional-stats-card">
+                  <CardHeader>
+                    <CardTitle>Estatísticas Adicionais</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="text-center p-3 border rounded">
                       <Flame className="h-5 w-5 mx-auto mb-2 text-orange-500" />
                       <div className="text-2xl font-bold text-green-600">{additionalStats.maxWinStreak}</div>
@@ -521,9 +584,10 @@ export default function Statistics() {
                         Sequência Atual: {additionalStats.currentStreakType === 'win' ? 'Vitórias' : 'Derrotas'}
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
             )
           })()}
 

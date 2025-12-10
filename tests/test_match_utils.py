@@ -76,21 +76,23 @@ class TestMatchUtils(unittest.TestCase):
         result = get_or_create_match(1)
         self.assertEqual(result, 5)
     
-    @patch('src.utils.match_utils.insert_and_get_id')
     @patch('src.utils.match_utils.is_match_eligible_for_betting')
     @patch('src.utils.match_utils.get_db')
-    def test_create_new_match_eligible(self, mock_get_db, mock_eligible, mock_insert):
+    def test_create_new_match_eligible(self, mock_get_db, mock_eligible):
         """Test creating a new match when eligible"""
         mock_db = Mock()
         mock_cursor = Mock()
+        mock_insert_cursor = Mock()
         
-        # First call returns None (no existing match)
+        # First call returns None (no existing match), second returns new ID
         mock_cursor.fetchone.return_value = None
+        mock_insert_cursor.fetchone.return_value = {'id': 10}
         
         mock_db.execute.return_value = mock_cursor
+        mock_db.cursor.return_value = mock_insert_cursor
+        mock_insert_cursor.execute.return_value = None
         mock_get_db.return_value = mock_db
         mock_eligible.return_value = True
-        mock_insert.return_value = 10
         
         result = get_or_create_match(1)
         self.assertEqual(result, 10)

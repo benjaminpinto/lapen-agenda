@@ -330,10 +330,13 @@ def set_wo_result(match_id):
     
     db = get_db()
     match = db.execute('''
-        SELECT rm.*, rr.season_id, rr.status as round_status, rs.status as season_status
+        SELECT rm.*, rr.season_id, rr.status as round_status, rs.status as season_status,
+               u1.short_name as p1_name, u2.short_name as p2_name
         FROM ranking_matches rm
         JOIN ranking_rounds rr ON rm.round_id = rr.id
         JOIN ranking_seasons rs ON rr.season_id = rs.id
+        JOIN users u1 ON rm.player1_id = u1.id
+        JOIN users u2 ON rm.player2_id = u2.id
         WHERE rm.id = %s
     ''', (match_id,)).fetchone()
     
@@ -358,11 +361,27 @@ def set_wo_result(match_id):
         points_p2 = winner_points if winner_id == match['player2_id'] else loser_points
         
         # Update match
+        wo_score = f'W.O. - {comment}'
         db.execute('''
             UPDATE ranking_matches
             SET status = %s, winner_id = %s, wo_type = %s, points_p1 = %s, points_p2 = %s, score = %s
             WHERE id = %s
-        ''', ('completed', winner_id, 'admin', points_p1, points_p2, f'W.O. - {comment}', match_id))
+        ''', ('completed', winner_id, 'admin', points_p1, points_p2, wo_score, match_id))
+        
+        # Add to statistics
+        winner_user = db.execute('SELECT short_name FROM users WHERE id = %s', (winner_id,)).fetchone()
+        db.execute('''
+            INSERT INTO match_statistics_unified (
+                ranking_match_id, player1_id, player2_id,
+                player1_name, player2_name, winner_id, winner_name,
+                score, match_type, match_date, season_id, added_by
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (
+            match_id, match['player1_id'], match['player2_id'],
+            match['p1_name'], match['p2_name'],
+            winner_id, winner_user['short_name'],
+            wo_score, 'Ranking', match.get('played_at') or 'NOW()', match['season_id'], request.user_id
+        ))
         
         # Update participant stats
         for player_id, is_winner, points in [

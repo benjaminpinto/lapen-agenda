@@ -46,7 +46,7 @@ def finish_match(match_id):
     db = get_db()
     try:
         # Check if match exists and is not already finished
-        cursor = db.execute('SELECT * FROM matches WHERE id = ?', (match_id,))
+        cursor = db.execute('SELECT * FROM matches WHERE id = %s', (match_id,))
         match = cursor.fetchone()
         
         if not match:
@@ -58,7 +58,7 @@ def finish_match(match_id):
         # Get total pool and calculate winnings
         cursor = db.execute('''
             SELECT SUM(amount) as total_pool FROM bets 
-            WHERE match_id = ? AND status = 'active'
+            WHERE match_id = %s AND status = 'active'
         ''', (match_id,))
         
         pool_result = cursor.fetchone()
@@ -70,7 +70,7 @@ def finish_match(match_id):
         # Get winning bets
         cursor = db.execute('''
             SELECT id, amount FROM bets 
-            WHERE match_id = ? AND player_name = ? AND status = 'active'
+            WHERE match_id = %s AND player_name = %s AND status = 'active'
         ''', (match_id, winner_name))
         
         winning_bets = cursor.fetchall()
@@ -79,12 +79,12 @@ def finish_match(match_id):
         total_winning_amount = sum(Decimal(str(bet['amount'])) for bet in winning_bets)
         
         # Update match status
-        db.execute('UPDATE matches SET status = ? WHERE id = ?', ('finished', match_id))
+        db.execute('UPDATE matches SET status = %s WHERE id = %s', ('finished', match_id))
         
         # Create match result record
         cursor = db.execute('''
             INSERT INTO match_results (match_id, winner_name, score, total_winnings, settled)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s)
         ''', (match_id, winner_name, score, float(total_winnings), True))
         
         # Get match details for emails
@@ -92,7 +92,7 @@ def finish_match(match_id):
             SELECT s.player1_name, s.player2_name
             FROM schedules s
             JOIN matches m ON s.id = m.schedule_id
-            WHERE m.id = ? AND s.deleted_at IS NULL
+            WHERE m.id = %s AND s.deleted_at IS NULL
         ''', (match_id,))
         match_info = cursor.fetchone()
         match_details = {
@@ -110,7 +110,7 @@ def finish_match(match_id):
                 SELECT b.id, b.amount, b.user_id, u.name, u.email
                 FROM bets b
                 JOIN users u ON b.user_id = u.id
-                WHERE b.match_id = ? AND b.player_name = ? AND b.status = 'active'
+                WHERE b.match_id = %s AND b.player_name = %s AND b.status = 'active'
             ''', (match_id, winner_name))
             
             winning_bets_with_users = cursor.fetchall()
@@ -119,8 +119,8 @@ def finish_match(match_id):
             for bet in winning_bets_with_users:
                 payout = Decimal(str(bet['amount'])) * payout_ratio
                 db.execute('''
-                    UPDATE bets SET status = ?, potential_return = ? 
-                    WHERE id = ?
+                    UPDATE bets SET status = %s, potential_return = %s 
+                    WHERE id = %s
                 ''', ('won', float(payout), bet['id']))
                 
                 # Send settlement email
@@ -131,14 +131,14 @@ def finish_match(match_id):
             SELECT b.user_id, u.name, u.email
             FROM bets b
             JOIN users u ON b.user_id = u.id
-            WHERE b.match_id = ? AND b.player_name != ? AND b.status = 'active'
+            WHERE b.match_id = %s AND b.player_name != %s AND b.status = 'active'
         ''', (match_id, winner_name))
         
         losing_users = cursor.fetchall()
         
         db.execute('''
-            UPDATE bets SET status = ? 
-            WHERE match_id = ? AND player_name != ? AND status = 'active'
+            UPDATE bets SET status = %s 
+            WHERE match_id = %s AND player_name != %s AND status = 'active'
         ''', ('lost', match_id, winner_name))
         
         # Send settlement emails to losing bettors
@@ -171,7 +171,7 @@ def cancel_match(match_id):
     db = get_db()
     try:
         # Check if match exists
-        cursor = db.execute('SELECT * FROM matches WHERE id = ?', (match_id,))
+        cursor = db.execute('SELECT * FROM matches WHERE id = %s', (match_id,))
         match = cursor.fetchone()
         
         if not match:
@@ -184,7 +184,7 @@ def cancel_match(match_id):
         cursor = db.execute('''
             SELECT b.id, b.user_id, b.amount, b.payment_id
             FROM bets b
-            WHERE b.match_id = ? AND b.status = 'active'
+            WHERE b.match_id = %s AND b.status = 'active'
         ''', (match_id,))
         
         active_bets = cursor.fetchall()
@@ -226,16 +226,16 @@ def cancel_match(match_id):
             # Log refund attempt
             db.execute('''
                 INSERT INTO payment_logs (payment_id, event_type, status, amount, error_message, metadata)
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s)
             ''', (bet['payment_id'], 'refund_attempt', refund_status, bet['amount'], failure_reason, f'bet_id:{bet["id"]}'))
         
         # Update match status
-        db.execute('UPDATE matches SET status = ? WHERE id = ?', ('cancelled', match_id))
+        db.execute('UPDATE matches SET status = %s WHERE id = %s', ('cancelled', match_id))
         
         # Update bet status
         db.execute('''
-            UPDATE bets SET status = ? 
-            WHERE match_id = ? AND status = 'active'
+            UPDATE bets SET status = %s 
+            WHERE match_id = %s AND status = 'active'
         ''', ('refunded', match_id))
         
         db.commit()
@@ -266,7 +266,7 @@ def get_match_report(match_id):
             FROM matches m
             JOIN schedules s ON m.schedule_id = s.id
             LEFT JOIN match_results mr ON m.id = mr.match_id
-            WHERE m.id = ? AND s.deleted_at IS NULL
+            WHERE m.id = %s AND s.deleted_at IS NULL
         ''', (match_id,))
         
         match_info = cursor.fetchone()
@@ -281,7 +281,7 @@ def get_match_report(match_id):
             FROM bets b
             JOIN users u ON b.user_id = u.id
             LEFT JOIN payment_logs pl ON b.payment_id = pl.payment_id AND pl.event_type = 'refund_attempt'
-            WHERE b.match_id = ?
+            WHERE b.match_id = %s
             ORDER BY b.player_name, b.amount DESC
         ''', (match_id,))
         
@@ -335,7 +335,7 @@ def get_match_result(match_id):
     """Get match result information"""
     db = get_db()
     try:
-        cursor = db.execute('SELECT winner_name, score FROM match_results WHERE match_id = ?', (match_id,))
+        cursor = db.execute('SELECT winner_name, score FROM match_results WHERE match_id = %s', (match_id,))
         result = cursor.fetchone()
         
         if not result:

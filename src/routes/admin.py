@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify
 from src.database import get_db
-from src.database_utils import get_month_comparison_sql
 from src.logger import get_logger
 from src.auth import verify_token, get_user_by_id, hash_password
 import base64
@@ -82,7 +81,7 @@ def create_court():
     db = get_db()
     try:
         db.execute(
-            'INSERT INTO courts (name, type, description, active, image_url) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO courts (name, type, description, active, image_url) VALUES (%s, %s, %s, %s, %s)',
             (name, court_type, description, active, image_url)
         )
         db.commit()
@@ -123,12 +122,12 @@ def update_court(court_id):
     try:
         if image_url:
             db.execute(
-                'UPDATE courts SET name = ?, type = ?, description = ?, active = ?, image_url = ? WHERE id = ?',
+                'UPDATE courts SET name = %s, type = %s, description = %s, active = %s, image_url = %s WHERE id = %s',
                 (name, court_type, description, active, image_url, court_id)
             )
         else:
             db.execute(
-                'UPDATE courts SET name = ?, type = ?, description = ?, active = ? WHERE id = ?',
+                'UPDATE courts SET name = %s, type = %s, description = %s, active = %s WHERE id = %s',
                 (name, court_type, description, active, court_id)
             )
         db.commit()
@@ -141,7 +140,7 @@ def update_court(court_id):
 def delete_court(court_id):
     db = get_db()
     try:
-        db.execute('DELETE FROM courts WHERE id = ?', (court_id,))
+        db.execute('DELETE FROM courts WHERE id = %s', (court_id,))
         db.commit()
         return jsonify({'success': True, 'message': 'Quadra excluída com sucesso'})
     except Exception as e:
@@ -184,7 +183,7 @@ def create_holiday_block():
     db = get_db()
     try:
         db.execute(
-            'INSERT INTO holidays_blocks (date, start_time, end_time, description) VALUES (?, ?, ?, ?)',
+            'INSERT INTO holidays_blocks (date, start_time, end_time, description) VALUES (%s, %s, %s, %s)',
             (date, start_time, end_time, description)
         )
         db.commit()
@@ -197,7 +196,7 @@ def create_holiday_block():
 def delete_holiday_block(block_id):
     db = get_db()
     try:
-        db.execute('DELETE FROM holidays_blocks WHERE id = ?', (block_id,))
+        db.execute('DELETE FROM holidays_blocks WHERE id = %s', (block_id,))
         db.commit()
         return jsonify({'success': True, 'message': 'Feriado/Bloqueio excluído com sucesso'})
     except Exception as e:
@@ -255,7 +254,7 @@ def create_recurring_schedule():
                 end_time = f"{end_hour:02d}:{end_minute:02d}"
                 
                 db.execute(
-                    'INSERT INTO recurring_schedules (court_id, day_of_week, start_time, end_time, description, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    'INSERT INTO recurring_schedules (court_id, day_of_week, start_time, end_time, description, start_date, end_date) VALUES (%s, %s, %s, %s, %s, %s, %s)',
                     (court_id, day, start_time, end_time, description, start_date, end_date)
                 )
         db.commit()
@@ -268,7 +267,7 @@ def create_recurring_schedule():
 def delete_recurring_schedule(schedule_id):
     db = get_db()
     try:
-        db.execute('DELETE FROM recurring_schedules WHERE id = ?', (schedule_id,))
+        db.execute('DELETE FROM recurring_schedules WHERE id = %s', (schedule_id,))
         db.commit()
         return jsonify({'success': True, 'message': 'Horário recorrente excluído com sucesso'})
     except Exception as e:
@@ -286,28 +285,28 @@ def get_lapen_requests():
         users = db.execute('''
             SELECT id, email, name, phone, lapen_requested_at
             FROM users
-            WHERE is_lapen_member = ? AND lapen_approved = ? AND lapen_approved_at IS NULL
+            WHERE is_lapen_member = %s AND lapen_approved = %s AND lapen_approved_at IS NULL
             ORDER BY lapen_requested_at DESC
         ''', (True, False)).fetchall()
     elif status == 'approved':
         users = db.execute('''
             SELECT id, email, name, phone, lapen_requested_at, lapen_approved_at
             FROM users
-            WHERE is_lapen_member = ? AND lapen_approved = ?
+            WHERE is_lapen_member = %s AND lapen_approved = %s
             ORDER BY lapen_approved_at DESC
         ''', (True, True)).fetchall()
     elif status == 'rejected':
         users = db.execute('''
             SELECT id, email, name, phone, lapen_requested_at, lapen_approved_at
             FROM users
-            WHERE is_lapen_member = ? AND lapen_approved = ? AND lapen_approved_at IS NOT NULL
+            WHERE is_lapen_member = %s AND lapen_approved = %s AND lapen_approved_at IS NOT NULL
             ORDER BY lapen_approved_at DESC
         ''', (True, False)).fetchall()
     else:
         users = db.execute('''
             SELECT id, email, name, phone, lapen_requested_at, lapen_approved_at, lapen_approved
             FROM users
-            WHERE is_lapen_member = ?
+            WHERE is_lapen_member = %s
             ORDER BY lapen_requested_at DESC
         ''', (True,)).fetchall()
     
@@ -322,13 +321,13 @@ def approve_lapen_member(user_id):
     try:
         from datetime import datetime
         
-        cursor = db.execute('SELECT email, name FROM users WHERE id = ?', (user_id,))
+        cursor = db.execute('SELECT email, name FROM users WHERE id = %s', (user_id,))
         user = cursor.fetchone()
         
         db.execute('''
             UPDATE users
-            SET lapen_approved = ?, lapen_approved_at = ?
-            WHERE id = ? AND is_lapen_member = ?
+            SET lapen_approved = %s, lapen_approved_at = %s
+            WHERE id = %s AND is_lapen_member = %s
         ''', (True, datetime.utcnow(), user_id, True))
         db.commit()
         
@@ -356,8 +355,8 @@ def reject_lapen_member(user_id):
         from datetime import datetime
         db.execute('''
             UPDATE users
-            SET lapen_approved = ?, lapen_approved_at = ?
-            WHERE id = ? AND is_lapen_member = ?
+            SET lapen_approved = %s, lapen_approved_at = %s
+            WHERE id = %s AND is_lapen_member = %s
         ''', (False, datetime.utcnow(), user_id, True))
         db.commit()
         
@@ -376,7 +375,7 @@ def get_dashboard_stats():
     db = get_db()
     
     # Most booked court this month
-    month_condition = get_month_comparison_sql('s.date')
+    month_condition = "DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)"
     most_booked_court = db.execute(f'''
         SELECT c.name, COUNT(*) as bookings
         FROM schedules s
@@ -388,7 +387,7 @@ def get_dashboard_stats():
     ''').fetchone()
     
     # Total games by type this month
-    month_condition = get_month_comparison_sql('date')
+    month_condition = "DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)"
     game_stats = db.execute(f'''
         SELECT match_type, COUNT(*) as count
         FROM schedules
@@ -397,14 +396,14 @@ def get_dashboard_stats():
     ''').fetchall()
     
     # Top players this month
-    month_condition = get_month_comparison_sql('date')
+    month_condition = "DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)"
     top_players = db.execute(f'''
         SELECT player_name, COUNT(*) as games
         FROM (
             SELECT player1_name as player_name FROM schedules WHERE {month_condition} AND deleted_at IS NULL
             UNION ALL
             SELECT player2_name as player_name FROM schedules WHERE {month_condition} AND deleted_at IS NULL
-        )
+        ) AS players
         GROUP BY player_name
         ORDER BY games DESC
         LIMIT 5
@@ -432,8 +431,8 @@ def update_user(user_id):
     try:
         db.execute('''
             UPDATE users 
-            SET name = ?, short_name = ?, email = ?, phone = ?, pix_key = ?, is_admin = ?, lapen_approved = ?
-            WHERE id = ?
+            SET name = %s, short_name = %s, email = %s, phone = %s, pix_key = %s, is_admin = %s, lapen_approved = %s
+            WHERE id = %s
         ''', (data['name'], data['short_name'], data['email'], data.get('phone'), data.get('pix_key'), data.get('is_admin', False), data.get('lapen_approved', False), user_id))
         db.commit()
         return jsonify({'success': True})
@@ -452,7 +451,7 @@ def update_user_password(user_id):
     db = get_db()
     try:
         password_hash = hash_password(password)
-        db.execute('UPDATE users SET password_hash = ? WHERE id = ?', (password_hash, user_id))
+        db.execute('UPDATE users SET password_hash = %s WHERE id = %s', (password_hash, user_id))
         db.commit()
         return jsonify({'success': True})
     except Exception as e:
@@ -463,7 +462,7 @@ def update_user_password(user_id):
 def delete_user(user_id):
     db = get_db()
     try:
-        db.execute('DELETE FROM users WHERE id = ?', (user_id,))
+        db.execute('DELETE FROM users WHERE id = %s', (user_id,))
         db.commit()
         return jsonify({'success': True})
     except Exception as e:

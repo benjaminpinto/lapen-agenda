@@ -34,11 +34,11 @@ def create_test_user(email, is_lapen=False, approved=False, is_admin=False):
         password_hash = hash_password("test123")
         
         cursor = db.execute(
-            'INSERT INTO users (email, password_hash, name, is_lapen_member, lapen_approved, is_admin) VALUES (?, ?, ?, ?, ?, ?)',
-            (email, password_hash, "Test User", is_lapen, approved, is_admin)
+            'INSERT INTO users (email, password_hash, name, is_lapen_member, lapen_approved, is_admin, is_verified) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id',
+            (email, password_hash, "Test User", is_lapen, approved, is_admin, True)
         )
+        user_id = cursor.fetchone()['id']
         db.commit()
-        user_id = cursor.lastrowid
         token = generate_token(user_id)
         db.close()
         return user_id, token
@@ -170,7 +170,7 @@ def test_admin_approve_lapen_member(setup_db):
         
         # Verify in database
         db = get_db()
-        user = db.execute('SELECT lapen_approved FROM users WHERE id = ?', (user_id,)).fetchone()
+        user = db.execute('SELECT lapen_approved FROM users WHERE id = %s', (user_id,)).fetchone()
         assert user['lapen_approved'] == True
         db.close()
 
@@ -189,7 +189,7 @@ def test_admin_reject_lapen_member(setup_db):
         
         # Verify in database - rejected users keep is_lapen_member=True but lapen_approved=False with timestamp
         db = get_db()
-        user = db.execute('SELECT is_lapen_member, lapen_approved, lapen_approved_at FROM users WHERE id = ?', (user_id,)).fetchone()
+        user = db.execute('SELECT is_lapen_member, lapen_approved, lapen_approved_at FROM users WHERE id = %s', (user_id,)).fetchone()
         assert user['is_lapen_member'] == True
         assert user['lapen_approved'] == False
         assert user['lapen_approved_at'] is not None

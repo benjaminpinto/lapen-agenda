@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { useToast } from '@/contexts/ToastContext'
-import { Trash2, Edit, Key } from 'lucide-react'
+import { Trash2, Edit, Key, ArrowLeft } from 'lucide-react'
 
 const AdminUsers = () => {
+  const navigate = useNavigate()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [editDialog, setEditDialog] = useState(false)
@@ -138,6 +140,10 @@ const AdminUsers = () => {
 
   return (
     <div className="space-y-6">
+      <Button variant="outline" onClick={() => navigate('/admin/dashboard')}>
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Voltar ao Dashboard
+      </Button>
       <Card>
         <CardHeader>
           <CardTitle>Gerenciar Usuários</CardTitle>

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DatePicker } from '@/components/ui/date-picker'
+import BackButton from '@/components/ui/BackButton'
 import {Calendar as CalendarIcon, Clock, Users, Trophy, GraduationCap, MedalIcon, AlertCircle} from 'lucide-react'
 import { useToast } from '@/contexts/ToastContext'
 import { useAuth } from '@/contexts/AuthContext'
@@ -29,6 +30,8 @@ const ScheduleForm = () => {
   const [player2Suggestions, setPlayer2Suggestions] = useState([])
   const [showPlayer1Suggestions, setShowPlayer1Suggestions] = useState(false)
   const [showPlayer2Suggestions, setShowPlayer2Suggestions] = useState(false)
+  const [rankingMatches, setRankingMatches] = useState([])
+  const [selectedMatch, setSelectedMatch] = useState(null)
   
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -41,6 +44,12 @@ const ScheduleForm = () => {
       setFormData(prev => ({ ...prev, player1_name: user.short_name }))
     }
   }, [])
+
+  useEffect(() => {
+    if (formData.match_type === 'Liga') {
+      fetchRankingMatches()
+    }
+  }, [formData.match_type])
 
   useEffect(() => {
     if (formData.court_id && formData.date) {
@@ -69,6 +78,28 @@ const ScheduleForm = () => {
       }
     } catch (error) {
       console.error('Error fetching players:', error)
+    }
+  }
+
+  const fetchRankingMatches = async () => {
+    try {
+      const token = localStorage.getItem('auth_token')
+      const response = await fetch('/api/ranking/all-open-matches', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      if (response.ok) {
+        const allMatches = await response.json()
+        const scheduled = allMatches.filter(m => m.status === 'scheduled')
+        
+        // Sort: user's matches first
+        const myMatches = scheduled.filter(m => m.player1_id === user?.id || m.player2_id === user?.id)
+        const otherMatches = scheduled.filter(m => m.player1_id !== user?.id && m.player2_id !== user?.id)
+        
+        setRankingMatches([...myMatches, ...otherMatches])
+      }
+    } catch (error) {
+      console.error('Error fetching ranking matches:', error)
     }
   }
 
@@ -218,6 +249,7 @@ const ScheduleForm = () => {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-0">
+      <BackButton to="/view" label="Voltar para Agenda" />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
@@ -230,6 +262,133 @@ const ScheduleForm = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Match Type - Cards */}
+            <div>
+              <Label>Tipo de Partida</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({
+                      court_id: '',
+                      date: '',
+                      start_time: '',
+                      player1_name: '',
+                      player2_name: '',
+                      match_type: 'Liga'
+                    })
+                    setSelectedMatch(null)
+                  }}
+                  className={`p-3 border-2 rounded-lg flex items-center gap-2 transition-all ${
+                    formData.match_type === 'Liga'
+                      ? 'border-yellow-800 bg-yellow-100'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <Trophy className={`h-5 w-5 ${
+                    formData.match_type === 'Liga' ? 'text-yellow-800' : 'text-gray-400'
+                  }`} />
+                  <span className="font-medium text-sm">Liga</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({
+                      court_id: '',
+                      date: '',
+                      start_time: '',
+                      player1_name: user?.short_name || '',
+                      player2_name: '',
+                      match_type: 'Amistoso'
+                    })
+                    setSelectedMatch(null)
+                  }}
+                  className={`p-3 border-2 rounded-lg flex items-center gap-2 transition-all ${
+                    formData.match_type === 'Amistoso'
+                      ? 'border-orange-600 bg-orange-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <Users className={`h-5 w-5 ${
+                    formData.match_type === 'Amistoso' ? 'text-orange-600' : 'text-gray-400'
+                  }`} />
+                  <span className="font-medium text-sm">Amistoso</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({
+                      court_id: '',
+                      date: '',
+                      start_time: '',
+                      player1_name: user?.short_name || '',
+                      player2_name: '',
+                      match_type: 'Torneio'
+                    })
+                    setSelectedMatch(null)
+                  }}
+                  className={`p-3 border-2 rounded-lg flex items-center gap-2 transition-all ${
+                    formData.match_type === 'Torneio'
+                      ? 'border-yellow-500 bg-yellow-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <MedalIcon className={`h-5 w-5 ${
+                    formData.match_type === 'Torneio' ? 'text-yellow-500' : 'text-gray-400'
+                  }`} />
+                  <span className="font-medium text-sm">Torneio</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Show rest of form only after match type is selected */}
+            {formData.match_type && (
+              <>
+            {/* Ranking Match Selection */}
+            {formData.match_type === 'Liga' && (
+              <div>
+                <Label>Partida de Ranking</Label>
+                {rankingMatches.length > 0 ? (
+                  <Select value={selectedMatch} onValueChange={(value) => {
+                    setSelectedMatch(value)
+                    const match = rankingMatches.find(m => m.id.toString() === value)
+                    if (match) {
+                      setFormData(prev => ({
+                        ...prev,
+                        player1_name: match.player1_name,
+                        player2_name: match.player2_name
+                      }))
+                    }
+                  }} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a partida">
+                        {selectedMatch && (() => {
+                          const match = rankingMatches.find(m => m.id.toString() === selectedMatch)
+                          if (match) {
+                            const isMyMatch = match.player1_id === user?.id || match.player2_id === user?.id
+                            return `${isMyMatch ? '⭐ ' : ''}${match.player1_name} vs ${match.player2_name} - Rodada ${match.round_number}`
+                          }
+                          return "Selecione a partida"
+                        })()}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {rankingMatches.map((match) => {
+                        const isMyMatch = match.player1_id === user?.id || match.player2_id === user?.id
+                        return (
+                          <SelectItem key={match.id} value={match.id.toString()}>
+                            {isMyMatch && '⭐ '}
+                            {match.player1_name} vs {match.player2_name} - Rodada {match.round_number}
+                          </SelectItem>
+                        )
+                      })}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-sm text-gray-500 p-2 border rounded">Nenhuma partida de ranking aberta no momento</p>
+                )}
+              </div>
+            )}
             {/* Court Selection */}
             <div>
               <Label htmlFor="court">Quadra</Label>
@@ -293,87 +452,63 @@ const ScheduleForm = () => {
               </Select>
             </div>
 
-            {/* Player 1 */}
-            <div className="relative">
-              <Label htmlFor="player1">Jogador 1</Label>
-              <Input
-                id="player1"
-                value={formData.player1_name}
-                onChange={(e) => handlePlayerInput('player1_name', e.target.value)}
-                onBlur={() => setTimeout(() => setShowPlayer1Suggestions(false), 200)}
-                placeholder="Digite o nome do primeiro jogador"
-                required
-              />
-              {showPlayer1Suggestions && player1Suggestions.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                  {player1Suggestions.map((suggestion, index) => (
-                    <div
-                      key={index}
-                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => selectSuggestion('player1_name', suggestion)}
-                    >
-                      {suggestion}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Player 1 - Only for non-Liga matches */}
+            {formData.match_type !== 'Liga' && (
+              <div className="relative">
+                <Label htmlFor="player1">Jogador 1</Label>
+                <Input
+                  id="player1"
+                  value={formData.player1_name}
+                  onChange={(e) => handlePlayerInput('player1_name', e.target.value)}
+                  onBlur={() => setTimeout(() => setShowPlayer1Suggestions(false), 200)}
+                  placeholder="Digite o nome do primeiro jogador"
+                  required
+                />
+                {showPlayer1Suggestions && player1Suggestions.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                    {player1Suggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => selectSuggestion('player1_name', suggestion)}
+                      >
+                        {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-            {/* Player 2 */}
-            <div className="relative">
-              <Label htmlFor="player2">Jogador 2</Label>
-              <Input
-                id="player2"
-                value={formData.player2_name}
-                onChange={(e) => handlePlayerInput('player2_name', e.target.value)}
-                onBlur={() => setTimeout(() => setShowPlayer2Suggestions(false), 200)}
-                placeholder="Digite o nome do segundo jogador"
-                required
-              />
-              {showPlayer2Suggestions && player2Suggestions.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                  {player2Suggestions.map((suggestion, index) => (
-                    <div
-                      key={index}
-                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => selectSuggestion('player2_name', suggestion)}
-                    >
-                      {suggestion}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Player 2 - Only for non-Liga matches */}
+            {formData.match_type !== 'Liga' && (
+              <div className="relative">
+                <Label htmlFor="player2">Jogador 2</Label>
+                <Input
+                  id="player2"
+                  value={formData.player2_name}
+                  onChange={(e) => handlePlayerInput('player2_name', e.target.value)}
+                  onBlur={() => setTimeout(() => setShowPlayer2Suggestions(false), 200)}
+                  placeholder="Digite o nome do segundo jogador"
+                  required
+                />
+                {showPlayer2Suggestions && player2Suggestions.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                    {player2Suggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => selectSuggestion('player2_name', suggestion)}
+                      >
+                        {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-            {/* Match Type */}
-            <div>
-              <Label htmlFor="match_type">Tipo de Partida</Label>
-              <Select value={formData.match_type} onValueChange={(value) => setFormData(prev => ({ ...prev, match_type: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo de partida" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Amistoso">
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-2" />
-                      Amistoso
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="Liga">
-                    <div className="flex items-center">
-                      <Trophy className="h-4 w-4 mr-2" />
-                      Liga
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="Torneio">
-                    <div className="flex items-center">
-                      <MedalIcon className="h-4 w-4 mr-2" />
-                      Torneio
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
 
             <div className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-4">
               <Button type="button" variant="outline" onClick={() => navigate('/')} className="w-full sm:w-auto">
@@ -383,6 +518,8 @@ const ScheduleForm = () => {
                 {loading ? 'Agendando...' : 'Confirmar Agendamento'}
               </Button>
             </div>
+            </>
+            )}
           </form>
         </CardContent>
       </Card>

@@ -4,7 +4,6 @@ from datetime import datetime, timedelta, time, timezone
 from flask import Blueprint, request, jsonify
 
 from src.database import get_db
-from src.database_utils import get_current_date_sql, get_current_time_sql, get_month_comparison_sql
 from src.auth import require_approved_lapen_member
 
 public_bp = Blueprint('public', __name__, url_prefix='/api/public')
@@ -39,7 +38,7 @@ def is_time_blocked(date, start_time, court_id=None):
     # Check holidays/blocks
     blocks = db.execute('''
         SELECT * FROM holidays_blocks 
-        WHERE date = ?
+        WHERE date = %s
     ''', (date,)).fetchall()
 
     for block in blocks:
@@ -57,8 +56,8 @@ def is_time_blocked(date, start_time, court_id=None):
 
     recurring = db.execute('''
         SELECT * FROM recurring_schedules 
-        WHERE day_of_week = ? AND start_date <= ? AND end_date >= ?
-        AND (? IS NULL OR court_id = ?)
+        WHERE day_of_week = %s AND start_date <= %s AND end_date >= %s
+        AND (%s IS NULL OR court_id = %s)
     ''', (day_of_week, date, date, court_id, court_id)).fetchall()
 
     for schedule in recurring:
@@ -114,20 +113,20 @@ def get_available_times():
     # Get already booked slots
     booked_slots = db.execute('''
         SELECT start_time FROM schedules 
-        WHERE court_id = ? AND date = ? AND deleted_at IS NULL
+        WHERE court_id = %s AND date = %s AND deleted_at IS NULL
     ''', (court_id, date)).fetchall()
     booked_times = [normalize_time(slot['start_time']) for slot in booked_slots]
 
     # Get all blocked times once
-    blocks = db.execute('SELECT * FROM holidays_blocks WHERE date = ?', (date,)).fetchall()
+    blocks = db.execute('SELECT * FROM holidays_blocks WHERE date = %s', (date,)).fetchall()
 
     date_obj = datetime.strptime(date, '%Y-%m-%d')
     day_of_week = date_obj.weekday()
 
     recurring = db.execute('''
         SELECT * FROM recurring_schedules 
-        WHERE day_of_week = ? AND start_date <= ? AND end_date >= ?
-        AND (? IS NULL OR court_id = ?)
+        WHERE day_of_week = %s AND start_date <= %s AND end_date >= %s
+        AND (%s IS NULL OR court_id = %s)
     ''', (day_of_week, date, date, court_id, court_id)).fetchall()
 
     # Check blocked times efficiently
@@ -164,31 +163,36 @@ def create_schedule():
     match_type = data.get('match_type')
 
     if not all([court_id, date, start_time, player1_name, player2_name, match_type]):
-        return jsonify({'error': 'All fields are required'}), 400
+        return jsonify({'error': 'Todos os campos são obrigatórios'}), 400
 
     # Check if slot is still available
     db = get_db()
     existing = db.execute('''
         SELECT id FROM schedules 
-        WHERE court_id = ? AND date = ? AND start_time = ? AND deleted_at IS NULL
+        WHERE court_id = %s AND date = %s AND start_time = %s AND deleted_at IS NULL
     ''', (court_id, date, start_time)).fetchone()
 
     if existing:
-        return jsonify({'error': 'Time slot is no longer available'}), 400
+        return jsonify({'error': 'Horário não está mais disponível'}), 400
 
     # Check if time is blocked
     if is_time_blocked(date, start_time, court_id):
-        return jsonify({'error': 'Time slot is blocked'}), 400
+        return jsonify({'error': 'Horário está bloqueado'}), 400
 
+    # Get player IDs if they are registered users
+    p1_user = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player1_name, player1_name)).fetchone()
+    p2_user = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player2_name, player2_name)).fetchone()
+    
     try:
         db.execute('''
-            INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, match_type)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (court_id, date, start_time, player1_name, player2_name, match_type))
+            INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, player1_id, player2_id, match_type)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (court_id, date, start_time, player1_name, player2_name, 
+              p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None, match_type))
         db.commit()
-        return jsonify({'success': True, 'message': 'Schedule created successfully'})
+        return jsonify({'success': True, 'message': 'Agendamento criado com sucesso'})
     except Exception:
-        return jsonify({'error': 'Failed to create schedule'}), 500
+        return jsonify({'error': 'Falha ao criar agendamento'}), 500
 
 
 @public_bp.route('/schedules/<int:schedule_id>/has-bets', methods=['GET'])
@@ -196,11 +200,11 @@ def check_schedule_has_bets(schedule_id):
     """Check if a schedule has active bets or is finished"""
     db = get_db()
     try:
-        match = db.execute('SELECT id, status FROM matches WHERE schedule_id = ?', (schedule_id,)).fetchone()
+        match = db.execute('SELECT id, status FROM matches WHERE schedule_id = %s', (schedule_id,)).fetchone()
         if match:
             if match['status'] == 'finished':
                 return jsonify({'has_bets': True, 'is_finished': True})
-            active_bets = db.execute("SELECT COUNT(*) as count FROM bets WHERE match_id = ? AND status = 'active'", (match['id'],)).fetchone()
+            active_bets = db.execute("SELECT COUNT(*) as count FROM bets WHERE match_id = %s AND status = 'active'", (match['id'],)).fetchone()
             return jsonify({'has_bets': active_bets['count'] > 0, 'is_finished': False})
         return jsonify({'has_bets': False, 'is_finished': False})
     finally:
@@ -216,34 +220,38 @@ def update_schedule(schedule_id):
     match_type = data.get('match_type')
 
     if not all([player1_name, player2_name, match_type]):
-        return jsonify({'error': 'All fields are required'}), 400
+        return jsonify({'error': 'Todos os campos são obrigatórios'}), 400
 
     db = get_db()
 
     # Check if schedule exists
-    existing = db.execute('SELECT id FROM schedules WHERE id = ?', (schedule_id,)).fetchone()
+    existing = db.execute('SELECT id FROM schedules WHERE id = %s', (schedule_id,)).fetchone()
     if not existing:
-        return jsonify({'error': 'Schedule not found'}), 404
+        return jsonify({'error': 'Agendamento não encontrado'}), 404
 
     # Check if schedule has active bets or finished match
-    match = db.execute('SELECT id, status FROM matches WHERE schedule_id = ?', (schedule_id,)).fetchone()
+    match = db.execute('SELECT id, status FROM matches WHERE schedule_id = %s', (schedule_id,)).fetchone()
     if match:
         if match['status'] == 'finished':
-            return jsonify({'error': 'Cannot edit finished match', 'has_bets': True}), 400
-        active_bets = db.execute("SELECT COUNT(*) as count FROM bets WHERE match_id = ? AND status = 'active'", (match['id'],)).fetchone()
+            return jsonify({'error': 'Não é possível editar partida finalizada', 'has_bets': True}), 400
+        active_bets = db.execute("SELECT COUNT(*) as count FROM bets WHERE match_id = %s AND status = 'active'", (match['id'],)).fetchone()
         if active_bets['count'] > 0:
-            return jsonify({'error': 'Cannot edit schedule with active bets', 'has_bets': True}), 400
+            return jsonify({'error': 'Não é possível editar agendamento com apostas ativas', 'has_bets': True}), 400
 
+    # Get player IDs if they are registered users
+    p1_user = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player1_name, player1_name)).fetchone()
+    p2_user = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player2_name, player2_name)).fetchone()
+    
     try:
         db.execute('''
             UPDATE schedules 
-            SET player1_name = ?, player2_name = ?, match_type = ?
-            WHERE id = ?
-        ''', (player1_name, player2_name, match_type, schedule_id))
+            SET player1_name = %s, player2_name = %s, player1_id = %s, player2_id = %s, match_type = %s
+            WHERE id = %s
+        ''', (player1_name, player2_name, p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None, match_type, schedule_id))
         db.commit()
-        return jsonify({'success': True, 'message': 'Schedule updated successfully'})
+        return jsonify({'success': True, 'message': 'Agendamento atualizado com sucesso'})
     except Exception:
-        return jsonify({'error': 'Failed to update schedule'}), 500
+        return jsonify({'error': 'Falha ao atualizar agendamento'}), 500
 
 
 @public_bp.route('/schedules/<int:schedule_id>', methods=['DELETE'])
@@ -253,32 +261,32 @@ def delete_schedule(schedule_id):
     db = get_db()
     
     # Check if schedule has any bets or finished match
-    match = db.execute('SELECT id, status FROM matches WHERE schedule_id = ?', (schedule_id,)).fetchone()
+    match = db.execute('SELECT id, status FROM matches WHERE schedule_id = %s', (schedule_id,)).fetchone()
     if match:
         if match['status'] == 'finished':
             # Soft delete finished matches
             try:
-                db.execute('UPDATE schedules SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?', (schedule_id,))
+                db.execute('UPDATE schedules SET deleted_at = CURRENT_TIMESTAMP WHERE id = %s', (schedule_id,))
                 db.commit()
-                return jsonify({'success': True, 'message': 'Schedule deleted successfully'})
+                return jsonify({'success': True, 'message': 'Agendamento excluído com sucesso'})
             except Exception as e:
                 return jsonify({'error': str(e)}), 400
         
-        any_bets = db.execute('SELECT COUNT(*) as count FROM bets WHERE match_id = ?', (match['id'],)).fetchone()
+        any_bets = db.execute('SELECT COUNT(*) as count FROM bets WHERE match_id = %s', (match['id'],)).fetchone()
         if any_bets['count'] > 0:
             # Soft delete instead of hard delete
             try:
-                db.execute('UPDATE schedules SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?', (schedule_id,))
+                db.execute('UPDATE schedules SET deleted_at = CURRENT_TIMESTAMP WHERE id = %s', (schedule_id,))
                 db.commit()
-                return jsonify({'success': True, 'message': 'Schedule deleted successfully'})
+                return jsonify({'success': True, 'message': 'Agendamento excluído com sucesso'})
             except Exception as e:
                 return jsonify({'error': str(e)}), 400
     
     # No bets, can hard delete
     try:
-        db.execute('DELETE FROM schedules WHERE id = ?', (schedule_id,))
+        db.execute('DELETE FROM schedules WHERE id = %s', (schedule_id,))
         db.commit()
-        return jsonify({'success': True, 'message': 'Schedule deleted successfully'})
+        return jsonify({'success': True, 'message': 'Agendamento excluído com sucesso'})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
@@ -300,7 +308,7 @@ def get_month_schedules():
         SELECT s.*, c.name as court_name, c.type as court_type
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
-        WHERE s.date >= ? AND s.date <= ? AND s.deleted_at IS NULL
+        WHERE s.date >= %s AND s.date <= %s AND s.deleted_at IS NULL
         ORDER BY s.date, s.start_time
     ''', (first_day, last_day)).fetchall()
 
@@ -334,7 +342,7 @@ def get_week_schedules():
         SELECT s.*, c.name as court_name, c.type as court_type
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
-        WHERE s.date >= ? AND s.date <= ? AND s.deleted_at IS NULL
+        WHERE s.date >= %s AND s.date <= %s AND s.deleted_at IS NULL
         ORDER BY s.date, s.start_time
     ''', (start_date, end_date)).fetchall()
 
@@ -384,7 +392,7 @@ def generate_whatsapp_message():
         SELECT s.*, c.name as court_name, c.type as court_type
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
-        WHERE s.date >= ? AND s.date <= ? AND s.deleted_at IS NULL
+        WHERE s.date >= %s AND s.date <= %s AND s.deleted_at IS NULL
         ORDER BY s.date, c.name, s.start_time
     ''', (start_date, last_day)).fetchall()
 
@@ -396,12 +404,12 @@ def generate_whatsapp_message():
     # Get betting odds for matches with active bets
     match_odds = {}
     for schedule in schedules:
-        match = db.execute('SELECT id FROM matches WHERE schedule_id = ? AND status = \'upcoming\'', (schedule['id'],)).fetchone()
+        match = db.execute('SELECT id FROM matches WHERE schedule_id = %s AND status = \'upcoming\'', (schedule['id'],)).fetchone()
         if match:
             bets = db.execute('''
                 SELECT player_name, SUM(amount) as total_amount
                 FROM bets
-                WHERE match_id = ? AND status = \'active\'
+                WHERE match_id = %s AND status = \'active\'
                 GROUP BY player_name
             ''', (match['id'],)).fetchall()
             
@@ -477,7 +485,7 @@ def get_public_dashboard_stats():
     db = get_db()
 
     # Most booked court this month
-    month_condition = get_month_comparison_sql('s.date')
+    month_condition = "DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)"
     most_booked_court = db.execute(f'''
         SELECT c.name, COUNT(*) as bookings
         FROM schedules s
@@ -489,7 +497,7 @@ def get_public_dashboard_stats():
     ''').fetchone()
 
     # Total games by type this month
-    month_condition = get_month_comparison_sql('date')
+    month_condition = "DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)"
     game_stats = db.execute(f'''
         SELECT match_type, COUNT(*) as count
         FROM schedules
@@ -498,7 +506,7 @@ def get_public_dashboard_stats():
     ''').fetchall()
 
     # Top players this month
-    month_condition = get_month_comparison_sql('date')
+    month_condition = "DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)"
     top_players = db.execute(f'''
         SELECT player_name, COUNT(*) as games
         FROM (

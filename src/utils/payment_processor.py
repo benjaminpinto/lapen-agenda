@@ -34,7 +34,7 @@ def log_payment_event(payment_id, event_type, status, amount, error_message=None
         
         db.execute('''
             INSERT INTO payment_logs (payment_id, event_type, status, amount, error_message, metadata)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
         ''', (payment_id, event_type, status, amount, error_message, str(metadata) if metadata else None))
         
         db.commit()

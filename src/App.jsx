@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './contexts/AuthContext'
 import { Toaster } from '@/components/ui/toaster'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
@@ -15,6 +16,10 @@ import MatchReport from './components/admin/MatchReport'
 import AdminReports from './components/admin/AdminReports'
 import LapenApprovals from './components/admin/LapenApprovals'
 import AdminUsers from './components/admin/AdminUsers'
+import AdminRanking from './components/admin/AdminRanking'
+import SeasonConfig from './components/admin/SeasonConfig'
+import SeasonParticipants from './components/admin/SeasonParticipants'
+import SeasonRounds from './components/admin/SeasonRounds'
 import ScheduleForm from './components/ScheduleForm'
 import ScheduleView from './components/ScheduleView'
 import SignUp from './components/auth/SignUp'
@@ -26,6 +31,10 @@ import ResetPassword from './components/auth/ResetPassword'
 import BettingDashboard from './components/betting/BettingDashboard'
 import MyBets from './components/betting/MyBets'
 import Profile from './components/Profile'
+import RankingLeaderboard from './components/ranking/RankingLeaderboard'
+import MyMatches from './components/ranking/MyMatches'
+import Statistics from './components/statistics/Statistics'
+import AddMatchResult from './components/statistics/AddMatchResult'
 import './App.css'
 
 function App() {
@@ -34,7 +43,23 @@ function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <Router>
+        <AuthWrapper>
+          <Router isAdminAuthenticated={isAdminAuthenticated} setIsAdminAuthenticated={setIsAdminAuthenticated} />
+        </AuthWrapper>
+      </AuthProvider>
+    </ToastProvider>
+  )
+}
+
+function AuthWrapper({ children }) {
+  return children
+}
+
+function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
+  const { isAuthenticated, loading } = useAuth()
+  
+  return (
+    <BrowserRouter>
         <div className="min-h-screen bg-slate-50">
           <Header isAdminAuthenticated={isAdminAuthenticated} setIsAdminAuthenticated={setIsAdminAuthenticated} />
           <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-7xl">
@@ -51,6 +76,10 @@ function App() {
               <Route path="/betting" element={<BettingDashboard />} />
               <Route path="/my-bets" element={<MyBets />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/ranking" element={<RankingLeaderboard />} />
+              <Route path="/ranking/my-matches" element={<MyMatches />} />
+              <Route path="/statistics" element={<Statistics />} />
+              <Route path="/statistics/add-result" element={loading ? <div>Carregando...</div> : (isAuthenticated ? <AddMatchResult /> : <Navigate to="/login" />)} />
               <Route 
                 path="/admin" 
                 element={
@@ -132,13 +161,43 @@ function App() {
                   <Navigate to="/admin" />
                 } 
               />
+              <Route 
+                path="/admin/ranking" 
+                element={
+                  isAdminAuthenticated ? 
+                  <AdminRanking /> : 
+                  <Navigate to="/admin" />
+                } 
+              />
+              <Route 
+                path="/admin/ranking/config/:id" 
+                element={
+                  isAdminAuthenticated ? 
+                  <SeasonConfig /> : 
+                  <Navigate to="/admin" />
+                } 
+              />
+              <Route 
+                path="/admin/ranking/participants/:id" 
+                element={
+                  isAdminAuthenticated ? 
+                  <SeasonParticipants /> : 
+                  <Navigate to="/admin" />
+                } 
+              />
+              <Route 
+                path="/admin/ranking/rounds/:id" 
+                element={
+                  isAdminAuthenticated ? 
+                  <SeasonRounds /> : 
+                  <Navigate to="/admin" />
+                } 
+              />
             </Routes>
           </main>
         </div>
         <Toaster />
-      </Router>
-    </AuthProvider>
-  </ToastProvider>
+    </BrowserRouter>
   )
 }
 

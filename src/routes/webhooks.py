@@ -45,7 +45,7 @@ def mercadopago_webhook():
                     if status == 'approved' and external_ref:
                         db = get_db()
                         db.execute(
-                            'UPDATE bets SET status = ?, payment_status = ? WHERE id = ?',
+                            'UPDATE bets SET status = %s, payment_status = %s WHERE id = %s',
                             ('confirmed', 'paid', external_ref)
                         )
                         db.commit()

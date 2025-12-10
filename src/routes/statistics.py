@@ -200,6 +200,7 @@ def get_past_matches():
             FROM schedules s
             LEFT JOIN match_statistics_unified mr ON s.id = mr.schedule_id
             WHERE s.deleted_at IS NULL AND mr.id IS NULL AND s.date <= CURRENT_DATE
+            ORDER BY s.date DESC, s.start_time DESC
         ''').fetchall()
         
         ranking_matches = db.execute('''

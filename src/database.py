@@ -1,103 +1,105 @@
-import sqlite3
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import time
 
-DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'instance', 'app.db')
-
-class DatabaseWrapper:
-    def __init__(self, conn, is_postgres=False):
-        self.conn = conn
-        self.is_postgres = is_postgres
-        if is_postgres:
-            self.cursor = conn.cursor()
+def init_db():
+    postgres_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL') or os.environ.get('PRISMA_DATABASE_URL')
+    if not postgres_url:
+        raise ValueError('DATABASE_URL environment variable is required')
     
-    def execute(self, query, params=()):
-        if self.is_postgres:
-            # Convert ? placeholders to %s for PostgreSQL
-            pg_query = query.replace('?', '%s')
+    # Wait for PostgreSQL to be ready
+    for attempt in range(30):
+        try:
+            conn = psycopg2.connect(postgres_url, cursor_factory=RealDictCursor)
+            conn.autocommit = True
+            cursor = conn.cursor()
             
-            # Convert SQLite date/time functions to PostgreSQL
-            pg_query = pg_query.replace("date('now')", "CURRENT_DATE")
-            pg_query = pg_query.replace("time('now')", "CURRENT_TIME")
-            pg_query = pg_query.replace("datetime('now')", "CURRENT_TIMESTAMP")
+            # Check if already initialized
+            cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users')")
+            if cursor.fetchone()['exists']:
+                cursor.close()
+                conn.close()
+                return
             
-            # Convert SQLite strftime to PostgreSQL date functions
-            pg_query = pg_query.replace("strftime('%Y-%m', s.date) = strftime('%Y-%m', 'now')", "DATE_TRUNC('month', s.date) = DATE_TRUNC('month', CURRENT_DATE)")
-            pg_query = pg_query.replace("strftime('%Y-%m', date) = strftime('%Y-%m', 'now')", "DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)")
+            # Run PostgreSQL migrations in correct order
+            migrations = [
+                'database/postgres_schema.sql',
+                'database/betting_schema_postgres.sql',
+                'database/payment_logs_schema_postgres.sql',
+                'database/migrations/ranking_schema_postgres.sql',
+                'database/migrations/add_match_statistics_postgres.sql'
+            ]
             
-            # Handle date comparisons
-            pg_query = pg_query.replace("date > date('now')", "date > CURRENT_DATE")
-            pg_query = pg_query.replace("date = date('now')", "date = CURRENT_DATE")
-            pg_query = pg_query.replace("start_time > time('now')", "start_time > CURRENT_TIME")
+            for migration_file in migrations:
+                migration_path = os.path.join(os.path.dirname(__file__), migration_file)
+                if os.path.exists(migration_path):
+                    with open(migration_path, 'r') as f:
+                        sql = f.read()
+                        # Split by semicolon and execute each statement separately
+                        statements = [s.strip() for s in sql.split(';') if s.strip()]
+                        for statement in statements:
+                            try:
+                                cursor.execute(statement)
+                            except psycopg2.Error as e:
+                                # Skip if already exists
+                                if 'already exists' not in str(e):
+                                    print(f"Error in {migration_file}: {e}")
+                                    raise
             
-            # Convert string concatenation for PostgreSQL compatibility
-            import re
-            # Handle || operator with CAST for better compatibility
-            pg_query = re.sub(r"'([^']+)' \|\| ([a-zA-Z_][a-zA-Z0-9_.]*)", r"CONCAT('\1', CAST(\2 AS TEXT))", pg_query)
-            pg_query = re.sub(r"([a-zA-Z_][a-zA-Z0-9_.]*) \|\| '([^']+)'", r"CONCAT(CAST(\1 AS TEXT), '\2')", pg_query)
-            
-            # Convert boolean literals
-            pg_query = pg_query.replace('= TRUE', '= true')
-            pg_query = pg_query.replace('= FALSE', '= false')
-            pg_query = pg_query.replace('active = 1', 'active = true')
-            pg_query = pg_query.replace('active = 0', 'active = false')
-            
-            # Convert AUTOINCREMENT to SERIAL (though this should be in schema)
-            pg_query = pg_query.replace('AUTOINCREMENT', 'SERIAL')
-            
-            # Handle CAST compatibility
-            pg_query = pg_query.replace('CAST(', 'CAST(')
-            
-            # Ensure proper text casting for PostgreSQL
-            pg_query = pg_query.replace('AS TEXT', 'AS VARCHAR')
-            
-            self.cursor.execute(pg_query, params)
-            return self.cursor
+            cursor.close()
+            conn.close()
+            return
+        except psycopg2.OperationalError:
+            if attempt == 29:
+                raise
+            time.sleep(1)
+
+class DBConnection:
+    def __init__(self, conn):
+        self.conn = conn
+        self._cursor = None
+    
+    def cursor(self):
+        if not self._cursor:
+            self._cursor = self.conn.cursor()
+        return self._cursor
+    
+    def execute(self, query, params=None):
+        cursor = self.cursor()
+        if params is None:
+            cursor.execute(query)
         else:
-            return self.conn.execute(query, params)
+            cursor.execute(query, params)
+        return cursor
     
     def commit(self):
         self.conn.commit()
     
     def close(self):
-        if self.is_postgres:
-            self.cursor.close()
+        if self._cursor:
+            self._cursor.close()
         self.conn.close()
 
-def init_db():
-    postgres_url = os.environ.get('POSTGRES_URL') or os.environ.get('PRISMA_DATABASE_URL')
-    if postgres_url:
-        return  # Skip init for PostgreSQL - run schema manually
-    
-    if not os.path.exists(DATABASE):
-        os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
-        conn = sqlite3.connect(DATABASE)
-        
-        # Load main schema
-        with open(os.path.join(os.path.dirname(__file__), "database", "schema.sql"), "r") as f:
-            conn.executescript(f.read())
-        
-        # Load betting schema if exists
-        betting_schema = os.path.join(os.path.dirname(__file__), "database", "betting_schema_sqlite.sql")
-        if os.path.exists(betting_schema):
-            with open(betting_schema, "r") as f:
-                conn.executescript(f.read())
-        
-        # Load payment logs schema if exists
-        payment_schema = os.path.join(os.path.dirname(__file__), "database", "payment_logs_schema_sqlite.sql")
-        if os.path.exists(payment_schema):
-            with open(payment_schema, "r") as f:
-                conn.executescript(f.read())
-        
-        conn.close()
-
 def get_db():
-    postgres_url = os.environ.get('POSTGRES_URL') or os.environ.get('PRISMA_DATABASE_URL')
-    if postgres_url:
-        import psycopg2
-        from psycopg2.extras import RealDictCursor
-        conn = psycopg2.connect(postgres_url, cursor_factory=RealDictCursor)
-        return DatabaseWrapper(conn, is_postgres=True)
-    else:
-        conn = sqlite3.connect(DATABASE)
-        conn.row_factory = sqlite3.Row
-        return DatabaseWrapper(conn, is_postgres=False)
+    postgres_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL') or os.environ.get('PRISMA_DATABASE_URL')
+    if not postgres_url:
+        raise ValueError('DATABASE_URL environment variable is required')
+    
+    # Retry connection up to 3 times
+    for attempt in range(3):
+        try:
+            conn = psycopg2.connect(
+                postgres_url,
+                cursor_factory=RealDictCursor,
+                connect_timeout=10,
+                keepalives=1,
+                keepalives_idle=30,
+                keepalives_interval=10,
+                keepalives_count=5
+            )
+            return DBConnection(conn)
+        except psycopg2.OperationalError as e:
+            if attempt == 2:
+                raise
+            time.sleep(0.5 * (attempt + 1))

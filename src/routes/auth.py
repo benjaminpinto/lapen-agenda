@@ -54,19 +54,11 @@ def register():
         from datetime import datetime
         lapen_requested_at = datetime.utcnow() if is_lapen_member else None
         
-        cursor = db.execute(
-            'INSERT INTO users (email, password_hash, name, short_name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            (email, password_hash, name, short_name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at)
-        )
+        cursor = db.cursor()
+        cursor.execute('INSERT INTO users (email, password_hash, name, short_name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id',
+            (email, password_hash, name, short_name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at))
+        user_id = cursor.fetchone()['id']
         db.commit()
-        
-        user_id = cursor.lastrowid
-        if not user_id:
-            cursor = db.execute('SELECT id FROM users WHERE email = ?', (email,))
-            user = cursor.fetchone()
-            user_id = user['id'] if user else None
-            if not user_id:
-                raise Exception('Failed to retrieve user ID after registration')
         token = generate_token(user_id)
         
         logger.info(f'User registered: email={email}, user_id={user_id}')
@@ -165,8 +157,8 @@ def update_profile():
     try:
         db.execute('''
             UPDATE users 
-            SET name = ?, short_name = ?, email = ?, phone = ?, pix_key = ?
-            WHERE id = ?
+            SET name = %s, short_name = %s, email = %s, phone = %s, pix_key = %s
+            WHERE id = %s
         ''', (data['name'], data['short_name'], data['email'], data.get('phone'), data.get('pix_key'), request.user_id))
         db.commit()
         
@@ -187,13 +179,13 @@ def verify_email():
     
     db = get_db()
     try:
-        cursor = db.execute('SELECT id FROM users WHERE verification_token = ?', (token,))
+        cursor = db.execute('SELECT id FROM users WHERE verification_token = %s', (token,))
         user = cursor.fetchone()
         
         if not user:
             return jsonify({'error': 'Token de verificação inválido'}), 400
         
-        db.execute('UPDATE users SET is_verified = ?, verification_token = NULL WHERE id = ?', 
+        db.execute('UPDATE users SET is_verified = %s, verification_token = NULL WHERE id = %s', 
                   (True, user['id']))
         db.commit()
         
@@ -230,7 +222,7 @@ def change_password():
     db = get_db()
     try:
         new_password_hash = hash_password(new_password)
-        db.execute('UPDATE users SET password_hash = ? WHERE id = ?', 
+        db.execute('UPDATE users SET password_hash = %s WHERE id = %s', 
                   (new_password_hash, request.user_id))
         db.commit()
         
@@ -263,7 +255,7 @@ def forgot_password():
         reset_token = generate_verification_token()
         reset_expires = datetime.utcnow() + timedelta(hours=1)
         
-        db.execute('UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE id = ?',
+        db.execute('UPDATE users SET reset_token = %s, reset_token_expires = %s WHERE id = %s',
                   (reset_token, reset_expires, user['id']))
         db.commit()
         
@@ -293,7 +285,7 @@ def reset_password():
     
     db = get_db()
     try:
-        cursor = db.execute('SELECT id, reset_token_expires FROM users WHERE reset_token = ?', (token,))
+        cursor = db.execute('SELECT id, reset_token_expires FROM users WHERE reset_token = %s', (token,))
         user = cursor.fetchone()
         
         if not user:
@@ -307,7 +299,7 @@ def reset_password():
             return jsonify({'error': 'Token expirado'}), 400
         
         new_password_hash = hash_password(new_password)
-        db.execute('UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?',
+        db.execute('UPDATE users SET password_hash = %s, reset_token = NULL, reset_token_expires = NULL WHERE id = %s',
                   (new_password_hash, user['id']))
         db.commit()
         

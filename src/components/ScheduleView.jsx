@@ -393,11 +393,15 @@ const ScheduleView = () => {
                     </p>
                 </div>
 
-                <Button onClick={handleWhatsappShare} className="w-full sm:w-auto">
-                    <Share2 className="h-4 w-4 mr-2"/>
-                    <span className="hidden sm:inline">Compartilhar no WhatsApp</span>
-                    <span className="sm:hidden">Compartilhar</span>
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={() => window.location.href = '/schedule'} variant="outline" className="w-full sm:w-auto">
+                        <Calendar className="h-4 w-4 mr-2"/>
+                        Agendar
+                    </Button>
+                    <Button onClick={handleWhatsappShare} size="icon" title="Compartilhar no WhatsApp">
+                        <Share2 className="h-4 w-4"/>
+                    </Button>
+                </div>
             </div>
 
             <Tabs value={viewType} onValueChange={setViewType} className="w-full">
@@ -537,15 +541,16 @@ const ScheduleView = () => {
                                         
                                         {hasPastSchedules && (
                                             <div className="mt-6">
-                                                <div className="mb-4 flex items-center justify-between">
+                                                <div className="mb-4">
                                                     <label className="flex items-center space-x-2 cursor-pointer">
                                                         <input
                                                             type="checkbox"
                                                             checked={hidePastDates}
                                                             onChange={(e) => setHidePastDates(e.target.checked)}
                                                             className="rounded border-gray-300"
+                                                            data-testid="hide-past-dates-checkbox"
                                                         />
-                                                        <span className="text-sm text-gray-600">Ocultar datas passadas</span>
+                                                        <span className="text-sm text-gray-600">Ocultar jogos passados do mês corrente</span>
                                                     </label>
                                                 </div>
                                                 {!hidePastDates && (

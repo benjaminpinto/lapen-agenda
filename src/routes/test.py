@@ -26,12 +26,12 @@ def cleanup_test_data():
             # Delete bets for users with matching name
             cursor = db.execute('''
                 DELETE FROM bets 
-                WHERE user_id IN (SELECT id FROM users WHERE name LIKE ?)
+                WHERE user_id IN (SELECT id FROM users WHERE name LIKE %s)
             ''', (f'%{name}%',))
             bets_deleted = cursor.rowcount
             
             # Delete users with matching name
-            cursor = db.execute('DELETE FROM users WHERE name LIKE ?', (f'%{name}%',))
+            cursor = db.execute('DELETE FROM users WHERE name LIKE %s', (f'%{name}%',))
             users_deleted = cursor.rowcount
             
             logger.info(f'Cleanup: deleted {users_deleted} users and {bets_deleted} bets with name "{name}"')
@@ -39,12 +39,12 @@ def cleanup_test_data():
             # Delete bets for test users
             cursor = db.execute('''
                 DELETE FROM bets 
-                WHERE user_id IN (SELECT id FROM users WHERE email LIKE ?)
+                WHERE user_id IN (SELECT id FROM users WHERE email LIKE %s)
             ''', (f'{email_prefix}%',))
             bets_deleted = cursor.rowcount
             
             # Delete test users
-            cursor = db.execute('DELETE FROM users WHERE email LIKE ?', (f'{email_prefix}%',))
+            cursor = db.execute('DELETE FROM users WHERE email LIKE %s', (f'{email_prefix}%',))
             users_deleted = cursor.rowcount
             
             logger.info(f'Cleanup: deleted {users_deleted} users and {bets_deleted} bets with prefix "{email_prefix}"')

@@ -779,9 +779,94 @@ def get_recent_results():
         JOIN users u1 ON rm.player1_id = u1.id
         JOIN users u2 ON rm.player2_id = u2.id
         LEFT JOIN users uw ON rm.winner_id = uw.id
-        LEFT JOIN users ua ON rm.added_by = ua.id
-        WHERE rm.status = 'completed'
-        ORDER BY rm.played_at DESC
         LIMIT %s
     ''', (limit,)).fetchall()
     return jsonify([dict(r) for r in results])
+
+@ranking_bp.route('/player-on-fire', methods=['GET'])
+def get_player_on_fire():
+    db = get_db()
+    
+    # Get active season
+    active_season = db.execute("SELECT id FROM ranking_seasons WHERE status = 'active'").fetchone()
+    if not active_season:
+        return jsonify({'elite': [], 'challenger': []})
+    
+    season_id = active_season['id']
+    
+    # Get configuration for cutoffs
+    config = RankingConfigService.get_config(season_id)
+    elite_cutoff = config.get('elite_cutoff', 10)
+    
+    # Get all participants with their positions to determine category
+    participants = db.execute('''
+        SELECT rp.user_id, rp.position, u.short_name, u.name
+        FROM ranking_participants rp
+        JOIN users u ON rp.user_id = u.id
+        WHERE rp.season_id = %s AND rp.is_active = true
+    ''', (season_id,)).fetchall()
+    
+    participants_map = {p['user_id']: dict(p) for p in participants}
+    
+    # Get all completed matches for the season ordered by date
+    matches = db.execute('''
+        SELECT rm.player1_id, rm.player2_id, rm.winner_id, rm.played_at
+        FROM ranking_matches rm
+        JOIN ranking_rounds rr ON rm.round_id = rr.id
+        WHERE rr.season_id = %s AND rm.status = 'completed'
+        ORDER BY rm.played_at ASC, rm.id ASC
+    ''', (season_id,)).fetchall()
+    
+    # Calculate streaks
+    streaks = {uid: 0 for uid in participants_map.keys()}
+    
+    for match in matches:
+        p1 = match['player1_id']
+        p2 = match['player2_id']
+        winner = match['winner_id']
+        
+        # Skip if winner is not set (should not happen for completed matches but safety check)
+        if not winner:
+            continue
+            
+        # Update P1
+        if p1 in streaks:
+            if p1 == winner:
+                streaks[p1] += 1
+            else:
+                streaks[p1] = 0
+                
+        # Update P2
+        if p2 in streaks:
+            if p2 == winner:
+                streaks[p2] += 1
+            else:
+                streaks[p2] = 0
+    
+    # Group by category and sort
+    elite_streaks = []
+    challenger_streaks = []
+    
+    for uid, streak in streaks.items():
+        if streak > 0:
+            player = participants_map[uid]
+            player_data = {
+                'user_id': uid,
+                'name': player['short_name'] or player['name'],
+                'streak': streak,
+                'position': player['position']
+            }
+            
+            if player['position'] <= elite_cutoff:
+                elite_streaks.append(player_data)
+            else:
+                challenger_streaks.append(player_data)
+    
+    # Sort by streak descending
+    elite_streaks.sort(key=lambda x: x['streak'], reverse=True)
+    challenger_streaks.sort(key=lambda x: x['streak'], reverse=True)
+    
+    return jsonify({
+        'elite': elite_streaks[:5],
+        'challenger': challenger_streaks[:5]
+    })

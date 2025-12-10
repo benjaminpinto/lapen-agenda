@@ -47,22 +47,11 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        brown: {
-          600: '#92400e',
-          500: '#a16207',
-          400: '#ca8a04',
-        },
         court: {
           saibro: "hsl(var(--court-saibro))",
           "saibro-light": "hsl(var(--court-saibro-light))",
           rapida: "hsl(var(--court-rapida))",
           "rapida-light": "hsl(var(--court-rapida-light))",
-        },
-        match: {
-          liga: "hsl(var(--match-liga))",
-          "liga-light": "hsl(var(--match-liga-light))",
-          amistoso: "hsl(var(--match-amistoso))",
-          "amistoso-light": "hsl(var(--match-amistoso-light))",
         },
       },
       borderRadius: {
@@ -72,7 +61,6 @@ export default {
       },
       borderColor: {
         DEFAULT: "hsl(var(--border))",
-        border: "hsl(var(--border))",
       },
     },
   },

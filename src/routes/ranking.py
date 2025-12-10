@@ -146,13 +146,8 @@ def get_leaderboard(season_id):
     
     participants = db.execute(query, (season['id'],)).fetchall()
     
-    if len(participants) < 2:
-        return jsonify({'error': 'Não há participantes ativos suficientes para realizar o sorteio. Mínimo: 2 jogadores'}), 400
-    
     if group == 'elite':
         participants = participants[:elite_cutoff]
-        if len(participants) < 2:
-            return jsonify({'error': 'Não há participantes suficientes no grupo Elite. Mínimo: 2 jogadores'}), 400
     elif group == 'challenger':
         participants = participants[elite_cutoff:]
     

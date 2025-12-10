@@ -25,11 +25,11 @@ def create_admin_user(client):
     db = get_db()
     password_hash = hash_password('admin123')
     cursor = db.execute('''
-        INSERT INTO users (email, password_hash, name, short_name, is_admin, is_lapen_member, lapen_approved)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', ('admin@test.com', password_hash, 'Admin User', 'Admin', True, True, True))
+        INSERT INTO users (email, password_hash, name, short_name, is_admin, is_lapen_member, lapen_approved, is_verified)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+    ''', ('admin@test.com', password_hash, 'Admin User', 'Admin', True, True, True, True))
+    user_id = cursor.fetchone()['id']
     db.commit()
-    user_id = cursor.lastrowid
     db.close()
     
     # Login to get token

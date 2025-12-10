@@ -398,10 +398,8 @@ const ScheduleView = () => {
                         <Calendar className="h-4 w-4 mr-2"/>
                         Agendar
                     </Button>
-                    <Button onClick={handleWhatsappShare} className="w-full sm:w-auto">
-                        <Share2 className="h-4 w-4 mr-2"/>
-                        <span className="hidden sm:inline">Compartilhar no WhatsApp</span>
-                        <span className="sm:hidden">Compartilhar</span>
+                    <Button onClick={handleWhatsappShare} size="icon" title="Compartilhar no WhatsApp">
+                        <Share2 className="h-4 w-4"/>
                     </Button>
                 </div>
             </div>

@@ -445,7 +445,7 @@ export default function Statistics() {
           {stats.head_to_head && (
             <Card data-testid="head-to-head-card">
               <CardHeader>
-                <CardTitle>H2H - Confrontos Diretos</CardTitle>
+                <CardTitle>H2H - Vitórias em confrontos diretos</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 text-center">

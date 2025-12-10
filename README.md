@@ -6,33 +6,102 @@
 [![Flask](https://img.shields.io/badge/Flask-3.0.0-green.svg)](https://flask.palletsprojects.com/)
 [![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-yellow.svg)](https://buymeacoffee.com/benjaminpinto)
 
 ## 🎾 Overview
 
-LAPEN Agenda is a comprehensive tennis court management system featuring:
-- Court scheduling and availability management
-- Match betting system with PIX payments (Mercado Pago)
-- Ranking system with automated draws and points calculation
-- Statistics module with player performance tracking
-- User authentication and admin panel
-- Real-time notifications and WhatsApp integration
-- Complete API with Swagger documentation
-- E2E testing with Playwright and Allure reporting
+LAPEN Agenda is a comprehensive tennis court management system with advanced features:
+- **Smart Scheduling** - Court booking with conflict prevention and recurring schedules
+- **Betting Platform** - Real-time odds calculation with PIX payments (Mercado Pago)
+- **Ranking System** - Automated tournament draws with Elite/Challenger groups
+- **Statistics Dashboard** - Player performance analytics with clay court themed charts
+- **User Management** - JWT authentication with LAPEN member approval workflow
+- **Admin Panel** - Complete management dashboard with W.O. resolution
+- **Payment Integration** - PIX and card payments with automatic settlement
+- **API Documentation** - Interactive Swagger UI with 60+ endpoints
+- **E2E Testing** - Playwright tests with Allure reporting on GitHub Pages
 
 ## ✨ Key Features
 
-- 🏟️ **Court Management** - Multiple courts with images and availability tracking
-- 📅 **Smart Scheduling** - Weekly/monthly views with conflict prevention
-- 🎲 **Betting System** - Real-time odds, PIX payments, automatic settlement
-- 💳 **Payment Integration** - Mercado Pago with PIX support (fully optimized)
-- 🏆 **Ranking System** - Annual seasons, monthly rounds, automated draws, Elite/Challenger groups
-- 📊 **Statistics Module** - Player performance, head-to-head records, leaderboards
-- 👥 **User System** - Registration, authentication, LAPEN member approval, betting history
-- 🔐 **Admin Panel** - Complete management dashboard
-- 📱 **WhatsApp Integration** - Schedule sharing
-- 📡 **API Documentation** - Interactive Swagger UI (60+ endpoints)
-- 🌐 **Portuguese UI** - Fully localized interface
-- 🧪 **E2E Testing** - Playwright tests with Allure reporting
+### 🏟️ Court Management
+- Multiple court types with images and availability tracking
+- Active/inactive status control
+- Holiday and time block management
+
+### 📅 Smart Scheduling System
+- 90-minute time slots (07:30-22:30)
+- Weekly/monthly calendar views with conflict prevention
+- Recurring schedules with date ranges
+- Player autocomplete and match type categorization
+- WhatsApp schedule sharing integration
+
+### 🎲 Advanced Betting Platform
+- Real-time odds calculation based on bet distribution
+- PIX and card payment support (Mercado Pago + Stripe)
+- Automatic bet settlement with 20% house edge
+- QR code generation for PIX payments
+- Device ID tracking for fraud prevention
+- Refund system for cancelled matches
+- Complete betting history and payment logs
+
+### 🏆 Intelligent Ranking System
+- **Automated Draw Engine** - Smart pairing algorithm avoiding recent opponents
+- **Elite/Challenger Groups** - Dynamic 50/50 split based on performance
+- **Points Calculator** - Configurable scoring with set/game bonuses
+- **W.O. Resolution** - Administrative walkover handling with evidence tracking
+- **Temporary Points** - Season start positioning with automatic expiration
+- **Finals System** - Top performer qualification tracking
+- **Season Management** - Draft/Active/Finished status workflow
+- **Round Control** - Pending/Drawn/Open/Closed lifecycle
+
+### 📊 Statistics & Analytics
+- Player performance tracking with win/loss ratios
+- Head-to-head records and match history
+- Set/game statistics with leaderboards
+- Clay court themed charts (Recharts)
+- Match type filtering (Liga, Amistoso, Aula, Torneio)
+- Recent matches display with trends
+
+### 👥 User Management
+- JWT authentication (7-day expiry) with email verification
+- LAPEN member approval workflow
+- Profile management (name, phone, PIX key, short name)
+- Password reset with token expiry
+- Admin role management
+- Betting history tracking
+
+### 🔐 Admin Dashboard
+- Court, holiday, and recurring schedule CRUD
+- Match management (finish/cancel with results)
+- User management with LAPEN approval
+- Ranking season and round control
+- W.O. resolution with evidence
+- Draw execution and cancellation
+- Betting reports and statistics
+
+### 💳 Payment Integration
+- **Mercado Pago** - PIX payments with QR code
+- **Stripe** - Card payments with 3D Secure
+- Webhook notifications for real-time status
+- External reference tracking
+- Payment logs for audit trail
+- ✅ 9/9 Mercado Pago quality recommendations implemented
+
+### 🧪 Testing & CI/CD
+- Unit tests with pytest and coverage reporting
+- E2E tests with Playwright (local and CI)
+- Allure reports published to GitHub Pages
+- Automated testing on every push/PR
+- Preview deployments with E2E validation
+- Screenshots, videos, and traces attached
+
+### 📡 API & Documentation
+- Interactive Swagger UI (OpenAPI 3.0.4)
+- 60+ REST endpoints across 11 blueprints
+- JWT and session authentication
+- Comprehensive error handling
+- Portuguese error messages
+- Request/response validation
 
 [See complete feature list →](docs/FEATURES.md)
 
@@ -114,10 +183,12 @@ npm run dev            # Frontend (port 5173)
 - Recharts 3.5.1
 - React Router 6.28.0
 
-**Testing:**
-- pytest (Unit tests)
+**Testing & Quality:**
+- pytest with pytest-cov (Unit tests)
 - Playwright 1.48.0 (E2E tests)
 - Allure 2.34.1 (Test reporting)
+- GitHub Actions (CI/CD pipeline)
+- PostgreSQL 15 (Test database)
 
 **Infrastructure:**
 - Vercel (Hosting)
@@ -129,14 +200,18 @@ npm run dev            # Frontend (port 5173)
 
 ## 💳 Payment Integration
 
-**Gateway:** Mercado Pago with PIX support
+**Primary Gateway:** Mercado Pago (PIX) | **Secondary:** Stripe (Cards)
 
-✅ **Fully Optimized** - All 9 Mercado Pago quality recommendations implemented:
-- Device ID tracking for fraud prevention
-- Complete item details
-- External reference tracking
-- Webhook notifications
-- PIX QR code generation
+✅ **Fully Optimized** - All 9 Mercado Pago quality recommendations:
+- ✅ Device ID tracking for fraud prevention
+- ✅ Complete item details in payment requests
+- ✅ External reference tracking
+- ✅ Webhook signature verification
+- ✅ PIX QR code generation
+- ✅ Real-time payment status updates
+- ✅ Automatic refund processing
+- ✅ Payment logs for audit trail
+- ✅ Error handling and retry logic
 
 ## 🔐 Security
 

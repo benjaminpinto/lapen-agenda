@@ -28,12 +28,16 @@ CREATE TABLE IF NOT EXISTS schedules (
     start_time TIME NOT NULL,
     player1_name VARCHAR(255) NOT NULL,
     player2_name VARCHAR(255) NOT NULL,
+    player1_id INTEGER REFERENCES users(id),
+    player2_id INTEGER REFERENCES users(id),
     match_type VARCHAR(50) NOT NULL,
     deleted_at TIMESTAMP DEFAULT NULL,
     FOREIGN KEY (court_id) REFERENCES courts(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_schedules_deleted_at ON schedules(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_schedules_player1_id ON schedules(player1_id);
+CREATE INDEX IF NOT EXISTS idx_schedules_player2_id ON schedules(player2_id);
 
 -- Recurring schedules table
 CREATE TABLE IF NOT EXISTS recurring_schedules (

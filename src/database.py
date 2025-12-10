@@ -65,9 +65,12 @@ class DBConnection:
             self._cursor = self.conn.cursor()
         return self._cursor
     
-    def execute(self, query, params=()):
+    def execute(self, query, params=None):
         cursor = self.cursor()
-        cursor.execute(query, params)
+        if params is None:
+            cursor.execute(query)
+        else:
+            cursor.execute(query, params)
         return cursor
     
     def commit(self):

@@ -14,12 +14,27 @@ from src.auth import hash_password
 @pytest.fixture
 def setup_db():
     db = get_db()
+    # Delete in correct order to avoid FK violations
+    db.execute("DELETE FROM match_statistics_unified WHERE ranking_match_id IN (SELECT id FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)))")
+    db.execute("DELETE FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025))")
+    db.execute("DELETE FROM ranking_draws WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025))")
+    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
+    db.execute("DELETE FROM ranking_season_config WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
+    db.execute("DELETE FROM ranking_temp_points_rules WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
+    db.execute("DELETE FROM ranking_participants WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
     db.execute("DELETE FROM ranking_seasons WHERE year >= 2025")
     db.execute("DELETE FROM users WHERE email LIKE '%@ranktest.com'")
     db.commit()
     db.close()
     yield
     db = get_db()
+    db.execute("DELETE FROM match_statistics_unified WHERE ranking_match_id IN (SELECT id FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)))")
+    db.execute("DELETE FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025))")
+    db.execute("DELETE FROM ranking_draws WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025))")
+    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
+    db.execute("DELETE FROM ranking_season_config WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
+    db.execute("DELETE FROM ranking_temp_points_rules WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
+    db.execute("DELETE FROM ranking_participants WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
     db.execute("DELETE FROM ranking_seasons WHERE year >= 2025")
     db.execute("DELETE FROM users WHERE email LIKE '%@ranktest.com'")
     db.commit()
@@ -28,10 +43,10 @@ def setup_db():
 def create_test_season():
     db = get_db()
     cursor = db.execute(
-        'INSERT INTO ranking_seasons (year, start_date, end_date, description, status) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO ranking_seasons (year, start_date, end_date, description, status) VALUES (%s, %s, %s, %s, %s) RETURNING id',
         (2025, '2025-01-01', '2025-12-31', 'Test Season', 'active')
     )
-    season_id = cursor.lastrowid
+    season_id = cursor.fetchone()['id']
     RankingConfigService.set_config(season_id, RankingConfigService.DEFAULT_CONFIG, db)
     db.commit()
     db.close()
@@ -41,9 +56,9 @@ def create_admin_user(client):
     db = get_db()
     password_hash = hash_password('admin123')
     cursor = db.execute('''
-        INSERT INTO users (email, password_hash, name, short_name, is_admin, is_lapen_member, lapen_approved)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', ('admin@ranktest.com', password_hash, 'Admin', 'Admin', True, True, True))
+        INSERT INTO users (email, password_hash, name, short_name, is_admin, is_lapen_member, lapen_approved, is_verified)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+    ''', ('admin@ranktest.com', password_hash, 'Admin', 'Admin', True, True, True, True))
     db.commit()
     db.close()
     

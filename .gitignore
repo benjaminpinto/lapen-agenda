@@ -37,6 +37,8 @@ instance/
 .env
 .env.local
 .env.*.local
+!.env.docker
+!.env.example
 
 # IDE
 .vscode/
@@ -60,6 +62,9 @@ yarn-debug.log*
 yarn-error.log*
 dist/
 dist-ssr/
+
+# Frontend build output
+src/static/
 
 # Playwright
 /test-results/

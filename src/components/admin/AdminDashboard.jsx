@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react'
 import {Link} from 'react-router-dom'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {Button} from '@/components/ui/button'
-import {Calendar, Clock, LogOut, MapPin, TrendingUp, Trophy, Users, UserCog} from 'lucide-react'
+import {Calendar, Clock, LogOut, MapPin, TrendingUp, Trophy, Users, UserCog, Award} from 'lucide-react'
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null)
@@ -126,6 +126,18 @@ const AdminDashboard = () => {
                         <CardHeader className="text-center pb-2">
                             <UserCog className="h-8 w-8 text-blue-600 mx-auto"/>
                             <CardTitle className="text-lg">Usuários</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center">
+                            <Button variant="ghost" size="sm">Gerenciar</Button>
+                        </CardContent>
+                    </Card>
+                </Link>
+
+                <Link to="/admin/ranking">
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                        <CardHeader className="text-center pb-2">
+                            <Award className="h-8 w-8 text-indigo-600 mx-auto"/>
+                            <CardTitle className="text-lg">Ranking</CardTitle>
                         </CardHeader>
                         <CardContent className="text-center">
                             <Button variant="ghost" size="sm">Gerenciar</Button>

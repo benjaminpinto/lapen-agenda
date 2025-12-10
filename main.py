@@ -20,11 +20,13 @@ from src.routes.admin_matches import admin_matches_bp
 from src.routes.payments import payments_bp
 from src.routes.webhooks import webhooks_bp
 from src.routes.test import test_bp
+from src.routes.ranking import ranking_bp
+from src.routes.statistics import statistics_bp
 from src.database import init_db
 from src.email_service import init_mail
 from src.logger import setup_logger
 
-app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'src', 'static'))
+app = Flask(__name__, static_folder='dist')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = os.getenv('FLASK_ENV') != 'development'
@@ -56,6 +58,8 @@ app.register_blueprint(admin_matches_bp)
 app.register_blueprint(payments_bp)
 app.register_blueprint(webhooks_bp, url_prefix='/api/webhooks')
 app.register_blueprint(test_bp)
+app.register_blueprint(ranking_bp)
+app.register_blueprint(statistics_bp)
 
 # Initialize Swagger (after blueprints, before catch-all route)
 swagger_config = {
@@ -74,20 +78,11 @@ Swagger(app, template_file='swagger.yaml', config=swagger_config)
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    static_folder_path = app.static_folder
-    if static_folder_path is None:
-            return "Static folder not configured", 404
-
     if path.startswith("api/"):
-        return "Not Found", 404 # API routes are handled by blueprints
-    elif path != "" and os.path.exists(os.path.join(static_folder_path, path)):
-        return send_from_directory(static_folder_path, path)
-    else:
-        index_path = os.path.join(static_folder_path, 'index.html')
-        if os.path.exists(index_path):
-            return send_from_directory(static_folder_path, 'index.html')
-        else:
-            return "index.html not found", 404
+        return "Not Found", 404
+    if path and os.path.exists(os.path.join('dist', path)):
+        return send_from_directory('dist', path)
+    return send_from_directory('dist', 'index.html')
 
 
 # Export app for Vercel

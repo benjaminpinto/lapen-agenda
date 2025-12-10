@@ -82,13 +82,15 @@ class TestMatchUtils(unittest.TestCase):
         """Test creating a new match when eligible"""
         mock_db = Mock()
         mock_cursor = Mock()
+        mock_insert_cursor = Mock()
         
-        # First call returns None (no existing match)
-        # Second call returns the new match id
+        # First call returns None (no existing match), second returns new ID
         mock_cursor.fetchone.return_value = None
-        mock_cursor.lastrowid = 10
+        mock_insert_cursor.fetchone.return_value = {'id': 10}
         
         mock_db.execute.return_value = mock_cursor
+        mock_db.cursor.return_value = mock_insert_cursor
+        mock_insert_cursor.execute.return_value = None
         mock_get_db.return_value = mock_db
         mock_eligible.return_value = True
         

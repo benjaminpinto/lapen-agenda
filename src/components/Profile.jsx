@@ -228,24 +228,6 @@ const Profile = () => {
           </form>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Preferências de Aparência</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="font-medium">Tema</p>
-              <p className="text-sm text-muted-foreground">Escolha como você quer ver o Agenda LAPEN.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <ThemeOption value="light" icon={<Sun className="h-4 w-4" />} label="Claro" />
-              <ThemeOption value="dark" icon={<Moon className="h-4 w-4" />} label="Escuro" />
-              <ThemeOption value="system" icon={<Laptop className="h-4 w-4" />} label="Sistema" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

@@ -1,8 +1,8 @@
-import {useEffect, useState} from 'react'
-import {Link} from 'react-router-dom'
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
-import {Button} from '@/components/ui/button'
-import {Calendar, Clock, LogOut, MapPin, TrendingUp, Trophy, Users, UserCog, Award} from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Calendar, Clock, LogOut, MapPin, TrendingUp, Trophy, Users, UserCog, Award } from 'lucide-react'
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null)
@@ -53,18 +53,18 @@ const AdminDashboard = () => {
                             window.location.href = '/'
                         }}
                     >
-                        <LogOut className="h-4 w-4 mr-2"/>
+                        <LogOut className="h-4 w-4 mr-2" />
                         Sair
                     </Button>
                 </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <Link to="/admin/courts">
                     <Card className="hover:shadow-md transition-shadow cursor-pointer">
                         <CardHeader className="text-center pb-2">
-                            <MapPin className="h-8 w-8 text-green-600 mx-auto"/>
+                            <MapPin className="h-8 w-8 text-green-600 mx-auto" />
                             <CardTitle className="text-lg">Quadras</CardTitle>
                         </CardHeader>
                         <CardContent className="text-center">
@@ -76,7 +76,7 @@ const AdminDashboard = () => {
                 <Link to="/admin/holidays">
                     <Card className="hover:shadow-md transition-shadow cursor-pointer">
                         <CardHeader className="text-center pb-2">
-                            <Calendar className="h-8 w-8 text-red-600 mx-auto"/>
+                            <Calendar className="h-8 w-8 text-red-600 mx-auto" />
                             <CardTitle className="text-lg">Feriados</CardTitle>
                         </CardHeader>
                         <CardContent className="text-center">
@@ -88,7 +88,7 @@ const AdminDashboard = () => {
                 <Link to="/admin/recurring">
                     <Card className="hover:shadow-md transition-shadow cursor-pointer">
                         <CardHeader className="text-center pb-2">
-                            <Clock className="h-8 w-8 text-purple-600 mx-auto"/>
+                            <Clock className="h-8 w-8 text-purple-600 mx-auto" />
                             <CardTitle className="text-lg">Agenda Fixa</CardTitle>
                         </CardHeader>
                         <CardContent className="text-center">
@@ -100,7 +100,7 @@ const AdminDashboard = () => {
                 <Link to="/admin/matches">
                     <Card className="hover:shadow-md transition-shadow cursor-pointer">
                         <CardHeader className="text-center pb-2">
-                            <Trophy className="h-8 w-8 text-yellow-600 mx-auto"/>
+                            <Trophy className="h-8 w-8 text-yellow-600 mx-auto" />
                             <CardTitle className="text-lg">Apostas</CardTitle>
                         </CardHeader>
                         <CardContent className="text-center">
@@ -112,7 +112,7 @@ const AdminDashboard = () => {
                 <Link to="/admin/lapen-approvals">
                     <Card className="hover:shadow-md transition-shadow cursor-pointer">
                         <CardHeader className="text-center pb-2">
-                            <Users className="h-8 w-8 text-orange-600 mx-auto"/>
+                            <Users className="h-8 w-8 text-orange-600 mx-auto" />
                             <CardTitle className="text-lg">Membros LAPEN</CardTitle>
                         </CardHeader>
                         <CardContent className="text-center">
@@ -124,7 +124,7 @@ const AdminDashboard = () => {
                 <Link to="/admin/users">
                     <Card className="hover:shadow-md transition-shadow cursor-pointer">
                         <CardHeader className="text-center pb-2">
-                            <UserCog className="h-8 w-8 text-blue-600 mx-auto"/>
+                            <UserCog className="h-8 w-8 text-blue-600 mx-auto" />
                             <CardTitle className="text-lg">Usuários</CardTitle>
                         </CardHeader>
                         <CardContent className="text-center">
@@ -136,7 +136,7 @@ const AdminDashboard = () => {
                 <Link to="/admin/ranking">
                     <Card className="hover:shadow-md transition-shadow cursor-pointer">
                         <CardHeader className="text-center pb-2">
-                            <Award className="h-8 w-8 text-indigo-600 mx-auto"/>
+                            <Award className="h-8 w-8 text-indigo-600 mx-auto" />
                             <CardTitle className="text-lg">Ranking</CardTitle>
                         </CardHeader>
                         <CardContent className="text-center">
@@ -151,7 +151,7 @@ const AdminDashboard = () => {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center">
-                            <TrendingUp className="h-5 w-5 mr-2 text-green-600"/>
+                            <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
                             Quadra Mais Agendada
                         </CardTitle>
                     </CardHeader>
@@ -174,7 +174,7 @@ const AdminDashboard = () => {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center">
-                            <Trophy className="h-5 w-5 mr-2 text-yellow-600"/>
+                            <Trophy className="h-5 w-5 mr-2 text-yellow-600" />
                             Tipos de Partida
                         </CardTitle>
                     </CardHeader>
@@ -197,7 +197,7 @@ const AdminDashboard = () => {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center">
-                            <Users className="h-5 w-5 mr-2 text-blue-600"/>
+                            <Users className="h-5 w-5 mr-2 text-blue-600" />
                             Top Jogadores
                         </CardTitle>
                     </CardHeader>

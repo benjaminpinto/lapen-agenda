@@ -42,7 +42,7 @@ function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
 
   return (
-    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="light">
       <ToastProvider>
         <AuthProvider>
           <AuthWrapper>

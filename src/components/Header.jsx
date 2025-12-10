@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Calendar, Eye, Home, LogIn, LogOut, Menu, Settings, Trophy, X, Award, BarChart3 } from 'lucide-react'
 import { useToast } from '@/contexts/ToastContext'
 import { useAuth } from '@/contexts/AuthContext'
-import { ThemeToggle } from '@/components/ThemeToggle'
+
 import { useState } from 'react'
 
 const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
@@ -93,7 +93,7 @@ const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
                         <div className="h-6 w-px bg-border mx-2" />
 
                         <div className="flex items-center space-x-2">
-                            <ThemeToggle />
+                            {/* ThemeToggle removed */}
 
                             {isAuthenticated ? (
                                 <>
@@ -122,7 +122,7 @@ const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
 
                     {/* Mobile Menu Button */}
                     <div className="flex items-center space-x-2 md:hidden">
-                        <ThemeToggle />
+                        {/* ThemeToggle removed */}
                         <Button
                             variant="ghost"
                             size="icon"

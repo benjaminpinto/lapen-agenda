@@ -405,7 +405,7 @@ const ScheduleView = () => {
             </div>
 
             <Tabs value={viewType} onValueChange={setViewType} className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="list" className="flex items-center text-xs sm:text-sm">
                         <List className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                         <span className="hidden sm:inline">Lista</span>
@@ -415,11 +415,6 @@ const ScheduleView = () => {
                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                         <span className="hidden sm:inline">Calendário Semanal</span>
                         <span className="sm:hidden">Semanal</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="stats" className="flex items-center text-xs sm:text-sm">
-                        <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                        <span className="hidden sm:inline">Estatísticas</span>
-                        <span className="sm:hidden">Estatísticas</span>
                     </TabsTrigger>
                 </TabsList>
 
@@ -596,55 +591,7 @@ const ScheduleView = () => {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="stats" className="mt-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Quadra Mais Agendada</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold text-green-600">
-                                    {stats.mostBookedCourt?.name || 'N/A'}
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                    {stats.mostBookedCourt?.bookings || 0} agendamentos este mês
-                                </p>
-                            </CardContent>
-                        </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Jogos por Tipo</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-2">
-                                    {stats.gameStats?.map((stat) => (
-                                        <div key={stat.match_type} className="flex justify-between">
-                                            <span>{stat.match_type}</span>
-                                            <span className="font-semibold">{stat.count}</span>
-                                        </div>
-                                    )) || <p className="text-muted-foreground">Nenhum dado disponível</p>}
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Jogadores Mais Assíduos</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-2">
-                                    {stats.topPlayers?.slice(0, 5).map((player, index) => (
-                                        <div key={player.player_name} className="flex justify-between">
-                                            <span className="text-sm">{index + 1}. {player.player_name}</span>
-                                            <span className="font-semibold text-sm">{player.games} jogos</span>
-                                        </div>
-                                    )) || <p className="text-muted-foreground">Nenhum dado disponível</p>}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </TabsContent>
             </Tabs>
 
             {/* Edit Dialog */}

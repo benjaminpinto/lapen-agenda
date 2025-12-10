@@ -4,6 +4,7 @@ import { useAuth } from './contexts/AuthContext'
 import { Toaster } from '@/components/ui/toaster'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import Header from './components/Header'
 import Home from './components/Home'
 import AdminLogin from './components/admin/AdminLogin'
@@ -41,13 +42,15 @@ function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
 
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <AuthWrapper>
-          <Router isAdminAuthenticated={isAdminAuthenticated} setIsAdminAuthenticated={setIsAdminAuthenticated} />
-        </AuthWrapper>
-      </AuthProvider>
-    </ToastProvider>
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+      <ToastProvider>
+        <AuthProvider>
+          <AuthWrapper>
+            <Router isAdminAuthenticated={isAdminAuthenticated} setIsAdminAuthenticated={setIsAdminAuthenticated} />
+          </AuthWrapper>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
   )
 }
 
@@ -57,146 +60,146 @@ function AuthWrapper({ children }) {
 
 function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
   const { isAuthenticated, loading } = useAuth()
-  
+
   return (
     <BrowserRouter>
-        <div className="min-h-screen bg-slate-50">
-          <Header isAdminAuthenticated={isAdminAuthenticated} setIsAdminAuthenticated={setIsAdminAuthenticated} />
-          <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-7xl">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/schedule" element={<ScheduleForm />} />
-              <Route path="/view" element={<ScheduleView />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/signup-success" element={<SignUpSuccess />} />
-              <Route path="/verify" element={<EmailVerification />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/betting" element={<BettingDashboard />} />
-              <Route path="/my-bets" element={<MyBets />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/ranking" element={<RankingLeaderboard />} />
-              <Route path="/ranking/my-matches" element={<MyMatches />} />
-              <Route path="/statistics" element={<Statistics />} />
-              <Route path="/statistics/add-result" element={loading ? <div>Carregando...</div> : (isAuthenticated ? <AddMatchResult /> : <Navigate to="/login" />)} />
-              <Route 
-                path="/admin" 
-                element={
-                  isAdminAuthenticated ? 
-                  <Navigate to="/admin/dashboard" /> : 
+      <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+        <Header isAdminAuthenticated={isAdminAuthenticated} setIsAdminAuthenticated={setIsAdminAuthenticated} />
+        <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-7xl">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/schedule" element={<ScheduleForm />} />
+            <Route path="/view" element={<ScheduleView />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/signup-success" element={<SignUpSuccess />} />
+            <Route path="/verify" element={<EmailVerification />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/betting" element={<BettingDashboard />} />
+            <Route path="/my-bets" element={<MyBets />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/ranking" element={<RankingLeaderboard />} />
+            <Route path="/ranking/my-matches" element={<MyMatches />} />
+            <Route path="/statistics" element={<Statistics />} />
+            <Route path="/statistics/add-result" element={loading ? <div>Carregando...</div> : (isAuthenticated ? <AddMatchResult /> : <Navigate to="/login" />)} />
+            <Route
+              path="/admin"
+              element={
+                isAdminAuthenticated ?
+                  <Navigate to="/admin/dashboard" /> :
                   <AdminLogin setIsAdminAuthenticated={setIsAdminAuthenticated} />
-                } 
-              />
-              <Route 
-                path="/admin/dashboard" 
-                element={
-                  isAdminAuthenticated ? 
-                  <AdminDashboard /> : 
+              }
+            />
+            <Route
+              path="/admin/dashboard"
+              element={
+                isAdminAuthenticated ?
+                  <AdminDashboard /> :
                   <Navigate to="/admin" />
-                } 
-              />
-              <Route 
-                path="/admin/courts" 
-                element={
-                  isAdminAuthenticated ? 
-                  <AdminCourts /> : 
+              }
+            />
+            <Route
+              path="/admin/courts"
+              element={
+                isAdminAuthenticated ?
+                  <AdminCourts /> :
                   <Navigate to="/admin" />
-                } 
-              />
+              }
+            />
 
-              <Route 
-                path="/admin/holidays" 
-                element={
-                  isAdminAuthenticated ? 
-                  <AdminHolidays /> : 
+            <Route
+              path="/admin/holidays"
+              element={
+                isAdminAuthenticated ?
+                  <AdminHolidays /> :
                   <Navigate to="/admin" />
-                } 
-              />
-              <Route 
-                path="/admin/recurring" 
-                element={
-                  isAdminAuthenticated ? 
-                  <AdminRecurring /> : 
+              }
+            />
+            <Route
+              path="/admin/recurring"
+              element={
+                isAdminAuthenticated ?
+                  <AdminRecurring /> :
                   <Navigate to="/admin" />
-                } 
-              />
-              <Route 
-                path="/admin/matches" 
-                element={
-                  isAdminAuthenticated ? 
-                  <AdminMatches /> : 
+              }
+            />
+            <Route
+              path="/admin/matches"
+              element={
+                isAdminAuthenticated ?
+                  <AdminMatches /> :
                   <Navigate to="/admin" />
-                } 
-              />
-              <Route 
-                path="/admin/matches/:matchId/report" 
-                element={
-                  isAdminAuthenticated ? 
-                  <MatchReport /> : 
+              }
+            />
+            <Route
+              path="/admin/matches/:matchId/report"
+              element={
+                isAdminAuthenticated ?
+                  <MatchReport /> :
                   <Navigate to="/admin" />
-                } 
-              />
-              <Route 
-                path="/admin/reports" 
-                element={
-                  isAdminAuthenticated ? 
-                  <AdminReports /> : 
+              }
+            />
+            <Route
+              path="/admin/reports"
+              element={
+                isAdminAuthenticated ?
+                  <AdminReports /> :
                   <Navigate to="/admin" />
-                } 
-              />
-              <Route 
-                path="/admin/lapen-approvals" 
-                element={
-                  isAdminAuthenticated ? 
-                  <LapenApprovals /> : 
+              }
+            />
+            <Route
+              path="/admin/lapen-approvals"
+              element={
+                isAdminAuthenticated ?
+                  <LapenApprovals /> :
                   <Navigate to="/admin" />
-                } 
-              />
-              <Route 
-                path="/admin/users" 
-                element={
-                  isAdminAuthenticated ? 
-                  <AdminUsers /> : 
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                isAdminAuthenticated ?
+                  <AdminUsers /> :
                   <Navigate to="/admin" />
-                } 
-              />
-              <Route 
-                path="/admin/ranking" 
-                element={
-                  isAdminAuthenticated ? 
-                  <AdminRanking /> : 
+              }
+            />
+            <Route
+              path="/admin/ranking"
+              element={
+                isAdminAuthenticated ?
+                  <AdminRanking /> :
                   <Navigate to="/admin" />
-                } 
-              />
-              <Route 
-                path="/admin/ranking/config/:id" 
-                element={
-                  isAdminAuthenticated ? 
-                  <SeasonConfig /> : 
+              }
+            />
+            <Route
+              path="/admin/ranking/config/:id"
+              element={
+                isAdminAuthenticated ?
+                  <SeasonConfig /> :
                   <Navigate to="/admin" />
-                } 
-              />
-              <Route 
-                path="/admin/ranking/participants/:id" 
-                element={
-                  isAdminAuthenticated ? 
-                  <SeasonParticipants /> : 
+              }
+            />
+            <Route
+              path="/admin/ranking/participants/:id"
+              element={
+                isAdminAuthenticated ?
+                  <SeasonParticipants /> :
                   <Navigate to="/admin" />
-                } 
-              />
-              <Route 
-                path="/admin/ranking/rounds/:id" 
-                element={
-                  isAdminAuthenticated ? 
-                  <SeasonRounds /> : 
+              }
+            />
+            <Route
+              path="/admin/ranking/rounds/:id"
+              element={
+                isAdminAuthenticated ?
+                  <SeasonRounds /> :
                   <Navigate to="/admin" />
-                } 
-              />
-            </Routes>
-          </main>
-        </div>
-        <Toaster />
+              }
+            />
+          </Routes>
+        </main>
+      </div>
+      <Toaster />
     </BrowserRouter>
   )
 }

@@ -2,66 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Agenda LAPEN Design System - Tennis Court Management */
+/* Agenda LAPEN Design System - Premium Courtside Experience */
 
 @layer base {
   :root {
-    /* Base colors */
-    --background: 0 0% 100%;
-    --foreground: 142 15% 15%;
+    /* Base colors - Light Mode (Clean & Bright) */
+    --background: 0 0% 98%;
+    --foreground: 240 10% 4%;
 
     --card: 0 0% 100%;
-    --card-foreground: 142 15% 15%;
+    --card-foreground: 240 10% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 142 15% 15%;
+    --popover-foreground: 240 10% 4%;
 
-    /* Clay court theme - terracotta and warm tones */
-    --primary: 25 75% 47%;
-    --primary-foreground: 0 0% 98%;
-    --primary-hover: 25 75% 42%;
+    /* Brand Colors - Sophisticated Clay & Gold */
+    --primary: 25 90% 48%; /* Vibrant Clay */
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 25 90% 43%;
 
-    --secondary: 35 100% 96%;
-    --secondary-foreground: 25 75% 47%;
+    --secondary: 45 90% 50%; /* Golden Trophy */
+    --secondary-foreground: 45 95% 15%;
 
-    --muted: 35 50% 96%;
-    --muted-foreground: 25 40% 45%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
 
-    --accent: 35 100% 94%;
-    --accent-foreground: 25 75% 47%;
-
-    /* Court type colors */
-    --court-saibro: 25 95% 53%;
-    --court-saibro-light: 25 95% 97%;
-    --court-rapida: 142 72% 29%;
-    --court-rapida-light: 142 20% 96%;
-
-    /* Match type colors */
-    --match-liga: 45 93% 47%;
-    --match-liga-light: 45 93% 95%;
-    --match-amistoso: 142 65% 45%;
-    --match-amistoso-light: 142 20% 94%;
+    --accent: 25 90% 96%;
+    --accent-foreground: 25 90% 48%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 35 30% 89%;
-    --input: 35 30% 89%;
-    --ring: 25 75% 47%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 25 90% 48%;
 
-    --radius: 0.75rem;
+    --radius: 1rem; /* More rounded for modern feel */
 
-    /* Custom gradients */
-    --gradient-tennis: linear-gradient(135deg, hsl(25 75% 47%), hsl(45 100% 51%));
-    --gradient-court: linear-gradient(180deg, hsl(25 75% 47% / 0.1), hsl(25 75% 47% / 0.05));
+    /* Court Types */
+    --court-saibro: 25 85% 55%;
+    --court-saibro-light: 25 85% 96%;
+    --court-rapida: 215 70% 50%;
+    --court-rapida-light: 215 70% 96%;
 
     /* Shadows */
-    --shadow-soft: 0 4px 6px -1px hsl(var(--primary) / 0.1);
-    --shadow-medium: 0 10px 15px -3px hsl(var(--primary) / 0.1);
-
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    
+    /* Sidebar (if used) */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -69,115 +59,139 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 25 90% 48%;
   }
 
   .dark {
-    --background: 142 15% 8%;
-    --foreground: 142 10% 95%;
+    /* Base colors - Dark Mode (Deep & Elegant) */
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
 
-    --card: 142 15% 10%;
-    --card-foreground: 142 10% 95%;
+    --card: 240 10% 7%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 142 15% 10%;
-    --popover-foreground: 142 10% 95%;
+    --popover: 240 10% 7%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 35 90% 55%;
-    --primary-foreground: 25 30% 15%;
-    --primary-hover: 35 90% 50%;
+    /* Brand Colors - Adjusted for Dark Mode */
+    --primary: 25 85% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 25 85% 50%;
 
-    --secondary: 25 30% 15%;
-    --secondary-foreground: 35 50% 95%;
+    --secondary: 45 80% 50%;
+    --secondary-foreground: 45 95% 10%;
 
-    --muted: 25 30% 15%;
-    --muted-foreground: 35 20% 65%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 25 30% 18%;
-    --accent-foreground: 35 50% 95%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 86% 97%;
 
-    --border: 25 30% 18%;
-    --input: 25 30% 18%;
-    --ring: 35 90% 55%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 25 85% 55%;
 
-    --sidebar-background: 25 30% 8%;
-    --sidebar-foreground: 35 50% 95%;
-    --sidebar-primary: 35 90% 55%;
-    --sidebar-primary-foreground: 25 30% 8%;
-    --sidebar-accent: 25 30% 15%;
-    --sidebar-accent-foreground: 35 50% 95%;
-    --sidebar-border: 25 30% 18%;
-    --sidebar-ring: 35 90% 55%;
+    /* Court Types - Dark Mode */
+    --court-saibro: 25 75% 55%;
+    --court-saibro-light: 25 30% 15%;
+    --court-rapida: 215 60% 55%;
+    --court-rapida-light: 215 30% 15%;
+    
+    /* Sidebar */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 25 85% 55%;
   }
 }
 
 @layer base {
+  * {
+    @apply border-border;
+  }
   body {
+    @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, sans-serif;
   }
 }
 
-@layer components {
-  .court-card {
-    @apply bg-white border border-gray-200 rounded-lg p-4 transition-all duration-300 hover:shadow-lg;
+@layer utilities {
+  .glass {
+    @apply bg-white/70 dark:bg-black/40 backdrop-blur-lg border border-white/20 dark:border-white/10 shadow-lg;
   }
   
-  .court-saibro {
-    @apply bg-orange-50 border-orange-200;
+  .glass-card {
+    @apply bg-white/80 dark:bg-zinc-900/80 backdrop-blur border border-white/50 dark:border-zinc-800/50 shadow-sm transition-all duration-300 hover:shadow-md;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-orange-600 dark:from-primary dark:to-orange-400;
   }
   
-  .court-rapida {
-    @apply bg-blue-50 border-blue-200;
+  .animate-in {
+    animation: animateIn 0.5s ease-out forwards;
   }
   
-  .match-liga {
-    @apply bg-yellow-100 text-yellow-800 border border-yellow-200;
-  }
-  
-  .match-amistoso {
-    @apply bg-amber-100 text-amber-800 border border-amber-200;
+  .animate-up {
+    animation: animateUp 0.5s ease-out forwards;
   }
 }
 
-/* Calendar disabled dates */
-.rdp-day:disabled,
-.rdp-day[disabled],
-.rdp-day[aria-disabled="true"],
-button:disabled {
-  color: #d1d5db !important;
-  background-color: #f3f4f6 !important;
-  opacity: 0.4 !important;
-  cursor: not-allowed !important;
+@keyframes animateIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes animateUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Court specific styles */
+.court-card-saibro {
+  @apply border-l-4 border-l-[hsl(var(--court-saibro))];
+}
+
+.court-card-rapida {
+  @apply border-l-4 border-l-[hsl(var(--court-rapida))];
+}
+
+/* Calendar customizations */
+.rdp {
+  @apply m-0 p-0 w-full;
+}
+.rdp-months {
+  @apply justify-center;
+}
+.rdp-day_selected, 
+.rdp-day_selected:focus-visible, 
+.rdp-day_selected:hover {
+  @apply bg-primary text-primary-foreground hover:bg-primary-hover !important;
+}
+.rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+  @apply bg-muted text-foreground;
 }
 
 /* Mobile optimizations */
 @media (max-width: 640px) {
-  /* Ensure minimum touch target size */
-  button, 
-  [role="button"],
-  input[type="button"],
-  input[type="submit"] {
-    min-height: 44px;
+  .container {
+    @apply px-4;
   }
   
-  /* Better spacing for mobile cards */
-  .mobile-card-spacing {
-    padding: 0.75rem;
+  /* Improve touch targets */
+  button, a {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
   }
   
-  /* Prevent horizontal scroll */
-  body {
-    overflow-x: hidden;
-  }
-  
-  /* Better mobile dialog positioning */
-  [data-radix-popper-content-wrapper] {
-    transform: none !important;
-    position: fixed !important;
-    inset: 1rem !important;
-    width: auto !important;
-    height: auto !important;
+  /* Better card spacing */
+  .card-padding {
+    @apply p-4;
   }
 }

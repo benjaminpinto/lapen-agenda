@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/contexts/ToastContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import { useTheme } from '@/contexts/ThemeContext'
+import { Sun, Moon, Laptop } from 'lucide-react'
 
 const Profile = () => {
   const { user, updateUser } = useAuth()
@@ -226,7 +228,42 @@ const Profile = () => {
           </form>
         </CardContent>
       </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Preferências de Aparência</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="font-medium">Tema</p>
+              <p className="text-sm text-muted-foreground">Escolha como você quer ver o Agenda LAPEN.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeOption value="light" icon={<Sun className="h-4 w-4" />} label="Claro" />
+              <ThemeOption value="dark" icon={<Moon className="h-4 w-4" />} label="Escuro" />
+              <ThemeOption value="system" icon={<Laptop className="h-4 w-4" />} label="Sistema" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
+  )
+}
+
+const ThemeOption = ({ value, icon, label }) => {
+  const { theme, setTheme } = useTheme()
+  const isSelected = theme === value
+
+  return (
+    <Button
+      variant={isSelected ? "default" : "outline"}
+      size="sm"
+      onClick={() => setTheme(value)}
+      className="flex items-center gap-2"
+    >
+      {icon}
+      <span className="hidden sm:inline">{label}</span>
+    </Button>
   )
 }
 

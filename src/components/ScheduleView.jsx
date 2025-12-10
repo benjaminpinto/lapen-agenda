@@ -1,17 +1,17 @@
-import {useEffect, useState} from 'react'
-import {useSearchParams} from 'react-router-dom'
-import {Button} from '@/components/ui/button'
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
-import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs'
-import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
-import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger} from '@/components/ui/alert-dialog'
-import {Input} from '@/components/ui/input'
-import {Label} from '@/components/ui/label'
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
-import {Textarea} from '@/components/ui/textarea'
-import {BarChart3, Calendar, Clock, Edit, GraduationCap, List, MapPin, Medal, Share2, Trash2, Trophy, Users} from 'lucide-react'
-import {useToast} from '@/contexts/ToastContext'
-import {useAuth} from '@/contexts/AuthContext'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { BarChart3, Calendar, Clock, Edit, GraduationCap, List, MapPin, Medal, Share2, Trash2, Trophy, Users } from 'lucide-react'
+import { useToast } from '@/contexts/ToastContext'
+import { useAuth } from '@/contexts/AuthContext'
 import WeeklyCalendar from './WeeklyCalendar'
 import MonthSelector from './ui/MonthSelector'
 import MatchTypeBadge from './ui/MatchTypeBadge'
@@ -41,8 +41,8 @@ const ScheduleView = () => {
         match_type: ''
     })
 
-    const {toast} = useToast()
-    const {isAuthenticated} = useAuth()
+    const { toast } = useToast()
+    const { isAuthenticated } = useAuth()
 
     useEffect(() => {
         fetchSchedules()
@@ -162,7 +162,7 @@ const ScheduleView = () => {
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`
             }
-            
+
             const response = await fetch(`/api/public/schedules/${editingSchedule.id}`, {
                 method: 'PUT',
                 headers,
@@ -219,7 +219,7 @@ const ScheduleView = () => {
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`
             }
-            
+
             const response = await fetch(`/api/public/schedules/${scheduleId}`, {
                 method: 'DELETE',
                 headers
@@ -251,7 +251,7 @@ const ScheduleView = () => {
 
     const handleDelete = async () => {
         if (!deletingSchedule) return
-        
+
         try {
             const scheduleId = deletingSchedule.id
             const token = localStorage.getItem('auth_token')
@@ -259,7 +259,7 @@ const ScheduleView = () => {
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`
             }
-            
+
             const response = await fetch(`/api/public/schedules/${scheduleId}`, {
                 method: 'DELETE',
                 headers
@@ -385,21 +385,21 @@ const ScheduleView = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 sm:mb-8 space-y-4 sm:space-y-0">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold mb-2">
                         Agenda das Quadras
                     </h1>
-                    <p className="text-gray-600 text-sm sm:text-base">
+                    <p className="text-muted-foreground text-sm sm:text-base">
                         Visualize e gerencie os agendamentos
                     </p>
                 </div>
 
                 <div className="flex gap-2">
                     <Button onClick={() => window.location.href = '/schedule'} variant="outline" className="w-full sm:w-auto">
-                        <Calendar className="h-4 w-4 mr-2"/>
+                        <Calendar className="h-4 w-4 mr-2" />
                         Agendar
                     </Button>
                     <Button onClick={handleWhatsappShare} size="icon" title="Compartilhar no WhatsApp">
-                        <Share2 className="h-4 w-4"/>
+                        <Share2 className="h-4 w-4" />
                     </Button>
                 </div>
             </div>
@@ -407,24 +407,24 @@ const ScheduleView = () => {
             <Tabs value={viewType} onValueChange={setViewType} className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="list" className="flex items-center text-xs sm:text-sm">
-                        <List className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2"/>
+                        <List className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                         <span className="hidden sm:inline">Lista</span>
                         <span className="sm:hidden">Lista</span>
                     </TabsTrigger>
                     <TabsTrigger value="weekly" className="flex items-center text-xs sm:text-sm">
-                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2"/>
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                         <span className="hidden sm:inline">Calendário Semanal</span>
                         <span className="sm:hidden">Semanal</span>
                     </TabsTrigger>
                     <TabsTrigger value="stats" className="flex items-center text-xs sm:text-sm">
-                        <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2"/>
+                        <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                         <span className="hidden sm:inline">Estatísticas</span>
                         <span className="sm:hidden">Estatísticas</span>
                     </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="list" className="mt-6">
-                    <MonthSelector 
+                    <MonthSelector
                         selectedMonth={selectedMonth}
                         selectedYear={selectedYear}
                         onMonthChange={(month, year) => {
@@ -436,7 +436,7 @@ const ScheduleView = () => {
                         const today = new Date().toISOString().split('T')[0]
                         const futureSchedules = {}
                         const pastSchedules = {}
-                        
+
                         Object.entries(groupedSchedules).forEach(([date, daySchedules]) => {
                             if (date >= today) {
                                 futureSchedules[date] = daySchedules
@@ -444,16 +444,16 @@ const ScheduleView = () => {
                                 pastSchedules[date] = daySchedules
                             }
                         })
-                        
+
                         const hasFutureSchedules = Object.keys(futureSchedules).length > 0
                         const hasPastSchedules = Object.keys(pastSchedules).length > 0
-                        
+
                         return (
                             <div className="space-y-6">
                                 {!hasFutureSchedules && !hasPastSchedules ? (
                                     <Card>
                                         <CardContent className="text-center py-8">
-                                            <p className="text-gray-500">Nenhum agendamento encontrado para este mês</p>
+                                            <p className="text-muted-foreground">Nenhum agendamento encontrado para este mês</p>
                                         </CardContent>
                                     </Card>
                                 ) : (
@@ -462,7 +462,7 @@ const ScheduleView = () => {
                                             <Card key={date}>
                                                 <CardHeader>
                                                     <CardTitle className="flex items-center">
-                                                        <Calendar className="h-5 w-5 mr-2 text-blue-600"/>
+                                                        <Calendar className="h-5 w-5 mr-2 text-primary" />
                                                         {formatDate(date)}
                                                     </CardTitle>
                                                 </CardHeader>
@@ -470,16 +470,16 @@ const ScheduleView = () => {
                                                     <div className="space-y-3">
                                                         {daySchedules.map((schedule) => (
                                                             <div key={schedule.id}
-                                                                 className="border rounded-lg p-3 sm:p-4">
+                                                                className="border rounded-lg p-3 sm:p-4">
                                                                 {/* Mobile Layout */}
                                                                 <div className="block sm:hidden space-y-2">
                                                                     <div className="flex items-center justify-between">
                                                                         <div className="flex items-center space-x-2">
-                                                                            <MapPin className="h-4 w-4 text-green-600"/>
+                                                                            <MapPin className="h-4 w-4 text-green-600" />
                                                                             <span className="font-medium text-sm">{schedule.court_name}</span>
                                                                         </div>
                                                                         <div className="flex items-center space-x-1">
-                                                                            <Clock className="h-3 w-3 text-gray-500"/>
+                                                                            <Clock className="h-3 w-3 text-muted-foreground" />
                                                                             <span className="text-sm">{schedule.start_time}</span>
                                                                         </div>
                                                                     </div>
@@ -493,25 +493,25 @@ const ScheduleView = () => {
                                                                     </div>
                                                                     <div className="flex justify-end space-x-1">
                                                                         <Button variant="ghost" size="sm"
-                                                                                onClick={() => handleEdit(schedule)}>
-                                                                            <Edit className="h-4 w-4"/>
+                                                                            onClick={() => handleEdit(schedule)}>
+                                                                            <Edit className="h-4 w-4" />
                                                                         </Button>
                                                                         <Button variant="ghost" size="sm"
-                                                                                onClick={() => handleDeleteClick(schedule)}>
-                                                                            <Trash2 className="h-4 w-4"/>
+                                                                            onClick={() => handleDeleteClick(schedule)}>
+                                                                            <Trash2 className="h-4 w-4" />
                                                                         </Button>
                                                                     </div>
                                                                 </div>
-                                                                
+
                                                                 {/* Desktop Layout */}
                                                                 <div className="hidden sm:flex items-center justify-between">
                                                                     <div className="flex items-center space-x-4">
                                                                         <div className="flex items-center">
-                                                                            <MapPin className="h-4 w-4 mr-1 text-green-600"/>
+                                                                            <MapPin className="h-4 w-4 mr-1 text-green-600 dark:text-green-500" />
                                                                             <span className="font-medium">{schedule.court_name}</span>
                                                                         </div>
                                                                         <div className="flex items-center">
-                                                                            <Clock className="h-4 w-4 mr-1 text-gray-500"/>
+                                                                            <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
                                                                             <span>{schedule.start_time}</span>
                                                                         </div>
                                                                         <div>
@@ -523,12 +523,12 @@ const ScheduleView = () => {
                                                                     </div>
                                                                     <div className="flex space-x-2">
                                                                         <Button variant="ghost" size="sm"
-                                                                                onClick={() => handleEdit(schedule)}>
-                                                                            <Edit className="h-4 w-4"/>
+                                                                            onClick={() => handleEdit(schedule)}>
+                                                                            <Edit className="h-4 w-4" />
                                                                         </Button>
                                                                         <Button variant="ghost" size="sm"
-                                                                                onClick={() => handleDeleteClick(schedule)}>
-                                                                            <Trash2 className="h-4 w-4"/>
+                                                                            onClick={() => handleDeleteClick(schedule)}>
+                                                                            <Trash2 className="h-4 w-4" />
                                                                         </Button>
                                                                     </div>
                                                                 </div>
@@ -538,7 +538,7 @@ const ScheduleView = () => {
                                                 </CardContent>
                                             </Card>
                                         ))}
-                                        
+
                                         {hasPastSchedules && (
                                             <div className="mt-6">
                                                 <div className="mb-4">
@@ -547,38 +547,38 @@ const ScheduleView = () => {
                                                             type="checkbox"
                                                             checked={hidePastDates}
                                                             onChange={(e) => setHidePastDates(e.target.checked)}
-                                                            className="rounded border-gray-300"
+                                                            className="rounded border-input text-primary focus:ring-primary"
                                                             data-testid="hide-past-dates-checkbox"
                                                         />
-                                                        <span className="text-sm text-gray-600">Ocultar jogos passados do mês corrente</span>
+                                                        <span className="text-sm text-muted-foreground">Ocultar jogos passados do mês corrente</span>
                                                     </label>
                                                 </div>
                                                 {!hidePastDates && (
-                                                    <Card className="border-gray-300">
-                                                <CardHeader className="bg-gray-50">
-                                                    <CardTitle className="text-gray-600 text-sm">
-                                                        Agendamentos Passados
-                                                    </CardTitle>
-                                                </CardHeader>
-                                                <CardContent className="pt-4">
-                                                    <div className="space-y-4">
-                                                        {Object.entries(pastSchedules).reverse().map(([date, daySchedules]) => (
-                                                            <div key={date} className="border-l-4 border-gray-300 pl-4">
-                                                                <h4 className="font-medium text-gray-600 mb-2">{formatDate(date)}</h4>
-                                                                <div className="space-y-2">
-                                                                    {daySchedules.map((schedule) => (
-                                                                        <div key={schedule.id} className="flex items-center space-x-4 p-2 bg-gray-50 rounded text-sm opacity-75">
-                                                                            <span className="font-medium">{schedule.court_name}</span>
-                                                                            <span>{schedule.start_time}</span>
-                                                                            <span>{schedule.player1_name} x {schedule.player2_name}</span>
-                                                                            <span className="text-xs px-2 py-1 bg-gray-200 rounded">{schedule.match_type}</span>
+                                                    <Card className="border-border">
+                                                        <CardHeader className="bg-muted/30">
+                                                            <CardTitle className="text-muted-foreground text-sm">
+                                                                Agendamentos Passados
+                                                            </CardTitle>
+                                                        </CardHeader>
+                                                        <CardContent className="pt-4">
+                                                            <div className="space-y-4">
+                                                                {Object.entries(pastSchedules).reverse().map(([date, daySchedules]) => (
+                                                                    <div key={date} className="border-l-4 border-gray-300 pl-4">
+                                                                        <h4 className="font-medium text-muted-foreground mb-2">{formatDate(date)}</h4>
+                                                                        <div className="space-y-2">
+                                                                            {daySchedules.map((schedule) => (
+                                                                                <div key={schedule.id} className="flex items-center space-x-4 p-2 bg-muted/50 rounded text-sm opacity-75">
+                                                                                    <span className="font-medium">{schedule.court_name}</span>
+                                                                                    <span>{schedule.start_time}</span>
+                                                                                    <span>{schedule.player1_name} x {schedule.player2_name}</span>
+                                                                                    <span className="text-xs px-2 py-1 bg-muted rounded border border-border">{schedule.match_type}</span>
+                                                                                </div>
+                                                                            ))}
                                                                         </div>
-                                                                    ))}
-                                                                </div>
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                        ))}
-                                                    </div>
-                                                </CardContent>
+                                                        </CardContent>
                                                     </Card>
                                                 )}
                                             </div>
@@ -592,7 +592,7 @@ const ScheduleView = () => {
 
                 <TabsContent value="weekly" className="mt-6">
                     <div data-weekly-calendar>
-                        <WeeklyCalendar weekSchedules={weekSchedules} fetchWeekSchedules={fetchWeekSchedules}/>
+                        <WeeklyCalendar weekSchedules={weekSchedules} fetchWeekSchedules={fetchWeekSchedules} />
                     </div>
                 </TabsContent>
 
@@ -606,7 +606,7 @@ const ScheduleView = () => {
                                 <div className="text-2xl font-bold text-green-600">
                                     {stats.mostBookedCourt?.name || 'N/A'}
                                 </div>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-muted-foreground">
                                     {stats.mostBookedCourt?.bookings || 0} agendamentos este mês
                                 </p>
                             </CardContent>
@@ -623,7 +623,7 @@ const ScheduleView = () => {
                                             <span>{stat.match_type}</span>
                                             <span className="font-semibold">{stat.count}</span>
                                         </div>
-                                    )) || <p className="text-gray-500">Nenhum dado disponível</p>}
+                                    )) || <p className="text-muted-foreground">Nenhum dado disponível</p>}
                                 </div>
                             </CardContent>
                         </Card>
@@ -639,7 +639,7 @@ const ScheduleView = () => {
                                             <span className="text-sm">{index + 1}. {player.player_name}</span>
                                             <span className="font-semibold text-sm">{player.games} jogos</span>
                                         </div>
-                                    )) || <p className="text-gray-500">Nenhum dado disponível</p>}
+                                    )) || <p className="text-muted-foreground">Nenhum dado disponível</p>}
                                 </div>
                             </CardContent>
                         </Card>
@@ -663,7 +663,7 @@ const ScheduleView = () => {
                             <Input
                                 id="edit-player1"
                                 value={formData.player1_name}
-                                onChange={(e) => setFormData(prev => ({...prev, player1_name: e.target.value}))}
+                                onChange={(e) => setFormData(prev => ({ ...prev, player1_name: e.target.value }))}
                                 required
                             />
                         </div>
@@ -673,7 +673,7 @@ const ScheduleView = () => {
                             <Input
                                 id="edit-player2"
                                 value={formData.player2_name}
-                                onChange={(e) => setFormData(prev => ({...prev, player2_name: e.target.value}))}
+                                onChange={(e) => setFormData(prev => ({ ...prev, player2_name: e.target.value }))}
                                 required
                             />
                         </div>
@@ -681,9 +681,9 @@ const ScheduleView = () => {
                         <div>
                             <Label htmlFor="edit-match-type">Tipo de Partida</Label>
                             <Select value={formData.match_type}
-                                    onValueChange={(value) => setFormData(prev => ({...prev, match_type: value}))}>
+                                onValueChange={(value) => setFormData(prev => ({ ...prev, match_type: value }))}>
                                 <SelectTrigger>
-                                    <SelectValue/>
+                                    <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Amistoso">Amistoso</SelectItem>
@@ -747,7 +747,7 @@ const ScheduleView = () => {
                                 Fechar
                             </Button>
                             <Button onClick={shareOnWhatsapp} className="bg-green-600 hover:bg-green-700">
-                                <Share2 className="h-4 w-4 mr-2"/>
+                                <Share2 className="h-4 w-4 mr-2" />
                                 Compartilhar no WhatsApp
                             </Button>
                         </div>
@@ -768,7 +768,7 @@ const ScheduleView = () => {
                             ) : (
                                 <>
                                     Este agendamento possui apostas ativas e não pode ser editado ou excluído.
-                                    <br/><br/>
+                                    <br /><br />
                                     Para modificar este agendamento, entre em contato com um administrador para cancelar as apostas primeiro.
                                 </>
                             )}

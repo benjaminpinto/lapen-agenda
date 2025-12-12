@@ -521,16 +521,16 @@ const BettingDashboard = () => {
                     <div className="mb-8">
                         <button
                             onClick={() => setAvailableMatchesOpen(!availableMatchesOpen)}
-                            className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-green-50 hover:from-blue-100 hover:to-green-100 rounded-lg transition-all duration-200 border border-blue-200 mb-4"
+                            className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 rounded-lg transition-all duration-200 border border-orange-200 mb-4"
                         >
                             <div className="flex items-center gap-2">
-                                <Flame className="h-5 w-5 text-blue-600"/>
-                                <h2 className="text-xl font-semibold text-blue-900">Partidas Disponíveis</h2>
-                                <Badge className="bg-blue-600 text-white">
+                                <Flame className="h-5 w-5 text-orange-600"/>
+                                <h2 className="text-xl font-semibold text-orange-900">Partidas Disponíveis</h2>
+                                <Badge className="bg-orange-600 text-white">
                                     {matches.filter(m => m.status === 'upcoming').length}
                                 </Badge>
                             </div>
-                            <ChevronDown className={`h-5 w-5 text-blue-600 transition-transform duration-200 ${availableMatchesOpen ? 'rotate-180' : ''}`}/>
+                            <ChevronDown className={`h-5 w-5 text-orange-600 transition-transform duration-200 ${availableMatchesOpen ? 'rotate-180' : ''}`}/>
                         </button>
                         <div className={`transition-all duration-300 ease-in-out overflow-hidden ${availableMatchesOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                             {matches.filter(m => m.status === 'upcoming').length === 0 ? (
@@ -552,16 +552,16 @@ const BettingDashboard = () => {
                     <div>
                         <button
                             onClick={() => setFinishedMatchesOpen(!finishedMatchesOpen)}
-                            className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100 rounded-lg transition-all duration-200 border border-gray-200 mb-4"
+                            className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 rounded-lg transition-all duration-200 border border-amber-200 mb-4"
                         >
                             <div className="flex items-center gap-2">
-                                <CheckCircle className="h-5 w-5 text-gray-600"/>
-                                <h2 className="text-xl font-semibold text-gray-900">Partidas Encerradas</h2>
-                                <Badge className="bg-gray-600 text-white">
+                                <CheckCircle className="h-5 w-5 text-amber-600"/>
+                                <h2 className="text-xl font-semibold text-amber-900">Partidas Encerradas</h2>
+                                <Badge className="bg-amber-600 text-white">
                                     {matches.filter(m => m.status === 'finished' || m.status === 'cancelled').length}
                                 </Badge>
                             </div>
-                            <ChevronDown className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${finishedMatchesOpen ? 'rotate-180' : ''}`}/>
+                            <ChevronDown className={`h-5 w-5 text-amber-600 transition-transform duration-200 ${finishedMatchesOpen ? 'rotate-180' : ''}`}/>
                         </button>
                         <div className={`transition-all duration-300 ease-in-out overflow-hidden ${finishedMatchesOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                             {matches.filter(m => m.status === 'finished' || m.status === 'cancelled').length === 0 ? (

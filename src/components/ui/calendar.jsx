@@ -10,17 +10,14 @@ function Calendar({className, classNames, showOutsideDays = true, ...props}) {
     return (
         <div className="calendar-container">
             <style>{`
-        .rdp button[disabled] {
+        .rdp button[disabled],
+        .rdp .rdp-day[aria-disabled="true"],
+        .rdp .rdp-day_disabled {
           color: #d1d5db !important;
-          background-color: #f9fafb !important;
-          opacity: 0.5 !important;
+          background-color: transparent !important;
+          opacity: 0.4 !important;
           cursor: not-allowed !important;
-        }
-        .rdp .rdp-day[aria-disabled="true"] {
-          color: #d1d5db !important;
-          background-color: #f9fafb !important;
-          opacity: 0.5 !important;
-          cursor: not-allowed !important;
+          pointer-events: none !important;
         }
       `}</style>
             <DayPicker

@@ -5,6 +5,7 @@ import { SpeedInsights } from '@vercel/speed-insights/react'
 import App from './App.jsx'
 import './index.css'
 
+console.log('Lapen Agenda Updated: ' + new Date().toISOString());
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />

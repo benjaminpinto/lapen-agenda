@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { DatePicker } from '@/components/ui/date-picker'
+
 import BackButton from '@/components/ui/BackButton'
 import {Calendar as CalendarIcon, Clock, Users, Trophy, GraduationCap, MedalIcon, AlertCircle} from 'lucide-react'
 import { useToast } from '@/contexts/ToastContext'
@@ -413,12 +413,14 @@ const ScheduleForm = () => {
 
             {/* Date Selection */}
             <div>
-              <Label>Data</Label>
-              <DatePicker
+              <Label htmlFor="date">Data</Label>
+              <Input
+                id="date"
+                type="date"
                 value={formData.date}
-                onChange={(date) => setFormData(prev => ({ ...prev, date }))}
-                disabled={(date) => date < new Date(getTodayDate())}
-                placeholder="Selecione a data"
+                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                min={getTodayDate()}
+                required
               />
             </div>
 

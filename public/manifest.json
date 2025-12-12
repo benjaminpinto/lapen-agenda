@@ -8,7 +8,7 @@
   "theme_color": "#10b981",
   "icons": [
     {
-      "src": "/src/static/images/lapen-logo.png",
+      "src": "/lapen-logo.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any maskable"

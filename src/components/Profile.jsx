@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/contexts/ToastContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import { useTheme } from '@/contexts/ThemeContext'
+import { Sun, Moon, Laptop } from 'lucide-react'
 
 const Profile = () => {
   const { user, updateUser } = useAuth()
@@ -227,6 +229,23 @@ const Profile = () => {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+const ThemeOption = ({ value, icon, label }) => {
+  const { theme, setTheme } = useTheme()
+  const isSelected = theme === value
+
+  return (
+    <Button
+      variant={isSelected ? "default" : "outline"}
+      size="sm"
+      onClick={() => setTheme(value)}
+      className="flex items-center gap-2"
+    >
+      {icon}
+      <span className="hidden sm:inline">{label}</span>
+    </Button>
   )
 }
 

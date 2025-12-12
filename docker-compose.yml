@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:17.2-alpine
     container_name: lapen-postgres
     environment:
       POSTGRES_DB: lapen_agenda
@@ -32,6 +32,7 @@ services:
       - .:/app
       - /app/node_modules
       - /app/.venv
+      - /app/dist
     restart: unless-stopped
 
 volumes:

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/components/hooks/use-toast'
-import { Trophy, TrendingUp, Target, Award, ChevronDown, ChevronUp, Users, Flame, BarChart3, History, Skull, Heart } from 'lucide-react'
+import { Trophy, TrendingUp, Target, Award, ChevronDown, ChevronUp, Users, Flame, BarChart3, History, Skull, Heart, X } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import RecentResults from '../ranking/RecentResults'
 
@@ -18,7 +18,7 @@ export default function Statistics() {
   const [seasons, setSeasons] = useState([])
   const [selectedSeason, setSelectedSeason] = useState('')
   const [loading, setLoading] = useState(false)
-  const [isFilterOpen, setIsFilterOpen] = useState(true)
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [showRecentResults, setShowRecentResults] = useState(false)
   const { toast } = useToast()
 
@@ -27,15 +27,12 @@ export default function Statistics() {
     setPlayer2('')
     setMatchType('')
     setStats(null)
-    setIsFilterOpen(true)
     fetchPlayers()
     fetchSeasons()
     fetchGeneralStats()
   }, [])
 
-  useEffect(() => {
-    fetchGeneralStats()
-  }, [selectedSeason])
+
 
   const fetchPlayers = async () => {
     try {
@@ -117,6 +114,7 @@ export default function Statistics() {
       const data = await response.json()
       setStats(data)
       setIsFilterOpen(false)
+      fetchGeneralStats()
     } catch (error) {
       toast({ title: 'Erro ao buscar estatísticas', variant: 'destructive' })
     } finally {
@@ -224,18 +222,21 @@ export default function Statistics() {
         </div>
       </div>
 
-      <Card data-testid="statistics-filters">
-        <CardHeader className="cursor-pointer" onClick={() => setIsFilterOpen(!isFilterOpen)}>
+      <Card data-testid="statistics-filters" className="border-l-4 border-l-orange-600 shadow-md">
+        <CardHeader className="cursor-pointer bg-gradient-to-r from-orange-50 to-transparent hover:from-orange-100 transition-colors" onClick={() => setIsFilterOpen(!isFilterOpen)}>
           <div className="flex justify-between items-center">
-            <CardTitle>Filtros</CardTitle>
-            {isFilterOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+            <CardTitle className="flex items-center gap-2">
+              <span className="text-orange-600">⚙️</span>
+              Filtros
+            </CardTitle>
+            {isFilterOpen ? <ChevronUp className="h-5 w-5 text-orange-600" /> : <ChevronDown className="h-5 w-5 text-orange-600" />}
           </div>
         </CardHeader>
         {isFilterOpen && <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Jogador 1</label>
-              <Select value={player1} onValueChange={setPlayer1}>
+              <Select value={player1} onValueChange={setPlayer1} key={`player1-${player1}`}>
                 <SelectTrigger data-testid="player1-select">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
@@ -249,7 +250,7 @@ export default function Statistics() {
 
             <div>
               <label className="text-sm font-medium mb-2 block">Jogador 2 (opcional)</label>
-              <Select value={player2} onValueChange={setPlayer2}>
+              <Select value={player2} onValueChange={setPlayer2} key={`player2-${player2}`}>
                 <SelectTrigger data-testid="player2-select">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
@@ -264,7 +265,7 @@ export default function Statistics() {
 
             <div>
               <label className="text-sm font-medium mb-2 block">Tipo de Partida</label>
-              <Select value={matchType} onValueChange={setMatchType}>
+              <Select value={matchType} onValueChange={setMatchType} key={`matchType-${matchType}`}>
                 <SelectTrigger data-testid="match-type-select">
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
@@ -275,39 +276,49 @@ export default function Statistics() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Temporada</label>
+              <Select value={selectedSeason} onValueChange={setSelectedSeason} key={`season-${selectedSeason}`}>
+                <SelectTrigger data-testid="season-select">
+                  <SelectValue placeholder="Todas">
+                    {getSelectedSeasonLabel()}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todas as temporadas</SelectItem>
+                  <SelectItem value="amistosos">Amistosos</SelectItem>
+                  {seasons.map(s => (
+                    <SelectItem key={s.id} value={s.id.toString()}>
+                      {getSeasonLabel(s)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <Button onClick={fetchStatistics} disabled={loading} data-testid="fetch-stats-btn">
-            {loading ? 'Carregando...' : 'Buscar Estatísticas'}
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={fetchStatistics} disabled={loading} data-testid="fetch-stats-btn">
+              {loading ? 'Carregando...' : 'Buscar Estatísticas'}
+            </Button>
+            <Button 
+              onClick={() => {
+                setPlayer1('')
+                setPlayer2('')
+                setMatchType('')
+                setSelectedSeason('')
+                setStats(null)
+              }} 
+              variant="outline"
+              data-testid="clear-filters-btn"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Limpar Filtros
+            </Button>
+          </div>
         </CardContent>}
       </Card>
-
-      {!stats && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Filtrar por Temporada</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Select value={selectedSeason} onValueChange={setSelectedSeason}>
-              <SelectTrigger data-testid="season-select" className="w-full md:w-64">
-                <SelectValue placeholder="Todas as temporadas">
-                  {getSelectedSeasonLabel()}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todas as temporadas</SelectItem>
-                <SelectItem value="amistosos">Amistosos</SelectItem>
-                {seasons.map(s => (
-                  <SelectItem key={s.id} value={s.id.toString()}>
-                    {getSeasonLabel(s)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
-      )}
 
       {!stats && generalStats && generalStats.total_matches > 0 && (
         <>
@@ -319,15 +330,15 @@ export default function Statistics() {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-brown-600">{generalStats.total_matches}</div>
+                    <div className="text-3xl font-bold" style={{ color: '#92400e' }}>{generalStats.total_matches}</div>
                     <div className="text-xs text-muted-foreground mt-1">Partidas</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-brown-500">{generalStats.total_players}</div>
+                    <div className="text-3xl font-bold" style={{ color: '#a16207' }}>{generalStats.total_players}</div>
                     <div className="text-xs text-muted-foreground mt-1">Jogadores</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-brown-400">{generalStats.total_sets}</div>
+                    <div className="text-3xl font-bold" style={{ color: '#ca8a04' }}>{generalStats.total_sets}</div>
                     <div className="text-xs text-muted-foreground mt-1">Sets</div>
                   </div>
                   <div className="text-center">
@@ -450,11 +461,11 @@ export default function Statistics() {
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 text-center">
                   <div>
-                    <div className="text-4xl font-bold text-green-600">{stats.head_to_head.player1_wins}</div>
+                    <div className="text-4xl font-bold" style={{ color: '#92400e' }}>{stats.head_to_head.player1_wins}</div>
                     <div className="text-sm text-muted-foreground">{stats.head_to_head.player1}</div>
                   </div>
                   <div>
-                    <div className="text-4xl font-bold text-blue-600">{stats.head_to_head.player2_wins}</div>
+                    <div className="text-4xl font-bold text-orange-600">{stats.head_to_head.player2_wins}</div>
                     <div className="text-sm text-muted-foreground">{stats.head_to_head.player2}</div>
                   </div>
                 </div>
@@ -492,7 +503,7 @@ export default function Statistics() {
                 <Target className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.sets_won} - {stats.sets_lost}</div>
+                <div className="text-2xl font-bold"><span className="text-green-600">{stats.sets_won}</span> - <span className="text-red-600">{stats.sets_lost}</span></div>
                 <p className="text-xs text-muted-foreground">Ganhos - Perdidos</p>
               </CardContent>
             </Card>
@@ -503,7 +514,7 @@ export default function Statistics() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.games_won} - {stats.games_lost}</div>
+                <div className="text-2xl font-bold"><span className="text-green-600">{stats.games_won}</span> - <span className="text-red-600">{stats.games_lost}</span></div>
                 <p className="text-xs text-muted-foreground">Ganhos - Perdidos</p>
               </CardContent>
             </Card>

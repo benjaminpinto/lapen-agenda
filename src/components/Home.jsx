@@ -130,18 +130,18 @@ const Home = () => {
       </h2>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
         <QuickActionCard
+          to="/view"
+          icon={<Users className="h-6 w-6 text-purple-600" />}
+          title="Partidas"
+          description="Jogos da semana"
+          color="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-900/50"
+        />
+        <QuickActionCard
           to="/ranking"
           icon={<Award className="h-6 w-6 text-yellow-600" />}
           title="Ranking"
           description="Elite & Challenger"
           color="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-900/50"
-        />
-        <QuickActionCard
-          to="/betting"
-          icon={<DollarSign className="h-6 w-6 text-green-600" />}
-          title="Apostas"
-          description="Dê seu palpite"
-          color="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900/50"
         />
         <QuickActionCard
           to="/statistics"
@@ -151,11 +151,11 @@ const Home = () => {
           color="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/50"
         />
         <QuickActionCard
-          to="/view"
-          icon={<Users className="h-6 w-6 text-purple-600" />}
-          title="Partidas"
-          description="Jogos da semana"
-          color="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-900/50"
+          to="/betting"
+          icon={<DollarSign className="h-6 w-6 text-green-600" />}
+          title="Apostas"
+          description="Dê seu palpite"
+          color="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900/50"
         />
       </div>
 

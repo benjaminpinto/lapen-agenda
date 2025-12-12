@@ -37,7 +37,7 @@ const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto px-4 py-3">
                 <div className="flex items-center justify-between">
-                    <Link to="/" className="flex items-center space-x-2 group">
+                    <Link to="/" className="flex items-center space-x-2 group" onClick={() => setIsMobileMenuOpen(false)}>
                         <span className="text-2xl sm:text-3xl transition-transform group-hover:scale-110">🎾</span>
                         <h1 className="text-lg sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-orange-600 dark:from-primary dark:to-orange-400">
                             LAPEN

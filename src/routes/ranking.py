@@ -808,12 +808,12 @@ def get_player_on_fire():
     
     participants_map = {p['user_id']: dict(p) for p in participants}
     
-    # Get all completed matches for the season ordered by date
+    # Get all matches with winners for the season ordered by date
     matches = db.execute('''
         SELECT rm.player1_id, rm.player2_id, rm.winner_id, rm.played_at
         FROM ranking_matches rm
         JOIN ranking_rounds rr ON rm.round_id = rr.id
-        WHERE rr.season_id = %s AND rm.status = 'completed'
+        WHERE rr.season_id = %s AND rm.winner_id IS NOT NULL
         ORDER BY rm.played_at ASC, rm.id ASC
     ''', (season_id,)).fetchall()
     

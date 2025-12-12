@@ -136,12 +136,9 @@ const RecentResults = ({ onBack }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <div onClick={onBack}>
-          <BackButton to="#" label="Voltar" />
-        </div>
-        <h1 className="text-2xl font-bold">Resultados Recentes</h1>
-      </div>
+      <BackButton to="/statistics" label="Voltar para Estatísticas" onClick={(e) => { e.preventDefault(); onBack(); }} />
+      <h1 className="text-3xl font-bold">Últimos Resultados</h1>
+
 
       {results.length > 0 ? (
         <div>

@@ -1,0 +1,2007 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 17.2
+-- Dumped by pg_dump version 17.2
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA public;
+
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS 'standard public schema';
+
+
+--
+-- Name: update_updated_at_column(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_updated_at_column() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$;
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: bets; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bets (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    match_id integer NOT NULL,
+    player_name character varying(255) NOT NULL,
+    amount numeric(10,2) NOT NULL,
+    potential_return numeric(10,2),
+    status character varying(20) DEFAULT 'active'::character varying,
+    payment_id character varying(255),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT bets_status_check CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'won'::character varying, 'lost'::character varying, 'refunded'::character varying])::text[])))
+);
+
+
+--
+-- Name: bets_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.bets_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: bets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.bets_id_seq OWNED BY public.bets.id;
+
+
+--
+-- Name: courts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.courts (
+    id integer NOT NULL,
+    name character varying(255) NOT NULL,
+    type character varying(100) NOT NULL,
+    description text,
+    active boolean DEFAULT true,
+    image_url text
+);
+
+
+--
+-- Name: courts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.courts_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: courts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.courts_id_seq OWNED BY public.courts.id;
+
+
+--
+-- Name: holidays_blocks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.holidays_blocks (
+    id integer NOT NULL,
+    date date NOT NULL,
+    start_time time without time zone,
+    end_time time without time zone,
+    description text
+);
+
+
+--
+-- Name: holidays_blocks_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.holidays_blocks_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: holidays_blocks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.holidays_blocks_id_seq OWNED BY public.holidays_blocks.id;
+
+
+--
+-- Name: match_results; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.match_results (
+    id integer NOT NULL,
+    match_id integer NOT NULL,
+    winner_name character varying(255) NOT NULL,
+    score character varying(100),
+    finished_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    settled boolean DEFAULT false,
+    total_winnings numeric(10,2)
+);
+
+
+--
+-- Name: match_results_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.match_results_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: match_results_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.match_results_id_seq OWNED BY public.match_results.id;
+
+
+--
+-- Name: match_statistics_unified; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.match_statistics_unified (
+    id integer NOT NULL,
+    schedule_id integer,
+    ranking_match_id integer,
+    player1_id integer,
+    player2_id integer,
+    player1_name character varying(255) NOT NULL,
+    player2_name character varying(255) NOT NULL,
+    winner_id integer,
+    winner_name character varying(255) NOT NULL,
+    score text NOT NULL,
+    match_type character varying(50) NOT NULL,
+    match_date date NOT NULL,
+    season_id integer,
+    added_by integer,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT match_statistics_unified_check CHECK (((schedule_id IS NOT NULL) OR (ranking_match_id IS NOT NULL))),
+    CONSTRAINT match_statistics_unified_check1 CHECK (((schedule_id IS NULL) OR (ranking_match_id IS NULL)))
+);
+
+
+--
+-- Name: match_statistics_unified_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.match_statistics_unified_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: match_statistics_unified_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.match_statistics_unified_id_seq OWNED BY public.match_statistics_unified.id;
+
+
+--
+-- Name: matches; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.matches (
+    id integer NOT NULL,
+    schedule_id integer NOT NULL,
+    status character varying(20) DEFAULT 'upcoming'::character varying,
+    betting_enabled boolean DEFAULT true,
+    total_pool numeric(10,2) DEFAULT 0.00,
+    house_edge numeric(3,2) DEFAULT 0.20,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT matches_status_check CHECK (((status)::text = ANY ((ARRAY['upcoming'::character varying, 'live'::character varying, 'finished'::character varying, 'cancelled'::character varying])::text[])))
+);
+
+
+--
+-- Name: matches_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.matches_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: matches_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.matches_id_seq OWNED BY public.matches.id;
+
+
+--
+-- Name: payment_logs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.payment_logs (
+    id integer NOT NULL,
+    payment_id text NOT NULL,
+    event_type text NOT NULL,
+    status text NOT NULL,
+    amount numeric(10,2),
+    error_message text,
+    metadata text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: payment_logs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.payment_logs_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: payment_logs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.payment_logs_id_seq OWNED BY public.payment_logs.id;
+
+
+--
+-- Name: ranking_draws; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ranking_draws (
+    id integer NOT NULL,
+    round_id integer NOT NULL,
+    player1_id integer NOT NULL,
+    player2_id integer NOT NULL,
+    group_type character varying(20) NOT NULL,
+    drawn_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+--
+-- Name: ranking_draws_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ranking_draws_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ranking_draws_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ranking_draws_id_seq OWNED BY public.ranking_draws.id;
+
+
+--
+-- Name: ranking_matches; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ranking_matches (
+    id integer NOT NULL,
+    round_id integer NOT NULL,
+    schedule_id integer,
+    player1_id integer NOT NULL,
+    player2_id integer NOT NULL,
+    group_type character varying(20) NOT NULL,
+    status character varying(20) DEFAULT 'scheduled'::character varying,
+    winner_id integer,
+    score text,
+    sets_p1 integer DEFAULT 0,
+    sets_p2 integer DEFAULT 0,
+    games_p1 integer DEFAULT 0,
+    games_p2 integer DEFAULT 0,
+    wo_type character varying(20) DEFAULT 'none'::character varying,
+    points_p1 integer DEFAULT 0,
+    points_p2 integer DEFAULT 0,
+    played_at timestamp without time zone,
+    added_by integer,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT ranking_matches_group_type_check CHECK (((group_type)::text = ANY ((ARRAY['elite'::character varying, 'challenger'::character varying])::text[]))),
+    CONSTRAINT ranking_matches_status_check CHECK (((status)::text = ANY ((ARRAY['scheduled'::character varying, 'completed'::character varying, 'cancelled'::character varying, 'wo'::character varying])::text[]))),
+    CONSTRAINT ranking_matches_wo_type_check CHECK (((wo_type)::text = ANY ((ARRAY['none'::character varying, 'admin'::character varying, 'forfeit'::character varying])::text[])))
+);
+
+
+--
+-- Name: ranking_matches_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ranking_matches_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ranking_matches_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ranking_matches_id_seq OWNED BY public.ranking_matches.id;
+
+
+--
+-- Name: ranking_participants; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ranking_participants (
+    id integer NOT NULL,
+    season_id integer NOT NULL,
+    user_id integer NOT NULL,
+    temp_points integer DEFAULT 0,
+    total_points integer DEFAULT 0,
+    wins integer DEFAULT 0,
+    losses integer DEFAULT 0,
+    sets_won integer DEFAULT 0,
+    sets_lost integer DEFAULT 0,
+    games_won integer DEFAULT 0,
+    games_lost integer DEFAULT 0,
+    wo_wins integer DEFAULT 0,
+    wo_losses integer DEFAULT 0,
+    "position" integer,
+    is_active boolean DEFAULT true
+);
+
+
+--
+-- Name: ranking_participants_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ranking_participants_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ranking_participants_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ranking_participants_id_seq OWNED BY public.ranking_participants.id;
+
+
+--
+-- Name: ranking_rounds; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ranking_rounds (
+    id integer NOT NULL,
+    season_id integer NOT NULL,
+    round_number integer NOT NULL,
+    month integer NOT NULL,
+    year integer NOT NULL,
+    draw_date timestamp without time zone,
+    description text,
+    status character varying(20) DEFAULT 'pending'::character varying,
+    is_finals boolean DEFAULT false,
+    CONSTRAINT ranking_rounds_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'drawn'::character varying, 'open'::character varying, 'closed'::character varying])::text[])))
+);
+
+
+--
+-- Name: ranking_rounds_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ranking_rounds_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ranking_rounds_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ranking_rounds_id_seq OWNED BY public.ranking_rounds.id;
+
+
+--
+-- Name: ranking_season_config; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ranking_season_config (
+    id integer NOT NULL,
+    season_id integer NOT NULL,
+    key character varying(100) NOT NULL,
+    value text NOT NULL,
+    data_type character varying(20) DEFAULT 'int'::character varying,
+    CONSTRAINT ranking_season_config_data_type_check CHECK (((data_type)::text = ANY ((ARRAY['int'::character varying, 'float'::character varying, 'string'::character varying, 'boolean'::character varying])::text[])))
+);
+
+
+--
+-- Name: ranking_season_config_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ranking_season_config_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ranking_season_config_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ranking_season_config_id_seq OWNED BY public.ranking_season_config.id;
+
+
+--
+-- Name: ranking_seasons; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ranking_seasons (
+    id integer NOT NULL,
+    year integer NOT NULL,
+    start_date date NOT NULL,
+    end_date date NOT NULL,
+    description text DEFAULT ''::text,
+    status character varying(20) DEFAULT 'draft'::character varying,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT ranking_seasons_status_check CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'active'::character varying, 'finished'::character varying])::text[])))
+);
+
+
+--
+-- Name: ranking_seasons_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ranking_seasons_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ranking_seasons_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ranking_seasons_id_seq OWNED BY public.ranking_seasons.id;
+
+
+--
+-- Name: ranking_temp_points_rules; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ranking_temp_points_rules (
+    id integer NOT NULL,
+    season_id integer NOT NULL,
+    position_min integer NOT NULL,
+    position_max integer NOT NULL,
+    points integer NOT NULL,
+    label character varying(100)
+);
+
+
+--
+-- Name: ranking_temp_points_rules_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.ranking_temp_points_rules_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: ranking_temp_points_rules_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.ranking_temp_points_rules_id_seq OWNED BY public.ranking_temp_points_rules.id;
+
+
+--
+-- Name: recurring_schedules; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.recurring_schedules (
+    id integer NOT NULL,
+    court_id integer NOT NULL,
+    day_of_week integer NOT NULL,
+    start_time time without time zone NOT NULL,
+    end_time time without time zone NOT NULL,
+    description text,
+    start_date date NOT NULL,
+    end_date date NOT NULL
+);
+
+
+--
+-- Name: recurring_schedules_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.recurring_schedules_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: recurring_schedules_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.recurring_schedules_id_seq OWNED BY public.recurring_schedules.id;
+
+
+--
+-- Name: schedules; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.schedules (
+    id integer NOT NULL,
+    court_id integer NOT NULL,
+    date date NOT NULL,
+    start_time time without time zone NOT NULL,
+    player1_name character varying(255) NOT NULL,
+    player2_name character varying(255) NOT NULL,
+    match_type character varying(50) NOT NULL,
+    deleted_at timestamp without time zone,
+    player1_id integer,
+    player2_id integer
+);
+
+
+--
+-- Name: schedules_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.schedules_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: schedules_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.schedules_id_seq OWNED BY public.schedules.id;
+
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.users (
+    id integer NOT NULL,
+    email character varying(255) NOT NULL,
+    password_hash character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    phone character varying(20),
+    is_verified boolean DEFAULT false,
+    verification_token character varying(255),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    is_lapen_member boolean DEFAULT false,
+    lapen_approved boolean DEFAULT false,
+    lapen_requested_at timestamp without time zone,
+    lapen_approved_at timestamp without time zone,
+    lapen_approved_by integer,
+    pix_key character varying(255),
+    reset_token character varying(255),
+    reset_token_expires timestamp without time zone,
+    is_admin boolean DEFAULT false,
+    short_name text
+);
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
+
+--
+-- Name: bets id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bets ALTER COLUMN id SET DEFAULT nextval('public.bets_id_seq'::regclass);
+
+
+--
+-- Name: courts id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.courts ALTER COLUMN id SET DEFAULT nextval('public.courts_id_seq'::regclass);
+
+
+--
+-- Name: holidays_blocks id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.holidays_blocks ALTER COLUMN id SET DEFAULT nextval('public.holidays_blocks_id_seq'::regclass);
+
+
+--
+-- Name: match_results id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.match_results ALTER COLUMN id SET DEFAULT nextval('public.match_results_id_seq'::regclass);
+
+
+--
+-- Name: match_statistics_unified id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.match_statistics_unified ALTER COLUMN id SET DEFAULT nextval('public.match_statistics_unified_id_seq'::regclass);
+
+
+--
+-- Name: matches id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.matches ALTER COLUMN id SET DEFAULT nextval('public.matches_id_seq'::regclass);
+
+
+--
+-- Name: payment_logs id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.payment_logs ALTER COLUMN id SET DEFAULT nextval('public.payment_logs_id_seq'::regclass);
+
+
+--
+-- Name: ranking_draws id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_draws ALTER COLUMN id SET DEFAULT nextval('public.ranking_draws_id_seq'::regclass);
+
+
+--
+-- Name: ranking_matches id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_matches ALTER COLUMN id SET DEFAULT nextval('public.ranking_matches_id_seq'::regclass);
+
+
+--
+-- Name: ranking_participants id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_participants ALTER COLUMN id SET DEFAULT nextval('public.ranking_participants_id_seq'::regclass);
+
+
+--
+-- Name: ranking_rounds id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_rounds ALTER COLUMN id SET DEFAULT nextval('public.ranking_rounds_id_seq'::regclass);
+
+
+--
+-- Name: ranking_season_config id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_season_config ALTER COLUMN id SET DEFAULT nextval('public.ranking_season_config_id_seq'::regclass);
+
+
+--
+-- Name: ranking_seasons id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_seasons ALTER COLUMN id SET DEFAULT nextval('public.ranking_seasons_id_seq'::regclass);
+
+
+--
+-- Name: ranking_temp_points_rules id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_temp_points_rules ALTER COLUMN id SET DEFAULT nextval('public.ranking_temp_points_rules_id_seq'::regclass);
+
+
+--
+-- Name: recurring_schedules id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.recurring_schedules ALTER COLUMN id SET DEFAULT nextval('public.recurring_schedules_id_seq'::regclass);
+
+
+--
+-- Name: schedules id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schedules ALTER COLUMN id SET DEFAULT nextval('public.schedules_id_seq'::regclass);
+
+
+--
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Data for Name: bets; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.bets (id, user_id, match_id, player_name, amount, potential_return, status, payment_id, created_at) FROM stdin;
+18	1	13	Luciandre	1.00	0.00	lost	130046749697	2025-10-20 15:02:25.407618
+22	1	13	Luciandre	1.00	0.00	lost	130048811855	2025-10-20 15:31:20.721482
+23	1	13	Luciandre	1.00	0.00	lost	130048811855	2025-10-20 15:31:23.371845
+10	1	10	Benjamin Pinto	1.00	0.00	lost	pi_3SJFmVE1cf0Sbfxq1ZCZ5j9a	2025-10-17 15:42:03.892629
+1	1	5	Rafaella	10.00	0.00	lost	mock_pi_1760463099605	2025-10-14 17:31:42.235319
+3	1	4	Barroso	1200.00	1760.00	won	mock_pi_1760466278267	2025-10-14 18:24:38.687902
+2	2	4	Bruno Marinho	1000.00	800.00	lost	mock_pi_1760465719411	2025-10-14 18:15:19.710641
+4	2	6	João Paulo 	500.00	400.00	refunded	mock_pi_1760522705696	2025-10-15 10:05:05.947501
+5	1	6	Cascata Federer 	200.00	0.00	refunded	mock_pi_1760531727619	2025-10-15 12:35:27.941024
+9	2	9	Bruno	500.00	0.00	refunded	mock_pi_1760639596215	2025-10-16 18:33:16.632491
+6	2	7	Paulo Vinicius 	500.00	704.00	won	mock_pi_1760560224773	2025-10-15 20:30:25.232406
+8	1	7	Raí	380.00	0.00	lost	mock_pi_1760636206465	2025-10-16 17:36:46.860553
+24	1	12	Luciandre	1.00	0.00	lost	130346610241	2025-10-22 21:21:57.606633
+13	1	12	Luciandre	1.00	0.00	lost	129864473203	2025-10-18 19:05:10.659057
+25	2	14	Jp Duarte (Penedo)	30.00	39.00	won	131304961842	2025-10-25 22:26:16.031707
+27	1	14	Jp Duarte (Penedo)	10.00	13.00	won	130806331099	2025-10-26 21:34:15.871236
+26	2	14	Humberto (Arapiraca )	5.00	14.65	lost	130718381839	2025-10-25 22:32:18.951707
+28	7	14	Humberto (Arapiraca )	10.00	29.30	lost	131468420270	2025-10-27 14:58:11.033048
+29	7	14	Humberto (Arapiraca )	10.00	29.30	lost	131468420270	2025-10-27 14:58:12.701357
+14	2	11	Fernando	30.00	38.88	won	129984607799	2025-10-19 20:56:21.657554
+17	2	11	Fernando	20.00	25.92	won	130603734346	2025-10-20 09:48:26.387984
+12	1	11	Rômulo Oliveira	1.00	1.57	lost	129864473203	2025-10-18 19:02:29.183397
+15	3	11	Rômulo Oliveira	20.00	31.40	lost	130571504986	2025-10-19 22:22:05.80848
+16	1	11	Rômulo Oliveira	10.00	15.70	lost	130016292377	2025-10-20 03:33:08.785216
+\.
+
+
+--
+-- Data for Name: courts; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.courts (id, name, type, description, active, image_url) FROM stdin;
+1	Quadra 1	Saibro	Quadra da esquerda. Preferencial para aulas.	t	\N
+2	Quadra 2	Saibro	Quadra da direita. Preferencial para jogos da liga.	t	\N
+3	Quadra 3	Rápida	Quadra rápida.	t	\N
+5	Quadra Externa	Saibro	Quadra externa para registrar eventos externos.	t	\N
+\.
+
+
+--
+-- Data for Name: holidays_blocks; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.holidays_blocks (id, date, start_time, end_time, description) FROM stdin;
+\.
+
+
+--
+-- Data for Name: match_results; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.match_results (id, match_id, winner_name, score, finished_at, settled, total_winnings) FROM stdin;
+1	5	Shirley 		2025-10-15 03:11:51.703137	t	8.00
+2	4	Barroso		2025-10-15 03:12:22.869546	t	1760.00
+3	7	Paulo Vinicius 		2025-10-18 18:30:37.672214	t	704.00
+4	11	Fernando		2025-10-20 23:15:01.179767	t	64.80
+5	13	João Paulo Brandão 		2025-10-22 21:13:49.896722	t	2.40
+6	10	Renato Guedes		2025-10-22 21:14:00.972166	t	0.80
+7	12	Benjamin 		2025-10-27 18:27:42.806325	t	1.60
+8	14	Jp Duarte (Penedo)	6-2 6-1	2025-10-29 00:16:19.626313	t	52.00
+\.
+
+
+--
+-- Data for Name: match_statistics_unified; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.match_statistics_unified (id, schedule_id, ranking_match_id, player1_id, player2_id, player1_name, player2_name, winner_id, winner_name, score, match_type, match_date, season_id, added_by, created_at) FROM stdin;
+1	232	\N	1	\N	Benjamin Pinto	Gilberto	1	Benjamin Pinto	2-6, 7-6, 10-6	Amistoso	2025-12-09	\N	1	2025-12-10 13:25:03.758746
+2	220	\N	\N	1	Neto Rezende	Benjamin Pinto	1	Benjamin Pinto	1-6, 1-6	Amistoso	2025-12-02	\N	1	2025-12-10 13:25:24.377859
+3	238	\N	16	\N	Neto Rezende	Joao Madero	16	Neto Rezende	6-2, 6-2	Amistoso	2025-12-10	\N	16	2025-12-11 12:12:46.791811
+4	235	\N	23	\N	Henrique Soares 	Ângelo ( retorno aos treinos)	\N	Ângelo ( retorno aos treinos)	6-3, 2-6, 6-10	Amistoso	2025-12-11	\N	23	2025-12-11 22:42:09.618391
+5	240	\N	1	3	Benjamin Pinto	Rômulo Oliveira 	3	Rômulo Oliveira 	0-6, 2-6	Amistoso	2025-12-11	\N	3	2025-12-12 14:41:50.176349
+6	241	\N	2	3	Bruno Marinho 	Rômulo Oliveira 	2	Bruno Marinho 	4-6, 6-3, 13-11	Amistoso	2025-12-12	\N	2	2025-12-13 01:44:21.208027
+\.
+
+
+--
+-- Data for Name: matches; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.matches (id, schedule_id, status, betting_enabled, total_pool, house_edge, created_at) FROM stdin;
+5	99	finished	t	10.00	0.20	2025-10-14 17:26:05.146959
+4	83	finished	t	2200.00	0.20	2025-10-14 17:22:57.514494
+6	95	cancelled	t	700.00	0.20	2025-10-15 10:05:02.733662
+9	93	cancelled	t	500.00	0.20	2025-10-16 18:33:15.131142
+7	89	finished	t	880.00	0.20	2025-10-15 20:30:23.538136
+11	94	finished	t	81.00	0.20	2025-10-18 19:02:25.268726
+13	101	finished	t	3.00	0.20	2025-10-20 15:02:21.418608
+10	104	finished	t	1.00	0.20	2025-10-17 15:37:13.252531
+12	106	finished	t	2.00	0.20	2025-10-18 19:05:06.71774
+14	123	finished	t	65.00	0.20	2025-10-25 22:26:11.20167
+\.
+
+
+--
+-- Data for Name: payment_logs; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.payment_logs (id, payment_id, event_type, status, amount, error_message, metadata, created_at) FROM stdin;
+1	mock_pi_1760522705696	refund_attempt	failed	500.00	Request req_E5KZXCCwFg2ss2: No such payment_intent: 'mock_pi_1760522705696'	bet_id:4	2025-10-17 16:05:27.680016
+2	mock_pi_1760531727619	refund_attempt	failed	200.00	Request req_QVXeJRk5yCGydb: No such payment_intent: 'mock_pi_1760531727619'	bet_id:5	2025-10-17 16:05:27.680016
+3	mock_pi_1760639596215	refund_attempt	failed	500.00	Request req_zMtjLBtEXydxn0: No such payment_intent: 'mock_pi_1760639596215'	bet_id:9	2025-10-18 17:01:14.543246
+4	mock_pi_1760560250360	refund_attempt	failed	5000.00	Request req_SSEz7WRn6WSucJ: No such payment_intent: 'mock_pi_1760560250360'	bet_id:7	2025-10-18 20:03:27.437583
+5	129864473203	refund_attempt	failed	1.00	Request req_E5Q9Uq8L9ODEGi: No such payment_intent: '129864473203'	bet_id:11	2025-10-18 20:03:27.437583
+\.
+
+
+--
+-- Data for Name: ranking_draws; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.ranking_draws (id, round_id, player1_id, player2_id, group_type, drawn_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: ranking_matches; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.ranking_matches (id, round_id, schedule_id, player1_id, player2_id, group_type, status, winner_id, score, sets_p1, sets_p2, games_p1, games_p2, wo_type, points_p1, points_p2, played_at, added_by, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: ranking_participants; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.ranking_participants (id, season_id, user_id, temp_points, total_points, wins, losses, sets_won, sets_lost, games_won, games_lost, wo_wins, wo_losses, "position", is_active) FROM stdin;
+\.
+
+
+--
+-- Data for Name: ranking_rounds; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.ranking_rounds (id, season_id, round_number, month, year, draw_date, description, status, is_finals) FROM stdin;
+\.
+
+
+--
+-- Data for Name: ranking_season_config; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.ranking_season_config (id, season_id, key, value, data_type) FROM stdin;
+\.
+
+
+--
+-- Data for Name: ranking_seasons; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.ranking_seasons (id, year, start_date, end_date, description, status, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: ranking_temp_points_rules; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.ranking_temp_points_rules (id, season_id, position_min, position_max, points, label) FROM stdin;
+\.
+
+
+--
+-- Data for Name: recurring_schedules; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.recurring_schedules (id, court_id, day_of_week, start_time, end_time, description, start_date, end_date) FROM stdin;
+\.
+
+
+--
+-- Data for Name: schedules; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.schedules (id, court_id, date, start_time, player1_name, player2_name, match_type, deleted_at, player1_id, player2_id) FROM stdin;
+1	2	2025-09-30	18:00:00	Angelo Mendes	Bruno Marinho	Liga	\N	\N	\N
+2	2	2025-09-26	19:30:00	Alexandre Barroso	Douglas Castro	Liga	\N	\N	\N
+3	2	2025-09-25	16:30:00	Gilberto	JP Brandão	Liga	\N	\N	\N
+4	2	2025-09-25	18:00:00	Rafaella	Marcelo	Liga	\N	\N	\N
+5	2	2025-09-24	18:00:00	Angelo Mendes	Luiz Costa	Liga	\N	\N	\N
+6	2	2025-09-23	16:30:00	Fernando	Raí	Liga	\N	\N	\N
+7	2	2025-09-23	18:00:00	Rafaella	Paulo Vinícius	Liga	\N	\N	\N
+8	2	2025-09-23	19:30:00	Renato	Gilberto	Liga	\N	\N	\N
+9	2	2025-09-22	16:30:00	Bras	JP Brandão	Liga	\N	\N	\N
+11	2	2025-09-19	16:30:00	Nadjane	Adilson	Amistoso	\N	\N	\N
+12	2	2025-09-19	18:00:00	Alexandre Barroso	Bras	Liga	\N	\N	\N
+238	2	2025-12-10	18:00:00	Neto Rezende	Joao Madero	Amistoso	\N	\N	\N
+16	2	2025-09-22	15:00:00	Cascata Federer 	Alex revelação 	Aula	\N	\N	\N
+17	2	2025-09-24	16:30:00	Fernando 	Cascata	Amistoso	\N	\N	\N
+241	2	2025-12-12	19:30:00	Bruno Marinho 	Rômulo Oliveira 	Amistoso	\N	2	3
+24	2	2025-09-24	15:00:00	Nadjane	Shirley 	Liga	\N	\N	\N
+52	2	2025-10-08	18:00:00	Shirley	Thiago	Amistoso	\N	\N	\N
+244	1	2025-12-16	16:30:00	Henrique Soares 	Joãozinho 	Amistoso	\N	23	\N
+84	2	2025-10-09	19:30:00	Rômulo 	Bruno Marinho	Amistoso	\N	\N	\N
+85	2	2025-10-14	16:30:00	Cascata Federer , Alex 	Beu, Fernando 	Amistoso	\N	\N	\N
+86	2	2025-10-10	18:00:00	JP Duarte	Bruno Marinho	Amistoso	\N	\N	\N
+22	2	2025-10-03	20:00:00	JP Duarte [PTC]	José Neto [JTC]	Torneio	\N	\N	\N
+25	1	2025-10-03	16:00:00	Douglas [PTC]	João [JTC]	Torneio	\N	\N	\N
+28	1	2025-10-03	19:00:00	Angelo [PTC]	Rodrigo Gluck [JTC]	Torneio	\N	\N	\N
+30	1	2025-10-03	21:00:00	Rafaella [PTC]	Natalia [JTC]	Torneio	\N	\N	\N
+19	2	2025-10-03	18:00:00	Alexandre Barroso [PTC]	Cesar Toledo [JTC]	Torneio	\N	\N	\N
+90	2	2025-10-13	18:00:00	Thiago 	Shirley 	Amistoso	\N	\N	\N
+31	2	2025-09-25	19:30:00	Adilson	Rômulo 	Liga	\N	\N	\N
+27	1	2025-10-03	17:00:00	Rômulo [PTC]	Inaldo [JTC]	Torneio	\N	\N	\N
+34	2	2025-09-30	16:30:00	Rafaella	Shirley	Liga	\N	\N	\N
+35	2	2025-09-29	16:30:00	Cascata Federer 	Alex revelação 	Amistoso	\N	\N	\N
+37	1	2025-10-03	22:00:00	Raí [PTC]	Leonardo [JTC]	Torneio	\N	\N	\N
+38	2	2025-10-03	21:00:00	Renato [PTC]	Guilherme Rossiter [JTC]	Torneio	\N	\N	\N
+20	2	2025-10-03	16:00:00	Cascata [PTC]	Rossite [JTC]	Torneio	\N	\N	\N
+40	2	2025-10-01	16:30:00	Cascata Federer 	Alex revelação 	Amistoso	\N	\N	\N
+42	2	2025-09-30	19:30:00	Rômulo Oliveira	Raí	Amistoso	\N	\N	\N
+43	2	2025-10-02	16:30:00	Rafaella	Fernando	Amistoso	\N	\N	\N
+45	1	2025-10-02	16:30:00	Lorena 	Lara	Amistoso	\N	\N	\N
+94	2	2025-10-20	18:00:00	Rômulo Oliveira	Fernando	Liga	\N	\N	\N
+95	2	2025-10-16	16:30:00	Cascata Federer 	João Paulo 	Liga	\N	\N	\N
+110	1	2025-10-21	16:30:00	Lorena 	Lara	Amistoso	\N	\N	\N
+98	2	2025-10-15	16:30:00	Guilherme Lopes 	Marcelo Oliveira 	Liga	\N	\N	\N
+46	1	2025-10-02	18:00:00	Diana	Denilson	Amistoso	\N	\N	\N
+21	2	2025-10-03	17:00:00	Igor (PTC)	Neanderson (JTC)	Torneio	\N	\N	\N
+23	2	2025-10-03	19:00:00	Valber (PTC)	Curvelo (JTC)	Torneio	\N	\N	\N
+29	1	2025-10-03	18:00:00	Benjamin [PTC]	Rafael [JTC]	Torneio	\N	\N	\N
+26	1	2025-10-03	20:00:00	Bruno [PTC]	Rodrigo Ribeiro [JTC]	Torneio	\N	\N	\N
+49	2	2025-10-06	19:30:00	Douglas 	JP Duarte	Liga	\N	\N	\N
+50	2	2025-10-07	16:30:00	Cascata Federer 	Joãozinho ( Rivotril)	Amistoso	\N	\N	\N
+51	2	2025-10-09	16:30:00	Cascata Federer 	Joãozinho ( Rivotril)	Amistoso	\N	\N	\N
+53	2	2025-10-09	18:00:00	Thiago 	Shirley 	Amistoso	\N	\N	\N
+99	1	2025-10-14	16:30:00	Rafaella	Shirley 	Amistoso	\N	\N	\N
+83	2	2025-10-14	19:30:00	Barroso	Bruno Marinho	Liga	\N	\N	\N
+15	2	2025-09-20	15:00:00	Cascata Federer 	Valber Tenório	Liga	\N	\N	21
+100	1	2025-10-15	16:30:00	Breno	Colega do Breno 	Amistoso	\N	\N	\N
+103	1	2025-10-16	16:30:00	Lorena 	Lara	Amistoso	\N	\N	\N
+111	2	2025-10-22	18:00:00	Shirley 	Thiago	Amistoso	\N	\N	\N
+93	2	2025-10-16	18:00:00	Rômulo Oliveira	Bruno	Amistoso	\N	\N	\N
+91	2	2025-10-16	19:30:00	Rômulo 	Bruno	Amistoso	\N	\N	\N
+112	2	2025-10-21	15:00:00	Thiago	Shirley 	Amistoso	\N	\N	\N
+107	2	2025-10-21	16:30:00	Rafaella	Fernando 	Amistoso	\N	\N	\N
+108	2	2025-10-23	16:30:00	Rafaella	JP Brandão	Liga	\N	\N	\N
+113	1	2025-10-21	19:30:00	Breno simoes	Neto rezende	Amistoso	\N	\N	\N
+115	1	2025-10-23	16:30:00	Lorena 	Lara	Amistoso	\N	\N	\N
+33	2	2025-09-27	15:00:00	Cascata Federer 	Valber Tenório	Amistoso	\N	\N	21
+48	2	2025-10-06	18:00:00	Rômulo Oliveira	Benjamin Pinto	Amistoso	\N	\N	1
+120	1	2025-10-31	16:30:00	Guilherme	Gilberto	Liga	\N	\N	\N
+121	2	2025-10-24	18:00:00	Breno	Neto 	Amistoso	\N	\N	\N
+126	2	2025-10-27	19:30:00	Breno 	Neto 	Amistoso	\N	\N	\N
+127	5	2025-10-29	18:00:00	 Henrique Cascata (Penedo)	Lucas Albuquerque (Arapiraca)	Torneio	\N	\N	\N
+123	5	2025-10-28	18:00:00	Jp Duarte (Penedo)	Humberto (Arapiraca )	Torneio	\N	\N	\N
+124	5	2025-10-30	19:30:00	Joaozinho (Penedo)	João J.G. (SE)	Torneio	\N	\N	\N
+10	2	2025-09-20	07:30:00	Benjamin Pinto	Luiz Costa	Liga	\N	1	\N
+13	2	2025-09-19	19:30:00	Luciandre	Bruno Marinho	Liga	\N	18	\N
+87	2	2025-10-10	19:30:00	Paulo Vinicius 	Raí	Liga	\N	19	\N
+116	2	2025-10-22	19:30:00	Rômulo Oliveira	Valber Tenório	Liga	\N	\N	21
+130	5	2025-10-29	19:30:00	Benjamin Pinto (Penedo)	Felipe Griep (Arapiraca)	Torneio	\N	\N	\N
+131	5	2025-10-29	21:00:00	Rômulo Oliveira	Diogo	Torneio	\N	\N	\N
+242	2	2025-12-11	19:30:00	Bruno Marinho 	Rai	Amistoso	\N	2	\N
+245	2	2025-12-15	16:30:00	Neto Rezende	Gilberto	Amistoso	\N	16	\N
+135	2	2025-10-29	18:00:00	Shirley 	Thiago	Amistoso	\N	\N	\N
+136	2	2025-10-31	18:00:00	Shirley 	Nadjane	Amistoso	\N	\N	\N
+139	2	2025-11-03	19:30:00	Neto Rezende	João	Amistoso	\N	\N	\N
+141	2	2025-11-04	18:00:00	Shirley 	Thiago 	Amistoso	\N	\N	\N
+143	2	2025-11-05	19:30:00	Diana	Breno 	Amistoso	\N	\N	\N
+145	2	2025-11-04	16:30:00	Neto Rezende	Breno	Amistoso	\N	\N	\N
+146	2	2025-11-05	16:30:00	Rafaella	Shirley 	Amistoso	\N	\N	\N
+147	2	2025-11-06	18:00:00	Shirley	Tiago 	Amistoso	\N	\N	\N
+181	1	2025-11-26	19:30:00	Adilson Nicacio	Rômulo Oliveira	Torneio	\N	\N	\N
+149	1	2025-11-06	19:30:00	Breno simoes	Neto rezende	Amistoso	\N	\N	\N
+150	2	2025-11-07	18:00:00	Denilson	Breno simoes	Amistoso	\N	\N	\N
+152	1	2025-11-07	19:30:00	Neto Rezende	João Madeiro	Amistoso	\N	\N	\N
+153	2	2025-11-11	18:00:00	Rafaella	Fernando	Amistoso	\N	\N	\N
+154	2	2025-11-10	19:30:00	Rômulo Oliveira	Angelo Mendes	Amistoso	\N	\N	\N
+156	2	2025-11-11	19:30:00	Neto Rezende	Joao Madeiro	Amistoso	\N	\N	\N
+158	2	2025-11-12	19:30:00	Diana	Breno	Amistoso	\N	\N	\N
+160	1	2025-11-11	18:00:00	Fernando	Paulo Vinícius 	Amistoso	\N	\N	\N
+161	2	2025-11-13	18:00:00	Neto Rezende	Rômulo Oliveira	Amistoso	\N	\N	\N
+163	1	2025-11-14	18:00:00	Diana	Alexandre Barroso	Amistoso	\N	\N	\N
+165	2	2025-11-16	15:00:00	Rafaella	Bruno Marinho	Amistoso	\N	\N	\N
+166	2	2025-11-17	19:30:00	Rômulo Oliveira	Paulo Vinícius 	Amistoso	\N	\N	\N
+167	2	2025-11-17	18:00:00	Fernando 	Rômulo Oliveira	Amistoso	\N	\N	\N
+168	2	2025-11-19	19:30:00	Diana	Breno	Amistoso	\N	\N	\N
+169	2	2025-11-18	19:30:00	Neto Rezende	João Madeiro	Amistoso	\N	\N	\N
+172	1	2025-11-18	19:30:00	Bruno 	Joao Paulo 	Amistoso	\N	\N	\N
+173	2	2025-11-19	16:30:00	Fernando	Rafaella	Amistoso	\N	\N	\N
+179	1	2025-11-26	16:30:00	Guilherme Lopes 	Braz Araújo	Torneio	\N	\N	\N
+185	1	2025-11-28	19:30:00	Rômulo Oliveira	Paulo Vinicius	Torneio	\N	\N	\N
+184	1	2025-11-28	18:00:00	Adilson Nicacio	Luciandre Moraes	Torneio	\N	\N	\N
+189	2	2025-11-24	19:30:00	Bruno Marinho	Alexandre Barroso	Torneio	\N	\N	\N
+180	1	2025-11-26	18:00:00	Luciandre Moraes	Paulo Vinícius 	Torneio	\N	\N	\N
+175	1	2025-11-24	16:30:00	Braz Araújo	JP Brandão	Torneio	\N	\N	\N
+192	2	2025-11-26	18:00:00	Fernando Moreira	Valber Gouveia	Torneio	\N	\N	\N
+194	2	2025-11-26	21:00:00	JP Duarte	Raí Freitas	Torneio	\N	\N	\N
+195	2	2025-11-26	19:30:00	Alexandre Barroso	Henrique Soares	Torneio	\N	\N	\N
+197	2	2025-11-28	19:30:00	Bruno Marinho	Henrique Soares	Torneio	\N	\N	\N
+202	1	2025-11-21	18:00:00	Alexandre Barroso	Nivea	Amistoso	\N	\N	\N
+203	2	2025-11-21	18:00:00	Rafael	Bruno Marinho	Amistoso	\N	\N	\N
+204	1	2025-11-25	19:30:00	Adilson	Paulo	Torneio	\N	\N	\N
+208	1	2025-11-24	18:00:00	Raí Freitas	Fernando Moreira	Torneio	\N	\N	\N
+209	2	2025-11-25	18:00:00	JP Duarte	Fernando	Torneio	\N	\N	\N
+215	2	2025-11-27	18:00:00	Fernando	Raí	Torneio	\N	\N	\N
+216	2	2025-12-03	19:30:00	Bruno Marinho	Bruno Acioli	Amistoso	\N	\N	\N
+217	2	2025-12-01	19:30:00	Joãozinho 	Bruno Marinho	Amistoso	\N	\N	\N
+218	1	2025-12-02	16:30:00	Lorena 	Davi Guedes 	Amistoso	\N	\N	\N
+219	2	2025-12-02	16:30:00	Shirley 	Rafaella	Amistoso	\N	\N	\N
+221	1	2025-12-04	16:30:00	Lorena 	Davi Guedes 	Amistoso	\N	\N	\N
+222	2	2025-12-04	16:30:00	Nivia	Rafaela 	Amistoso	\N	\N	\N
+224	1	2025-12-04	19:30:00	Neto Rezende	Joao Madeiro	Amistoso	\N	\N	\N
+225	2	2025-12-04	18:00:00	Alex revelação 	Joãozinho 	Amistoso	\N	\N	\N
+226	2	2025-12-08	16:30:00	Nivia	Rafaela 	Amistoso	\N	\N	\N
+227	2	2025-12-04	19:30:00	Rômulo Oliveira	Bruno Marinho	Amistoso	\N	\N	\N
+228	1	2025-12-08	16:30:00	Alex	Fernando 	Amistoso	\N	\N	\N
+229	2	2025-12-05	19:30:00	Rafael 	Bruno Marinho	Amistoso	\N	\N	\N
+230	2	2025-12-09	19:30:00	Fernando	Bruno Marinho	Amistoso	\N	\N	\N
+231	2	2025-12-15	19:30:00	João Paulo	Bruno Marinho	Amistoso	\N	\N	\N
+162	2	2025-11-14	19:30:00	Rômulo Oliveira	Benjamin Pinto	Amistoso	\N	\N	1
+236	1	2025-12-09	16:30:00	Lorena 	Davi Guedes 	Amistoso	\N	\N	\N
+237	2	2025-12-09	18:00:00	Joãozinho 	Bruno 	Amistoso	\N	\N	\N
+109	2	2025-10-19	16:30:00	Valber Tenório	Bruno Marinho	Liga	\N	21	\N
+170	2	2025-11-18	18:00:00	Luciandre 	Benjamin Pinto	Amistoso	\N	\N	1
+188	2	2025-11-24	16:30:00	Henrique Soares	Renato Guedes	Torneio	\N	\N	11
+196	2	2025-11-28	18:00:00	Alexandre Barroso	Renato Guedes	Torneio	\N	\N	11
+186	1	2025-11-28	21:00:00	Braz Araújo	Benjamin Pinto	Torneio	\N	\N	1
+177	1	2025-11-24	19:30:00	Guilherme Lopes	Benjamin Pinto	Torneio	\N	\N	1
+210	1	2025-11-25	18:00:00	Raí	Valber Tenório	Torneio	\N	\N	21
+212	1	2025-11-27	19:30:00	Adilson	Luciandre	Torneio	\N	\N	18
+220	2	2025-12-02	19:30:00	Neto Rezende	Benjamin Pinto	Amistoso	\N	\N	1
+233	2	2025-12-11	16:30:00	Nivia	Rafaella Moreira	Amistoso	\N	\N	8
+88	2	2025-10-17	19:30:00	Paulo Vinicius 	Adilson	Liga	\N	19	\N
+89	2	2025-10-17	18:00:00	Paulo Vinicius 	Raí	Liga	\N	19	\N
+32	2	2025-09-26	16:30:00	Benjamin Pinto	Guilherme Lopes	Liga	\N	1	\N
+44	2	2025-10-02	18:00:00	Luciandre	Romulo	Amistoso	\N	18	\N
+96	2	2025-10-14	18:00:00	Benjamin Pinto	Breno Pinto 	Amistoso	\N	1	\N
+92	2	2025-10-15	18:00:00	Renato Guedes	Braz	Liga	\N	11	\N
+101	2	2025-10-21	18:00:00	Luciandre	João Paulo Brandão 	Liga	\N	18	\N
+114	2	2025-10-23	19:30:00	Renato Guedes	Brás	Liga	\N	11	\N
+117	2	2025-10-28	19:30:00	Benjamin Pinto	Angelo Mendes	Liga	\N	1	\N
+118	2	2025-10-28	18:00:00	Luciandre	Gilberto	Liga	\N	18	\N
+106	2	2025-10-23	18:00:00	Luciandre	Benjamin 	Amistoso	\N	18	\N
+122	2	2025-10-25	15:00:00	Benjamin Pinto	Rômulo Oliveira	Amistoso	\N	1	\N
+129	2	2025-10-27	18:00:00	Benjamin Pinto	Rômulo Oliveira	Amistoso	\N	1	\N
+133	2	2025-10-28	15:00:00	Igor Lerner 	João JTC	Amistoso	\N	10	\N
+134	2	2025-10-28	16:30:00	Renato Guedes	Rômulo Oliveira	Amistoso	\N	11	\N
+137	2	2025-10-31	16:30:00	Benjamin Pinto	Breno 	Amistoso	\N	1	\N
+140	2	2025-11-03	18:00:00	Renato Guedes	Joaozinho 	Amistoso	\N	11	\N
+142	2	2025-11-04	19:30:00	Luciandre	Gilberto	Amistoso	\N	18	\N
+144	1	2025-11-04	19:30:00	Benjamin Pinto	Rômulo Oliveira	Amistoso	\N	1	\N
+148	2	2025-11-06	19:30:00	Benjamin Pinto	Denilson	Amistoso	\N	1	\N
+157	1	2025-11-11	19:30:00	Benjamin Pinto	Rômulo Oliveira	Amistoso	\N	1	\N
+174	2	2025-11-19	18:00:00	Renato Guedes	Joãozinho 	Amistoso	\N	11	\N
+191	1	2025-11-27	18:00:00	Luciandre	Rômulo Oliveira	Torneio	\N	18	\N
+200	2	2025-11-25	19:30:00	Renato Guedes	Bruno Marinho	Torneio	\N	11	\N
+207	2	2025-11-24	18:00:00	Valber Tenório	JP Duarte	Torneio	\N	21	\N
+213	2	2025-11-27	21:00:00	Benjamin Pinto	Bras	Torneio	\N	1	\N
+214	2	2025-11-28	16:30:00	Valber Tenório	Fernando	Torneio	\N	21	\N
+232	1	2025-12-09	19:30:00	Benjamin Pinto	Gilberto	Amistoso	\N	1	\N
+235	2	2025-12-11	18:00:00	Henrique Soares 	Ângelo ( retorno aos treinos)	Amistoso	\N	23	\N
+104	2	2025-10-21	19:30:00	Benjamin Pinto	Renato Guedes	Liga	\N	1	11
+151	2	2025-11-07	19:30:00	Benjamin Pinto	Luiz Henrique	Amistoso	\N	1	24
+234	2	2025-12-10	16:30:00	Fernando Moreira 	Paulo Alex 	Amistoso	\N	20	22
+240	1	2025-12-11	19:30:00	Benjamin Pinto	Rômulo Oliveira 	Amistoso	\N	1	3
+243	2	2025-12-16	16:30:00	Nivia	Rafaella Moreira	Amistoso	\N	\N	8
+246	2	2025-12-18	18:00:00	Henrique Soares 	Ângelo ( treino continua )	Amistoso	\N	23	\N
+\.
+
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.users (id, email, password_hash, name, phone, is_verified, verification_token, created_at, updated_at, is_lapen_member, lapen_approved, lapen_requested_at, lapen_approved_at, lapen_approved_by, pix_key, reset_token, reset_token_expires, is_admin, short_name) FROM stdin;
+6	barrosoas@yahoo.com.br	$2b$12$G9agk5dFE5YOsgAC6gNrH.SgvpOPdBdrqsOqihAfrnCTeNXibNPOu	Alexandre Souza Barroso	82991151551	f	0PKMlhXxNYx46csCsmQe_blRbiGncWXs2GJSbOphtWk	2025-10-25 19:06:44.58315	2025-12-07 02:11:51.03414	t	t	2025-10-25 19:06:44.57861	2025-10-25 21:51:39.53865	\N	\N	\N	\N	f	Alexandre Barroso 
+3	romulloolliveiira@gmail.com	$2b$12$jvZirpOtqFts67pdZs3gferB/BgZcVzkm82LFvWqGtBpglzgGcmtS	Rômulo José Oliveira santos	82991280606	f	DtswmglwRrCWjZGej98fX6-iJG_yuKo0avimIFdRuV4	2025-10-19 22:19:08.378845	2025-12-07 02:11:51.03414	t	t	2025-10-25 12:19:45	2025-10-25 12:19:53	\N	\N	\N	\N	f	Rômulo Oliveira 
+9	j.paulo-duarte@hotmail.com	$2b$12$u5hdh8SmU171PzmgKiSiZ.3RTU.LTD8WGJYRi5CZckXzJKqw2b64e	João Paulo Duarte Pereira	~82996930007	t	\N	2025-10-27 13:20:38.719912	2025-12-07 02:11:51.03414	t	t	2025-10-27 13:20:38.715477	2025-10-27 13:23:37.029888	\N	\N	\N	\N	f	João Paulo Duarte
+16	netorezende@outlook.com.br	$2b$12$zrPB99qBTgoUuo0PtHiAdOYNnQ/2rzUIho.Dsd6PJOYeNcszldtOq	Antonio Carlos de Rezende Neto	82996645433	f	cDM1s3wkdlXWmiyUw-nC9-WgJucCMr50VIfR75tcEwU	2025-10-31 20:48:56.567069	2025-12-11 12:12:17.778623	t	t	2025-10-31 20:48:56.559982	2025-10-31 22:13:16.000758	\N		\N	\N	f	Neto Rezende
+7	pavip@hotmail.com	$2b$12$jM21eNpNDRfAQUPPPJyHBO24H6Qo2TUR5FSIlu3nCxaor68ErY0o6	Paulo Victor Malta Pinheiro Amancio	82999314771	t	\N	2025-10-25 22:54:11.707434	2025-12-07 01:21:49.589829	f	f	\N	\N	\N	\N	\N	\N	f	Paulo Victor 
+8	rafaellasouzamoreira@gmail.com	$2b$12$ujsHTHcxA4XLA/kuGPZzQOcK7IYH0.r0ckNaDIPcrW8ZZagaROG16	Rafaella Moreira		f	VNu1aNkpF0ikkNMrHq5VKSKRs2vLUR89Q6-8uAFZCjA	2025-10-26 21:19:11.894304	2025-12-07 01:21:49.589829	t	t	2025-10-26 21:19:11.890164	2025-10-26 21:37:23.562331	\N	\N	\N	\N	f	Rafaella Moreira
+10	lernerigor@hotmail.com	$2b$12$3M6slVv/aeJBEUbX89ktY.5ASyurUC2BjyG3pIT7hT8E4nGvNhMRe	Igor Lerner Hora Ribeiro	82996991140	f	HpfNOOZeIwM0Fir4GYPxHklmNV4SVOFzJ47y08XBoJU	2025-10-28 14:29:55.842634	2025-12-07 01:21:49.589829	t	t	2025-10-28 14:29:55.838797	2025-10-28 17:09:03.494281	\N	\N	\N	\N	f	Igor Lerner 
+11	carlosrgramos@outlook.com	$2b$12$XSLnCZMnZyZEn4SIM9n4j.FxF8vndfvusdbYTihZ8IOXBQzGNmkOK	Renato Guedes	91993071005	t	\N	2025-10-28 18:34:30.595399	2025-12-07 01:21:49.589829	t	t	2025-10-28 18:34:30.5909	2025-10-28 18:37:56.737958	\N	\N	\N	\N	f	Renato Guedes
+15	brenosimoespinto@gmail.com	$2b$12$ost4dt699EcIUhHAK4FEnOHqcnUes2.fLCGjS4EEVNq84ukG0/b5G	Breno Simões Pinto	8296718328	f	cSlPfgQzpbs5oAJ8Mrx93U5YtFcoMWhIpO-l8jCPck8	2025-10-31 20:08:19.874363	2025-12-07 01:21:49.589829	t	t	2025-10-31 20:08:19.869069	2025-10-31 22:13:21.012999	\N	145.597.034-42	\N	\N	f	Breno Simões 
+14	shirleymsp23@gmail.com	$2b$12$FBJlgKBDT2MOGhWWY.ipu.l8w92uIJEi2R8r6gZlbMCuxEfoT.jGS	Shirley Maria da Silva Pereira	82999683870	f	UUTXI_Th4HfOqCnhEetugxi9JhwLajywSdmY4GEYuOk	2025-10-29 19:37:30.114362	2025-12-07 01:21:49.589829	t	t	2025-10-29 19:37:30.110268	2025-10-29 19:39:38.431481	\N	\N	\N	\N	f	Shirley Maria 
+17	dianadalles@hotmail.com	$2b$12$2tEVHnmeJWG0xkcVC8u/FeuscdFnOqBZ52/1juI0JDpILpcTEWzGm	Diana peixoto d barroso	79981368165	t	\N	2025-11-03 12:43:11.786978	2025-12-07 01:21:49.589829	t	t	2025-11-03 12:43:11.781822	2025-11-03 16:01:28.395362	\N	dianadalles@hotmail.com	\N	\N	f	Diana peixoto 
+22	pajaneiro@hotmail.com	$2b$12$eCMKA1Xlg1hOoHsLtyDQZ.KxyuxOKOvenuzzYjcqsNC8P21CE1m.i	Paulo Alex Silveira Nascimento	79999726071	t	\N	2025-12-01 20:36:46.860123	2025-12-07 01:21:49.589829	t	t	2025-12-01 20:36:46.854477	2025-12-02 00:32:50.389122	\N	80286950510	\N	\N	f	Paulo Alex 
+18	luciandre_fernandes@hotmail.com	$2b$12$jTSezYgl40eUIhBDVqBjpOgkBGmB.F9DLr57fDD9fyYPtmANhqwOi	Luciandre		t	\N	2025-11-03 21:35:11.202631	2025-12-07 01:21:49.589829	t	t	2025-11-03 21:35:11.197624	2025-11-03 21:38:04.560422	\N	82996138586	\N	\N	f	Luciandre
+19	pvms210388@gmail.com	$2b$12$3K862AwVSgPbDskZ8gGhpOg9sQZZbQCiKZHPh./ozfqNna2wHSHE6	Paulo Vinicius Santos	82996978257	f	XZwknZTXQToM0Pgh3A-rlofc6AuEc0BFyKSz3Z_xkPo	2025-11-11 18:48:07.467252	2025-12-07 01:21:49.589829	t	t	2025-11-11 18:48:07.463167	2025-11-11 18:54:58.883309	\N	05920048484	\N	\N	f	Paulo Vinicius 
+21	tenorio_penedo@hotmail.com	$2b$12$ymPDltufaggmj50FYb414ujCCG4OZUEIE2KQHE0GKBrTizRXS5wuG	Valber Tenório	82993299828	f	Zp4W5bJNBJRgqNRxWftFvaVRRmnAzLvleyQOAjl3PE8	2025-11-27 13:02:22.147328	2025-12-07 01:21:49.589829	t	t	2025-11-27 13:02:22.142981	2025-11-27 13:03:33.020933	\N	02234811570	\N	\N	f	Valber Tenório
+20	fernandomoreiraal@gmail.com	$2b$12$KnweQ8VxL2gGRIpJYH6OoO3rt1S/53L35RPrTCL6RFMP0.Y4zeCh6	Fernando Pereira Moreira	82991176166	f	0azJWcCnhNcv4GcsJeS3DbC-X815xPG0DX23TM0uEHI	2025-11-11 18:54:05.117741	2025-12-07 02:11:51.03414	t	t	2025-11-11 18:54:05.113121	2025-11-11 18:55:01.612161	\N	82991176166	\N	\N	f	Fernando Moreira 
+23	henbriso@hotmail.com	$2b$12$6DMxa0ONRXowk/3InNb1Ku4THPLAPtFG.xV8KP11MjMapCDzFRvze	Henrique de Brito Soares	82991233151	f	ZoB7px-x7_-4edsRgXPRQ5NMwdxhS_AUn3VvOCgYtJM	2025-12-01 20:36:57.733306	2025-12-07 02:11:51.03414	t	t	2025-12-01 20:36:57.727823	2025-12-02 00:32:47.270672	\N	45634459400	\N	\N	f	Henrique Soares 
+2	nubro_oliveira@hotmail.com	$2b$12$wi5CathZANdWtZQFzCngV.SAlOsPA5dRDFHOusYjpPkqRE5Ky6eoy	Bruno Oliveira Duarte Marinho	82991020112	f	fF02ozfF0m5U1KWNWi4uI71IK_A926BQSq8khloNIQo	2025-10-14 17:51:37.300009	2025-12-07 02:11:51.03414	t	t	2025-10-25 12:19:44	2025-10-25 12:19:52	\N	07592564467	\N	\N	f	Bruno Marinho 
+1	benjaminpinto@gmail.com	$2b$12$mivy1HuXONzeqII5bct.Y.CqE8A90m1Yhhb516aPRSRgAB5bG5nIK	Benjamin Raimundo Pinto Neto	83981960846	f	jGTD5WQtNEzN2ZQCTBBg6PHIQXii-ZgiCqtg5kXkoAc	2025-10-08 19:52:43.311534	2025-12-07 02:27:43.053437	t	t	2025-10-25 12:19:41	2025-10-25 12:19:50	\N	07579095408	\N	\N	t	Benjamin Pinto
+24	luizhmtavares@gmail.com	$2b$12$zEaO9N3D8kta64RE3y42lu3XvuPLUTvCaaowQXiYyWxb1jFxNBvcG	LUIZ HENRIQUE MARTINS TAVARES	82996100880	t	\N	2025-12-10 00:26:05.089959	2025-12-10 00:33:23.529404	t	t	2025-12-10 00:26:05.082126	2025-12-10 00:33:23.53899	\N	82996100880	\N	\N	f	LUIZ HENRIQUE
+25	israelsaldanhaneto@gmail.com	$2b$12$J3Q.34Vo7dty2583PrKfG.V54HIj9nLMS1D2cu1TWfuMzmXKg5GAi	Israel Ramires Saldanha Neto	82993517805	f	ZJU2hLHF3arh-kpbqsbIH6vnrS6wPjV6B_INtOx9xt0	2025-12-10 13:50:29.856285	2025-12-10 13:56:37.293175	t	t	2025-12-10 08:55:56	2025-12-10 13:56:37.307058	\N	16500059468	\N	\N	f	Israel
+26	raizao.rf@gmail.com	$2b$12$XjS0ok.6Azl5Ee2w.gb54egpQ07m2g.lXrA.Givx2qHmYuN/7v7oC	Raí Freitas		f	DtKGxrTZ2Xe2K9MVyNVVQ0FPQiAVviDaZ861xV664xI	2025-12-10 14:07:13.811637	2025-12-10 15:19:39.051717	t	t	2025-12-10 14:07:13.807573	2025-12-10 15:19:39.066891	\N	03594623599	\N	\N	f	RF
+\.
+
+
+--
+-- Name: bets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.bets_id_seq', 29, true);
+
+
+--
+-- Name: courts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.courts_id_seq', 5, true);
+
+
+--
+-- Name: holidays_blocks_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.holidays_blocks_id_seq', 10, true);
+
+
+--
+-- Name: match_results_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.match_results_id_seq', 8, true);
+
+
+--
+-- Name: match_statistics_unified_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.match_statistics_unified_id_seq', 6, true);
+
+
+--
+-- Name: matches_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.matches_id_seq', 14, true);
+
+
+--
+-- Name: payment_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.payment_logs_id_seq', 5, true);
+
+
+--
+-- Name: ranking_draws_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.ranking_draws_id_seq', 1, false);
+
+
+--
+-- Name: ranking_matches_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.ranking_matches_id_seq', 1, false);
+
+
+--
+-- Name: ranking_participants_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.ranking_participants_id_seq', 1, false);
+
+
+--
+-- Name: ranking_rounds_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.ranking_rounds_id_seq', 1, false);
+
+
+--
+-- Name: ranking_season_config_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.ranking_season_config_id_seq', 1, false);
+
+
+--
+-- Name: ranking_seasons_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.ranking_seasons_id_seq', 1, false);
+
+
+--
+-- Name: ranking_temp_points_rules_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.ranking_temp_points_rules_id_seq', 1, false);
+
+
+--
+-- Name: recurring_schedules_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.recurring_schedules_id_seq', 12, true);
+
+
+--
+-- Name: schedules_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.schedules_id_seq', 246, true);
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.users_id_seq', 26, true);
+
+
+--
+-- Name: bets bets_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bets
+    ADD CONSTRAINT bets_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: courts courts_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.courts
+    ADD CONSTRAINT courts_name_key UNIQUE (name);
+
+
+--
+-- Name: courts courts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.courts
+    ADD CONSTRAINT courts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: holidays_blocks holidays_blocks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.holidays_blocks
+    ADD CONSTRAINT holidays_blocks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: match_results match_results_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.match_results
+    ADD CONSTRAINT match_results_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: match_statistics_unified match_statistics_unified_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.match_statistics_unified
+    ADD CONSTRAINT match_statistics_unified_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: matches matches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.matches
+    ADD CONSTRAINT matches_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: payment_logs payment_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.payment_logs
+    ADD CONSTRAINT payment_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ranking_draws ranking_draws_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_draws
+    ADD CONSTRAINT ranking_draws_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ranking_matches ranking_matches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_matches
+    ADD CONSTRAINT ranking_matches_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ranking_participants ranking_participants_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_participants
+    ADD CONSTRAINT ranking_participants_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ranking_participants ranking_participants_season_id_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_participants
+    ADD CONSTRAINT ranking_participants_season_id_user_id_key UNIQUE (season_id, user_id);
+
+
+--
+-- Name: ranking_rounds ranking_rounds_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_rounds
+    ADD CONSTRAINT ranking_rounds_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ranking_rounds ranking_rounds_season_id_round_number_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_rounds
+    ADD CONSTRAINT ranking_rounds_season_id_round_number_key UNIQUE (season_id, round_number);
+
+
+--
+-- Name: ranking_season_config ranking_season_config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_season_config
+    ADD CONSTRAINT ranking_season_config_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ranking_season_config ranking_season_config_season_id_key_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_season_config
+    ADD CONSTRAINT ranking_season_config_season_id_key_key UNIQUE (season_id, key);
+
+
+--
+-- Name: ranking_seasons ranking_seasons_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_seasons
+    ADD CONSTRAINT ranking_seasons_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ranking_temp_points_rules ranking_temp_points_rules_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_temp_points_rules
+    ADD CONSTRAINT ranking_temp_points_rules_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: recurring_schedules recurring_schedules_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.recurring_schedules
+    ADD CONSTRAINT recurring_schedules_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: schedules schedules_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schedules
+    ADD CONSTRAINT schedules_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_bets_match_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bets_match_id ON public.bets USING btree (match_id);
+
+
+--
+-- Name: idx_bets_match_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bets_match_status ON public.bets USING btree (match_id, status);
+
+
+--
+-- Name: idx_bets_match_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bets_match_user ON public.bets USING btree (match_id, user_id);
+
+
+--
+-- Name: idx_bets_player; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bets_player ON public.bets USING btree (player_name);
+
+
+--
+-- Name: idx_bets_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bets_status ON public.bets USING btree (status);
+
+
+--
+-- Name: idx_bets_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bets_user_id ON public.bets USING btree (user_id);
+
+
+--
+-- Name: idx_bets_user_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bets_user_status ON public.bets USING btree (user_id, status);
+
+
+--
+-- Name: idx_courts_active; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_courts_active ON public.courts USING btree (active);
+
+
+--
+-- Name: idx_holidays_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_holidays_date ON public.holidays_blocks USING btree (date);
+
+
+--
+-- Name: idx_match_results_match_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_match_results_match_id ON public.match_results USING btree (match_id);
+
+
+--
+-- Name: idx_match_stats_unified_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_match_stats_unified_date ON public.match_statistics_unified USING btree (match_date);
+
+
+--
+-- Name: idx_match_stats_unified_names; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_match_stats_unified_names ON public.match_statistics_unified USING btree (player1_name, player2_name);
+
+
+--
+-- Name: idx_match_stats_unified_players; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_match_stats_unified_players ON public.match_statistics_unified USING btree (player1_id, player2_id);
+
+
+--
+-- Name: idx_match_stats_unified_ranking; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_match_stats_unified_ranking ON public.match_statistics_unified USING btree (ranking_match_id) WHERE (ranking_match_id IS NOT NULL);
+
+
+--
+-- Name: idx_match_stats_unified_schedule; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_match_stats_unified_schedule ON public.match_statistics_unified USING btree (schedule_id) WHERE (schedule_id IS NOT NULL);
+
+
+--
+-- Name: idx_match_stats_unified_season; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_match_stats_unified_season ON public.match_statistics_unified USING btree (season_id) WHERE (season_id IS NOT NULL);
+
+
+--
+-- Name: idx_match_stats_unified_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_match_stats_unified_type ON public.match_statistics_unified USING btree (match_type);
+
+
+--
+-- Name: idx_matches_schedule; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_matches_schedule ON public.matches USING btree (schedule_id);
+
+
+--
+-- Name: idx_matches_schedule_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_matches_schedule_id ON public.matches USING btree (schedule_id);
+
+
+--
+-- Name: idx_matches_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_matches_status ON public.matches USING btree (status);
+
+
+--
+-- Name: idx_payment_logs_event_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_payment_logs_event_type ON public.payment_logs USING btree (event_type);
+
+
+--
+-- Name: idx_payment_logs_payment_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_payment_logs_payment_id ON public.payment_logs USING btree (payment_id);
+
+
+--
+-- Name: idx_ranking_draws_round; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ranking_draws_round ON public.ranking_draws USING btree (round_id);
+
+
+--
+-- Name: idx_ranking_matches_players; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ranking_matches_players ON public.ranking_matches USING btree (player1_id, player2_id);
+
+
+--
+-- Name: idx_ranking_matches_round; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ranking_matches_round ON public.ranking_matches USING btree (round_id);
+
+
+--
+-- Name: idx_ranking_participants_season_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_ranking_participants_season_user ON public.ranking_participants USING btree (season_id, user_id);
+
+
+--
+-- Name: idx_recurring_court; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_recurring_court ON public.recurring_schedules USING btree (court_id);
+
+
+--
+-- Name: idx_recurring_day_dates; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_recurring_day_dates ON public.recurring_schedules USING btree (day_of_week, start_date, end_date);
+
+
+--
+-- Name: idx_schedules_court_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_schedules_court_date ON public.schedules USING btree (court_id, date);
+
+
+--
+-- Name: idx_schedules_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_schedules_date ON public.schedules USING btree (date);
+
+
+--
+-- Name: idx_schedules_date_time; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_schedules_date_time ON public.schedules USING btree (date, start_time);
+
+
+--
+-- Name: idx_schedules_deleted_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_schedules_deleted_at ON public.schedules USING btree (deleted_at);
+
+
+--
+-- Name: idx_schedules_player1_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_schedules_player1_id ON public.schedules USING btree (player1_id);
+
+
+--
+-- Name: idx_schedules_player2_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_schedules_player2_id ON public.schedules USING btree (player2_id);
+
+
+--
+-- Name: idx_users_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_users_email ON public.users USING btree (email);
+
+
+--
+-- Name: users update_users_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: bets bets_match_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bets
+    ADD CONSTRAINT bets_match_id_fkey FOREIGN KEY (match_id) REFERENCES public.matches(id);
+
+
+--
+-- Name: bets bets_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bets
+    ADD CONSTRAINT bets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: match_results match_results_match_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.match_results
+    ADD CONSTRAINT match_results_match_id_fkey FOREIGN KEY (match_id) REFERENCES public.matches(id);
+
+
+--
+-- Name: match_statistics_unified match_statistics_unified_added_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.match_statistics_unified
+    ADD CONSTRAINT match_statistics_unified_added_by_fkey FOREIGN KEY (added_by) REFERENCES public.users(id);
+
+
+--
+-- Name: match_statistics_unified match_statistics_unified_player1_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.match_statistics_unified
+    ADD CONSTRAINT match_statistics_unified_player1_id_fkey FOREIGN KEY (player1_id) REFERENCES public.users(id);
+
+
+--
+-- Name: match_statistics_unified match_statistics_unified_player2_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.match_statistics_unified
+    ADD CONSTRAINT match_statistics_unified_player2_id_fkey FOREIGN KEY (player2_id) REFERENCES public.users(id);
+
+
+--
+-- Name: match_statistics_unified match_statistics_unified_ranking_match_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.match_statistics_unified
+    ADD CONSTRAINT match_statistics_unified_ranking_match_id_fkey FOREIGN KEY (ranking_match_id) REFERENCES public.ranking_matches(id);
+
+
+--
+-- Name: match_statistics_unified match_statistics_unified_schedule_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.match_statistics_unified
+    ADD CONSTRAINT match_statistics_unified_schedule_id_fkey FOREIGN KEY (schedule_id) REFERENCES public.schedules(id);
+
+
+--
+-- Name: match_statistics_unified match_statistics_unified_season_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.match_statistics_unified
+    ADD CONSTRAINT match_statistics_unified_season_id_fkey FOREIGN KEY (season_id) REFERENCES public.ranking_seasons(id);
+
+
+--
+-- Name: match_statistics_unified match_statistics_unified_winner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.match_statistics_unified
+    ADD CONSTRAINT match_statistics_unified_winner_id_fkey FOREIGN KEY (winner_id) REFERENCES public.users(id);
+
+
+--
+-- Name: matches matches_schedule_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.matches
+    ADD CONSTRAINT matches_schedule_id_fkey FOREIGN KEY (schedule_id) REFERENCES public.schedules(id);
+
+
+--
+-- Name: ranking_draws ranking_draws_player1_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_draws
+    ADD CONSTRAINT ranking_draws_player1_id_fkey FOREIGN KEY (player1_id) REFERENCES public.users(id);
+
+
+--
+-- Name: ranking_draws ranking_draws_player2_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_draws
+    ADD CONSTRAINT ranking_draws_player2_id_fkey FOREIGN KEY (player2_id) REFERENCES public.users(id);
+
+
+--
+-- Name: ranking_draws ranking_draws_round_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_draws
+    ADD CONSTRAINT ranking_draws_round_id_fkey FOREIGN KEY (round_id) REFERENCES public.ranking_rounds(id);
+
+
+--
+-- Name: ranking_matches ranking_matches_added_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_matches
+    ADD CONSTRAINT ranking_matches_added_by_fkey FOREIGN KEY (added_by) REFERENCES public.users(id);
+
+
+--
+-- Name: ranking_matches ranking_matches_player1_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_matches
+    ADD CONSTRAINT ranking_matches_player1_id_fkey FOREIGN KEY (player1_id) REFERENCES public.users(id);
+
+
+--
+-- Name: ranking_matches ranking_matches_player2_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_matches
+    ADD CONSTRAINT ranking_matches_player2_id_fkey FOREIGN KEY (player2_id) REFERENCES public.users(id);
+
+
+--
+-- Name: ranking_matches ranking_matches_round_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_matches
+    ADD CONSTRAINT ranking_matches_round_id_fkey FOREIGN KEY (round_id) REFERENCES public.ranking_rounds(id);
+
+
+--
+-- Name: ranking_matches ranking_matches_schedule_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_matches
+    ADD CONSTRAINT ranking_matches_schedule_id_fkey FOREIGN KEY (schedule_id) REFERENCES public.schedules(id);
+
+
+--
+-- Name: ranking_matches ranking_matches_winner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_matches
+    ADD CONSTRAINT ranking_matches_winner_id_fkey FOREIGN KEY (winner_id) REFERENCES public.users(id);
+
+
+--
+-- Name: ranking_participants ranking_participants_season_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_participants
+    ADD CONSTRAINT ranking_participants_season_id_fkey FOREIGN KEY (season_id) REFERENCES public.ranking_seasons(id);
+
+
+--
+-- Name: ranking_participants ranking_participants_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_participants
+    ADD CONSTRAINT ranking_participants_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: ranking_rounds ranking_rounds_season_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_rounds
+    ADD CONSTRAINT ranking_rounds_season_id_fkey FOREIGN KEY (season_id) REFERENCES public.ranking_seasons(id);
+
+
+--
+-- Name: ranking_season_config ranking_season_config_season_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_season_config
+    ADD CONSTRAINT ranking_season_config_season_id_fkey FOREIGN KEY (season_id) REFERENCES public.ranking_seasons(id);
+
+
+--
+-- Name: ranking_temp_points_rules ranking_temp_points_rules_season_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ranking_temp_points_rules
+    ADD CONSTRAINT ranking_temp_points_rules_season_id_fkey FOREIGN KEY (season_id) REFERENCES public.ranking_seasons(id);
+
+
+--
+-- Name: recurring_schedules recurring_schedules_court_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.recurring_schedules
+    ADD CONSTRAINT recurring_schedules_court_id_fkey FOREIGN KEY (court_id) REFERENCES public.courts(id);
+
+
+--
+-- Name: schedules schedules_court_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schedules
+    ADD CONSTRAINT schedules_court_id_fkey FOREIGN KEY (court_id) REFERENCES public.courts(id);
+
+
+--
+-- Name: schedules schedules_player1_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schedules
+    ADD CONSTRAINT schedules_player1_id_fkey FOREIGN KEY (player1_id) REFERENCES public.users(id);
+
+
+--
+-- Name: schedules schedules_player2_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schedules
+    ADD CONSTRAINT schedules_player2_id_fkey FOREIGN KEY (player2_id) REFERENCES public.users(id);
+
+
+--
+-- Name: users users_lapen_approved_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_lapen_approved_by_fkey FOREIGN KEY (lapen_approved_by) REFERENCES public.users(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+

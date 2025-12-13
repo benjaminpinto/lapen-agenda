@@ -256,10 +256,13 @@ def get_player_opponents(player_name):
     opponents = db.execute('''
         SELECT DISTINCT u.short_name as opponent
         FROM match_statistics_unified m
-        JOIN users u ON (CASE WHEN m.player1_id = %s THEN m.player2_id ELSE m.player1_id END) = u.id
-        WHERE (m.player1_id = %s OR m.player2_id = %s) AND u.id IS NOT NULL
+        JOIN users u ON u.id = CASE 
+            WHEN m.player1_id = %s THEN m.player2_id 
+            WHEN m.player2_id = %s THEN m.player1_id 
+        END
+        WHERE (m.player1_id = %s OR m.player2_id = %s)
         ORDER BY u.short_name
-    ''', (player['id'], player['id'], player['id'])).fetchall()
+    ''', (player['id'], player['id'], player['id'], player['id'])).fetchall()
     logger.info(f'Found {len(opponents)} registered opponents')
     db.close()
     return jsonify({'opponents': [o['opponent'] for o in opponents]})

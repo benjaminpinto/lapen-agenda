@@ -240,6 +240,8 @@ def get_all_players():
 
 @statistics_bp.route('/opponents/<player_name>', methods=['GET'])
 def get_player_opponents(player_name):
+    from urllib.parse import unquote
+    player_name = unquote(player_name)
     db = get_db()
     logger.info(f'Fetching opponents for player: {player_name}')
     

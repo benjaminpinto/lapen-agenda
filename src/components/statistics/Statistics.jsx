@@ -80,9 +80,13 @@ export default function Statistics() {
 
   const fetchOpponents = async (playerName) => {
     try {
+      console.log('[DEBUG] Fetching opponents for:', playerName)
       const response = await fetch(`/api/statistics/opponents/${encodeURIComponent(playerName)}`)
+      console.log('[DEBUG] Response status:', response.status)
       const data = await response.json()
+      console.log('[DEBUG] Opponents data:', data)
       setOpponents(data.opponents || [])
+      console.log('[DEBUG] Opponents state set to:', data.opponents || [])
     } catch (error) {
       console.error('Error fetching opponents:', error)
       setOpponents([])

@@ -241,10 +241,15 @@ def get_all_players():
 @statistics_bp.route('/opponents/<player_name>', methods=['GET'])
 def get_player_opponents(player_name):
     db = get_db()
+    logger.info(f'Fetching opponents for player: {player_name}')
     
-    # Get player ID
-    player = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player_name, player_name)).fetchone()
+    player = db.execute('''
+        SELECT id FROM users 
+        WHERE unaccent(LOWER(TRIM(short_name))) = unaccent(LOWER(TRIM(%s))) 
+           OR unaccent(LOWER(TRIM(name))) = unaccent(LOWER(TRIM(%s)))
+    ''', (player_name, player_name)).fetchone()
     if not player:
+        logger.info(f'Player not found: {player_name}')
         db.close()
         return jsonify({'opponents': []})
     
@@ -252,9 +257,10 @@ def get_player_opponents(player_name):
         SELECT DISTINCT u.short_name as opponent
         FROM match_statistics_unified m
         JOIN users u ON (CASE WHEN m.player1_id = %s THEN m.player2_id ELSE m.player1_id END) = u.id
-        WHERE m.player1_id = %s OR m.player2_id = %s
+        WHERE (m.player1_id = %s OR m.player2_id = %s) AND u.id IS NOT NULL
         ORDER BY u.short_name
     ''', (player['id'], player['id'], player['id'])).fetchall()
+    logger.info(f'Found {len(opponents)} registered opponents')
     db.close()
     return jsonify({'opponents': [o['opponent'] for o in opponents]})
 

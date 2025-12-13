@@ -1,6 +1,9 @@
 -- LAPEN Agenda - Complete PostgreSQL Database Schema
 -- Includes all migrations: ranking system, match statistics, admin fields, short names
 
+-- Enable unaccent extension for accent-insensitive comparisons
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
 -- Courts table
 CREATE TABLE IF NOT EXISTS courts (
     id SERIAL PRIMARY KEY,

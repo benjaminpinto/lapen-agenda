@@ -103,6 +103,9 @@ lapen-agenda/
 
 ## Database Architecture
 
+### PostgreSQL Extensions
+- **unaccent**: Accent-insensitive text comparisons (á→a, ê→e, ç→c, etc.)
+
 ### Core Tables
 - **courts**: Tennis court information (id, name, type, description, active, image_url)
 - **schedules**: Court bookings (id, court_id, date, start_time, player1_name, player2_name, match_type, deleted_at)

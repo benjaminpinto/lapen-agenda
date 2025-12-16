@@ -7,10 +7,10 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Edit, Trash2, MapPin, ArrowLeft } from 'lucide-react'
 import { useToast } from '@/contexts/ToastContext'
-import PasswordConfirmDialog from './PasswordConfirmDialog'
 import { Link } from 'react-router-dom'
 
 const AdminCourts = () => {
@@ -18,6 +18,8 @@ const AdminCourts = () => {
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingCourt, setEditingCourt] = useState(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [courtToDelete, setCourtToDelete] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
     type: '',
@@ -25,8 +27,6 @@ const AdminCourts = () => {
     active: true,
     image: null
   })
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false)
-  const [pendingAction, setPendingAction] = useState(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -99,12 +99,15 @@ const AdminCourts = () => {
     }
   }
 
-  const handleDelete = async (court) => {
-    setPendingAction(() => () => deleteCourt(court.id))
-    setShowPasswordDialog(true)
+  const confirmDelete = (court) => {
+    setCourtToDelete(court)
+    setDeleteDialogOpen(true)
   }
 
-  const deleteCourt = async (courtId) => {
+  const handleDelete = async () => {
+    if (!courtToDelete) return
+    
+    const courtId = courtToDelete.id
     try {
       const token = localStorage.getItem('auth_token')
       const response = await fetch(`/api/admin/courts/${courtId}`, {
@@ -120,6 +123,8 @@ const AdminCourts = () => {
           description: data.message
         })
         fetchCourts()
+        setDeleteDialogOpen(false)
+        setCourtToDelete(null)
       } else {
         toast({
           title: "Erro",
@@ -298,7 +303,7 @@ const AdminCourts = () => {
                   <Button variant="ghost" size="sm" onClick={() => handleEdit(court)}>
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(court)}>
+                  <Button variant="ghost" size="sm" onClick={() => confirmDelete(court)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -313,13 +318,20 @@ const AdminCourts = () => {
         ))}
       </div>
 
-      <PasswordConfirmDialog
-        open={showPasswordDialog}
-        onOpenChange={setShowPasswordDialog}
-        onConfirm={pendingAction}
-        title="Confirmar Ação"
-        description="Digite a senha administrativa para confirmar esta ação."
-      />
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a quadra "{courtToDelete?.name}"? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

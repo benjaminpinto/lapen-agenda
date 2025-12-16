@@ -5,11 +5,11 @@ export const Toaster = () => {
   const { toasts, removeToast } = useToast()
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 space-y-2 w-[calc(100%-2rem)] sm:w-auto">
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`p-4 rounded-lg shadow-lg max-w-sm relative ${
+          className={`p-4 rounded-lg shadow-lg max-w-sm w-full relative ${
             toast.variant === 'destructive'
               ? 'bg-red-500 text-white'
               : 'bg-green-500 text-white'

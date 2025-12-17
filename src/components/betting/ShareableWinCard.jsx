@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import winnerBackground from '/src/static/images/winner-background.png'
+const winnerBackground = '/winner-background.png'
 
 const ShareableWinCard = forwardRef(({ bet }, ref) => {
   const profit = bet.potential_return - bet.amount

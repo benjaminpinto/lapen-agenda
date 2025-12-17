@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import betBackground from '/src/static/images/bet-img-bkgnd.png'
+const betBackground = '/bet-img-bkgnd.png'
 
 const ShareableMatchCard = forwardRef(({ match, odds, stats }, ref) => {
   return (

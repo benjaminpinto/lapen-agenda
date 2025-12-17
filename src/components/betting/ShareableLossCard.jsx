@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import loserBackground from '/src/static/images/loser-background.png'
+const loserBackground = '/loser-background.png'
 
 const ShareableLossCard = forwardRef(({ bet }, ref) => {
   const funnyMessages = [

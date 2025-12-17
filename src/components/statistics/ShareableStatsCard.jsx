@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import statsBackground from '../../static/images/stats_share_img.png'
+const statsBackground = '/stats_share_img.png'
 
 const ShareableStatsCard = forwardRef(({ stats, player1, player2, matchType, seasonLabel, additionalStats }, ref) => {
   const isH2H = !!player2

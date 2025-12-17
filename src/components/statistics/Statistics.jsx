@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { useToast } from '@/components/hooks/use-toast'
-import { Trophy, TrendingUp, Target, Award, ChevronDown, ChevronUp, Users, Flame, BarChart3, History, Skull, Heart, X } from 'lucide-react'
+import { Trophy, TrendingUp, Target, Award, ChevronDown, ChevronUp, Users, Flame, BarChart3, History, Skull, Heart, X, Share2 } from 'lucide-react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import RecentResults from '../ranking/RecentResults'
+import ShareableStatsCard from './ShareableStatsCard'
+import html2canvas from 'html2canvas'
 
 export default function Statistics() {
   const [players, setPlayers] = useState([])
@@ -20,6 +23,9 @@ export default function Statistics() {
   const [loading, setLoading] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [showRecentResults, setShowRecentResults] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
+  const [showShareDialog, setShowShareDialog] = useState(false)
+  const shareRef = useRef(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -126,9 +132,59 @@ export default function Statistics() {
     }
   }
 
-  const shareStats = () => {
-    toast({ title: 'Funcionalidade em desenvolvimento', description: 'Compartilhamento de imagem será implementado em breve' })
+  const handleShare = async () => {
+    setIsSharing(true)
+    try {
+      if (!shareRef.current) throw new Error('Elemento não encontrado')
+
+      const additionalStats = stats && !player2 ? calculateAdditionalStats(stats) : null
+
+      const canvas = await html2canvas(shareRef.current, {
+        backgroundColor: '#ffffff',
+        scale: window.devicePixelRatio || 1,
+        useCORS: true,
+        allowTaint: true
+      })
+
+      const filename = player1 && player2 
+        ? `${player1}_vs_${player2}_stats.png`
+        : player1 
+        ? `${player1}_stats.png`
+        : 'lapen_stats.png'
+
+      if (navigator.share) {
+        try {
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+          if (blob && blob.size > 0) {
+            const file = new File([blob], filename, { type: 'image/png' })
+            try {
+              await navigator.share({ files: [file], title: 'Estatísticas LAPEN' })
+            } catch {
+              await navigator.share({ title: 'Estatísticas LAPEN', url: window.location.href })
+            }
+          }
+        } catch {
+          const url = canvas.toDataURL()
+          const a = document.createElement('a')
+          a.href = url
+          a.download = filename
+          a.click()
+        }
+      } else {
+        const url = canvas.toDataURL()
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        a.click()
+      }
+    } catch (error) {
+      toast({ title: "Erro", description: "Erro ao compartilhar", variant: "destructive" })
+    } finally {
+      setIsSharing(false)
+    }
   }
+
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
   const calculateAdditionalStats = (stats) => {
     if (!stats || !stats.matches || stats.matches.length === 0) return null
@@ -215,13 +271,33 @@ export default function Statistics() {
     <div className="space-y-6" data-testid="statistics-page">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Estatísticas</h1>
-        <div className="flex gap-2">
+        <div className="hidden md:flex gap-2">
+          <Button onClick={() => window.location.href = '/statistics/add-result'} variant="outline" data-testid="add-result-link">
+            Adicionar Resultado
+          </Button>
           <Button onClick={() => setShowRecentResults(true)} variant="outline" size="sm">
             <History className="h-4 w-4 mr-2" />
             Últimos Resultados
           </Button>
-          <Button onClick={() => window.location.href = '/statistics/add-result'} variant="outline" data-testid="add-result-link">
+          {(stats || generalStats) && (
+            <Button 
+              onClick={() => setShowShareDialog(true)} 
+              disabled={isSharing}
+              variant="outline" 
+              size="sm"
+              data-testid="share-stats-btn"
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Compartilhar
+            </Button>
+          )}
+        </div>
+        <div className="md:hidden flex gap-2">
+          <Button onClick={() => window.location.href = '/statistics/add-result'} variant="outline" size="sm" data-testid="add-result-link">
             Adicionar Resultado
+          </Button>
+          <Button onClick={() => setShowRecentResults(true)} variant="outline" size="sm">
+            <History className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -639,6 +715,52 @@ export default function Statistics() {
             </CardContent>
           </Card>
         </>
+      )}
+
+      {!isMobile && (
+        <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+          <DialogContent className="max-w-[850px]">
+            <div className="overflow-x-auto">
+              <ShareableStatsCard
+                ref={shareRef}
+                stats={stats || generalStats}
+                player1={player1}
+                player2={player2}
+                matchType={matchType}
+                seasonLabel={getSelectedSeasonLabel()}
+                additionalStats={stats && !player2 ? calculateAdditionalStats(stats) : null}
+              />
+            </div>
+            <Button onClick={handleShare} disabled={isSharing} className="w-full mt-4">
+              <Share2 className="h-4 w-4 mr-2" />
+              {isSharing ? 'Compartilhando...' : 'Compartilhar Imagem'}
+            </Button>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      <div style={{ position: 'absolute', left: '-9999px', top: '0' }}>
+        <ShareableStatsCard
+          ref={shareRef}
+          stats={stats || generalStats}
+          player1={player1}
+          player2={player2}
+          matchType={matchType}
+          seasonLabel={getSelectedSeasonLabel()}
+          additionalStats={stats && !player2 ? calculateAdditionalStats(stats) : null}
+        />
+      </div>
+
+      {isMobile && (stats || generalStats) && (
+        <Button
+          onClick={handleShare}
+          disabled={isSharing}
+          size="icon"
+          className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-50"
+          data-testid="share-stats-btn-mobile"
+        >
+          <Share2 className="h-5 w-5" />
+        </Button>
       )}
     </div>
   )

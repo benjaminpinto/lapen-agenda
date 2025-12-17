@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Calendar, Eye, Home, LogIn, LogOut, Menu, Settings, Trophy, X, Award, BarChart3 } from 'lucide-react'
+import { Calendar, Eye, Home, LogIn, LogOut, Menu, Settings, Dices, X, Award, BarChart3 } from 'lucide-react'
 import { useToast } from '@/contexts/ToastContext'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -62,7 +62,7 @@ const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
 
                         <Link to="/betting">
                             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                                <Trophy className="h-4 w-4 mr-2" />
+                                <Dices className="h-4 w-4 mr-2" />
                                 Apostas
                             </Button>
                         </Link>
@@ -153,7 +153,7 @@ const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
 
                             <Link to="/betting" onClick={() => setIsMobileMenuOpen(false)}>
                                 <Button variant="ghost" size="sm" className="w-full justify-start">
-                                    <Trophy className="h-4 w-4 mr-2" />
+                                    <Dices className="h-4 w-4 mr-2" />
                                     Apostas
                                 </Button>
                             </Link>

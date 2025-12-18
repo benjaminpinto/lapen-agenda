@@ -44,6 +44,8 @@ def generate_tokens(user_id, remember_me=False):
     
     db = get_db()
     try:
+        # Delete existing refresh tokens for this user to avoid duplicates
+        db.execute('DELETE FROM refresh_tokens WHERE user_id = %s', (user_id,))
         db.execute(
             'INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (%s, %s, %s)',
             (user_id, refresh_token, datetime.utcnow() + refresh_expiry)

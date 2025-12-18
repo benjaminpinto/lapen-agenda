@@ -1,6 +1,8 @@
-import pytest
-import sys
 import os
+import sys
+
+import pytest
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 os.environ.setdefault('SECRET_KEY', 'test-secret-key-min-32-characters-long')
@@ -123,7 +125,7 @@ def test_wo_match_appears_in_statistics(setup_db):
             'email': 'admin@wotest.com',
             'password': 'test123'
         })
-        admin_token = login_response.get_json()['token']
+        cookies = login_response.headers.getlist('Set-Cookie'); admin_token = [cookie.split('access_token=')[1].split(';')[0] for cookie in cookies if 'access_token=' in cookie][0]
         
         # Set W.O. result
         response = client.post(f'/api/ranking/matches/{match_id}/wo',
@@ -196,7 +198,7 @@ def test_wo_match_counts_in_player_statistics(setup_db):
             'email': 'admin@wotest.com',
             'password': 'test123'
         })
-        admin_token = login_response.get_json()['token']
+        cookies = login_response.headers.getlist('Set-Cookie'); admin_token = [cookie.split('access_token=')[1].split(';')[0] for cookie in cookies if 'access_token=' in cookie][0]
         
         client.post(f'/api/ranking/matches/{match_id}/wo',
             headers={'Authorization': f'Bearer {admin_token}'},
@@ -266,7 +268,7 @@ def test_wo_match_in_general_statistics(setup_db):
             'email': 'admin@wotest.com',
             'password': 'test123'
         })
-        admin_token = login_response.get_json()['token']
+        cookies = login_response.headers.getlist('Set-Cookie'); admin_token = [cookie.split('access_token=')[1].split(';')[0] for cookie in cookies if 'access_token=' in cookie][0]
         
         client.post(f'/api/ranking/matches/{match_id}/wo',
             headers={'Authorization': f'Bearer {admin_token}'},

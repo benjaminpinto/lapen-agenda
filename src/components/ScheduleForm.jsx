@@ -1,16 +1,17 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import {useEffect, useState} from 'react'
+import {Link, useNavigate} from 'react-router-dom'
+import {Button} from '@/components/ui/button'
+import {Input} from '@/components/ui/input'
+import {Label} from '@/components/ui/label'
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
+import {Alert, AlertDescription} from '@/components/ui/alert'
 
 import BackButton from '@/components/ui/BackButton'
-import {Calendar as CalendarIcon, Clock, Users, Trophy, GraduationCap, MedalIcon, AlertCircle} from 'lucide-react'
-import { useToast } from '@/contexts/ToastContext'
-import { useAuth } from '@/contexts/AuthContext'
+import {AlertCircle, Calendar as CalendarIcon, Clock, MedalIcon, Trophy, Users} from 'lucide-react'
+import {useToast} from '@/contexts/ToastContext'
+import {useAuth} from '@/contexts/AuthContext'
+import {fetchWithAuth} from '@/utils/fetchWithAuth'
 
 const ScheduleForm = () => {
   const { canBookCourts, user } = useAuth()
@@ -59,7 +60,7 @@ const ScheduleForm = () => {
 
   const fetchCourts = async () => {
     try {
-      const response = await fetch(`/api/public/courts?_t=${new Date().getTime()}`)
+      const response = await fetchWithAuth(`/api/public/courts?_t=${new Date().getTime()}`)
       if (response.ok) {
         const data = await response.json()
         setCourts(data)
@@ -71,7 +72,7 @@ const ScheduleForm = () => {
 
   const fetchPlayers = async () => {
     try {
-      const response = await fetch(`/api/public/users/short-names?_t=${new Date().getTime()}`)
+      const response = await fetchWithAuth(`/api/public/users/short-names?_t=${new Date().getTime()}`)
       if (response.ok) {
         const data = await response.json()
         setPlayers(data)
@@ -83,9 +84,7 @@ const ScheduleForm = () => {
 
   const fetchRankingMatches = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch('/api/ranking/all-open-matches', {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await fetchWithAuth('/api/ranking/all-open-matches', {
       })
       
       if (response.ok) {
@@ -105,7 +104,7 @@ const ScheduleForm = () => {
 
   const fetchAvailableTimes = async () => {
     try {
-      const response = await fetch(`/api/public/available-times?court_id=${formData.court_id}&date=${formData.date}`)
+      const response = await fetchWithAuth(`/api/public/available-times?court_id=${formData.court_id}&date=${formData.date}`)
       if (response.ok) {
         const data = await response.json()
         setAvailableTimes(data)
@@ -157,12 +156,10 @@ const ScheduleForm = () => {
     setLoading(true)
 
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch("/api/public/schedules", {
+      const response = await fetchWithAuth("/api/public/schedules", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(formData),
       })

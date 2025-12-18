@@ -35,12 +35,10 @@ def test_update_profile(setup_db):
     from main import app
     
     with app.test_client() as client:
-        user_data = create_test_user(client)
-        token = user_data['token']
-    
-    # Update profile
-    response = client.put('/api/auth/profile', 
-        headers={'Authorization': f'Bearer {token}'},
+        create_test_user(client)
+        
+        # Update profile
+        response = client.put('/api/auth/profile', 
         json={
             'name': 'Updated Name',
             'short_name': 'Updated Short',
@@ -74,12 +72,10 @@ def test_change_password(setup_db):
     from main import app
     
     with app.test_client() as client:
-        user_data = create_test_user(client, password='oldpass123')
-        token = user_data['token']
-    
-    # Change password
-    response = client.post('/api/auth/change-password',
-        headers={'Authorization': f'Bearer {token}'},
+        create_test_user(client, password='oldpass123')
+        
+        # Change password
+        response = client.post('/api/auth/change-password',
         json={
             'current_password': 'oldpass123',
             'new_password': 'newpass123'
@@ -100,11 +96,9 @@ def test_change_password_wrong_current(setup_db):
     from main import app
     
     with app.test_client() as client:
-        user_data = create_test_user(client, password='correctpass')
-        token = user_data['token']
-    
-    response = client.post('/api/auth/change-password',
-        headers={'Authorization': f'Bearer {token}'},
+        create_test_user(client, password='correctpass')
+        
+        response = client.post('/api/auth/change-password',
         json={
             'current_password': 'wrongpass',
             'new_password': 'newpass123'
@@ -118,11 +112,9 @@ def test_change_password_too_short(setup_db):
     from main import app
     
     with app.test_client() as client:
-        user_data = create_test_user(client)
-        token = user_data['token']
-    
-    response = client.post('/api/auth/change-password',
-        headers={'Authorization': f'Bearer {token}'},
+        create_test_user(client)
+        
+        response = client.post('/api/auth/change-password',
         json={
             'current_password': 'password123',
             'new_password': '123'

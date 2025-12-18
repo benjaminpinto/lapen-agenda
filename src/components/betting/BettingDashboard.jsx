@@ -8,11 +8,24 @@ import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Dialog, DialogContent} from '@/components/ui/dialog'
 import {Badge} from '@/components/ui/badge'
-import {CheckCircle, ChevronDown, Clock, Flame, Share2, Star, Trophy, Users, Wallet, QrCode, CreditCard} from 'lucide-react'
+import {
+    CheckCircle,
+    ChevronDown,
+    Clock,
+    CreditCard,
+    Flame,
+    QrCode,
+    Share2,
+    Star,
+    Trophy,
+    Users,
+    Wallet
+} from 'lucide-react'
 import ShareableMatchCard from './ShareableMatchCard'
 import FinishedMatchCard from '../shared/FinishedMatchCard'
 import PaymentForm from './PaymentForm'
 import html2canvas from 'html2canvas'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const BettingDashboard = () => {
     const [matches, setMatches] = useState([])
@@ -35,14 +48,7 @@ const BettingDashboard = () => {
 
     const fetchMatches = async () => {
         try {
-            const headers = {}
-            const token = localStorage.getItem('auth_token')
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`
-            }
-            
-            const response = await fetch(`/api/matches/?t=${Date.now()}`, { 
-                headers,
+            const response = await fetchWithAuth(`/api/matches/?t=${Date.now()}`, { 
                 cache: 'no-cache'
             })
             
@@ -82,7 +88,7 @@ const BettingDashboard = () => {
 
     const fetchMatchOdds = async (matchId) => {
         try {
-            const response = await fetch(`/api/betting/match/${matchId}/bets`)
+            const response = await fetchWithAuth(`/api/betting/match/${matchId}/bets`)
             const data = await response.json()
             return data
         } catch (error) {
@@ -115,11 +121,11 @@ const BettingDashboard = () => {
             // Check if mock mode is active
             if (import.meta.env.VITE_PAYMENT_MOCK_ACTIVE === 'true') {
                 // Mock payment - directly place bet
-                const betResponse = await fetch('/api/betting/place-bet', {
+                const betResponse = await fetchWithAuth('/api/betting/place-bet', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                        
                     },
                     body: JSON.stringify({
                         schedule_id: selectedMatch.schedule_id,
@@ -149,11 +155,11 @@ const BettingDashboard = () => {
                 }
             } else {
                 // Normal payment flow
-                const paymentResponse = await fetch('/api/betting/create-payment-intent', {
+                const paymentResponse = await fetchWithAuth('/api/betting/create-payment-intent', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                        
                     },
                     body: JSON.stringify({
                         schedule_id: selectedMatch.schedule_id,
@@ -194,11 +200,11 @@ const BettingDashboard = () => {
 
     const handlePaymentSuccess = async (setPaymentLoading, currentBetAmount, currentSelectedPlayer, currentSelectedMatch) => {
         try {
-            const betResponse = await fetch('/api/betting/place-bet', {
+            const betResponse = await fetchWithAuth('/api/betting/place-bet', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    
                 },
                 body: JSON.stringify({
                     schedule_id: currentSelectedMatch.schedule_id,

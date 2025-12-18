@@ -11,8 +11,9 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import {CheckCircle, Clock, Users, XCircle, ArrowLeft} from 'lucide-react'
+import {ArrowLeft, CheckCircle, Clock, Users, XCircle} from 'lucide-react'
 import {Link} from 'react-router-dom'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const LapenApprovals = () => {
     const [requests, setRequests] = useState([])
@@ -28,9 +29,7 @@ const LapenApprovals = () => {
     const fetchRequests = async () => {
         setLoading(true)
         try {
-            const token = localStorage.getItem('auth_token')
-            const response = await fetch(`/api/admin/lapen-requests?status=${filter}`, {
-                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            const response = await fetchWithAuth(`/api/admin/lapen-requests?status=${filter}`, {
             })
             if (response.ok) {
                 const data = await response.json()
@@ -45,10 +44,8 @@ const LapenApprovals = () => {
 
     const handleApprove = async (userId) => {
         try {
-            const token = localStorage.getItem('auth_token')
-            const response = await fetch(`/api/admin/lapen-approve/${userId}`, {
+            const response = await fetchWithAuth(`/api/admin/lapen-approve/${userId}`, {
                 method: 'POST',
-                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             })
 
             if (response.ok) {
@@ -78,10 +75,8 @@ const LapenApprovals = () => {
         if (!rejectingUser) return
 
         try {
-            const token = localStorage.getItem('auth_token')
-            const response = await fetch(`/api/admin/lapen-reject/${rejectingUser.id}`, {
+            const response = await fetchWithAuth(`/api/admin/lapen-reject/${rejectingUser.id}`, {
                 method: 'POST',
-                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             })
 
             if (response.ok) {

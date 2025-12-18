@@ -147,7 +147,12 @@ def test_admin_delete_user(setup_db):
         user_data = create_regular_user(client, email='delete@test.com')
         user_id = user_data['user']['id']
         
-        # Re-login as admin
+        # Clean up tokens and re-login as admin
+        db = get_db()
+        db.execute('DELETE FROM refresh_tokens WHERE user_id IN (SELECT id FROM users WHERE email = %s)', ('admin@test.com',))
+        db.commit()
+        db.close()
+        
         client.post('/api/auth/login', json={'email': 'admin@test.com', 'password': 'admin123'})
         
         response = client.delete(f'/api/admin/users/{user_id}')

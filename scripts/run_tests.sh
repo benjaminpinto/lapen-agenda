@@ -6,7 +6,9 @@ if [ -d ".venv" ]; then
     source .venv/bin/activate
 fi
 
-python -m pytest tests/ -v --tb=short
+export DATABASE_URL=postgresql://lapen_user:lapen_password@localhost:5432/lapen_agenda
+
+python -m pytest tests/ -v --cov=src --cov-report=term-missing --tb=short
 
 if [ $? -eq 0 ]; then
     echo "✅ All tests passed!"

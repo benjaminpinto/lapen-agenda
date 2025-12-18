@@ -1,6 +1,8 @@
-import pytest
-import sys
 import os
+import sys
+
+import pytest
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 os.environ.setdefault('SECRET_KEY', 'test-secret-key-min-32-characters-long')
@@ -84,6 +86,12 @@ def test_change_password(setup_db):
     
     assert response.status_code == 200
     assert 'Senha alterada com sucesso' in response.get_json()['message']
+    
+    # Clean up tokens before re-login
+    db = get_db()
+    db.execute('DELETE FROM refresh_tokens WHERE user_id IN (SELECT id FROM users WHERE email = %s)', ('test@example.com',))
+    db.commit()
+    db.close()
     
     # Try login with new password
     login_response = client.post('/api/auth/login', json={

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Calendar, Clock, MapPin, TrendingUp, Trophy, Users, UserCog, Award } from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {Link} from 'react-router-dom'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Button} from '@/components/ui/button'
+import {Award, Calendar, Clock, MapPin, Trophy, UserCog, Users} from 'lucide-react'
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null)
@@ -14,8 +14,8 @@ const AdminDashboard = () => {
 
     const fetchDashboardStats = async () => {
         try {
-            const response = await fetch('/api/admin/dashboard', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+            const response = await fetchWithAuth('/api/admin/dashboard', {
+                headers: {  }
             })
             if (response.ok) {
                 const data = await response.json()

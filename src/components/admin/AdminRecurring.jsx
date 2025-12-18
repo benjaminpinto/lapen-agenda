@@ -10,6 +10,7 @@ import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} fro
 import {ArrowLeft, Clock, MapPin, Plus, Trash2} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext';
 import {Link} from 'react-router-dom'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const AdminRecurring = () => {
     const [schedules, setSchedules] = useState([])
@@ -43,8 +44,8 @@ const AdminRecurring = () => {
 
     const fetchSchedules = async () => {
         try {
-            const response = await fetch('/api/admin/recurring-schedules', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+            const response = await fetchWithAuth('/api/admin/recurring-schedules', {
+                headers: {  }
             })
             if (response.ok) {
                 const data = await response.json()
@@ -59,8 +60,8 @@ const AdminRecurring = () => {
 
     const fetchCourts = async () => {
         try {
-            const response = await fetch('/api/admin/courts', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+            const response = await fetchWithAuth('/api/admin/courts', {
+                headers: {  }
             })
             if (response.ok) {
                 const data = await response.json()
@@ -87,11 +88,11 @@ const AdminRecurring = () => {
         }
 
         try {
-            const response = await fetch('/api/admin/recurring-schedules', {
+            const response = await fetchWithAuth('/api/admin/recurring-schedules', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    
                 },
                 body: JSON.stringify({
                     ...formData,
@@ -127,9 +128,9 @@ const AdminRecurring = () => {
 
     const handleDelete = async (scheduleId) => {
         try {
-            const response = await fetch(`/api/admin/recurring-schedules/${scheduleId}`, {
+            const response = await fetchWithAuth(`/api/admin/recurring-schedules/${scheduleId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                headers: {  }
             })
 
             const data = await response.json()

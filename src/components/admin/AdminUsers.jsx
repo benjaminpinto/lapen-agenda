@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { useToast } from '@/contexts/ToastContext'
-import { Trash2, Edit, Key, ArrowLeft } from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {useNavigate} from 'react-router-dom'
+import {Button} from '@/components/ui/button'
+import {Input} from '@/components/ui/input'
+import {Label} from '@/components/ui/label'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
+import {useToast} from '@/contexts/ToastContext'
+import {ArrowLeft, Edit, Key, Trash2} from 'lucide-react'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const AdminUsers = () => {
   const navigate = useNavigate()
@@ -14,6 +15,7 @@ const AdminUsers = () => {
   const [loading, setLoading] = useState(true)
   const [editDialog, setEditDialog] = useState(false)
   const [passwordDialog, setPasswordDialog] = useState(false)
+  const [deleteDialog, setDeleteDialog] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [editForm, setEditForm] = useState({})
   const [newPassword, setNewPassword] = useState('')
@@ -25,9 +27,7 @@ const AdminUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch('/api/admin/users', {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await fetchWithAuth('/api/admin/users', {
       })
       if (response.ok) {
         const data = await response.json()
@@ -56,12 +56,10 @@ const AdminUsers = () => {
 
   const handleSaveEdit = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/admin/users/${selectedUser.id}`, {
+      const response = await fetchWithAuth(`/api/admin/users/${selectedUser.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(editForm)
       })
@@ -92,12 +90,10 @@ const AdminUsers = () => {
     }
 
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/admin/users/${selectedUser.id}/password`, {
+      const response = await fetchWithAuth(`/api/admin/users/${selectedUser.id}/password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ password: newPassword })
       })
@@ -114,18 +110,20 @@ const AdminUsers = () => {
     }
   }
 
-  const handleDelete = async (userId) => {
-    if (!confirm('Tem certeza que deseja excluir este usuário?')) return
+  const handleDelete = (user) => {
+    setSelectedUser(user)
+    setDeleteDialog(true)
+  }
 
+  const confirmDelete = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/admin/users/${userId}`, {
+      const response = await fetchWithAuth(`/api/admin/users/${selectedUser.id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
       })
       
       if (response.ok) {
         toast({ title: 'Usuário excluído com sucesso' })
+        setDeleteDialog(false)
         fetchUsers()
       } else {
         const data = await response.json()
@@ -176,7 +174,7 @@ const AdminUsers = () => {
                       <Button size="sm" variant="outline" onClick={() => handlePasswordChange(user)}>
                         <Key className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleDelete(user.id)}>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(user)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </td>
@@ -259,6 +257,20 @@ const AdminUsers = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setPasswordDialog(false)}>Cancelar</Button>
             <Button onClick={handleSavePassword}>Alterar Senha</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir Usuário</DialogTitle>
+          </DialogHeader>
+          <p>Tem certeza que deseja excluir este usuário?</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialog(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Excluir</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

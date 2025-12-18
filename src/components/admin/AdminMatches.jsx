@@ -1,5 +1,5 @@
-import {useEffect, useState, useRef} from 'react'
-import {useNavigate, Link} from 'react-router-dom'
+import {useEffect, useRef, useState} from 'react'
+import {Link, useNavigate} from 'react-router-dom'
 import {useToast} from '@/contexts/ToastContext'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
@@ -7,9 +7,10 @@ import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Badge} from '@/components/ui/badge'
-import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger} from '@/components/ui/dialog'
-import {Trophy, Users, Wallet, ArrowLeft, ChevronDown} from 'lucide-react'
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
+import {ArrowLeft, ChevronDown, Trophy, Users, Wallet} from 'lucide-react'
 import FinishedMatchCard from '../shared/FinishedMatchCard'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const AdminMatches = () => {
     const [matches, setMatches] = useState([])
@@ -31,7 +32,7 @@ const AdminMatches = () => {
 
     const fetchMatches = async () => {
         try {
-            const response = await fetch('/api/matches/?include_all=true')
+            const response = await fetchWithAuth('/api/matches/?include_all=true')
             const data = await response.json()
             setMatches(data.matches || [])
         } catch (error) {
@@ -41,13 +42,13 @@ const AdminMatches = () => {
 
     const fetchMatchDetails = async (matchId) => {
         try {
-            const response = await fetch(`/api/betting/match/${matchId}/bets`)
+            const response = await fetchWithAuth(`/api/betting/match/${matchId}/bets`)
             const data = await response.json()
             
             // For finished matches, get winner info
             if (data.match?.status === 'finished') {
-                const resultResponse = await fetch(`/api/admin/matches/${matchId}/result`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                const resultResponse = await fetchWithAuth(`/api/admin/matches/${matchId}/result`, {
+                    headers: {  }
                 })
                 if (resultResponse.ok) {
                     const resultData = await resultResponse.json()
@@ -66,11 +67,11 @@ const AdminMatches = () => {
 
         setLoading(true)
         try {
-            const response = await fetch(`/api/admin/matches/${selectedMatch.match_id}/finish`, {
+            const response = await fetchWithAuth(`/api/admin/matches/${selectedMatch.match_id}/finish`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    
                 },
                 body: JSON.stringify({
                     winner_name: winner,
@@ -110,9 +111,9 @@ const AdminMatches = () => {
         if (!matchToCancel) return
 
         try {
-            const response = await fetch(`/api/admin/matches/${matchToCancel.match_id}/cancel`, {
+            const response = await fetchWithAuth(`/api/admin/matches/${matchToCancel.match_id}/cancel`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                headers: {  }
             })
 
             if (response.ok) {

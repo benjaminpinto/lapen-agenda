@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/contexts/ToastContext'
@@ -13,6 +14,7 @@ const Login = () => {
     email: '',
     password: ''
   })
+  const [rememberMe, setRememberMe] = useState(false)
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const { toast } = useToast()
@@ -30,7 +32,7 @@ const Login = () => {
     setLoading(true)
     
     try {
-      const result = await login(formData.email, formData.password)
+      const result = await login(formData.email, formData.password, rememberMe)
 
       if (result.success) {
         toast({
@@ -91,7 +93,7 @@ const Login = () => {
             <div>
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Senha</Label>
-                <Link to="/forgot-password" tabIndex={3} className="text-xs text-green-600 hover:text-green-500">
+                <Link to="/forgot-password" tabIndex={4} className="text-xs text-green-600 hover:text-green-500">
                   Esqueceu a senha?
                 </Link>
               </div>
@@ -109,6 +111,21 @@ const Login = () => {
                   tabIndex={2}
                 />
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="remember"
+                checked={rememberMe}
+                onCheckedChange={setRememberMe}
+                tabIndex={3}
+              />
+              <label
+                htmlFor="remember"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Manter conectado por 30 dias
+              </label>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>

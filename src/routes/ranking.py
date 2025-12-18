@@ -1,11 +1,13 @@
+from datetime import datetime
+
 from flask import Blueprint, request, jsonify
-from datetime import datetime, date
-from src.database import get_db
+
 from src.auth import verify_token, get_user_by_id
-from src.services.ranking_config import RankingConfigService
-from src.services.points_calculator import PointsCalculator
-from src.services.draw_engine import DrawEngine
+from src.database import get_db
 from src.logger import get_logger
+from src.services.draw_engine import DrawEngine
+from src.services.points_calculator import PointsCalculator
+from src.services.ranking_config import RankingConfigService
 
 logger = get_logger()
 ranking_bp = Blueprint('ranking', __name__, url_prefix='/api/ranking')
@@ -369,7 +371,7 @@ def set_wo_result(match_id):
         ''', ('completed', winner_id, 'admin', points_p1, points_p2, wo_score, match_id))
         
         # Add to statistics
-        winner_user = db.execute('SELECT short_name FROM users WHERE id = %s', (winner_id,)).fetchone()
+        winner_user = db.execute('SELECT short_name FROM users WHERE id = %s AND deleted_at IS NULL', (winner_id,)).fetchone()
         db.execute('''
             INSERT INTO match_statistics_unified (
                 ranking_match_id, player1_id, player2_id,
@@ -779,6 +781,9 @@ def get_recent_results():
         JOIN users u1 ON rm.player1_id = u1.id
         JOIN users u2 ON rm.player2_id = u2.id
         LEFT JOIN users uw ON rm.winner_id = uw.id
+        LEFT JOIN users ua ON rm.added_by = ua.id
+        WHERE rm.status = 'completed'
+        ORDER BY rm.played_at DESC, rm.id DESC
         LIMIT %s
     ''', (limit,)).fetchall()
     return jsonify([dict(r) for r in results])

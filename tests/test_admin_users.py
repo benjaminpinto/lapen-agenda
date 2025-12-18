@@ -1,6 +1,8 @@
-import pytest
-import sys
 import os
+import sys
+
+import pytest
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 os.environ.setdefault('SECRET_KEY', 'test-secret-key-min-32-characters-long')
@@ -32,12 +34,11 @@ def create_admin_user(client):
     db.commit()
     db.close()
     
-    # Login to get token
-    response = client.post('/api/auth/login', json={
+    # Login - cookies are automatically stored in test client
+    client.post('/api/auth/login', json={
         'email': 'admin@test.com',
         'password': 'admin123'
     })
-    return response.get_json()['token']
 
 def create_regular_user(client, email='user@test.com'):
     """Helper to create a regular user"""
@@ -55,28 +56,46 @@ def test_admin_get_users(setup_db):
     from main import app
     
     with app.test_client() as client:
-        admin_token = create_admin_user(client)
-        create_regular_user(client)
-    
-    response = client.get('/api/admin/users',
-        headers={'Authorization': f'Bearer {admin_token}'}
-    )
-    
-    assert response.status_code == 200
-    data = response.get_json()
-    assert len(data) >= 2  # At least admin and regular user
+        # Create users
+        db = get_db()
+        password_hash = hash_password('admin123')
+        db.execute('INSERT INTO users (email, password_hash, name, short_name, is_admin, is_verified) VALUES (%s, %s, %s, %s, %s, %s)', 
+                   ('admin@test.com', password_hash, 'Admin', 'Admin', True, True))
+        password_hash = hash_password('password123')
+        db.execute('INSERT INTO users (email, password_hash, name, short_name, is_verified) VALUES (%s, %s, %s, %s, %s)', 
+                   ('user@test.com', password_hash, 'User', 'User', True))
+        db.commit()
+        db.close()
+        
+        # Login as admin
+        client.post('/api/auth/login', json={'email': 'admin@test.com', 'password': 'admin123'})
+        
+        response = client.get('/api/admin/users')
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data) >= 2  # At least admin and regular user
 
 def test_admin_update_user(setup_db):
     from main import app
     
     with app.test_client() as client:
-        admin_token = create_admin_user(client)
-        user_data = create_regular_user(client)
-        user_id = user_data['user']['id']
-    
-    response = client.put(f'/api/admin/users/{user_id}',
-        headers={'Authorization': f'Bearer {admin_token}'},
-        json={
+        # Create users first
+        db = get_db()
+        password_hash = hash_password('admin123')
+        db.execute('INSERT INTO users (email, password_hash, name, short_name, is_admin, is_verified) VALUES (%s, %s, %s, %s, %s, %s)', 
+                   ('admin@test.com', password_hash, 'Admin', 'Admin', True, True))
+        password_hash = hash_password('password123')
+        cursor = db.execute('INSERT INTO users (email, password_hash, name, short_name, is_verified) VALUES (%s, %s, %s, %s, %s) RETURNING id', 
+                           ('user@test.com', password_hash, 'User', 'User', True))
+        user_id = cursor.fetchone()['id']
+        db.commit()
+        db.close()
+        
+        # Login as admin
+        client.post('/api/auth/login', json={'email': 'admin@test.com', 'password': 'admin123'})
+        
+        response = client.put(f'/api/admin/users/{user_id}', json={
             'name': 'Updated Name',
             'short_name': 'Updated',
             'email': 'updated@test.com',
@@ -84,71 +103,92 @@ def test_admin_update_user(setup_db):
             'pix_key': 'updated@pix.com',
             'is_admin': False,
             'lapen_approved': True
-        }
-    )
-    
-    assert response.status_code == 200
+        })
+        
+        assert response.status_code == 200
 
 def test_admin_update_user_password(setup_db):
     from main import app
     
     with app.test_client() as client:
-        admin_token = create_admin_user(client)
-        user_data = create_regular_user(client)
-        user_id = user_data['user']['id']
-    
-    response = client.put(f'/api/admin/users/{user_id}/password',
-        headers={'Authorization': f'Bearer {admin_token}'},
-        json={'password': 'newpassword123'}
-    )
-    
-    assert response.status_code == 200
-    
-    # Verify new password works
-    login_response = client.post('/api/auth/login', json={
-        'email': 'user@test.com',
-        'password': 'newpassword123'
-    })
-    assert login_response.status_code == 200
+        # Create users first
+        db = get_db()
+        password_hash = hash_password('admin123')
+        db.execute('INSERT INTO users (email, password_hash, name, short_name, is_admin, is_verified) VALUES (%s, %s, %s, %s, %s, %s)', 
+                   ('admin@test.com', password_hash, 'Admin', 'Admin', True, True))
+        password_hash = hash_password('password123')
+        cursor = db.execute('INSERT INTO users (email, password_hash, name, short_name, is_verified) VALUES (%s, %s, %s, %s, %s) RETURNING id', 
+                           ('user@test.com', password_hash, 'User', 'User', True))
+        user_id = cursor.fetchone()['id']
+        db.commit()
+        db.close()
+        
+        # Login as admin
+        client.post('/api/auth/login', json={'email': 'admin@test.com', 'password': 'admin123'})
+        
+        response = client.put(f'/api/admin/users/{user_id}/password',
+            json={'password': 'newpassword123'}
+        )
+        
+        assert response.status_code == 200
+        
+        # Verify new password works
+        login_response = client.post('/api/auth/login', json={
+            'email': 'user@test.com',
+            'password': 'newpassword123'
+        })
+        assert login_response.status_code == 200
 
 def test_admin_delete_user(setup_db):
     from main import app
     
     with app.test_client() as client:
-        admin_token = create_admin_user(client)
+        create_admin_user(client)
         user_data = create_regular_user(client, email='delete@test.com')
         user_id = user_data['user']['id']
-    
-    response = client.delete(f'/api/admin/users/{user_id}',
-        headers={'Authorization': f'Bearer {admin_token}'}
-    )
-    
-    assert response.status_code == 200
+        
+        # Clean up tokens and re-login as admin
+        db = get_db()
+        db.execute('DELETE FROM refresh_tokens WHERE user_id IN (SELECT id FROM users WHERE email = %s)', ('admin@test.com',))
+        db.commit()
+        db.close()
+        
+        client.post('/api/auth/login', json={'email': 'admin@test.com', 'password': 'admin123'})
+        
+        response = client.delete(f'/api/admin/users/{user_id}')
+        
+        assert response.status_code == 200
 
 def test_non_admin_cannot_access_users(setup_db):
     from main import app
     
     with app.test_client() as client:
-        user_data = create_regular_user(client)
-        token = user_data['token']
-    
-    response = client.get('/api/admin/users',
-        headers={'Authorization': f'Bearer {token}'}
-    )
-    
-    assert response.status_code == 403
+        create_regular_user(client)
+        
+        response = client.get('/api/admin/users')
+        
+        assert response.status_code == 403
 
 def test_admin_update_lapen_status(setup_db):
     from main import app
     
     with app.test_client() as client:
-        admin_token = create_admin_user(client)
-        user_data = create_regular_user(client)
-        user_id = user_data['user']['id']
-    
-    response = client.put(f'/api/admin/users/{user_id}',
-        headers={'Authorization': f'Bearer {admin_token}'},
-        json={
+        # Create users first
+        db = get_db()
+        password_hash = hash_password('admin123')
+        db.execute('INSERT INTO users (email, password_hash, name, short_name, is_admin, is_verified) VALUES (%s, %s, %s, %s, %s, %s)', 
+                   ('admin@test.com', password_hash, 'Admin', 'Admin', True, True))
+        password_hash = hash_password('password123')
+        cursor = db.execute('INSERT INTO users (email, password_hash, name, short_name, is_verified) VALUES (%s, %s, %s, %s, %s) RETURNING id', 
+                           ('user@test.com', password_hash, 'User', 'User', True))
+        user_id = cursor.fetchone()['id']
+        db.commit()
+        db.close()
+        
+        # Login as admin
+        client.post('/api/auth/login', json={'email': 'admin@test.com', 'password': 'admin123'})
+        
+        response = client.put(f'/api/admin/users/{user_id}', json={
             'name': 'Regular User',
             'short_name': 'Regular',
             'email': 'user@test.com',
@@ -156,7 +196,6 @@ def test_admin_update_lapen_status(setup_db):
             'pix_key': 'user@pix.com',
             'is_admin': False,
             'lapen_approved': True
-        }
-    )
-    
-    assert response.status_code == 200
+        })
+        
+        assert response.status_code == 200

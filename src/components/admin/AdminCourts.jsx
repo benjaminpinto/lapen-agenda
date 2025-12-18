@@ -1,17 +1,27 @@
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Badge } from '@/components/ui/badge'
-import { Plus, Edit, Trash2, MapPin, ArrowLeft } from 'lucide-react'
-import { useToast } from '@/contexts/ToastContext'
-import { Link } from 'react-router-dom'
+import {useEffect, useState} from 'react'
+import {Button} from '@/components/ui/button'
+import {Input} from '@/components/ui/input'
+import {Label} from '@/components/ui/label'
+import {Textarea} from '@/components/ui/textarea'
+import {Switch} from '@/components/ui/switch'
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
+import {Badge} from '@/components/ui/badge'
+import {ArrowLeft, Edit, MapPin, Plus, Trash2} from 'lucide-react'
+import {useToast} from '@/contexts/ToastContext'
+import {Link} from 'react-router-dom'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const AdminCourts = () => {
   const [courts, setCourts] = useState([])
@@ -35,9 +45,7 @@ const AdminCourts = () => {
 
   const fetchCourts = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch('/api/admin/courts', {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      const response = await fetchWithAuth('/api/admin/courts', {
       })
       if (response.ok) {
         const data = await response.json()
@@ -62,13 +70,11 @@ const AdminCourts = () => {
         : '/api/admin/courts'
       
       const method = editingCourt ? 'PUT' : 'POST'
-      const token = localStorage.getItem('auth_token')
       
-      const response = await fetch(url, {
+      const response = await fetchWithAuth(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify(formData),
       })
@@ -109,10 +115,8 @@ const AdminCourts = () => {
     
     const courtId = courtToDelete.id
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/admin/courts/${courtId}`, {
+      const response = await fetchWithAuth(`/api/admin/courts/${courtId}`, {
         method: 'DELETE',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       })
 
       const data = await response.json()

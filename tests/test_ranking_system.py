@@ -1,6 +1,8 @@
-import pytest
-import sys
 import os
+import sys
+
+import pytest
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 os.environ.setdefault('SECRET_KEY', 'test-secret-key-min-32-characters-long')
@@ -66,7 +68,7 @@ def create_admin_user(client):
         'email': 'admin@ranktest.com',
         'password': 'admin123'
     })
-    return response.get_json()['token']
+    data = response.get_json(); cookies = response.headers.getlist('Set-Cookie'); token = None; [token := cookie.split('access_token=')[1].split(';')[0] for cookie in cookies if 'access_token=' in cookie]; return token if token else data.get('token')
 
 def create_test_user(client):
     response = client.post('/api/auth/register', json={

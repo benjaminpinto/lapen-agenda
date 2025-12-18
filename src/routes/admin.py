@@ -1,9 +1,11 @@
-from flask import Blueprint, request, jsonify
-from src.database import get_db
-from src.logger import get_logger
-from src.auth import verify_token, get_user_by_id, hash_password
 import base64
 import os
+
+from flask import Blueprint, request, jsonify
+
+from src.auth import verify_token, get_user_by_id, hash_password
+from src.database import get_db
+from src.logger import get_logger
 
 logger = get_logger()
 
@@ -19,12 +21,14 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
 def require_admin_auth(f):
     def decorated_function(*args, **kwargs):
-        token = request.headers.get('Authorization')
+        token = request.cookies.get('access_token')
+        if not token:
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                token = auth_header[7:]
+        
         if not token:
             return jsonify({'error': 'Autenticação necessária'}), 401
-        
-        if token.startswith('Bearer '):
-            token = token[7:]
         
         user_id = verify_token(token)
         if not user_id:
@@ -285,28 +289,28 @@ def get_lapen_requests():
         users = db.execute('''
             SELECT id, email, name, phone, lapen_requested_at
             FROM users
-            WHERE is_lapen_member = %s AND lapen_approved = %s AND lapen_approved_at IS NULL
+            WHERE is_lapen_member = %s AND lapen_approved = %s AND lapen_approved_at IS NULL AND deleted_at IS NULL
             ORDER BY lapen_requested_at DESC
         ''', (True, False)).fetchall()
     elif status == 'approved':
         users = db.execute('''
             SELECT id, email, name, phone, lapen_requested_at, lapen_approved_at
             FROM users
-            WHERE is_lapen_member = %s AND lapen_approved = %s
+            WHERE is_lapen_member = %s AND lapen_approved = %s AND deleted_at IS NULL
             ORDER BY lapen_approved_at DESC
         ''', (True, True)).fetchall()
     elif status == 'rejected':
         users = db.execute('''
             SELECT id, email, name, phone, lapen_requested_at, lapen_approved_at
             FROM users
-            WHERE is_lapen_member = %s AND lapen_approved = %s AND lapen_approved_at IS NOT NULL
+            WHERE is_lapen_member = %s AND lapen_approved = %s AND lapen_approved_at IS NOT NULL AND deleted_at IS NULL
             ORDER BY lapen_approved_at DESC
         ''', (True, False)).fetchall()
     else:
         users = db.execute('''
             SELECT id, email, name, phone, lapen_requested_at, lapen_approved_at, lapen_approved
             FROM users
-            WHERE is_lapen_member = %s
+            WHERE is_lapen_member = %s AND deleted_at IS NULL
             ORDER BY lapen_requested_at DESC
         ''', (True,)).fetchall()
     
@@ -420,7 +424,7 @@ def get_dashboard_stats():
 @require_admin_auth
 def get_users():
     db = get_db()
-    users = db.execute('SELECT id, email, name, short_name, phone, pix_key, is_admin, is_lapen_member, lapen_approved FROM users ORDER BY name').fetchall()
+    users = db.execute('SELECT id, email, name, short_name, phone, pix_key, is_admin, is_lapen_member, lapen_approved FROM users WHERE deleted_at IS NULL ORDER BY name').fetchall()
     return jsonify([dict(user) for user in users])
 
 @admin_bp.route('/users/<int:user_id>', methods=['PUT'])
@@ -460,9 +464,10 @@ def update_user_password(user_id):
 @admin_bp.route('/users/<int:user_id>', methods=['DELETE'])
 @require_admin_auth
 def delete_user(user_id):
+    from datetime import datetime
     db = get_db()
     try:
-        db.execute('DELETE FROM users WHERE id = %s', (user_id,))
+        db.execute('UPDATE users SET deleted_at = %s WHERE id = %s', (datetime.utcnow(), user_id))
         db.commit()
         return jsonify({'success': True})
     except Exception as e:

@@ -24,6 +24,9 @@ Applied in chronological order:
 9. **create_match_results_unified.sql** - Created unified statistics table
 10. **migrate_to_match_results.sql** - Migrated data to unified table
 11. **cleanup_old_statistics.sql** - Removed old match_statistics table
+12. **001_add_unaccent_extension.sql** - PostgreSQL unaccent extension
+13. **002_backfill_player_ids.sql** - Backfilled player IDs in ranking matches
+14. **003_add_refresh_tokens.sql** - Added refresh_tokens table for HTTP-only cookie auth
 
 ## Current Schema
 

@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Sun, Moon, Laptop } from 'lucide-react'
+import { fetchWithAuth } from '@/utils/fetchWithAuth'
 
 const Profile = () => {
   const { user, updateUser } = useAuth()
@@ -57,13 +58,9 @@ const Profile = () => {
     setLoading(true)
 
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch('/api/auth/profile', {
+      const response = await fetchWithAuth('/api/auth/profile', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profileData)
       })
 
@@ -98,13 +95,9 @@ const Profile = () => {
     setLoading(true)
 
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch('/api/auth/change-password', {
+      const response = await fetchWithAuth('/api/auth/change-password', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           current_password: passwordData.current_password,
           new_password: passwordData.new_password

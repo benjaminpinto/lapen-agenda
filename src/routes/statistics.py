@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify
+
 from src.auth import require_auth
 from src.database import get_db
-from src.utils.score_parser import parse_score
 from src.logger import get_logger
+from src.utils.score_parser import parse_score
 
 logger = get_logger()
 statistics_bp = Blueprint('statistics', __name__, url_prefix='/api/statistics')
@@ -79,9 +80,9 @@ def add_match_result():
                     WHERE season_id = %s AND user_id = %s
                 ''', (points, 1 if is_winner else 0, 0 if is_winner else 1, season_id, player_id))
         
-        p1_user = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (p1, p1)).fetchone()
-        p2_user = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (p2, p2)).fetchone()
-        winner_user = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (winner_name, winner_name)).fetchone()
+        p1_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (p1, p1)).fetchone()
+        p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (p2, p2)).fetchone()
+        winner_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (winner_name, winner_name)).fetchone()
         
         db.execute('''
             INSERT INTO match_statistics_unified (
@@ -117,7 +118,7 @@ def get_player_statistics():
     db = get_db()
     
     # Get player IDs from names
-    p1_user = db.execute('SELECT id, short_name FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player1, player1)).fetchone()
+    p1_user = db.execute('SELECT id, short_name FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (player1, player1)).fetchone()
     if not p1_user:
         return jsonify({'error': 'Jogador não encontrado'}), 404
     
@@ -125,7 +126,7 @@ def get_player_statistics():
     params = [p1_user['id'], p1_user['id']]
     
     if player2:
-        p2_user = db.execute('SELECT id FROM users WHERE LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)', (player2, player2)).fetchone()
+        p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (player2, player2)).fetchone()
         if p2_user:
             conditions.append('((m.player1_id = %s AND m.player2_id = %s) OR (m.player1_id = %s AND m.player2_id = %s))')
             params.extend([p1_user['id'], p2_user['id'], p2_user['id'], p1_user['id']])

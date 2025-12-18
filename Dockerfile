@@ -1,3 +1,4 @@
+# Try alternative registries if Docker Hub is slow
 FROM python:3.11-slim
 
 WORKDIR /app

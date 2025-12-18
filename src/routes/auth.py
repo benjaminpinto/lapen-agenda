@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from src.database import get_db
-from src.auth import hash_password, verify_password, generate_token, generate_verification_token, require_auth, get_user_by_email, get_user_by_id
+from src.auth import hash_password, verify_password, generate_token, generate_tokens, verify_refresh_token, revoke_refresh_token, generate_verification_token, require_auth, get_user_by_email, get_user_by_id
 from src.email_service import send_verification_email, send_lapen_approval_request_email
 from src.logger import get_logger
 import re
@@ -59,7 +59,6 @@ def register():
             (email, password_hash, name, short_name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at))
         user_id = cursor.fetchone()['id']
         db.commit()
-        token = generate_token(user_id)
         
         logger.info(f'User registered: email={email}, user_id={user_id}')
         
@@ -82,9 +81,10 @@ def register():
         if is_lapen_member:
             message += '. Sua solicitação de membro LAPEN está pendente de aprovação.'
         
-        return jsonify({
+        access_token, refresh_token = generate_tokens(user_id, False)
+        
+        response = jsonify({
             'message': message,
-            'token': token,
             'user': {
                 'id': user_id,
                 'email': email,
@@ -96,7 +96,22 @@ def register():
                 'lapen_approved': False,
                 'is_admin': False
             }
-        }), 201
+        })
+        
+        from flask import current_app
+        is_production = current_app.config.get('FLASK_ENV') == 'production'
+        response.set_cookie(
+            'access_token', access_token,
+            httponly=True, secure=is_production, samesite='Strict',
+            max_age=15*60
+        )
+        response.set_cookie(
+            'refresh_token', refresh_token,
+            httponly=True, secure=is_production, samesite='Strict',
+            max_age=7*24*60*60
+        )
+        
+        return response, 201
         
     except Exception as e:
         logger.error(f'Error registering user {email}: {str(e)}')
@@ -106,6 +121,7 @@ def register():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
+    from flask import current_app
     data = request.get_json()
     
     if not data.get('email') or not data.get('password'):
@@ -113,6 +129,7 @@ def login():
     
     email = data['email'].lower().strip()
     password = data['password']
+    remember_me = data.get('remember_me', False)
     
     user = get_user_by_email(email)
     if not user or not verify_password(password, user['password_hash']):
@@ -120,12 +137,10 @@ def login():
         return jsonify({'error': 'Email ou senha inválidos'}), 401
     
     logger.info(f'User logged in: email={email}, user_id={user["id"]}')
-    token = generate_token(user['id'])
+    access_token, refresh_token = generate_tokens(user['id'], remember_me)
     
-    logger.info(f'User login successful: {email}')
-    return jsonify({
+    response = jsonify({
         'message': 'Login realizado com sucesso',
-        'token': token,
         'user': {
             'id': user['id'],
             'email': user['email'],
@@ -138,6 +153,22 @@ def login():
             'is_admin': user.get('is_admin', False)
         }
     })
+    
+    is_production = current_app.config.get('FLASK_ENV') == 'production'
+    max_age = 30*24*60*60 if remember_me else 7*24*60*60
+    
+    response.set_cookie(
+        'access_token', access_token,
+        httponly=True, secure=is_production, samesite='Strict',
+        max_age=15*60
+    )
+    response.set_cookie(
+        'refresh_token', refresh_token,
+        httponly=True, secure=is_production, samesite='Strict',
+        max_age=max_age
+    )
+    
+    return response
 
 @auth_bp.route('/me', methods=['GET'])
 @require_auth
@@ -310,3 +341,47 @@ def reset_password():
         return jsonify({'error': 'Erro ao redefinir senha'}), 500
     finally:
         db.close()
+
+@auth_bp.route('/refresh', methods=['POST'])
+def refresh():
+    """Refresh access token using refresh token"""
+    from flask import current_app
+    refresh_token = request.cookies.get('refresh_token')
+    if not refresh_token:
+        return jsonify({'error': 'No refresh token'}), 401
+    
+    user_id = verify_refresh_token(refresh_token)
+    if not user_id:
+        return jsonify({'error': 'Invalid refresh token'}), 401
+    
+    from datetime import datetime, timedelta
+    access_payload = {
+        'user_id': user_id,
+        'type': 'access',
+        'exp': datetime.utcnow() + timedelta(minutes=15)
+    }
+    import jwt
+    access_token = jwt.encode(access_payload, current_app.config['SECRET_KEY'], algorithm='HS256')
+    
+    response = jsonify({'message': 'Token refreshed'})
+    is_production = current_app.config.get('FLASK_ENV') == 'production'
+    response.set_cookie(
+        'access_token', access_token,
+        httponly=True, secure=is_production, samesite='Strict',
+        max_age=15*60
+    )
+    
+    return response
+
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    """Logout and revoke refresh token"""
+    refresh_token = request.cookies.get('refresh_token')
+    if refresh_token:
+        revoke_refresh_token(refresh_token)
+    
+    response = jsonify({'message': 'Logout realizado com sucesso'})
+    response.set_cookie('access_token', '', expires=0)
+    response.set_cookie('refresh_token', '', expires=0)
+    
+    return response

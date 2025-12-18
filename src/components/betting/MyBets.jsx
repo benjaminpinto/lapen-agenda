@@ -1,16 +1,17 @@
-import { useState, useEffect, useRef } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { useToast } from '@/contexts/ToastContext'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import {useEffect, useRef, useState} from 'react'
+import {useAuth} from '@/contexts/AuthContext'
+import {useToast} from '@/contexts/ToastContext'
+import {Button} from '@/components/ui/button'
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
+import {Badge} from '@/components/ui/badge'
+import {Dialog, DialogContent} from '@/components/ui/dialog'
 import BackButton from '@/components/ui/BackButton'
-import { History, Trophy, DollarSign, Calendar, Wallet, TrendingUp, Share2 } from 'lucide-react'
+import {Calendar, History, Share2, TrendingUp, Trophy, Wallet} from 'lucide-react'
 import ShareableMatchCard from './ShareableMatchCard'
 import ShareableWinCard from './ShareableWinCard'
 import ShareableLossCard from './ShareableLossCard'
 import html2canvas from 'html2canvas'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const MyBets = () => {
   const [bets, setBets] = useState([])
@@ -26,11 +27,7 @@ const MyBets = () => {
 
   const fetchMyBets = async () => {
     try {
-      const response = await fetch('/api/betting/my-bets', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        }
-      })
+      const response = await fetchWithAuth('/api/betting/my-bets')
       
       const data = await response.json()
       if (response.ok) {

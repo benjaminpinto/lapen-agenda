@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { useToast } from '@/contexts/ToastContext'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {useNavigate, useParams} from 'react-router-dom'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Button} from '@/components/ui/button'
+import {Input} from '@/components/ui/input'
+import {Label} from '@/components/ui/label'
+import {useToast} from '@/contexts/ToastContext'
+import {ArrowLeft, Plus, Trash2} from 'lucide-react'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const SeasonConfig = () => {
   const navigate = useNavigate()
@@ -22,7 +23,7 @@ const SeasonConfig = () => {
 
   const fetchConfig = async () => {
     try {
-      const response = await fetch(`/api/ranking/seasons/${id}/config`)
+      const response = await fetchWithAuth(`/api/ranking/seasons/${id}/config`)
       if (response.ok) {
         const data = await response.json()
         setConfig(data)
@@ -36,7 +37,7 @@ const SeasonConfig = () => {
 
   const fetchTempRules = async () => {
     try {
-      const response = await fetch(`/api/ranking/seasons/${id}/temp-points-rules`)
+      const response = await fetchWithAuth(`/api/ranking/seasons/${id}/temp-points-rules`)
       if (response.ok) {
         const data = await response.json()
         setTempRules(data)
@@ -48,12 +49,10 @@ const SeasonConfig = () => {
 
   const saveConfig = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/seasons/${id}/config`, {
+      const response = await fetchWithAuth(`/api/ranking/seasons/${id}/config`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(config)
       })
@@ -88,16 +87,13 @@ const SeasonConfig = () => {
 
   const saveTempRules = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
-      await fetch(`/api/ranking/seasons/${id}/temp-points-rules`, {
+      await fetchWithAuth(`/api/ranking/seasons/${id}/temp-points-rules`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
       })
-      const response = await fetch(`/api/ranking/seasons/${id}/temp-points-rules`, {
+      const response = await fetchWithAuth(`/api/ranking/seasons/${id}/temp-points-rules`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ rules: tempRules })
       })

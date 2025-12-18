@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Calendar, Clock, Trophy, History } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
+import {useEffect, useState} from 'react'
+import {Card, CardContent} from '@/components/ui/card'
+import {Badge} from '@/components/ui/badge'
+import {Button} from '@/components/ui/button'
+import {Calendar, History} from 'lucide-react'
+import {useAuth} from '@/contexts/AuthContext'
 import MatchResultForm from './MatchResultForm'
 import RecentResults from './RecentResults'
-import { useToast } from '@/contexts/ToastContext'
+import {useToast} from '@/contexts/ToastContext'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const MyMatches = () => {
   const [matches, setMatches] = useState([])
@@ -25,8 +26,8 @@ const MyMatches = () => {
   const fetchMyMatches = async () => {
     try {
       // This would need a new API endpoint
-      const response = await fetch(`/api/ranking/my-matches`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+      const response = await fetchWithAuth(`/api/ranking/my-matches`, {
+        headers: {  }
       })
       if (response.ok) {
         const data = await response.json()
@@ -41,11 +42,11 @@ const MyMatches = () => {
 
   const submitResult = async (result) => {
     try {
-      const response = await fetch(`/api/ranking/matches/${selectedMatch.id}/result`, {
+      const response = await fetchWithAuth(`/api/ranking/matches/${selectedMatch.id}/result`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          
         },
         body: JSON.stringify(result)
       })

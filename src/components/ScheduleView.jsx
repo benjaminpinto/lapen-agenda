@@ -1,20 +1,29 @@
-import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { BarChart3, Calendar, Clock, Edit, GraduationCap, List, MapPin, Medal, Share2, Trash2, Trophy, Users } from 'lucide-react'
-import { useToast } from '@/contexts/ToastContext'
-import { useAuth } from '@/contexts/AuthContext'
+import {useEffect, useState} from 'react'
+import {useSearchParams} from 'react-router-dom'
+import {Button} from '@/components/ui/button'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs'
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle
+} from '@/components/ui/alert-dialog'
+import {Input} from '@/components/ui/input'
+import {Label} from '@/components/ui/label'
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
+import {Textarea} from '@/components/ui/textarea'
+import {Calendar, Clock, Edit, List, MapPin, Share2, Trash2} from 'lucide-react'
+import {useToast} from '@/contexts/ToastContext'
+import {useAuth} from '@/contexts/AuthContext'
 import WeeklyCalendar from './WeeklyCalendar'
 import MonthSelector from './ui/MonthSelector'
 import MatchTypeBadge from './ui/MatchTypeBadge'
+import {fetchWithAuth} from '@/utils/fetchWithAuth'
 
 const ScheduleView = () => {
     const [searchParams] = useSearchParams()
@@ -65,7 +74,7 @@ const ScheduleView = () => {
 
     const fetchSchedules = async () => {
         try {
-            const response = await fetch(`/api/public/schedules/month?year=${selectedYear}&month=${selectedMonth}`)
+            const response = await fetchWithAuth(`/api/public/schedules/month?year=${selectedYear}&month=${selectedMonth}`)
             if (response.ok) {
                 const data = await response.json()
                 setSchedules(data)
@@ -82,7 +91,7 @@ const ScheduleView = () => {
             const url = date
                 ? `/api/public/schedules/week?date=${date}`
                 : '/api/public/schedules/week'
-            const response = await fetch(url)
+            const response = await fetchWithAuth(url)
             if (response.ok) {
                 const data = await response.json()
                 setWeekSchedules(data)
@@ -94,7 +103,7 @@ const ScheduleView = () => {
 
     const fetchPlayers = async () => {
         try {
-            const response = await fetch('/api/public/players')
+            const response = await fetchWithAuth('/api/public/players')
             if (response.ok) {
                 const data = await response.json()
                 setPlayers(data)
@@ -106,7 +115,7 @@ const ScheduleView = () => {
 
     const fetchStats = async () => {
         try {
-            const response = await fetch('/api/public/dashboard-stats')
+            const response = await fetchWithAuth('/api/public/dashboard-stats')
             if (response.ok) {
                 const data = await response.json()
                 setStats(data)
@@ -138,7 +147,7 @@ const ScheduleView = () => {
 
     const checkActiveBets = async (scheduleId) => {
         try {
-            const response = await fetch(`/api/public/schedules/${scheduleId}/has-bets`)
+            const response = await fetchWithAuth(`/api/public/schedules/${scheduleId}/has-bets`)
             if (response.ok) {
                 const data = await response.json()
                 setIsFinishedMatch(data.is_finished || false)
@@ -155,15 +164,13 @@ const ScheduleView = () => {
         e.preventDefault()
 
         try {
-            const token = localStorage.getItem('auth_token')
             const headers = {
                 'Content-Type': 'application/json',
             }
             if (token) {
-                headers['Authorization'] = `Bearer ${token}`
             }
 
-            const response = await fetch(`/api/public/schedules/${editingSchedule.id}`, {
+            const response = await fetchWithAuth(`/api/public/schedules/${editingSchedule.id}`, {
                 method: 'PUT',
                 headers,
                 body: JSON.stringify(formData),
@@ -214,13 +221,11 @@ const ScheduleView = () => {
 
     const performDelete = async (scheduleId) => {
         try {
-            const token = localStorage.getItem('auth_token')
             const headers = {}
             if (token) {
-                headers['Authorization'] = `Bearer ${token}`
             }
 
-            const response = await fetch(`/api/public/schedules/${scheduleId}`, {
+            const response = await fetchWithAuth(`/api/public/schedules/${scheduleId}`, {
                 method: 'DELETE',
                 headers
             })
@@ -254,13 +259,11 @@ const ScheduleView = () => {
 
         try {
             const scheduleId = deletingSchedule.id
-            const token = localStorage.getItem('auth_token')
             const headers = {}
             if (token) {
-                headers['Authorization'] = `Bearer ${token}`
             }
 
-            const response = await fetch(`/api/public/schedules/${scheduleId}`, {
+            const response = await fetchWithAuth(`/api/public/schedules/${scheduleId}`, {
                 method: 'DELETE',
                 headers
             })
@@ -295,7 +298,7 @@ const ScheduleView = () => {
             await captureWeeklyCalendar()
         } else {
             try {
-                const response = await fetch(`/api/public/whatsapp-message?year=${selectedYear}&month=${selectedMonth}`)
+                const response = await fetchWithAuth(`/api/public/whatsapp-message?year=${selectedYear}&month=${selectedMonth}`)
                 if (response.ok) {
                     const data = await response.json()
                     setWhatsappMessage(data.message)

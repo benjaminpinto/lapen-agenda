@@ -456,7 +456,8 @@ paths:
     post:
       tags:
         - Auth
-      summary: User login
+      summary: User login with HTTP-only cookies
+      description: Authenticates user and sets access_token and refresh_token cookies
       requestBody:
         required: true
         content:
@@ -469,11 +470,23 @@ paths:
               properties:
                 email:
                   type: string
+                  format: email
+                  example: "user@example.com"
                 password:
                   type: string
+                  example: "password123"
+                remember_me:
+                  type: boolean
+                  default: false
+                  description: "If true, refresh token expires in 30 days instead of 7"
       responses:
         '200':
-          description: Login successful
+          description: Login successful, cookies set
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: "access_token=<token>; HttpOnly; Secure; SameSite=Strict; Max-Age=900"
           content:
             application/json:
               schema:
@@ -481,16 +494,18 @@ paths:
                 properties:
                   message:
                     type: string
-                  token:
-                    type: string
+                    example: "Login realizado com sucesso"
                   user:
-                    type: object
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
 
   /api/auth/me:
     get:
       tags:
         - Auth
       summary: Get current user
+      description: Returns current user info using access_token cookie or Authorization header
       security:
         - BearerAuth: []
       responses:
@@ -504,7 +519,69 @@ paths:
                   user:
                     $ref: '#/components/schemas/User'
         '401':
-          $ref: '#/components/responses/UnauthorizedError'
+          description: Token expired or invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  refresh:
+                    type: boolean
+                    description: "If true, client should call /api/auth/refresh"
+
+  /api/auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Refresh access token
+      description: Uses refresh_token cookie to generate new access_token
+      responses:
+        '200':
+          description: Token refreshed successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: "access_token=<new_token>; HttpOnly; Secure; SameSite=Strict; Max-Age=900"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Token refreshed"
+        '401':
+          description: Refresh token invalid or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Logout user
+      description: Revokes refresh token and clears cookies
+      responses:
+        '200':
+          description: Logout successful
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: "access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logout realizado com sucesso"
 
   /api/admin/login:
     post:

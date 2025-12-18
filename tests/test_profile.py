@@ -1,6 +1,8 @@
-import pytest
-import sys
 import os
+import sys
+
+import pytest
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 os.environ.setdefault('SECRET_KEY', 'test-secret-key-min-32-characters-long')
@@ -35,12 +37,10 @@ def test_update_profile(setup_db):
     from main import app
     
     with app.test_client() as client:
-        user_data = create_test_user(client)
-        token = user_data['token']
-    
-    # Update profile
-    response = client.put('/api/auth/profile', 
-        headers={'Authorization': f'Bearer {token}'},
+        create_test_user(client)
+        
+        # Update profile
+        response = client.put('/api/auth/profile', 
         json={
             'name': 'Updated Name',
             'short_name': 'Updated Short',
@@ -74,12 +74,10 @@ def test_change_password(setup_db):
     from main import app
     
     with app.test_client() as client:
-        user_data = create_test_user(client, password='oldpass123')
-        token = user_data['token']
-    
-    # Change password
-    response = client.post('/api/auth/change-password',
-        headers={'Authorization': f'Bearer {token}'},
+        create_test_user(client, password='oldpass123')
+        
+        # Change password
+        response = client.post('/api/auth/change-password',
         json={
             'current_password': 'oldpass123',
             'new_password': 'newpass123'
@@ -88,6 +86,12 @@ def test_change_password(setup_db):
     
     assert response.status_code == 200
     assert 'Senha alterada com sucesso' in response.get_json()['message']
+    
+    # Clean up tokens before re-login
+    db = get_db()
+    db.execute('DELETE FROM refresh_tokens WHERE user_id IN (SELECT id FROM users WHERE email = %s)', ('test@example.com',))
+    db.commit()
+    db.close()
     
     # Try login with new password
     login_response = client.post('/api/auth/login', json={
@@ -100,11 +104,9 @@ def test_change_password_wrong_current(setup_db):
     from main import app
     
     with app.test_client() as client:
-        user_data = create_test_user(client, password='correctpass')
-        token = user_data['token']
-    
-    response = client.post('/api/auth/change-password',
-        headers={'Authorization': f'Bearer {token}'},
+        create_test_user(client, password='correctpass')
+        
+        response = client.post('/api/auth/change-password',
         json={
             'current_password': 'wrongpass',
             'new_password': 'newpass123'
@@ -118,11 +120,9 @@ def test_change_password_too_short(setup_db):
     from main import app
     
     with app.test_client() as client:
-        user_data = create_test_user(client)
-        token = user_data['token']
-    
-    response = client.post('/api/auth/change-password',
-        headers={'Authorization': f'Bearer {token}'},
+        create_test_user(client)
+        
+        response = client.post('/api/auth/change-password',
         json={
             'current_password': 'password123',
             'new_password': '123'

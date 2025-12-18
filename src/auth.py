@@ -15,12 +15,69 @@ def verify_password(password, hashed):
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
 def generate_token(user_id):
-    """Generate JWT token for user"""
+    """Generate JWT token for user (deprecated - use generate_tokens)"""
     payload = {
         'user_id': user_id,
         'exp': datetime.utcnow() + timedelta(days=7)
     }
     return jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
+
+def generate_tokens(user_id, remember_me=False):
+    """Generate access and refresh tokens"""
+    access_payload = {
+        'user_id': user_id,
+        'type': 'access',
+        'exp': datetime.utcnow() + timedelta(minutes=15)
+    }
+    access_token = jwt.encode(access_payload, current_app.config['SECRET_KEY'], algorithm='HS256')
+    
+    refresh_expiry = timedelta(days=30 if remember_me else 7)
+    refresh_payload = {
+        'user_id': user_id,
+        'type': 'refresh',
+        'exp': datetime.utcnow() + refresh_expiry
+    }
+    refresh_token = jwt.encode(refresh_payload, current_app.config['SECRET_KEY'], algorithm='HS256')
+    
+    db = get_db()
+    try:
+        db.execute(
+            'INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (%s, %s, %s)',
+            (user_id, refresh_token, datetime.utcnow() + refresh_expiry)
+        )
+        db.commit()
+    finally:
+        db.close()
+    
+    return access_token, refresh_token
+
+def verify_refresh_token(token):
+    """Verify refresh token and check if revoked"""
+    try:
+        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+        if payload.get('type') != 'refresh':
+            return None
+        
+        db = get_db()
+        try:
+            cursor = db.execute('SELECT revoked FROM refresh_tokens WHERE token = %s', (token,))
+            result = cursor.fetchone()
+            if not result or result['revoked']:
+                return None
+            return payload['user_id']
+        finally:
+            db.close()
+    except:
+        return None
+
+def revoke_refresh_token(token):
+    """Revoke a refresh token"""
+    db = get_db()
+    try:
+        db.execute('UPDATE refresh_tokens SET revoked = TRUE WHERE token = %s', (token,))
+        db.commit()
+    finally:
+        db.close()
 
 def verify_token(token):
     """Verify JWT token and return user_id"""
@@ -40,18 +97,22 @@ def require_auth(f):
     """Decorator to require authentication"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        token = request.headers.get('Authorization')
+        token = request.cookies.get('access_token')
+        if not token:
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                token = auth_header[7:]
+        
         if not token:
             return jsonify({'error': 'No token provided'}), 401
         
-        if token.startswith('Bearer '):
-            token = token[7:]
-        
         user_id = verify_token(token)
         if not user_id:
+            refresh_token = request.cookies.get('refresh_token')
+            if refresh_token and verify_refresh_token(refresh_token):
+                return jsonify({'error': 'Token expired', 'refresh': True}), 401
             return jsonify({'error': 'Invalid or expired token'}), 401
         
-        # Add user to request context
         request.user_id = user_id
         return f(*args, **kwargs)
     
@@ -61,12 +122,14 @@ def require_approved_lapen_member(f):
     """Decorator to require approved LAPEN member"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        token = request.headers.get('Authorization')
+        token = request.cookies.get('access_token')
+        if not token:
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                token = auth_header[7:]
+        
         if not token:
             return jsonify({'error': 'Autenticação necessária'}), 401
-        
-        if token.startswith('Bearer '):
-            token = token[7:]
         
         user_id = verify_token(token)
         if not user_id:

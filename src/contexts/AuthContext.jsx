@@ -15,51 +15,62 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token')
-    if (token) {
-      fetchUser(token)
-    } else {
-      setLoading(false)
-    }
+    fetchUser()
   }, [])
 
-  const fetchUser = async (token) => {
+  const fetchUser = async () => {
     try {
       const response = await fetch('/api/auth/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include'
       })
       
       if (response.ok) {
         const data = await response.json()
         setUser(data.user)
-      } else {
-        localStorage.removeItem('auth_token')
+      } else if (response.status === 401) {
+        const data = await response.json()
+        if (data.refresh) {
+          const refreshed = await refreshToken()
+          if (refreshed) {
+            await fetchUser()
+            return
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to fetch user:', error)
-      localStorage.removeItem('auth_token')
     } finally {
       setLoading(false)
     }
   }
 
-  const login = async (email, password) => {
+  const refreshToken = async () => {
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include'
+      })
+      return response.ok
+    } catch {
+      return false
+    }
+  }
+
+  const login = async (email, password, rememberMe = false) => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, remember_me: rememberMe }),
+        credentials: 'include'
       })
 
       const text = await response.text()
       
       if (response.ok) {
         const data = JSON.parse(text)
-        localStorage.setItem('auth_token', data.token)
         setUser(data.user)
         return { success: true }
       } else {
@@ -82,14 +93,14 @@ export const AuthProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(userData)
+        body: JSON.stringify(userData),
+        credentials: 'include'
       })
 
       const text = await response.text()
       
       if (response.ok) {
         const data = JSON.parse(text)
-        localStorage.setItem('auth_token', data.token)
         setUser(data.user)
         return { success: true }
       } else {
@@ -108,8 +119,15 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const logout = () => {
-    localStorage.removeItem('auth_token')
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      })
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
     setUser(null)
   }
 

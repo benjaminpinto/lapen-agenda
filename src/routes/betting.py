@@ -1,14 +1,16 @@
+import time
+from decimal import Decimal
+
 from flask import Blueprint, request, jsonify
-from src.database import get_db
+
 from src.auth import require_auth
+from src.database import get_db
+from src.email_service import send_bet_confirmation_email
+from src.logger import get_logger
+from src.payment_gateway import format_payment_response
 from src.utils.match_utils import is_match_eligible_for_betting, get_or_create_match, update_match_pool
 from src.utils.odds_calculator import calculate_odds, calculate_potential_return
 from src.utils.payment_processor import create_payment_intent, confirm_payment
-from src.payment_gateway import format_payment_response
-from src.email_service import send_bet_confirmation_email
-from src.logger import get_logger
-from decimal import Decimal
-import time
 
 logger = get_logger()
 
@@ -44,7 +46,7 @@ def create_bet_payment_intent():
     # Get user email for Mercado Pago
     db = get_db()
     try:
-        cursor = db.execute('SELECT email FROM users WHERE id = %s', (request.user_id,))
+        cursor = db.execute('SELECT email FROM users WHERE id = %s AND deleted_at IS NULL', (request.user_id,))
         user = cursor.fetchone()
         user_email = user['email'] if user else 'test@test.com'
     finally:
@@ -192,7 +194,7 @@ def place_bet():
         db.commit()
         
         # Get user info for email
-        cursor = db.execute('SELECT name, email FROM users WHERE id = %s', (request.user_id,))
+        cursor = db.execute('SELECT name, email FROM users WHERE id = %s AND deleted_at IS NULL', (request.user_id,))
         user = cursor.fetchone()
         
         # Send confirmation email (don't fail if email fails)

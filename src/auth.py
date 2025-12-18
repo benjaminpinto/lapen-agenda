@@ -1,10 +1,13 @@
-import jwt
-import bcrypt
 import secrets
 from datetime import datetime, timedelta
 from functools import wraps
+
+import bcrypt
+import jwt
 from flask import request, jsonify, current_app
+
 from src.database import get_db
+
 
 def hash_password(password):
     """Hash a password using bcrypt"""
@@ -154,7 +157,7 @@ def get_user_by_id(user_id):
     """Get user by ID"""
     db = get_db()
     try:
-        cursor = db.execute('SELECT id, email, name, short_name, phone, pix_key, is_verified, is_lapen_member, lapen_approved, lapen_requested_at, lapen_approved_at, is_admin FROM users WHERE id = %s', (user_id,))
+        cursor = db.execute('SELECT id, email, name, short_name, phone, pix_key, is_verified, is_lapen_member, lapen_approved, lapen_requested_at, lapen_approved_at, is_admin FROM users WHERE id = %s AND deleted_at IS NULL', (user_id,))
         user = cursor.fetchone()
         return dict(user) if user else None
     finally:
@@ -164,7 +167,7 @@ def get_user_by_email(email):
     """Get user by email"""
     db = get_db()
     try:
-        cursor = db.execute('SELECT * FROM users WHERE email = %s', (email,))
+        cursor = db.execute('SELECT * FROM users WHERE email = %s AND deleted_at IS NULL', (email,))
         user = cursor.fetchone()
         return dict(user) if user else None
     finally:

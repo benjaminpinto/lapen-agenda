@@ -46,11 +46,13 @@ CREATE TABLE IF NOT EXISTS users (
     lapen_approved_at TIMESTAMP,
     lapen_approved_by INTEGER REFERENCES users(id),
     is_admin BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_deleted_at ON users(deleted_at);
 
 -- Schedules table (after users table)
 CREATE TABLE IF NOT EXISTS schedules (

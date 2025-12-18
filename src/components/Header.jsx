@@ -1,10 +1,11 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Calendar, Eye, Home, LogIn, LogOut, Menu, Settings, Dices, X, Award, BarChart3 } from 'lucide-react'
-import { useToast } from '@/contexts/ToastContext'
-import { useAuth } from '@/contexts/AuthContext'
+import {Link, useNavigate} from 'react-router-dom'
+import {Button} from '@/components/ui/button'
+import {Award, BarChart3, Calendar, Dices, Home, LogIn, LogOut, Menu, Settings, X} from 'lucide-react'
+import {useToast} from '@/contexts/ToastContext'
+import {useAuth} from '@/contexts/AuthContext'
 
-import { useState } from 'react'
+import {useState} from 'react'
+import {fetchWithAuth} from '@/utils/fetchWithAuth'
 
 const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
     const navigate = useNavigate()
@@ -14,9 +15,9 @@ const Header = ({ isAdminAuthenticated, setIsAdminAuthenticated }) => {
 
     const handleLogout = async () => {
         try {
-            const response = await fetch('/api/admin/logout', {
+            const response = await fetchWithAuth('/api/admin/logout', {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                headers: {  }
             })
 
             if (response.ok) {

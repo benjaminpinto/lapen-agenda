@@ -1,9 +1,20 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Download, TrendingUp, Users, Wallet, Trophy, Calendar, CheckCircle, XCircle, Clock, DollarSign, Target, Activity } from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {Link} from 'react-router-dom'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Button} from '@/components/ui/button'
+import {
+    Activity,
+    ArrowLeft,
+    Calendar,
+    CheckCircle,
+    Clock,
+    DollarSign,
+    Download,
+    Trophy,
+    Wallet,
+    XCircle
+} from 'lucide-react'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const AdminReports = () => {
     const [reports, setReports] = useState(null)
@@ -15,8 +26,8 @@ const AdminReports = () => {
 
     const fetchReports = async () => {
         try {
-            const response = await fetch('/api/admin/matches/reports', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+            const response = await fetchWithAuth('/api/admin/matches/reports', {
+                headers: {  }
             })
             if (response.ok) {
                 const data = await response.json()

@@ -8,6 +8,7 @@ import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} fro
 import {ArrowLeft, Calendar, Clock, Plus, Trash2} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
 import {Link} from 'react-router-dom'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const AdminHolidays = () => {
     const [holidays, setHolidays] = useState([])
@@ -27,8 +28,8 @@ const AdminHolidays = () => {
 
     const fetchHolidays = async () => {
         try {
-            const response = await fetch('/api/admin/holidays-blocks', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+            const response = await fetchWithAuth('/api/admin/holidays-blocks', {
+                headers: {  }
             })
             if (response.ok) {
                 const data = await response.json()
@@ -45,11 +46,11 @@ const AdminHolidays = () => {
         e.preventDefault()
 
         try {
-            const response = await fetch('/api/admin/holidays-blocks', {
+            const response = await fetchWithAuth('/api/admin/holidays-blocks', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                    
                 },
                 body: JSON.stringify(formData),
             })
@@ -82,9 +83,9 @@ const AdminHolidays = () => {
 
     const handleDelete = async (holidayId) => {
         try {
-            const response = await fetch(`/api/admin/holidays-blocks/${holidayId}`, {
+            const response = await fetchWithAuth(`/api/admin/holidays-blocks/${holidayId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                headers: {  }
             })
 
             const data = await response.json()

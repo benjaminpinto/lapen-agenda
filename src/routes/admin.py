@@ -19,12 +19,14 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 
 def require_admin_auth(f):
     def decorated_function(*args, **kwargs):
-        token = request.headers.get('Authorization')
+        token = request.cookies.get('access_token')
+        if not token:
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                token = auth_header[7:]
+        
         if not token:
             return jsonify({'error': 'Autenticação necessária'}), 401
-        
-        if token.startswith('Bearer '):
-            token = token[7:]
         
         user_id = verify_token(token)
         if not user_id:

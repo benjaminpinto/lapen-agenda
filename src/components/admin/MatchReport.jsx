@@ -3,7 +3,8 @@ import {Link, useParams} from 'react-router-dom'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
 import {Button} from '@/components/ui/button'
 import {Badge} from '@/components/ui/badge'
-import {ArrowLeft, Crown, Trophy, Users, Wallet, CheckCircle, XCircle, Clock, Copy} from 'lucide-react'
+import {ArrowLeft, CheckCircle, Clock, Copy, Crown, Trophy, Users, Wallet, XCircle} from 'lucide-react'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const MatchReport = () => {
     const {matchId} = useParams()
@@ -23,8 +24,8 @@ const MatchReport = () => {
 
     const fetchMatchReport = async () => {
         try {
-            const response = await fetch(`/api/admin/matches/${matchId}/report`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+            const response = await fetchWithAuth(`/api/admin/matches/${matchId}/report`, {
+                headers: {  }
             })
             if (response.ok) {
                 const data = await response.json()

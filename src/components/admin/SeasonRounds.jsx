@@ -1,14 +1,24 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { useToast } from '@/contexts/ToastContext'
-import { ArrowLeft } from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {useNavigate, useParams} from 'react-router-dom'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Button} from '@/components/ui/button'
+import {Badge} from '@/components/ui/badge'
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
+import {useToast} from '@/contexts/ToastContext'
+import {ArrowLeft} from 'lucide-react'
 import WOForm from './WOForm'
 import MatchResultForm from './MatchResultForm'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const SeasonRounds = () => {
   const navigate = useNavigate()
@@ -44,10 +54,10 @@ const SeasonRounds = () => {
 
   const fetchRounds = async () => {
     try {
-      const seasonRes = await fetch(`/api/ranking/seasons/${id}`)
+      const seasonRes = await fetchWithAuth(`/api/ranking/seasons/${id}`)
       if (seasonRes.ok) {
         const season = await seasonRes.json()
-        const roundsRes = await fetch(`/api/ranking/rounds/${season.id}`)
+        const roundsRes = await fetchWithAuth(`/api/ranking/rounds/${season.id}`)
         if (roundsRes.ok) {
           const data = await roundsRes.json()
           setRounds(data)
@@ -60,7 +70,7 @@ const SeasonRounds = () => {
 
   const fetchMatches = async (roundId) => {
     try {
-      const response = await fetch(`/api/ranking/rounds/${roundId}/matches`)
+      const response = await fetchWithAuth(`/api/ranking/rounds/${roundId}/matches`)
       if (response.ok) {
         const data = await response.json()
         setMatches(data)
@@ -80,17 +90,15 @@ const SeasonRounds = () => {
     }
 
     try {
-      const seasonRes = await fetch(`/api/ranking/seasons/${id}`)
+      const seasonRes = await fetchWithAuth(`/api/ranking/seasons/${id}`)
       const season = await seasonRes.json()
       
       const nextRoundNumber = rounds.length + 1
       
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch('/api/ranking/rounds', {
+      const response = await fetchWithAuth('/api/ranking/rounds', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           season_id: season.id,
@@ -116,10 +124,8 @@ const SeasonRounds = () => {
 
   const generateDraw = async (roundId) => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/rounds/${roundId}/draw`, {
+      const response = await fetchWithAuth(`/api/ranking/rounds/${roundId}/draw`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (response.ok) {
@@ -138,10 +144,8 @@ const SeasonRounds = () => {
 
   const cancelDraw = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/rounds/${roundToCancel}/draw`, {
+      const response = await fetchWithAuth(`/api/ranking/rounds/${roundToCancel}/draw`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (response.ok) {
@@ -161,12 +165,10 @@ const SeasonRounds = () => {
 
   const submitResult = async (data) => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/matches/${selectedMatch.id}/result`, {
+      const response = await fetchWithAuth(`/api/ranking/matches/${selectedMatch.id}/result`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(data)
       })
@@ -187,12 +189,10 @@ const SeasonRounds = () => {
 
   const submitWO = async (data) => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/matches/${selectedMatch.id}/wo`, {
+      const response = await fetchWithAuth(`/api/ranking/matches/${selectedMatch.id}/wo`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(data)
       })
@@ -213,10 +213,8 @@ const SeasonRounds = () => {
 
   const openRound = async (roundId) => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/rounds/${roundId}/open`, {
+      const response = await fetchWithAuth(`/api/ranking/rounds/${roundId}/open`, {
         method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (response.ok) {
@@ -233,10 +231,8 @@ const SeasonRounds = () => {
 
   const closeRound = async (roundId) => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/rounds/${roundId}/close`, {
+      const response = await fetchWithAuth(`/api/ranking/rounds/${roundId}/close`, {
         method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (response.ok) {

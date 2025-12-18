@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { useToast } from '@/contexts/ToastContext'
-import { ArrowLeft, UserX, UserCheck, Clock, Edit2 } from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {useNavigate, useParams} from 'react-router-dom'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Button} from '@/components/ui/button'
+import {Badge} from '@/components/ui/badge'
+import {Input} from '@/components/ui/input'
+import {Label} from '@/components/ui/label'
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
+import {useToast} from '@/contexts/ToastContext'
+import {ArrowLeft, Clock, Edit2, UserCheck, UserX} from 'lucide-react'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const SeasonParticipants = () => {
   const navigate = useNavigate()
@@ -31,13 +32,10 @@ const SeasonParticipants = () => {
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
       const [participantsRes, usersRes] = await Promise.all([
         fetch(`/api/ranking/seasons/${id}/all-participants`, {
-          headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch('/api/admin/users', {
-          headers: { 'Authorization': `Bearer ${token}` }
         })
       ])
 
@@ -59,7 +57,7 @@ const SeasonParticipants = () => {
 
   const fetchTempRules = async () => {
     try {
-      const response = await fetch(`/api/ranking/seasons/${id}/temp-points-rules`)
+      const response = await fetchWithAuth(`/api/ranking/seasons/${id}/temp-points-rules`)
       if (response.ok) {
         const data = await response.json()
         setTempRules(data)
@@ -77,12 +75,10 @@ const SeasonParticipants = () => {
 
   const addParticipant = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/seasons/${id}/participants`, {
+      const response = await fetchWithAuth(`/api/ranking/seasons/${id}/participants`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ 
           user_id: selectedUser.id, 
@@ -105,10 +101,8 @@ const SeasonParticipants = () => {
 
   const toggleParticipant = async (userId, isActive) => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/seasons/${id}/participants/${userId}/toggle`, {
+      const response = await fetchWithAuth(`/api/ranking/seasons/${id}/participants/${userId}/toggle`, {
         method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (response.ok) {
@@ -125,10 +119,8 @@ const SeasonParticipants = () => {
 
   const expireAllTempPoints = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/seasons/${id}/expire-temp-points`, {
+      const response = await fetchWithAuth(`/api/ranking/seasons/${id}/expire-temp-points`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (response.ok) {
@@ -145,12 +137,10 @@ const SeasonParticipants = () => {
 
   const updateTempPoints = async (userId) => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/seasons/${id}/participants/${userId}/temp-points`, {
+      const response = await fetchWithAuth(`/api/ranking/seasons/${id}/participants/${userId}/temp-points`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ temp_points: tempValue })
       })

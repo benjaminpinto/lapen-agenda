@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Plus, Settings, Users, Calendar, ArrowLeft } from 'lucide-react'
-import { useToast } from '@/contexts/ToastContext'
+import {useEffect, useState} from 'react'
+import {useNavigate} from 'react-router-dom'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Button} from '@/components/ui/button'
+import {Input} from '@/components/ui/input'
+import {Label} from '@/components/ui/label'
+import {Badge} from '@/components/ui/badge'
+import {ArrowLeft, Calendar, Plus, Settings, Users} from 'lucide-react'
+import {useToast} from '@/contexts/ToastContext'
+import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const AdminRanking = () => {
   const navigate = useNavigate()
@@ -27,12 +28,7 @@ const AdminRanking = () => {
 
   const fetchSeasons = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch('/api/ranking/seasons', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetchWithAuth('/api/ranking/seasons')
       if (response.ok) {
         const data = await response.json()
         setSeasons(data)
@@ -46,10 +42,8 @@ const AdminRanking = () => {
 
   const openSeason = async (seasonId) => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/seasons/${seasonId}/open`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await fetchWithAuth(`/api/ranking/seasons/${seasonId}/open`, {
+        method: 'PUT'
       })
       
       const data = await response.json()
@@ -67,10 +61,8 @@ const AdminRanking = () => {
 
   const closeSeason = async (seasonId) => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch(`/api/ranking/seasons/${seasonId}/close`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
+      const response = await fetchWithAuth(`/api/ranking/seasons/${seasonId}/close`, {
+        method: 'PUT'
       })
       
       const data = await response.json()
@@ -89,13 +81,9 @@ const AdminRanking = () => {
 
   const createSeason = async () => {
     try {
-      const token = localStorage.getItem('auth_token')
-      const response = await fetch('/api/ranking/seasons', {
+      const response = await fetchWithAuth('/api/ranking/seasons', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSeason)
       })
 

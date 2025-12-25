@@ -86,10 +86,10 @@ def get_players_autocomplete():
 
 @public_bp.route('/users/short-names', methods=['GET'])
 def get_users_short_names():
-    """Get all users short names for autocomplete"""
+    """Get all users with both full name and short name for autocomplete"""
     db = get_db()
-    users = db.execute('SELECT DISTINCT short_name FROM users WHERE short_name IS NOT NULL AND deleted_at IS NULL ORDER BY short_name').fetchall()
-    response = jsonify([user["short_name"] for user in users])
+    users = db.execute('SELECT DISTINCT name, short_name FROM users WHERE short_name IS NOT NULL AND deleted_at IS NULL ORDER BY short_name').fetchall()
+    response = jsonify([{"name": user["name"], "short_name": user["short_name"]} for user in users])
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"

@@ -143,8 +143,9 @@ def test_get_users_short_names(setup_db):
     
     assert response.status_code == 200
     data = response.get_json()
-    assert 'John Doe' in data
-    assert 'Jane Smith' in data
+    short_names = [user['short_name'] for user in data]
+    assert 'John Doe' in short_names
+    assert 'Jane Smith' in short_names
 
 def test_register_with_short_name(setup_db):
     from main import app

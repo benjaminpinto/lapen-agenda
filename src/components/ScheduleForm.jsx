@@ -114,17 +114,28 @@ const ScheduleForm = () => {
     }
   }
 
+  const normalizeString = (str) => {
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  }
+
   const handlePlayerInput = (playerField, value) => {
     setFormData(prev => ({ ...prev, [playerField]: value }))
     
     if (value.length > 0) {
-      // Include user's short_name in suggestions
-      const allNames = user?.short_name ? [user.short_name, ...players] : players
-      const uniqueNames = [...new Set(allNames)]
+      const normalizedInput = normalizeString(value)
       
-      const suggestions = uniqueNames.filter(player => 
-        player.toLowerCase().includes(value.toLowerCase())
-      ).slice(0, 5)
+      const allPlayers = user?.short_name ? [{name: user.name, short_name: user.short_name}, ...players] : players
+      const uniquePlayers = allPlayers.filter((player, index, self) => 
+        index === self.findIndex(p => p.short_name === player.short_name)
+      )
+      
+      const suggestions = uniquePlayers
+        .filter(player => 
+          normalizeString(player.short_name).includes(normalizedInput) ||
+          normalizeString(player.name).includes(normalizedInput)
+        )
+        .map(player => player.short_name)
+        .slice(0, 5)
       
       if (playerField === 'player1_name') {
         setPlayer1Suggestions(suggestions)
@@ -461,6 +472,7 @@ const ScheduleForm = () => {
                   onChange={(e) => handlePlayerInput('player1_name', e.target.value)}
                   onBlur={() => setTimeout(() => setShowPlayer1Suggestions(false), 200)}
                   placeholder="Digite o nome do primeiro jogador"
+                  autoComplete="off"
                   required
                 />
                 {showPlayer1Suggestions && player1Suggestions.length > 0 && (
@@ -489,6 +501,7 @@ const ScheduleForm = () => {
                   onChange={(e) => handlePlayerInput('player2_name', e.target.value)}
                   onBlur={() => setTimeout(() => setShowPlayer2Suggestions(false), 200)}
                   placeholder="Digite o nome do segundo jogador"
+                  autoComplete="off"
                   required
                 />
                 {showPlayer2Suggestions && player2Suggestions.length > 0 && (

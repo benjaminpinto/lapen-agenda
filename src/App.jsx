@@ -35,6 +35,7 @@ import Profile from './components/Profile'
 import RankingLeaderboard from './components/ranking/RankingLeaderboard'
 import MyMatches from './components/ranking/MyMatches'
 import Statistics from './components/statistics/Statistics'
+import Challenges from './pages/Challenges'
 import AddMatchResult from './components/statistics/AddMatchResult'
 import './App.css'
 
@@ -82,6 +83,7 @@ function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
             <Route path="/ranking" element={<RankingLeaderboard />} />
             <Route path="/ranking/my-matches" element={<MyMatches />} />
             <Route path="/statistics" element={<Statistics />} />
+            <Route path="/challenges" element={<Challenges />} />
             <Route path="/statistics/add-result" element={loading ? <div>Carregando...</div> : (isAuthenticated ? <AddMatchResult /> : <Navigate to="/login" />)} />
             <Route
               path="/admin"

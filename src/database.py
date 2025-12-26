@@ -1,7 +1,9 @@
 import os
+import time
+
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import time
+
 
 def init_db():
     postgres_url = os.environ.get('DATABASE_URL') or os.environ.get('POSTGRES_URL') or os.environ.get('PRISMA_DATABASE_URL')
@@ -28,7 +30,8 @@ def init_db():
                 'database/betting_schema_postgres.sql',
                 'database/payment_logs_schema_postgres.sql',
                 'database/migrations/ranking_schema_postgres.sql',
-                'database/migrations/add_match_statistics_postgres.sql'
+                'database/migrations/add_match_statistics_postgres.sql',
+                'database/migrations/005_challenges_schema.sql'
             ]
             
             for migration_file in migrations:

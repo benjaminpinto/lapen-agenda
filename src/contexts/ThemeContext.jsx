@@ -20,9 +20,6 @@ export function ThemeProvider({
 
         // Force light mode always
         root.classList.add("light")
-        return
-
-        root.classList.add(theme)
     }, [theme])
 
     const value = {

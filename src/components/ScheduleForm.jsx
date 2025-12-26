@@ -157,8 +157,10 @@ const ScheduleForm = () => {
     setFormData(prev => ({ ...prev, [playerField]: suggestion }))
     if (playerField === 'player1_name') {
       setShowPlayer1Suggestions(false)
+      document.getElementById('player1')?.blur()
     } else {
       setShowPlayer2Suggestions(false)
+      document.getElementById('player2')?.blur()
     }
   }
 
@@ -470,17 +472,19 @@ const ScheduleForm = () => {
                   id="player1"
                   value={formData.player1_name}
                   onChange={(e) => handlePlayerInput('player1_name', e.target.value)}
-                  onBlur={() => setTimeout(() => setShowPlayer1Suggestions(false), 200)}
+                  onFocus={() => formData.player1_name && setShowPlayer1Suggestions(true)}
+                  onBlur={() => setTimeout(() => setShowPlayer1Suggestions(false), 300)}
                   placeholder="Digite o nome do primeiro jogador"
                   autoComplete="off"
                   required
                 />
                 {showPlayer1Suggestions && player1Suggestions.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
                     {player1Suggestions.map((suggestion, index) => (
                       <div
                         key={index}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        className="px-4 py-3 hover:bg-gray-100 cursor-pointer active:bg-gray-200"
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => selectSuggestion('player1_name', suggestion)}
                       >
                         {suggestion}
@@ -499,17 +503,19 @@ const ScheduleForm = () => {
                   id="player2"
                   value={formData.player2_name}
                   onChange={(e) => handlePlayerInput('player2_name', e.target.value)}
-                  onBlur={() => setTimeout(() => setShowPlayer2Suggestions(false), 200)}
+                  onFocus={() => formData.player2_name && setShowPlayer2Suggestions(true)}
+                  onBlur={() => setTimeout(() => setShowPlayer2Suggestions(false), 300)}
                   placeholder="Digite o nome do segundo jogador"
                   autoComplete="off"
                   required
                 />
                 {showPlayer2Suggestions && player2Suggestions.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
                     {player2Suggestions.map((suggestion, index) => (
                       <div
                         key={index}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        className="px-4 py-3 hover:bg-gray-100 cursor-pointer active:bg-gray-200"
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => selectSuggestion('player2_name', suggestion)}
                       >
                         {suggestion}

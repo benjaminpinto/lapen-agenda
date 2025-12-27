@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Trophy, Plus, Calendar as CalendarIcon, Swords, History } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { fetchWithAuth } from '@/utils/fetchWithAuth';
+import React, {useEffect, useState} from 'react';
+import {History, Plus, Swords, Trophy} from 'lucide-react';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Textarea} from "@/components/ui/textarea";
+import {fetchWithAuth} from '@/utils/fetchWithAuth';
 
 import ChallengeCard from '@/components/challenges/ChallengeCard';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from "sonner";
+import {useAuth} from '@/contexts/AuthContext';
+import {toast} from "sonner";
 
 const Challenges = () => {
     const { user } = useAuth();
@@ -120,13 +120,12 @@ const Challenges = () => {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="w-full grid grid-cols-4">
-                    <TabsTrigger value="active" className="text-xs sm:text-sm">Em Andamento</TabsTrigger>
-                    <TabsTrigger value="pending" className="text-xs sm:text-sm">Pendentes ({challenges.pending_received.length + challenges.pending_sent.length})</TabsTrigger>
-                    <TabsTrigger value="history" className="text-xs sm:text-sm">Histórico</TabsTrigger>
-                    <TabsTrigger value="new" className="text-xs sm:text-sm">
-                        <Plus className="w-4 h-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Novo Desafio</span>
+                <TabsList className="w-full grid grid-cols-4 gap-1 p-1">
+                    <TabsTrigger value="active" className="text-[10px] sm:text-sm px-1 sm:px-3">Ativos</TabsTrigger>
+                    <TabsTrigger value="pending" className="text-[10px] sm:text-sm px-1 sm:px-3">Pendentes ({challenges.pending_received.length + challenges.pending_sent.length})</TabsTrigger>
+                    <TabsTrigger value="history" className="text-[10px] sm:text-sm px-1 sm:px-3">Histórico</TabsTrigger>
+                    <TabsTrigger value="new" className="px-2 sm:px-3">
+                        <Plus className="w-4 h-4" />
                     </TabsTrigger>
                 </TabsList>
 

@@ -22,6 +22,7 @@ from src.routes.webhooks import webhooks_bp
 from src.routes.test import test_bp
 from src.routes.ranking import ranking_bp
 from src.routes.statistics import statistics_bp
+from src.routes.challenges import challenges_bp
 from src.database import init_db
 from src.email_service import init_mail
 from src.logger import setup_logger
@@ -60,6 +61,7 @@ app.register_blueprint(webhooks_bp, url_prefix='/api/webhooks')
 app.register_blueprint(test_bp)
 app.register_blueprint(ranking_bp)
 app.register_blueprint(statistics_bp)
+app.register_blueprint(challenges_bp)
 
 # Initialize Swagger (after blueprints, before catch-all route)
 swagger_config = {

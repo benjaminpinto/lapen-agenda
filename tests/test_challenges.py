@@ -24,14 +24,16 @@ def get_auth_token(client, email):
         'email': email,
         'password': 'password'
     })
-    return response.get_json()['token']
+    # Login now returns tokens in cookies, extract from cookie
+    return response.headers.get('Set-Cookie', '').split('access_token=')[1].split(';')[0] if 'access_token=' in response.headers.get('Set-Cookie', '') else None
 
 @pytest.fixture
 def setup_data():
     db = get_db()
-    # Clean up
+    # Clean up in correct order (child tables first)
     db.execute("DELETE FROM challenges")
-    db.execute("DELETE FROM match_statistics_unified WHERE match_type = 'Amistoso'")
+    db.execute("DELETE FROM match_statistics_unified WHERE match_type = 'Amistoso' OR added_by IN (SELECT id FROM users WHERE email LIKE '%@challengetest.com')")
+    db.execute("DELETE FROM schedules WHERE player1_name IN ('U1', 'U2') OR player2_name IN ('U1', 'U2')")
     db.execute("DELETE FROM users WHERE email LIKE '%@challengetest.com'")
     db.commit()
     db.close()
@@ -42,10 +44,11 @@ def setup_data():
     
     yield {'u1': u1, 'u2': u2}
     
-    # Cleanup after
+    # Cleanup after in correct order
     db = get_db()
     db.execute("DELETE FROM challenges")
-    db.execute("DELETE FROM match_statistics_unified WHERE match_type = 'Amistoso'")
+    db.execute("DELETE FROM match_statistics_unified WHERE match_type = 'Amistoso' OR added_by IN (SELECT id FROM users WHERE email LIKE '%@challengetest.com')")
+    db.execute("DELETE FROM schedules WHERE player1_name IN ('U1', 'U2') OR player2_name IN ('U1', 'U2')")
     db.execute("DELETE FROM users WHERE email LIKE '%@challengetest.com'")
     db.commit()
     db.close()
@@ -198,33 +201,58 @@ class TestChallenges:
 
         # Insert some match stats (simulating match results)
         # Using match_statistics_unified
+        # Need to create a schedule_id first to satisfy the constraint
+        cursor = db.execute('''
+            INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, match_type)
+            VALUES (1, '2025-01-10', '10:00', 'U1', 'U2', 'Amistoso') RETURNING id
+        ''')
+        schedule_id_1 = cursor.fetchone()['id']
+        
+        cursor = db.execute('''
+            INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, match_type)
+            VALUES (1, '2025-01-15', '10:00', 'U2', 'U1', 'Amistoso') RETURNING id
+        ''')
+        schedule_id_2 = cursor.fetchone()['id']
+        
+        cursor = db.execute('''
+            INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, match_type)
+            VALUES (1, '2025-01-10', '12:00', 'U1', 'U2', 'Ranking') RETURNING id
+        ''')
+        schedule_id_3 = cursor.fetchone()['id']
+        
+        cursor = db.execute('''
+            INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, match_type)
+            VALUES (1, '2025-02-01', '10:00', 'U1', 'U2', 'Amistoso') RETURNING id
+        ''')
+        schedule_id_4 = cursor.fetchone()['id']
+        
         # 1. U1 wins - 6/0 6/0 (Amistoso) INSIDE date range
         db.execute('''
             INSERT INTO match_statistics_unified 
-            (player1_id, player2_id, player1_name, player2_name, winner_id, winner_name, score, match_type, match_date, season_id, added_by)
-            VALUES (%s, %s, 'U1', 'U2', %s, 'U1', '6-0 6-0', 'Amistoso', '2025-01-10', NULL, %s)
-        ''', (u1_id, u2_id, u1_id, u1_id))
+            (schedule_id, player1_id, player2_id, player1_name, player2_name, winner_id, winner_name, score, match_type, match_date, season_id, added_by)
+            VALUES (%s, %s, %s, 'U1', 'U2', %s, 'U1', '6-0 6-0', 'Amistoso', '2025-01-10', NULL, %s)
+        ''', (schedule_id_1, u1_id, u2_id, u1_id, u1_id))
 
         # 2. U2 wins - 6-4 4-6 10-8 (Amistoso) INSIDE date range
         db.execute('''
             INSERT INTO match_statistics_unified 
-            (player1_id, player2_id, player1_name, player2_name, winner_id, winner_name, score, match_type, match_date, season_id, added_by)
-            VALUES (%s, %s, 'U2', 'U1', %s, 'U2', '6-4 4-6 10-8', 'Amistoso', '2025-01-15', NULL, %s)
-        ''', (u2_id, u1_id, u2_id, u1_id))
+            (schedule_id, player1_id, player2_id, player1_name, player2_name, winner_id, winner_name, score, match_type, match_date, season_id, added_by)
+            VALUES (%s, %s, %s, 'U2', 'U1', %s, 'U2', '6-4 4-6 10-8', 'Amistoso', '2025-01-15', NULL, %s)
+        ''', (schedule_id_2, u2_id, u1_id, u2_id, u1_id))
 
         # 3. U1 wins - (Ranking) - Should NOT count
         db.execute('''
             INSERT INTO match_statistics_unified 
-            (player1_id, player2_id, player1_name, player2_name, winner_id, winner_name, score, match_type, match_date, season_id, added_by)
-            VALUES (%s, %s, 'U1', 'U2', %s, 'U1', '6-0 6-0', 'Ranking', '2025-01-10', NULL, %s)
-        ''', (u1_id, u2_id, u1_id, u1_id))
+            (schedule_id, player1_id, player2_id, player1_name, player2_name, winner_id, winner_name, score, match_type, match_date, season_id, added_by)
+            VALUES (%s, %s, %s, 'U1', 'U2', %s, 'U1', '6-0 6-0', 'Ranking', '2025-01-10', NULL, %s)
+        ''', (schedule_id_3, u1_id, u2_id, u1_id, u1_id))
 
         # 4. U1 wins - (Amistoso) - OUTSIDE date range
         db.execute('''
             INSERT INTO match_statistics_unified 
-            (player1_id, player2_id, player1_name, player2_name, winner_id, winner_name, score, match_type, match_date, season_id, added_by)
-            VALUES (%s, %s, 'U1', 'U2', %s, 'U1', '6-0 6-0', 'Amistoso', '2025-02-01', NULL, %s)
-        ''', (u1_id, u2_id, u1_id, u1_id))
+            (schedule_id, player1_id, player2_id, player1_name, player2_name, winner_id, winner_name, score, match_type, match_date, season_id, added_by)
+            VALUES (%s, %s, %s, 'U1', 'U2', %s, 'U1', '6-0 6-0', 'Amistoso', '2025-02-01', NULL, %s)
+        ''', (schedule_id_4, u1_id, u2_id, u1_id, u1_id))
 
         db.commit()
         

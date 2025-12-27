@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, CalendarDays, Clock, Trophy, DollarSign, MapPin, Users, RotateCcw, FileText, Mail, Instagram, TrendingUp, Award, Flame, ArrowRight, BarChart3, Dices } from 'lucide-react'
+import { Calendar, CalendarDays, Clock, Trophy, DollarSign, MapPin, Users, RotateCcw, FileText, Mail, Instagram, TrendingUp, Award, Flame, ArrowRight, BarChart3, Swords } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import MatchTypeBadge from './ui/MatchTypeBadge'
 import { useAuth } from '@/contexts/AuthContext'
@@ -151,10 +151,10 @@ const Home = () => {
           color="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/50"
         />
         <QuickActionCard
-          to="/betting"
-          icon={<Dices className="h-6 w-6 text-green-600" />}
-          title="Apostas"
-          description="Dê seu palpite"
+          to="/challenges"
+          icon={<Swords className="h-6 w-6 text-green-600" />}
+          title="Desafios"
+          description="Crie disputas"
           color="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900/50"
         />
       </div>

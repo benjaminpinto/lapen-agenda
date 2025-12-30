@@ -27,14 +27,15 @@ def generate_token(user_id):
 
 def generate_tokens(user_id, remember_me=False):
     """Generate access and refresh tokens"""
+    refresh_expiry = timedelta(days=30 if remember_me else 7)
+    
     access_payload = {
         'user_id': user_id,
         'type': 'access',
-        'exp': datetime.utcnow() + timedelta(minutes=15)
+        'exp': datetime.utcnow() + refresh_expiry
     }
     access_token = jwt.encode(access_payload, current_app.config['SECRET_KEY'], algorithm='HS256')
     
-    refresh_expiry = timedelta(days=30 if remember_me else 7)
     refresh_payload = {
         'user_id': user_id,
         'type': 'refresh',

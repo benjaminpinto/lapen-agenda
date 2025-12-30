@@ -1,9 +1,12 @@
+import re
+
 from flask import Blueprint, request, jsonify
+
+from src.auth import hash_password, verify_password, generate_tokens, verify_refresh_token, revoke_refresh_token, \
+    generate_verification_token, require_auth, get_user_by_email, get_user_by_id
 from src.database import get_db
-from src.auth import hash_password, verify_password, generate_token, generate_tokens, verify_refresh_token, revoke_refresh_token, generate_verification_token, require_auth, get_user_by_email, get_user_by_id
 from src.email_service import send_verification_email, send_lapen_approval_request_email
 from src.logger import get_logger
-import re
 
 logger = get_logger()
 
@@ -100,10 +103,12 @@ def register():
         
         from flask import current_app
         is_production = current_app.config.get('FLASK_ENV') == 'production'
+        max_age = 7*24*60*60  # 7 days
+        
         response.set_cookie(
             'access_token', access_token,
             httponly=True, secure=is_production, samesite='Strict',
-            max_age=15*60
+            max_age=max_age
         )
         response.set_cookie(
             'refresh_token', refresh_token,
@@ -160,7 +165,7 @@ def login():
     response.set_cookie(
         'access_token', access_token,
         httponly=True, secure=is_production, samesite='Strict',
-        max_age=15*60
+        max_age=max_age
     )
     response.set_cookie(
         'refresh_token', refresh_token,

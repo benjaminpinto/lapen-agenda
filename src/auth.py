@@ -51,6 +51,9 @@ def generate_tokens(user_id, remember_me=False):
             (user_id, refresh_token, datetime.utcnow() + refresh_expiry)
         )
         db.commit()
+    except Exception:
+        # If refresh token storage fails, still return tokens (graceful degradation)
+        pass
     finally:
         db.close()
     

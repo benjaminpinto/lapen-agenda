@@ -64,21 +64,22 @@ def create_admin_user(client):
     db.commit()
     db.close()
     
-    response = client.post('/api/auth/login', json={
+    client.post('/api/auth/login', json={
         'email': 'admin@ranktest.com',
         'password': 'admin123'
     })
-    data = response.get_json(); cookies = response.headers.getlist('Set-Cookie'); token = None; [token := cookie.split('access_token=')[1].split(';')[0] for cookie in cookies if 'access_token=' in cookie]; return token if token else data.get('token')
 
 def create_test_user(client):
-    response = client.post('/api/auth/register', json={
-        'email': 'user@ranktest.com',
-        'password': 'password123',
-        'name': 'Test User',
-        'short_name': 'TestUser',
-        'phone': '11999999999'
-    })
-    return response.get_json()['user']
+    db = get_db()
+    password_hash = hash_password('password123')
+    cursor = db.execute('''
+        INSERT INTO users (email, password_hash, name, short_name, is_verified)
+        VALUES (%s, %s, %s, %s, %s) RETURNING id
+    ''', ('user@ranktest.com', password_hash, 'Test User', 'TestUser', True))
+    user_id = cursor.fetchone()['id']
+    db.commit()
+    db.close()
+    return {'id': user_id, 'email': 'user@ranktest.com', 'name': 'Test User'}
 
 class TestRankingConfig:
     def test_get_default_config(self, setup_db):
@@ -164,15 +165,14 @@ class TestRankingSeasons:
         """Test creating a new season"""
         from main import app
         with app.test_client() as client:
-            admin_token = create_admin_user(client)
+            create_admin_user(client)
             response = client.post('/api/ranking/seasons', 
                 json={
                     'year': 2026,
                     'start_date': '2026-01-01',
                     'end_date': '2026-12-31',
                     'description': 'Test'
-                },
-                headers={'Authorization': f'Bearer {admin_token}'}
+                }
             )
             assert response.status_code == 200
             data = response.get_json()
@@ -195,11 +195,10 @@ class TestRankingParticipants:
         from main import app
         season_id = create_test_season()
         with app.test_client() as client:
-            admin_token = create_admin_user(client)
+            create_admin_user(client)
             test_user = create_test_user(client)
             response = client.post(f'/api/ranking/seasons/{season_id}/participants',
-                json={'user_id': test_user['id']},
-                headers={'Authorization': f'Bearer {admin_token}'}
+                json={'user_id': test_user['id']}
             )
             assert response.status_code == 200
 

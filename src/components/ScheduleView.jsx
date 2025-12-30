@@ -164,15 +164,11 @@ const ScheduleView = () => {
         e.preventDefault()
 
         try {
-            const headers = {
-                'Content-Type': 'application/json',
-            }
-            if (token) {
-            }
-
             const response = await fetchWithAuth(`/api/public/schedules/${editingSchedule.id}`, {
                 method: 'PUT',
-                headers,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify(formData),
             })
 
@@ -221,13 +217,8 @@ const ScheduleView = () => {
 
     const performDelete = async (scheduleId) => {
         try {
-            const headers = {}
-            if (token) {
-            }
-
             const response = await fetchWithAuth(`/api/public/schedules/${scheduleId}`, {
-                method: 'DELETE',
-                headers
+                method: 'DELETE'
             })
 
             const data = await response.json()
@@ -259,13 +250,8 @@ const ScheduleView = () => {
 
         try {
             const scheduleId = deletingSchedule.id
-            const headers = {}
-            if (token) {
-            }
-
             const response = await fetchWithAuth(`/api/public/schedules/${scheduleId}`, {
-                method: 'DELETE',
-                headers
+                method: 'DELETE'
             })
 
             const data = await response.json()

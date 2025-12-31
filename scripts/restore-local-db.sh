@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-PROJECT_ROOT="/Users/benjaminpinto/Developer/playground/lapen-agenda/antigravity"
+PROJECT_ROOT="/Users/benjaminpinto/Developer/playground/lapen-agenda"
 
 if [ -z "$1" ]; then
     echo "Usage: $0 <backup_file>"
-    echo "Example: $0 src/database/backups/production_backup_20251226_113441.sql"
+    echo "Example: $0 src/database/backups/production_backup_20251231_142710.sql"
     exit 1
 fi
 

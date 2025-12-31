@@ -5,14 +5,14 @@ import {Button} from '@/components/ui/button'
 import {Badge} from '@/components/ui/badge'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle
 } from '@/components/ui/alert-dialog'
 import {useToast} from '@/contexts/ToastContext'
 import {ArrowLeft} from 'lucide-react'
@@ -359,50 +359,87 @@ const SeasonRounds = () => {
         ))}
       </div>
 
-      {selectedRound && matches.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Partidas - Rodada {rounds.find(r => r.id === selectedRound)?.round_number}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {matches.map(match => (
-                <div key={match.id} className="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center p-2 border rounded">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-medium">{match.player1_name} vs {match.player2_name}</span>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge>{match.group_type}</Badge>
-                      {match.score && <span className="text-sm">{match.score}</span>}
-                      {match.winner_name && <span className="text-sm text-green-600">Vencedor: {match.winner_name}</span>}
-                    </div>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Badge variant={match.status === 'completed' ? 'default' : 'secondary'}>
-                      {match.status === 'completed' ? 'Finalizada' : 'Pendente'}
-                    </Badge>
-                    {match.status === 'scheduled' && (
-                      <>
-                        <Button size="sm" onClick={() => {
-                          setSelectedMatch(match)
-                          setShowResultForm(true)
-                        }} className="w-full sm:w-auto">
-                          Registrar Resultado
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => {
-                          setSelectedMatch(match)
-                          setShowResultForm(false)
-                        }} className="w-full sm:w-auto">
-                          W.O.
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
+      {selectedRound && matches.length > 0 && (() => {
+        const eliteMatches = matches.filter(m => m.group_type === 'elite')
+        const challengerMatches = matches.filter(m => m.group_type === 'challenger')
+        
+        const MatchCard = ({ match }) => (
+          <div key={match.id} className="bg-white border rounded-lg p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm truncate">{match.player1_name}</div>
+                <div className="text-xs text-gray-500">vs</div>
+                <div className="font-medium text-sm truncate">{match.player2_name}</div>
+              </div>
+              <Badge variant={match.status === 'completed' ? 'default' : 'secondary'} className="shrink-0">
+                {match.status === 'completed' ? '✓' : '○'}
+              </Badge>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            {match.score && (
+              <div className="text-sm font-semibold text-center py-1 bg-gray-50 rounded">
+                {match.score}
+              </div>
+            )}
+            {match.winner_name && (
+              <div className="text-xs text-green-600 text-center truncate">
+                🏆 {match.winner_name}
+              </div>
+            )}
+            {match.status === 'scheduled' && (
+              <div className="flex gap-1">
+                <Button size="sm" onClick={() => {
+                  setSelectedMatch(match)
+                  setShowResultForm(true)
+                }} className="flex-1 h-8 text-xs">
+                  Resultado
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => {
+                  setSelectedMatch(match)
+                  setShowResultForm(false)
+                }} className="flex-1 h-8 text-xs">
+                  W.O.
+                </Button>
+              </div>
+            )}
+          </div>
+        )
+        
+        return (
+          <div className="space-y-4">
+            {eliteMatches.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <span className="text-amber-600">👑</span>
+                    Elite ({eliteMatches.length} partidas)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    {eliteMatches.map(match => <MatchCard key={match.id} match={match} />)}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
+            {challengerMatches.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <span className="text-blue-600">⚔️</span>
+                    Challenger ({challengerMatches.length} partidas)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    {challengerMatches.map(match => <MatchCard key={match.id} match={match} />)}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )
+      })()}
 
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>

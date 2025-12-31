@@ -262,20 +262,70 @@ def submit_match_result(match_id):
         return jsonify({'error': str(e)}), 400
 
 def _update_positions(db, season_id):
-    """Update participant positions based on total points"""
+    """Update participant positions based on total points and tie-breaking rules"""
     participants = db.execute('''
-        SELECT user_id, (total_points + temp_points) as total
+        SELECT user_id, (total_points + temp_points) as total,
+               wins, (sets_won - sets_lost) as set_diff, (games_won - games_lost) as game_diff
         FROM ranking_participants
         WHERE season_id = %s
-        ORDER BY total DESC
+        ORDER BY total DESC, wins DESC, set_diff DESC, game_diff DESC
     ''', (season_id,)).fetchall()
     
-    for i, participant in enumerate(participants):
+    # Apply head-to-head for remaining ties
+    participants_list = list(participants)
+    i = 0
+    while i < len(participants_list):
+        # Find group with same stats
+        j = i + 1
+        while j < len(participants_list) and _same_stats(participants_list[i], participants_list[j]):
+            j += 1
+        
+        # If tied group, apply head-to-head
+        if j - i > 1:
+            tied_group = participants_list[i:j]
+            tied_group = _apply_head_to_head(db, season_id, tied_group)
+            participants_list[i:j] = tied_group
+        
+        i = j
+    
+    for idx, participant in enumerate(participants_list):
         db.execute('''
             UPDATE ranking_participants
             SET position = %s
             WHERE season_id = %s AND user_id = %s
-        ''', (i + 1, season_id, participant['user_id']))
+        ''', (idx + 1, season_id, participant['user_id']))
+
+def _same_stats(p1, p2):
+    """Check if two participants have identical stats for tie-breaking"""
+    return (p1['total'] == p2['total'] and 
+            p1['wins'] == p2['wins'] and 
+            p1['set_diff'] == p2['set_diff'] and 
+            p1['game_diff'] == p2['game_diff'])
+
+def _apply_head_to_head(db, season_id, tied_players):
+    """Apply head-to-head results to break ties"""
+    if len(tied_players) != 2:
+        return tied_players  # Head-to-head only for 2-player ties
+    
+    p1_id = tied_players[0]['user_id']
+    p2_id = tied_players[1]['user_id']
+    
+    # Check if they played each other
+    h2h = db.execute('''
+        SELECT winner_id FROM ranking_matches rm
+        JOIN ranking_rounds rr ON rm.round_id = rr.id
+        WHERE rr.season_id = %s 
+          AND ((rm.player1_id = %s AND rm.player2_id = %s) 
+            OR (rm.player1_id = %s AND rm.player2_id = %s))
+          AND rm.winner_id IS NOT NULL
+        ORDER BY rm.played_at DESC
+        LIMIT 1
+    ''', (season_id, p1_id, p2_id, p2_id, p1_id)).fetchone()
+    
+    if h2h and h2h['winner_id'] == p2_id:
+        return [tied_players[1], tied_players[0]]
+    
+    return tied_players
 
 @ranking_bp.route('/stats/<int:user_id>/<int:season_id>', methods=['GET'])
 def get_user_stats(user_id, season_id):

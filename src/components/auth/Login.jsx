@@ -1,13 +1,13 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useAuth } from '@/contexts/AuthContext'
-import { useToast } from '@/contexts/ToastContext'
-import { LogIn, Mail, Lock } from 'lucide-react'
+import {useState} from 'react'
+import {Link, useNavigate} from 'react-router-dom'
+import {Button} from '@/components/ui/button'
+import {Input} from '@/components/ui/input'
+import {Label} from '@/components/ui/label'
+import {Checkbox} from '@/components/ui/checkbox'
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
+import {useAuth} from '@/contexts/AuthContext'
+import {useToast} from '@/contexts/ToastContext'
+import {Lock, LogIn, Mail} from 'lucide-react'
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -108,6 +108,7 @@ const Login = () => {
                   placeholder="Sua senha"
                   value={formData.password}
                   onChange={handleChange}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSubmit(e)}
                   tabIndex={2}
                 />
               </div>

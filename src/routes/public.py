@@ -184,11 +184,28 @@ def create_schedule():
     p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (player2_name, player2_name)).fetchone()
     
     try:
-        db.execute('''
+        cursor = db.cursor()
+        cursor.execute('''
             INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, player1_id, player2_id, match_type)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
         ''', (court_id, date, start_time, player1_name, player2_name, 
               p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None, match_type))
+        schedule_id = cursor.fetchone()['id']
+        
+        # If Liga match and both players are registered, link to pending ranking match
+        if match_type == 'Liga' and p1_user and p2_user:
+            ranking_match = db.execute('''
+                SELECT rm.id FROM ranking_matches rm
+                JOIN ranking_rounds rr ON rm.round_id = rr.id
+                WHERE rr.status = 'open' AND rm.status = 'scheduled'
+                  AND ((rm.player1_id = %s AND rm.player2_id = %s) OR (rm.player1_id = %s AND rm.player2_id = %s))
+                LIMIT 1
+            ''', (p1_user['id'], p2_user['id'], p2_user['id'], p1_user['id'])).fetchone()
+            
+            if ranking_match:
+                db.execute('UPDATE ranking_matches SET schedule_id = %s WHERE id = %s', 
+                          (schedule_id, ranking_match['id']))
+        
         db.commit()
         return jsonify({'success': True, 'message': 'Agendamento criado com sucesso'})
     except Exception:

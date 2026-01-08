@@ -363,6 +363,8 @@ Vercel Deployment
 - Points calculation
 - W.O. resolution
 - Finals qualification
+- **Schedule Integration** - Automatic linking between Liga schedules and ranking matches
+- **Statistics Integration** - Automatic ranking update when results are added via statistics
 
 ### Statistics Module
 - Player performance tracking

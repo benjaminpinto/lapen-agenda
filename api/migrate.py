@@ -8,6 +8,25 @@ def handler(request):
         
         db = get_db()
         
+        # Step 1: Link existing Liga schedules to ranking matches
+        db.execute("""
+            UPDATE ranking_matches rm
+            SET schedule_id = s.id
+            FROM schedules s
+            JOIN users u1 ON LOWER(TRIM(s.player1_name)) = LOWER(TRIM(u1.short_name))
+            JOIN users u2 ON LOWER(TRIM(s.player2_name)) = LOWER(TRIM(u2.short_name))
+            JOIN ranking_rounds rr ON rm.round_id = rr.id
+            WHERE rm.player1_id = u1.id
+              AND rm.player2_id = u2.id
+              AND rm.status = 'scheduled'
+              AND rm.schedule_id IS NULL
+              AND s.match_type = 'Liga'
+              AND s.deleted_at IS NULL
+              AND rr.status = 'open'
+        """)
+        linked = db.rowcount
+        
+        # Step 2: Update ranking matches from statistics
         stats = db.execute("""
             SELECT ms.*, rm.id as ranking_match_id, rm.player1_id, rm.player2_id, rr.season_id
             FROM match_statistics_unified ms
@@ -73,7 +92,7 @@ def handler(request):
         db.commit()
         db.close()
         
-        return jsonify({'success': True, 'updated': updated})
+        return jsonify({'success': True, 'linked': linked, 'updated': updated})
     except Exception as e:
         import traceback
         return jsonify({'success': False, 'error': str(e), 'traceback': traceback.format_exc()}), 500

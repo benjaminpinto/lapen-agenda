@@ -1,5 +1,6 @@
 import os
 import sys
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -26,6 +27,9 @@ from src.routes.challenges import challenges_bp
 from src.database import init_db
 from src.email_service import init_mail
 from src.logger import setup_logger
+
+# Import migration handler
+from api.migrate import handler as migrate_handler
 
 app = Flask(__name__, static_folder='dist')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -76,6 +80,12 @@ swagger_config = {
     }]
 }
 Swagger(app, template_file='swagger.yaml', config=swagger_config)
+
+# Migration endpoint
+@app.route('/api/migrate')
+def migrate():
+    from flask import request
+    return migrate_handler(request)
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')

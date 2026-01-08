@@ -27,8 +27,8 @@ def setup_db():
     db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year = 2025)")
     db.execute("DELETE FROM ranking_seasons WHERE year = 2025")
     db.execute("DELETE FROM schedules WHERE player1_name LIKE 'TestP%'")
-    db.execute("DELETE FROM courts WHERE name = 'Test Court'")
     db.execute("DELETE FROM users WHERE email LIKE '%@integtest.com'")
+    db.execute("DELETE FROM courts WHERE name = 'Test Court'")
     db.commit()
     db.close()
     yield
@@ -39,8 +39,8 @@ def setup_db():
     db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year = 2025)")
     db.execute("DELETE FROM ranking_seasons WHERE year = 2025")
     db.execute("DELETE FROM schedules WHERE player1_name LIKE 'TestP%'")
-    db.execute("DELETE FROM courts WHERE name = 'Test Court'")
     db.execute("DELETE FROM users WHERE email LIKE '%@integtest.com'")
+    db.execute("DELETE FROM courts WHERE name = 'Test Court'")
     db.commit()
     db.close()
 

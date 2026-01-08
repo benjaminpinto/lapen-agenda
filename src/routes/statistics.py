@@ -32,6 +32,62 @@ def add_match_result():
             match_type = schedule['match_type']
             match_date = schedule['date']
             season_id = None
+            
+            # Check if this schedule is linked to a ranking match
+            linked_ranking_match = db.execute('''
+                SELECT rm.*, rr.season_id, rr.status as round_status
+                FROM ranking_matches rm
+                JOIN ranking_rounds rr ON rm.round_id = rr.id
+                WHERE rm.schedule_id = %s AND rm.status = 'scheduled'
+            ''', (schedule_id,)).fetchone()
+            
+            if linked_ranking_match:
+                # Update the ranking match
+                ranking_match_id = linked_ranking_match['id']
+                season_id = linked_ranking_match['season_id']
+                match_type = 'Ranking'
+                
+                winner_id = linked_ranking_match['player1_id'] if winner_name in [p1, schedule['player1_name']] else linked_ranking_match['player2_id']
+                parsed = parse_score(score)
+                
+                from src.services.points_calculator import PointsCalculator
+                match_result = {
+                    'wo_type': 'none',
+                    'sets_winner': max(parsed['p1_sets'], parsed['p2_sets']),
+                    'sets_loser': min(parsed['p1_sets'], parsed['p2_sets']),
+                    'games_winner': parsed['p1_games'] if winner_id == linked_ranking_match['player1_id'] else parsed['p2_games'],
+                    'games_loser': parsed['p2_games'] if winner_id == linked_ranking_match['player1_id'] else parsed['p1_games']
+                }
+                winner_points, loser_points = PointsCalculator.calculate(match_result, season_id)
+                
+                db.execute('''
+                    UPDATE ranking_matches
+                    SET status = 'completed', winner_id = %s, score = %s, 
+                        sets_p1 = %s, sets_p2 = %s, games_p1 = %s, games_p2 = %s,
+                        points_p1 = %s, points_p2 = %s, played_at = NOW(), added_by = %s
+                    WHERE id = %s
+                ''', (winner_id, score, parsed['p1_sets'], parsed['p2_sets'], 
+                      parsed['p1_games'], parsed['p2_games'],
+                      winner_points if winner_id == linked_ranking_match['player1_id'] else loser_points,
+                      winner_points if winner_id == linked_ranking_match['player2_id'] else loser_points,
+                      request.user_id, ranking_match_id))
+                
+                for player_id, is_winner, sets_won, sets_lost, games_won, games_lost, points in [
+                    (linked_ranking_match['player1_id'], winner_id == linked_ranking_match['player1_id'], 
+                     parsed['p1_sets'], parsed['p2_sets'], parsed['p1_games'], parsed['p2_games'],
+                     winner_points if winner_id == linked_ranking_match['player1_id'] else loser_points),
+                    (linked_ranking_match['player2_id'], winner_id == linked_ranking_match['player2_id'], 
+                     parsed['p2_sets'], parsed['p1_sets'], parsed['p2_games'], parsed['p1_games'],
+                     winner_points if winner_id == linked_ranking_match['player2_id'] else loser_points)
+                ]:
+                    db.execute('''
+                        UPDATE ranking_participants
+                        SET total_points = total_points + %s, wins = wins + %s, losses = losses + %s,
+                            sets_won = sets_won + %s, sets_lost = sets_lost + %s,
+                            games_won = games_won + %s, games_lost = games_lost + %s
+                        WHERE season_id = %s AND user_id = %s
+                    ''', (points, 1 if is_winner else 0, 0 if is_winner else 1,
+                          sets_won, sets_lost, games_won, games_lost, season_id, player_id))
         else:
             match = db.execute('''
                 SELECT rm.*, u1.short_name as p1, u2.short_name as p2, rr.season_id
@@ -84,6 +140,10 @@ def add_match_result():
         p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (p2, p2)).fetchone()
         winner_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (winner_name, winner_name)).fetchone()
         
+        # For linked ranking matches, only set ranking_match_id (not schedule_id)
+        stat_schedule_id = None if ranking_match_id else schedule_id
+        stat_ranking_match_id = ranking_match_id
+        
         db.execute('''
             INSERT INTO match_statistics_unified (
                 schedule_id, ranking_match_id, player1_id, player2_id,
@@ -91,7 +151,7 @@ def add_match_result():
                 score, match_type, match_date, season_id, added_by
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', (
-            schedule_id, ranking_match_id,
+            stat_schedule_id, stat_ranking_match_id,
             p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None,
             p1, p2,
             winner_user['id'] if winner_user else None, winner_name,
@@ -197,9 +257,11 @@ def get_past_matches():
     db = get_db()
     try:
         schedule_matches = db.execute('''
-            SELECT s.id, s.date, s.start_time, s.player1_name, s.player2_name, s.match_type
+            SELECT s.id, s.date, s.start_time, s.player1_name, s.player2_name, s.match_type,
+                   rm.id as ranking_match_id
             FROM schedules s
             LEFT JOIN match_statistics_unified mr ON s.id = mr.schedule_id
+            LEFT JOIN ranking_matches rm ON s.id = rm.schedule_id AND rm.status = 'scheduled'
             WHERE s.deleted_at IS NULL AND mr.id IS NULL AND s.date <= CURRENT_DATE
             ORDER BY s.date DESC, s.start_time DESC
         ''').fetchall()
@@ -207,11 +269,11 @@ def get_past_matches():
         ranking_matches = db.execute('''
             SELECT rm.id, NULL as date, NULL as start_time, 
                    u1.short_name as player1_name, u2.short_name as player2_name, 
-                   'Ranking' as match_type
+                   'Ranking' as match_type, rm.id as ranking_match_id
             FROM ranking_matches rm
             JOIN users u1 ON rm.player1_id = u1.id
             JOIN users u2 ON rm.player2_id = u2.id
-            WHERE rm.status = 'scheduled'
+            WHERE rm.status = 'scheduled' AND rm.schedule_id IS NULL
         ''').fetchall()
         
         all_matches = []

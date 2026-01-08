@@ -1,5 +1,7 @@
 from datetime import datetime, date
+
 from flask import Blueprint, request, jsonify
+
 from src.auth import require_auth
 from src.database import get_db
 from src.logger import get_logger
@@ -79,31 +81,17 @@ def get_challenges():
     
     db = get_db()
     try:
-        if user_id:
-            # Authenticated: show user's challenges
-            logger.info(f"Fetching challenges for user_id: {user_id}")
-            cursor = db.execute('''
-                SELECT c.*, 
-                       u1.name as challenger_name, u1.short_name as challenger_short_name,
-                       u2.name as challenged_name, u2.short_name as challenged_short_name
-                FROM challenges c
-                JOIN users u1 ON c.challenger_id = u1.id AND u1.deleted_at IS NULL
-                JOIN users u2 ON c.challenged_id = u2.id AND u2.deleted_at IS NULL
-                WHERE (c.challenger_id = %s OR c.challenged_id = %s)
-                ORDER BY c.created_at DESC
-            ''', (user_id, user_id))
-        else:
-            # Public: show only active challenges
-            cursor = db.execute('''
-                SELECT c.*, 
-                       u1.name as challenger_name, u1.short_name as challenger_short_name,
-                       u2.name as challenged_name, u2.short_name as challenged_short_name
-                FROM challenges c
-                JOIN users u1 ON c.challenger_id = u1.id
-                JOIN users u2 ON c.challenged_id = u2.id
-                WHERE c.status = 'active'
-                ORDER BY c.created_at DESC
-            ''')
+        # Fetch all active challenges for everyone, plus user's own pending/history if authenticated
+        cursor = db.execute('''
+            SELECT c.*, 
+                   u1.name as challenger_name, u1.short_name as challenger_short_name,
+                   u2.name as challenged_name, u2.short_name as challenged_short_name
+            FROM challenges c
+            JOIN users u1 ON c.challenger_id = u1.id AND u1.deleted_at IS NULL
+            JOIN users u2 ON c.challenged_id = u2.id AND u2.deleted_at IS NULL
+            WHERE c.status = 'active' OR (c.challenger_id = %s OR c.challenged_id = %s)
+            ORDER BY c.created_at DESC
+        ''', (user_id or 0, user_id or 0))
         
         challenges = cursor.fetchall()
         logger.info(f"Found {len(challenges)} challenges for user {user_id}")
@@ -125,16 +113,19 @@ def get_challenges():
             if isinstance(c['created_at'], datetime):
                 c['created_at'] = c['created_at'].isoformat()
 
+            # Mark if user is involved
+            c['is_mine'] = user_id and (c['challenger_id'] == user_id or c['challenged_id'] == user_id)
+
             # Add progress data if active
             if c['status'] == 'active':
                 c['progress'] = get_challenge_progress(db, c)
                 result['active'].append(c)
-            elif c['status'] == 'pending' and user_id:
+            elif c['status'] == 'pending' and user_id and c['is_mine']:
                 if c['challenged_id'] == user_id:
                     result['pending_received'].append(c)
                 else:
                     result['pending_sent'].append(c)
-            elif c['status'] in ['rejected', 'completed', 'cancelled']:
+            elif c['status'] in ['rejected', 'completed', 'cancelled'] and user_id and c['is_mine']:
                 if c['status'] == 'completed':
                      c['progress'] = get_challenge_progress(db, c)
                 result['history'].append(c)

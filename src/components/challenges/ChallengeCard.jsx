@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Calendar, Gift, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import React, {useState} from 'react';
+import {AlertCircle, Calendar, CheckCircle2, Gift} from 'lucide-react';
+import {format} from 'date-fns';
+import {ptBR} from 'date-fns/locale';
 import ChallengeProgress from './ChallengeProgress';
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { useAuth } from '@/contexts/AuthContext';
+import {Button} from "@/components/ui/button";
+import {toast} from "sonner";
+import {useAuth} from '@/contexts/AuthContext';
 
 const ChallengeCard = ({ challenge, onUpdate }) => {
     const { user } = useAuth();
@@ -48,7 +48,9 @@ const ChallengeCard = ({ challenge, onUpdate }) => {
     };
 
     return (
-        <div className="rounded-xl border overflow-hidden hover:border-orange-300 transition-colors">
+        <div className={`rounded-xl border overflow-hidden hover:border-orange-300 transition-colors ${
+            challenge.is_mine ? 'ring-2 ring-orange-400 ring-offset-2' : ''
+        }`}>
 
             {/* Header */}
             <div className="p-4 flex items-center justify-between border-b bg-orange-50">

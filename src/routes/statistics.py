@@ -336,10 +336,12 @@ def get_player_opponents(player_name):
 def get_recent_statistics_results():
     limit = request.args.get('limit', 20, type=int)
     db = get_db()
+    # Exclude statistics that are linked to ranking matches (they appear in ranking recent results)
     results = db.execute('''
         SELECT mr.*, u.short_name as added_by_name
         FROM match_statistics_unified mr
         LEFT JOIN users u ON mr.added_by = u.id
+        WHERE mr.ranking_match_id IS NULL
         ORDER BY mr.created_at DESC
         LIMIT %s
     ''', (limit,)).fetchall()

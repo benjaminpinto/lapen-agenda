@@ -1,11 +1,25 @@
-import { useState, useEffect, useRef } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { useToast } from '@/components/hooks/use-toast'
-import { Trophy, TrendingUp, Target, Award, ChevronDown, ChevronUp, Users, Flame, BarChart3, History, Skull, Heart, X, Share2 } from 'lucide-react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
+import {useEffect, useRef, useState} from 'react'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Button} from '@/components/ui/button'
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
+import {Dialog, DialogContent} from '@/components/ui/dialog'
+import {useToast} from '@/components/hooks/use-toast'
+import {
+  Award,
+  BarChart3,
+  ChevronDown,
+  ChevronUp,
+  Flame,
+  Heart,
+  History,
+  Share2,
+  Skull,
+  Target,
+  TrendingUp,
+  Trophy,
+  X
+} from 'lucide-react'
+import {Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip} from 'recharts'
 import RecentResults from '../ranking/RecentResults'
 import ShareableStatsCard from './ShareableStatsCard'
 import html2canvas from 'html2canvas'
@@ -191,29 +205,42 @@ export default function Statistics() {
 
     const matches = stats.matches
     let currentStreak = 0
+    let currentStreakType = null
     let maxWinStreak = 0
     let maxLossStreak = 0
-    let currentStreakType = null
+    let tempStreak = 0
+    let tempType = null
 
     const sortedMatches = [...matches].sort((a, b) => new Date(b.match_date) - new Date(a.match_date))
     
-    sortedMatches.forEach(match => {
+    sortedMatches.forEach((match, index) => {
       const isWin = match.winner_name === player1
-      if (currentStreakType === null) {
+      
+      // Current streak: only count from most recent match
+      if (index === 0) {
         currentStreakType = isWin ? 'win' : 'loss'
         currentStreak = 1
       } else if ((currentStreakType === 'win' && isWin) || (currentStreakType === 'loss' && !isWin)) {
         currentStreak++
+      }
+      
+      // Max streaks: track throughout all matches
+      if (tempType === null) {
+        tempType = isWin ? 'win' : 'loss'
+        tempStreak = 1
+      } else if ((tempType === 'win' && isWin) || (tempType === 'loss' && !isWin)) {
+        tempStreak++
       } else {
-        if (currentStreakType === 'win') maxWinStreak = Math.max(maxWinStreak, currentStreak)
-        else maxLossStreak = Math.max(maxLossStreak, currentStreak)
-        currentStreakType = isWin ? 'win' : 'loss'
-        currentStreak = 1
+        if (tempType === 'win') maxWinStreak = Math.max(maxWinStreak, tempStreak)
+        else maxLossStreak = Math.max(maxLossStreak, tempStreak)
+        tempType = isWin ? 'win' : 'loss'
+        tempStreak = 1
       }
     })
     
-    if (currentStreakType === 'win') maxWinStreak = Math.max(maxWinStreak, currentStreak)
-    else maxLossStreak = Math.max(maxLossStreak, currentStreak)
+    // Final max streak update
+    if (tempType === 'win') maxWinStreak = Math.max(maxWinStreak, tempStreak)
+    else maxLossStreak = Math.max(maxLossStreak, tempStreak)
 
     const totalSets = stats.sets_won + stats.sets_lost
     const avgGamesPerSet = totalSets > 0 ? ((stats.games_won + stats.games_lost) / totalSets).toFixed(1) : 0

@@ -317,6 +317,8 @@ CREATE INDEX IF NOT EXISTS idx_match_stats_unified_type ON match_statistics_unif
 CREATE INDEX IF NOT EXISTS idx_match_stats_unified_season ON match_statistics_unified(season_id) WHERE season_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_match_stats_unified_schedule ON match_statistics_unified(schedule_id) WHERE schedule_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_match_stats_unified_ranking ON match_statistics_unified(ranking_match_id) WHERE ranking_match_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_match_stats_unified_schedule_unique ON match_statistics_unified(schedule_id) WHERE schedule_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_match_stats_unified_ranking_unique ON match_statistics_unified(ranking_match_id) WHERE ranking_match_id IS NOT NULL;
 
 -- Update trigger for users table
 CREATE OR REPLACE FUNCTION update_updated_at_column()

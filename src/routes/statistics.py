@@ -261,8 +261,10 @@ def get_past_matches():
                    rm.id as ranking_match_id
             FROM schedules s
             LEFT JOIN match_statistics_unified mr ON s.id = mr.schedule_id
-            LEFT JOIN ranking_matches rm ON s.id = rm.schedule_id AND rm.status = 'scheduled'
-            WHERE s.deleted_at IS NULL AND mr.id IS NULL AND s.date <= CURRENT_DATE
+            LEFT JOIN ranking_matches rm ON s.id = rm.schedule_id
+            LEFT JOIN match_statistics_unified mr2 ON rm.id = mr2.ranking_match_id
+            WHERE s.deleted_at IS NULL AND mr.id IS NULL AND mr2.id IS NULL 
+                  AND s.date <= CURRENT_DATE AND (rm.status = 'scheduled' OR rm.status IS NULL)
             ORDER BY s.date DESC, s.start_time DESC
         ''').fetchall()
         

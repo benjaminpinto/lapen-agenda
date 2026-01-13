@@ -187,7 +187,7 @@ def create_schedule():
         cursor = db.cursor()
         cursor.execute('''
             INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, player1_id, player2_id, match_type)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+            VALUES (%s, %s, %s, TRIM(%s), TRIM(%s), %s, %s, %s) RETURNING id
         ''', (court_id, date, start_time, player1_name, player2_name, 
               p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None, match_type))
         schedule_id = cursor.fetchone()['id']
@@ -262,7 +262,7 @@ def update_schedule(schedule_id):
     try:
         db.execute('''
             UPDATE schedules 
-            SET player1_name = %s, player2_name = %s, player1_id = %s, player2_id = %s, match_type = %s
+            SET player1_name = TRIM(%s), player2_name = TRIM(%s), player1_id = %s, player2_id = %s, match_type = %s
             WHERE id = %s
         ''', (player1_name, player2_name, p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None, match_type, schedule_id))
         db.commit()

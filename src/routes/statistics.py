@@ -90,16 +90,16 @@ def add_match_result():
                           sets_won, sets_lost, games_won, games_lost, season_id, player_id))
                 
                 # For linked ranking matches, insert statistics with ranking_match_id only
-                p1_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (p1, p1)).fetchone()
-                p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (p2, p2)).fetchone()
-                winner_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (winner_name, winner_name)).fetchone()
+                p1_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (p1, p1)).fetchone()
+                p2_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (p2, p2)).fetchone()
+                winner_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (winner_name, winner_name)).fetchone()
                 
                 db.execute('''
                     INSERT INTO match_statistics_unified (
                         schedule_id, ranking_match_id, player1_id, player2_id,
                         player1_name, player2_name, winner_id, winner_name,
                         score, match_type, match_date, season_id, added_by
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ) VALUES (%s, %s, %s, %s, TRIM(%s), TRIM(%s), %s, TRIM(%s), %s, %s, %s, %s, %s)
                 ''', (
                     None, ranking_match_id,
                     p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None,
@@ -162,16 +162,16 @@ def add_match_result():
                 return jsonify({'message': 'Resultado adicionado com sucesso'}), 201
         
         # Non-ranking schedule - insert statistics with schedule_id
-        p1_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (p1, p1)).fetchone()
-        p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (p2, p2)).fetchone()
-        winner_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (winner_name, winner_name)).fetchone()
+        p1_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (p1, p1)).fetchone()
+        p2_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (p2, p2)).fetchone()
+        winner_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (winner_name, winner_name)).fetchone()
         
         db.execute('''
             INSERT INTO match_statistics_unified (
                 schedule_id, ranking_match_id, player1_id, player2_id,
                 player1_name, player2_name, winner_id, winner_name,
                 score, match_type, match_date, season_id, added_by
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, TRIM(%s), TRIM(%s), %s, TRIM(%s), %s, %s, %s, %s, %s)
         ''', (
             schedule_id, None,
             p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None,
@@ -200,7 +200,7 @@ def get_player_statistics():
     db = get_db()
     
     # Get player IDs from names
-    p1_user = db.execute('SELECT id, short_name FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (player1, player1)).fetchone()
+    p1_user = db.execute('SELECT id, short_name FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (player1, player1)).fetchone()
     if not p1_user:
         return jsonify({'error': 'Jogador não encontrado'}), 404
     
@@ -208,7 +208,7 @@ def get_player_statistics():
     params = [p1_user['id'], p1_user['id']]
     
     if player2:
-        p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (player2, player2)).fetchone()
+        p2_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (player2, player2)).fetchone()
         if p2_user:
             conditions.append('((m.player1_id = %s AND m.player2_id = %s) OR (m.player1_id = %s AND m.player2_id = %s))')
             params.extend([p1_user['id'], p2_user['id'], p2_user['id'], p1_user['id']])

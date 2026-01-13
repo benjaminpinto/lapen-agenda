@@ -58,7 +58,7 @@ def register():
         lapen_requested_at = datetime.utcnow() if is_lapen_member else None
         
         cursor = db.cursor()
-        cursor.execute('INSERT INTO users (email, password_hash, name, short_name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id',
+        cursor.execute('INSERT INTO users (email, password_hash, name, short_name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at) VALUES (%s, %s, TRIM(%s), TRIM(%s), TRIM(%s), TRIM(%s), %s, %s, %s) RETURNING id',
             (email, password_hash, name, short_name, phone, pix_key, verification_token, is_lapen_member, lapen_requested_at))
         user_id = cursor.fetchone()['id']
         db.commit()
@@ -193,7 +193,7 @@ def update_profile():
     try:
         db.execute('''
             UPDATE users 
-            SET name = %s, short_name = %s, email = %s, phone = %s, pix_key = %s
+            SET name = TRIM(%s), short_name = TRIM(%s), email = %s, phone = TRIM(%s), pix_key = TRIM(%s)
             WHERE id = %s
         ''', (data['name'], data['short_name'], data['email'], data.get('phone'), data.get('pix_key'), request.user_id))
         db.commit()

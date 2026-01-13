@@ -231,6 +231,36 @@ def submit_match_result(match_id):
         ''', ('completed', winner_id, score, p1_sets, p2_sets, p1_games, p2_games,
               points_p1, points_p2, datetime.utcnow(), request.user_id, match_id))
         
+        # Update or insert statistics
+        winner_user = db.execute('SELECT short_name FROM users WHERE id = %s', (winner_id,)).fetchone()
+        p1_user = db.execute('SELECT short_name FROM users WHERE id = %s', (match['player1_id'],)).fetchone()
+        p2_user = db.execute('SELECT short_name FROM users WHERE id = %s', (match['player2_id'],)).fetchone()
+        
+        existing_stat = db.execute(
+            'SELECT id FROM match_statistics_unified WHERE ranking_match_id = %s',
+            (match_id,)
+        ).fetchone()
+        
+        if existing_stat:
+            db.execute('''
+                UPDATE match_statistics_unified
+                SET winner_id = %s, winner_name = TRIM(%s), score = %s, match_date = %s
+                WHERE ranking_match_id = %s
+            ''', (winner_id, winner_user['short_name'], score, datetime.utcnow(), match_id))
+        else:
+            db.execute('''
+                INSERT INTO match_statistics_unified (
+                    ranking_match_id, player1_id, player2_id,
+                    player1_name, player2_name, winner_id, winner_name,
+                    score, match_type, match_date, season_id, added_by
+                ) VALUES (%s, %s, %s, TRIM(%s), TRIM(%s), %s, TRIM(%s), %s, %s, %s, %s, %s)
+            ''', (
+                match_id, match['player1_id'], match['player2_id'],
+                p1_user['short_name'], p2_user['short_name'],
+                winner_id, winner_user['short_name'],
+                score, 'Ranking', datetime.utcnow(), match['season_id'], request.user_id
+            ))
+        
         # Update participant stats
         for player_id, is_winner, sets_won, sets_lost, games_won, games_lost, points in [
             (match['player1_id'], winner_id == match['player1_id'], p1_sets, p2_sets, p1_games, p2_games, points_p1),
@@ -258,6 +288,7 @@ def submit_match_result(match_id):
         return jsonify({'success': True})
     except Exception as e:
         logger.error(f'Error submitting match result: {str(e)}')
+        db.rollback()
         db.close()
         return jsonify({'error': str(e)}), 400
 

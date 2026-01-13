@@ -40,8 +40,9 @@ const MatchResultForm = ({ match, onSubmit, onCancel }) => {
     const finalP1Sets = p1Sets + (s3p1 > s3p2 ? 1 : 0)
     const finalP2Sets = p2Sets + (s3p2 > s3p1 ? 1 : 0)
     
+    const winnerId = finalP1Sets > finalP2Sets ? match.player1_id : match.player2_id
     const winnerName = finalP1Sets > finalP2Sets ? match.player1_name : match.player2_name
-    onSubmit({ score, winner_name: winnerName })
+    onSubmit({ score, winner_id: winnerId, winner_name: winnerName })
   }
 
   return (

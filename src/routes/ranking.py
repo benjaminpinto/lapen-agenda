@@ -159,7 +159,7 @@ def get_leaderboard(season_id):
 
 # Match Results
 @ranking_bp.route('/matches/<int:match_id>/result', methods=['POST'])
-@require_auth
+@require_admin_auth
 def submit_match_result(match_id):
     data = request.get_json()
     score = data.get('score')

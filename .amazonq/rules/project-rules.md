@@ -83,3 +83,9 @@
 
 ## Debugging
 - When fixing UI issues, always use Playwright MCP to reproduce the issue and investigate instead of trying to guess stuff
+
+
+## Database Query Rules
+- Always query PostgreSQL inside Docker container: `docker exec lapen-postgres psql -U lapen_user -d lapen_agenda -c "YOUR_QUERY"`
+- Never use `psql $DATABASE_URL` directly on host machine
+- Do not use `-it` flag in docker exec for non-interactive queries

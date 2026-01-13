@@ -429,7 +429,7 @@ def set_wo_result(match_id):
                 ranking_match_id, player1_id, player2_id,
                 player1_name, player2_name, winner_id, winner_name,
                 score, match_type, match_date, season_id, added_by
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, TRIM(%s), TRIM(%s), %s, TRIM(%s), %s, %s, %s, %s, %s)
         ''', (
             match_id, match['player1_id'], match['player2_id'],
             match['p1_name'], match['p2_name'],

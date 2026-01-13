@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Trophy, Medal, Award } from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Badge} from '@/components/ui/badge'
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
+import {Award, Medal, Trophy} from 'lucide-react'
 import RankingMatches from './RankingMatches'
 
 const RankingLeaderboard = () => {
@@ -62,16 +62,32 @@ const RankingLeaderboard = () => {
     }
   }
 
-  const getPositionIcon = (position) => {
-    switch (position) {
-      case 1:
-        return <Trophy className="h-5 w-5 text-yellow-500" />
-      case 2:
-        return <Medal className="h-5 w-5 text-gray-400" />
-      case 3:
-        return <Award className="h-5 w-5 text-amber-600" />
-      default:
-        return null
+  const getPositionIcon = (position, group) => {
+    // For Elite: positions 1, 2, 3 get icons
+    // For Challenger: positions 1, 2, 3 within the group get icons (which are positions 9, 10, 11 overall)
+    if (group === 'elite') {
+      switch (position) {
+        case 1:
+          return <Trophy className="h-5 w-5 text-yellow-500" />
+        case 2:
+          return <Medal className="h-5 w-5 text-gray-400" />
+        case 3:
+          return <Award className="h-5 w-5 text-amber-600" />
+        default:
+          return null
+      }
+    } else {
+      // Challenger group: first 3 players get icons
+      switch (position - leaderboard.elite.length) {
+        case 1:
+          return <Trophy className="h-5 w-5 text-yellow-500" />
+        case 2:
+          return <Medal className="h-5 w-5 text-gray-400" />
+        case 3:
+          return <Award className="h-5 w-5 text-amber-600" />
+        default:
+          return null
+      }
     }
   }
 
@@ -81,9 +97,9 @@ const RankingLeaderboard = () => {
       <div className="flex items-center justify-between p-4 border-b last:border-b-0 hover:bg-gray-50">
         <div className="flex items-center space-x-4">
           <div className="flex items-center justify-center w-8 h-8">
-            {getPositionIcon(index + 1) || (
+            {getPositionIcon(player.position, group) || (
               <span className="text-sm font-medium text-gray-600">
-                {index + 1}
+                {player.position}º
               </span>
             )}
           </div>

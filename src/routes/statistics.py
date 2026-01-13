@@ -88,6 +88,28 @@ def add_match_result():
                         WHERE season_id = %s AND user_id = %s
                     ''', (points, 1 if is_winner else 0, 0 if is_winner else 1,
                           sets_won, sets_lost, games_won, games_lost, season_id, player_id))
+                
+                # For linked ranking matches, insert statistics with ranking_match_id only
+                p1_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (p1, p1)).fetchone()
+                p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (p2, p2)).fetchone()
+                winner_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (winner_name, winner_name)).fetchone()
+                
+                db.execute('''
+                    INSERT INTO match_statistics_unified (
+                        schedule_id, ranking_match_id, player1_id, player2_id,
+                        player1_name, player2_name, winner_id, winner_name,
+                        score, match_type, match_date, season_id, added_by
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ''', (
+                    None, ranking_match_id,
+                    p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None,
+                    p1, p2,
+                    winner_user['id'] if winner_user else None, winner_name,
+                    score, match_type, match_date, season_id, request.user_id
+                ))
+                
+                db.commit()
+                return jsonify({'message': 'Resultado adicionado com sucesso'}), 201
         else:
             match = db.execute('''
                 SELECT rm.*, u1.short_name as p1, u2.short_name as p2, rr.season_id
@@ -136,13 +158,13 @@ def add_match_result():
                     WHERE season_id = %s AND user_id = %s
                 ''', (points, 1 if is_winner else 0, 0 if is_winner else 1, season_id, player_id))
         
+                db.commit()
+                return jsonify({'message': 'Resultado adicionado com sucesso'}), 201
+        
+        # Non-ranking schedule - insert statistics with schedule_id
         p1_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (p1, p1)).fetchone()
         p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (p2, p2)).fetchone()
         winner_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (winner_name, winner_name)).fetchone()
-        
-        # For linked ranking matches, only set ranking_match_id (not schedule_id)
-        stat_schedule_id = None if ranking_match_id else schedule_id
-        stat_ranking_match_id = ranking_match_id
         
         db.execute('''
             INSERT INTO match_statistics_unified (
@@ -151,7 +173,7 @@ def add_match_result():
                 score, match_type, match_date, season_id, added_by
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', (
-            stat_schedule_id, stat_ranking_match_id,
+            schedule_id, None,
             p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None,
             p1, p2,
             winner_user['id'] if winner_user else None, winner_name,

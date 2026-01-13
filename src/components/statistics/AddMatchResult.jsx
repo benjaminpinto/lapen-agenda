@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
-import {useToast} from '@/components/hooks/use-toast'
+import {useToast} from '@/contexts/ToastContext'
 import {useAuth} from '@/contexts/AuthContext'
 import BackButton from '@/components/ui/BackButton'
 import MatchResultForm from '@/components/shared/MatchResultForm'
@@ -81,9 +81,12 @@ export default function AddMatchResult() {
             })
 
             if (response.ok) {
-                toast({title: 'Resultado adicionado com sucesso'})
                 setSelectedMatch(null)
                 fetchPastMatches()
+                toast({
+                    title: 'Sucesso!',
+                    description: 'Resultado adicionado com sucesso',
+                })
             } else {
                 const error = await response.json()
                 toast({title: error.error || 'Erro ao adicionar resultado', variant: 'destructive'})

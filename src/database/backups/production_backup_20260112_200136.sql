@@ -943,8 +943,8 @@ COPY public.bets (id, user_id, match_id, player_name, amount, potential_return, 
 --
 
 COPY public.challenges (id, challenger_id, challenged_id, status, start_date, end_date, target_type, target_amount, prize_comment, created_at, updated_at) FROM stdin;
-1	1	15	pending	2025-12-01	2025-12-31	victories	\N	Teste	2025-12-28 15:30:38.477096	2025-12-28 15:30:38.477096
 2	2	3	active	2026-01-01	2026-06-30	victories	7	Um perfume a escolha do vencedor	2025-12-28 16:02:55.348419	2025-12-28 16:02:55.348419
+1	1	15	rejected	2025-12-01	2025-12-31	victories	\N	Teste	2025-12-28 15:30:38.477096	2025-12-28 15:30:38.477096
 \.
 
 
@@ -1020,7 +1020,9 @@ COPY public.match_statistics_unified (id, schedule_id, ranking_match_id, player1
 29	319	\N	3	1	Rômulo Oliveira 	Benjamin Pinto	3	Rômulo Oliveira 	6-0, 6-0	Amistoso	2026-01-07	\N	1	2026-01-08 15:20:48.062518
 30	\N	37	1	31	Benjamin Pinto	Angelo	31	Angelo	1-6, 1-6	Ranking	2026-01-08	1	1	2026-01-09 00:20:53.744679
 31	\N	35	3	28	Rômulo Oliveira 	Guedes	28	Guedes	4-6, 5-7	Ranking	2026-01-08	1	3	2026-01-09 00:54:26.67145
-32	306	\N	3	28	Rômulo Oliveira 	Guedes	28	Guedes	4-6, 5-7	Liga	2026-01-08	\N	3	2026-01-09 00:54:28.660233
+33	329	\N	1	19	Benjamin Pinto	Paulo Vinicius 	19	Paulo Vinicius 	4-6, 3-6	Amistoso	2026-01-12	\N	1	2026-01-12 23:03:06.271888
+34	\N	52	15	22	Breno Simões 	Paulo Alex 	22	Paulo Alex 	0-6, 3-6	Ranking	2026-01-12	1	15	2026-01-12 23:30:56.95524
+35	321	\N	15	22	Breno Simões 	Paulo Alex 	22	Paulo Alex 	0-6, 3-6	Liga	2026-01-12	\N	15	2026-01-12 23:30:57.884391
 \.
 
 
@@ -1107,21 +1109,21 @@ COPY public.ranking_matches (id, round_id, schedule_id, player1_id, player2_id, 
 39	1	\N	22	34	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
 40	1	\N	29	30	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
 41	1	\N	35	33	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
-42	1	\N	15	27	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
 43	1	\N	16	32	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
 45	1	\N	25	3	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
 46	1	\N	27	26	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
 47	1	\N	8	31	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
 48	1	\N	30	19	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
-49	1	\N	1	18	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
 50	1	\N	29	33	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
 51	1	\N	35	16	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
+42	1	333	15	27	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
 34	1	298	19	32	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
 44	1	310	34	28	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
-52	1	321	15	22	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
 27	1	320	2	21	elite	completed	21	0-6, 2-6	0	2	2	12	none	-5	130	2026-01-07 00:00:00	2	2025-12-31 20:09:54.827689
 37	1	307	1	31	challenger	completed	31	1-6, 1-6	0	2	2	12	none	-5	130	2026-01-09 00:20:53.744679	1	2025-12-31 20:09:54.827689
 35	1	306	3	28	challenger	completed	28	4-6, 5-7	0	2	9	13	none	1	124	2026-01-09 00:54:26.67145	3	2025-12-31 20:09:54.827689
+49	1	328	1	18	challenger	scheduled	\N	\N	0	0	0	0	none	0	0	\N	\N	2025-12-31 20:09:54.827689
+52	1	321	15	22	challenger	completed	22	0-6, 3-6	0	2	3	12	none	-4	129	2026-01-12 23:30:56.95524	15	2025-12-31 20:09:54.827689
 \.
 
 
@@ -1134,6 +1136,8 @@ COPY public.ranking_participants (id, season_id, user_id, temp_points, total_poi
 23	1	31	800	130	1	0	2	0	12	2	0	0	16	t
 1	1	3	1000	1	0	1	0	2	9	13	0	0	12	t
 19	1	28	1200	124	1	0	2	0	13	9	0	0	10	t
+10	1	15	0	-4	0	1	0	2	3	12	0	0	21	t
+13	1	22	0	129	1	0	2	0	12	3	0	0	19	t
 9	1	21	2500	130	1	0	2	0	12	2	0	0	1	t
 5	1	6	2500	0	0	0	0	0	0	0	0	0	2	t
 7	1	23	2000	0	0	0	0	0	0	0	0	0	3	t
@@ -1149,9 +1153,7 @@ COPY public.ranking_participants (id, season_id, user_id, temp_points, total_poi
 21	1	19	800	0	0	0	0	0	0	0	0	0	15	t
 15	1	18	800	0	0	0	0	0	0	0	0	0	17	t
 8	1	16	0	0	0	0	0	0	0	0	0	0	18	t
-13	1	22	0	0	0	0	0	0	0	0	0	0	19	t
 12	1	25	0	0	0	0	0	0	0	0	0	0	20	t
-10	1	15	0	0	0	0	0	0	0	0	0	0	21	t
 27	1	35	0	0	0	0	0	0	0	0	0	0	22	t
 26	1	33	0	0	0	0	0	0	0	0	0	0	23	t
 20	1	29	0	0	0	0	0	0	0	0	0	0	24	t
@@ -1228,11 +1230,15 @@ COPY public.recurring_schedules (id, court_id, day_of_week, start_time, end_time
 COPY public.refresh_tokens (id, user_id, token, expires_at, created_at, revoked, device_info) FROM stdin;
 77	20	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyMCwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3NjgzOTE2NzJ9.YhJXqTdaLccBSXaknRFKQPmxviELI9z22xk8109g7X0	2026-01-14 11:54:32.301711	2026-01-07 11:54:32.291248	f	\N
 78	26	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyNiwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3NjgzOTQ2NjF9.xivpnO7cDS7N0mthhN0xDhhFz9WsZCDkZMlFniC6d7U	2026-01-14 12:44:21.843872	2026-01-07 12:44:21.830131	f	\N
-79	17	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNywidHlwZSI6InJlZnJlc2giLCJleHAiOjE3NzAzOTA2Njh9.2OGaDygOtef9IN6eT_w5s6w6KR9ZPV_R8j7sLm3Brvc	2026-02-06 15:11:08.968319	2026-01-07 15:11:08.952905	f	\N
 82	22	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyMiwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3Njg0NDMwODN9.lcMGNbJtU9NfMyhdW4qt62mMi_zMWbDijwArgvJu9HQ	2026-01-15 02:11:24.052879	2026-01-08 02:11:24.039259	f	\N
-85	1	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2ODUxNzIyOX0.eH4_S-GpQpTti3mJsgo_x3AIIPLT1fiT_76TgXcMiqo	2026-01-15 22:47:09.656551	2026-01-08 22:47:09.643505	f	\N
+88	23	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyMywidHlwZSI6InJlZnJlc2giLCJleHAiOjE3Njg1NzY1ODV9.2WXQAKU2PnqkBm3CpN34GPh4g87z-cWU-KdOOoCKrmQ	2026-01-16 15:16:25.431215	2026-01-09 15:16:25.416019	f	\N
+86	1	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2ODUyODEzNn0.jMOTRfiA8-E_Sx7iJ3EWKYyc0TH_9kBTVKy0IT_lHCU	2026-01-16 01:48:57.173608	2026-01-09 01:48:57.159796	f	\N
+87	16	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNiwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3NzA1MTg0Mzl9.wAuTTsm-1VXvpWwoz2DaR8wAviUMXJk1cU9oZkqdzg0	2026-02-08 02:40:39.564906	2026-01-09 02:40:39.537537	f	\N
+89	2	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2ODY3Mzc3N30.BeiqoAzyl0ZDtABeZbW7j4L-VEsBRimCTiJerJSXAKc	2026-01-17 18:16:17.359997	2026-01-10 18:16:17.347759	f	\N
+90	3	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2ODc3MjYyOH0.9T5qrGjmLwRQwVd5rSchAABoKXmdsg1KlsHmNwh9Mas	2026-01-18 21:43:48.729236	2026-01-11 21:43:48.715028	f	\N
+92	17	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNywidHlwZSI6InJlZnJlc2giLCJleHAiOjE3Njg4Njk3NDF9.eF5CYH03SxDNm3t_cz8oa__7mvOsjH8yeyMUBYCTDaU	2026-01-20 00:42:21.655588	2026-01-13 00:42:21.641083	f	\N
+93	15	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNSwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3NzA4NTc5MjR9.F32GuA9RVxOXKIifvoHvY933GwJ5y4rSYFTMRnILDRo	2026-02-12 00:58:45.367492	2026-01-13 00:58:45.353235	f	\N
 46	27	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyNywidHlwZSI6InJlZnJlc2giLCJleHAiOjE3Njc3MTI2MzN9.bVuqWsmyPFH5eUz69gLdoCWZMXS9-LJlLpe6X9whVI0	2026-01-06 15:17:13.753396	2025-12-30 15:17:13.738693	f	\N
-47	15	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNSwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3Njk2OTk5MDh9.4XWfaIc2jW6xjw2wlsHztk4Ia6B9BWiPGRb1RiqzH8g	2026-01-29 15:18:28.411707	2025-12-30 15:18:28.397236	f	\N
 48	28	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyOCwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3Njc3MTM5MjF9.xM9TUnVeLf_MbhfNuHCqwTWIzDl0_VPSLQL5f2zi0cA	2026-01-06 15:38:41.561482	2025-12-30 15:38:41.546846	f	\N
 51	30	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozMCwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3Njc3MTY2MDJ9.t-f-DhzKX_YIAOFJZQEXMXpRTkQnZf4QC9OAc56qp1Q	2026-01-06 16:23:22.535254	2025-12-30 16:23:22.519068	f	\N
 52	31	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozMSwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3Njc3MTY2MzF9.ZBS9BHbzaRQiNegb5ibdOMfQTD9-S_fov-eTDAqxPo8	2026-01-06 16:23:51.547908	2025-12-30 16:23:51.532026	f	\N
@@ -1241,11 +1247,7 @@ COPY public.refresh_tokens (id, user_id, token, expires_at, created_at, revoked,
 56	11	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMSwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3Njc4MTc1MTZ9.ZC0Ghuu6JP3VYln72SmE6pmbvcLiYG3qaWiOZAyGuwc	2026-01-07 20:25:16.828977	2025-12-31 20:25:16.815298	f	\N
 57	29	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyOSwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3Njk4MjMxNzV9.R4kS9T_S_5xWq_tt6ZKP3I3dEeGv-5n8yWMWGmAEt9Y	2026-01-31 01:32:55.847967	2026-01-01 01:32:55.825111	f	\N
 59	21	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyMSwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3Njc5MjQ5NDZ9.b1fQauwPHjj7Z3lcPskgpmTJy17-5dYxQZhclKO8tw4	2026-01-09 02:15:46.20072	2026-01-02 02:15:46.18751	f	\N
-61	2	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2ODAwNDUwOX0.yfzOB-GmuOVCXmS5wsti4O_rEmyjhyRM9NV9WhAxegY	2026-01-10 00:21:49.620887	2026-01-03 00:21:49.606559	f	\N
 65	19	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxOSwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3NzAxNjQxODB9.3IDgdT3lxHJ3D1bNA9MC1PYHdg0THuljpCGTTqF3ghE	2026-02-04 00:16:28.693934	2026-01-05 00:16:28.67946	f	\N
-69	3	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2ODIzNDk5OX0.n0pS2t1-YjuCdZeT-tIyXuOboVhnD-GKeeXAz9YEclk	2026-01-12 16:23:19.857734	2026-01-05 16:23:19.842451	f	\N
-70	23	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyMywidHlwZSI6InJlZnJlc2giLCJleHAiOjE3NzAyMjY5MDF9.k3Nh-YxnUcTODpjFmuxPqoNV_BQII5S8tPJheZqWK-c	2026-02-04 17:41:41.624559	2026-01-05 17:41:41.609571	f	\N
-71	16	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxNiwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3NjgyNDIwMDB9.KbSG3x9H98l1oX5vAVu4p_LvCHvJTtt-zAKI97j1W7M	2026-01-12 18:20:00.459447	2026-01-05 18:20:00.421151	f	\N
 72	18	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxOCwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3NjgyNDI0NjB9.FPKOrgZPtqLh6POFAXYJ7Jq9K55Lh0rcn8B3Btjc7ME	2026-01-12 18:27:40.921622	2026-01-05 18:27:40.909815	f	\N
 73	9	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo5LCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MTc3MDMwMTM1MX0.yEfCdN5ZxdyYUlxe6J2BeG160NPuSeKpa_i81BCy2yQ	2026-02-05 14:22:31.267733	2026-01-06 14:22:31.252254	f	\N
 \.
@@ -1479,7 +1481,6 @@ COPY public.schedules (id, court_id, date, start_time, player1_name, player2_nam
 291	2	2026-01-03	15:00:00	Bruno Marinho 	Rômulo Oliveira 	Amistoso	\N	2	3
 292	2	2026-01-03	09:00:00	Benjamin Pinto	Breno Simões 	Amistoso	\N	1	15
 294	2	2026-01-06	18:00:00	Rômulo Oliveira 	Henrique Soares 	Amistoso	\N	3	23
-297	2	2026-01-12	19:30:00	Paulo Vinicius 	Benjamin Pinto	Amistoso	\N	19	1
 298	2	2026-01-13	19:30:00	Paulo Vinicius 	Douglas Castro	Liga	\N	19	32
 299	1	2026-01-06	19:30:00	Benjamin Pinto	Neto Rezende	Amistoso	\N	1	16
 300	1	2026-01-06	18:00:00	Diana peixoto 	Breno Simões 	Amistoso	\N	17	15
@@ -1500,6 +1501,16 @@ COPY public.schedules (id, court_id, date, start_time, player1_name, player2_nam
 320	1	2026-01-07	19:30:00	Bruno Marinho 	Valber Tenório	Liga	\N	2	21
 321	1	2026-01-12	19:30:00	Breno Simões 	Paulo Alex 	Liga	\N	15	22
 323	2	2026-01-13	16:30:00	Henrique Soares 	Paulo Alex  revelação 	Amistoso	\N	23	\N
+324	2	2026-01-09	16:30:00	Guedes , Ângelo 	Alex , Cascata 	Amistoso	\N	\N	\N
+325	2	2026-01-22	19:30:00	Bruno Marinho 	Rômulo Oliveira 	Amistoso	\N	2	3
+326	1	2026-01-12	16:30:00	Diana peixoto 	Convidado	Amistoso	\N	17	\N
+328	2	2026-01-15	19:30:00	Benjamin Pinto	Luciandre	Liga	\N	1	18
+330	1	2026-01-12	18:00:00	Neto Rezende	João Madeiro	Amistoso	\N	16	\N
+329	2	2026-01-12	18:00:00	Benjamin Pinto	Paulo Vinicius 	Amistoso	\N	1	19
+327	2	2026-01-12	19:30:00	Bruno Marinho 	Rômulo Oliveira	Amistoso	\N	2	\N
+331	2	2026-01-13	18:00:00	Breno Simões 	Denilson	Amistoso	\N	15	\N
+332	1	2026-01-14	16:30:00	Diana peixoto 	Convidado	Amistoso	\N	17	\N
+333	1	2026-01-15	19:30:00	Breno Simões 	Brunno Galvão	Liga	\N	15	27
 \.
 
 
@@ -1581,7 +1592,7 @@ SELECT pg_catalog.setval('public.match_results_id_seq', 8, true);
 -- Name: match_statistics_unified_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.match_statistics_unified_id_seq', 32, true);
+SELECT pg_catalog.setval('public.match_statistics_unified_id_seq', 35, true);
 
 
 --
@@ -1658,14 +1669,14 @@ SELECT pg_catalog.setval('public.recurring_schedules_id_seq', 12, true);
 -- Name: refresh_tokens_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.refresh_tokens_id_seq', 85, true);
+SELECT pg_catalog.setval('public.refresh_tokens_id_seq', 93, true);
 
 
 --
 -- Name: schedules_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.schedules_id_seq', 323, true);
+SELECT pg_catalog.setval('public.schedules_id_seq', 333, true);
 
 
 --
@@ -1995,10 +2006,24 @@ CREATE INDEX idx_match_stats_unified_ranking ON public.match_statistics_unified 
 
 
 --
+-- Name: idx_match_stats_unified_ranking_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_match_stats_unified_ranking_unique ON public.match_statistics_unified USING btree (ranking_match_id) WHERE (ranking_match_id IS NOT NULL);
+
+
+--
 -- Name: idx_match_stats_unified_schedule; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_match_stats_unified_schedule ON public.match_statistics_unified USING btree (schedule_id) WHERE (schedule_id IS NOT NULL);
+
+
+--
+-- Name: idx_match_stats_unified_schedule_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_match_stats_unified_schedule_unique ON public.match_statistics_unified USING btree (schedule_id) WHERE (schedule_id IS NOT NULL);
 
 
 --

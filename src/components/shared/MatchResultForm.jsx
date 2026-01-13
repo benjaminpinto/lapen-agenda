@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useToast } from '@/contexts/ToastContext'
+import {useState} from 'react'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Button} from '@/components/ui/button'
+import {Input} from '@/components/ui/input'
+import {useToast} from '@/contexts/ToastContext'
 
 const MatchResultForm = ({ match, onSubmit, onCancel }) => {
   const [set1P1, setSet1P1] = useState('')
@@ -40,13 +40,8 @@ const MatchResultForm = ({ match, onSubmit, onCancel }) => {
     const finalP1Sets = p1Sets + (s3p1 > s3p2 ? 1 : 0)
     const finalP2Sets = p2Sets + (s3p2 > s3p1 ? 1 : 0)
     
-    if (match.player1_id && match.player2_id) {
-      const winnerId = finalP1Sets > finalP2Sets ? match.player1_id : match.player2_id
-      onSubmit({ score, winner_id: winnerId })
-    } else {
-      const winnerName = finalP1Sets > finalP2Sets ? match.player1_name : match.player2_name
-      onSubmit({ score, winner_name: winnerName })
-    }
+    const winnerName = finalP1Sets > finalP2Sets ? match.player1_name : match.player2_name
+    onSubmit({ score, winner_name: winnerName })
   }
 
   return (

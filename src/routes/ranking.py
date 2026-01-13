@@ -267,7 +267,7 @@ def _update_positions(db, season_id):
         SELECT user_id, (total_points + temp_points) as total,
                wins, (sets_won - sets_lost) as set_diff, (games_won - games_lost) as game_diff
         FROM ranking_participants
-        WHERE season_id = %s
+        WHERE season_id = %s AND is_active = true
         ORDER BY total DESC, wins DESC, set_diff DESC, game_diff DESC
     ''', (season_id,)).fetchall()
     

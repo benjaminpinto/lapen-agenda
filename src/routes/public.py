@@ -301,6 +301,8 @@ def delete_schedule(schedule_id):
     
     # No bets, can hard delete
     try:
+        # Unlink from ranking_matches before deletion
+        db.execute('UPDATE ranking_matches SET schedule_id = NULL WHERE schedule_id = %s', (schedule_id,))
         db.execute('DELETE FROM schedules WHERE id = %s', (schedule_id,))
         db.commit()
         return jsonify({'success': True, 'message': 'Agendamento excluído com sucesso'})

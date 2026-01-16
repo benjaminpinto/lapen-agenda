@@ -89,6 +89,10 @@ def add_match_result():
                     ''', (points, 1 if is_winner else 0, 0 if is_winner else 1,
                           sets_won, sets_lost, games_won, games_lost, season_id, player_id))
                 
+                # Update positions after updating participant stats
+                from src.routes.ranking import _update_positions
+                _update_positions(db, season_id)
+                
                 # For linked ranking matches, insert statistics with ranking_match_id only
                 p1_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (p1, p1)).fetchone()
                 p2_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (p2, p2)).fetchone()
@@ -157,9 +161,13 @@ def add_match_result():
                     SET total_points = total_points + %s, wins = wins + %s, losses = losses + %s
                     WHERE season_id = %s AND user_id = %s
                 ''', (points, 1 if is_winner else 0, 0 if is_winner else 1, season_id, player_id))
+            
+            # Update positions after updating participant stats
+            from src.routes.ranking import _update_positions
+            _update_positions(db, season_id)
         
-                db.commit()
-                return jsonify({'message': 'Resultado adicionado com sucesso'}), 201
+            db.commit()
+            return jsonify({'message': 'Resultado adicionado com sucesso'}), 201
         
         # Non-ranking schedule - insert statistics with schedule_id
         p1_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (p1, p1)).fetchone()

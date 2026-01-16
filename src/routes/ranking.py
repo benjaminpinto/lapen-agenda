@@ -157,6 +157,113 @@ def get_leaderboard(season_id):
     
     return jsonify([dict(p) for p in participants])
 
+def _update_match_result(db, match_id, winner_id, score, wo_type='none', sets_p1=0, sets_p2=0, games_p1=0, games_p2=0, added_by=None):
+    """Unified method to update match results and participant stats"""
+    # Get match details
+    match = db.execute('''
+        SELECT rm.*, rr.season_id, u1.short_name as p1_name, u2.short_name as p2_name
+        FROM ranking_matches rm
+        JOIN ranking_rounds rr ON rm.round_id = rr.id
+        JOIN users u1 ON rm.player1_id = u1.id
+        JOIN users u2 ON rm.player2_id = u2.id
+        WHERE rm.id = %s
+    ''', (match_id,)).fetchone()
+    
+    if not match:
+        raise ValueError('Partida não encontrada')
+    
+    # Calculate points
+    if wo_type != 'none':
+        match_result = {'wo_type': wo_type}
+    else:
+        if winner_id == match['player1_id']:
+            match_result = {
+                'wo_type': 'none',
+                'sets_winner': sets_p1,
+                'sets_loser': sets_p2,
+                'games_winner': games_p1,
+                'games_loser': games_p2
+            }
+        else:
+            match_result = {
+                'wo_type': 'none',
+                'sets_winner': sets_p2,
+                'sets_loser': sets_p1,
+                'games_winner': games_p2,
+                'games_loser': games_p1
+            }
+    
+    winner_points, loser_points = PointsCalculator.calculate(match_result, match['season_id'])
+    points_p1 = winner_points if winner_id == match['player1_id'] else loser_points
+    points_p2 = winner_points if winner_id == match['player2_id'] else loser_points
+    
+    # Update match
+    db.execute('''
+        UPDATE ranking_matches
+        SET status = %s, winner_id = %s, score = %s, sets_p1 = %s, sets_p2 = %s,
+            games_p1 = %s, games_p2 = %s, wo_type = %s, points_p1 = %s, points_p2 = %s, 
+            played_at = %s, added_by = %s
+        WHERE id = %s
+    ''', ('completed', winner_id, score, sets_p1, sets_p2, games_p1, games_p2, wo_type,
+          points_p1, points_p2, datetime.utcnow(), added_by, match_id))
+    
+    # Update or insert statistics
+    winner_user = db.execute('SELECT short_name FROM users WHERE id = %s', (winner_id,)).fetchone()
+    existing_stat = db.execute(
+        'SELECT id FROM match_statistics_unified WHERE ranking_match_id = %s',
+        (match_id,)
+    ).fetchone()
+    
+    if existing_stat:
+        db.execute('''
+            UPDATE match_statistics_unified
+            SET winner_id = %s, winner_name = TRIM(%s), score = %s, match_date = %s
+            WHERE ranking_match_id = %s
+        ''', (winner_id, winner_user['short_name'], score, datetime.utcnow(), match_id))
+    else:
+        db.execute('''
+            INSERT INTO match_statistics_unified (
+                ranking_match_id, player1_id, player2_id,
+                player1_name, player2_name, winner_id, winner_name,
+                score, match_type, match_date, season_id, added_by
+            ) VALUES (%s, %s, %s, TRIM(%s), TRIM(%s), %s, TRIM(%s), %s, %s, %s, %s, %s)
+        ''', (
+            match_id, match['player1_id'], match['player2_id'],
+            match['p1_name'], match['p2_name'],
+            winner_id, winner_user['short_name'],
+            score, 'Ranking', datetime.utcnow(), match['season_id'], added_by
+        ))
+    
+    # Update participant stats
+    for player_id, is_winner, sets_won, sets_lost, games_won, games_lost, points in [
+        (match['player1_id'], winner_id == match['player1_id'], sets_p1, sets_p2, games_p1, games_p2, points_p1),
+        (match['player2_id'], winner_id == match['player2_id'], sets_p2, sets_p1, games_p2, games_p1, points_p2)
+    ]:
+        update_fields = [
+            'total_points = total_points + %s',
+            'wins = wins + %s',
+            'losses = losses + %s',
+            'sets_won = sets_won + %s',
+            'sets_lost = sets_lost + %s',
+            'games_won = games_won + %s',
+            'games_lost = games_lost + %s'
+        ]
+        update_values = [points, 1 if is_winner else 0, 0 if is_winner else 1,
+                        sets_won, sets_lost, games_won, games_lost]
+        
+        if wo_type != 'none':
+            wo_field = 'wo_wins' if is_winner else 'wo_losses'
+            update_fields.append(f'{wo_field} = {wo_field} + 1')
+        
+        db.execute(f'''
+            UPDATE ranking_participants
+            SET {', '.join(update_fields)}
+            WHERE season_id = %s AND user_id = %s
+        ''', (*update_values, match['season_id'], player_id))
+    
+    # Update positions
+    _update_positions(db, match['season_id'])
+
 # Match Results
 @ranking_bp.route('/matches/<int:match_id>/result', methods=['POST'])
 @require_admin_auth
@@ -200,88 +307,9 @@ def submit_match_result(match_id):
         # Parse score
         p1_sets, p2_sets, p1_games, p2_games = PointsCalculator.parse_score(score)
         
-        # Determine winner and calculate points
-        if winner_id == match['player1_id']:
-            match_result = {
-                'wo_type': 'none',
-                'sets_winner': p1_sets,
-                'sets_loser': p2_sets,
-                'games_winner': p1_games,
-                'games_loser': p2_games
-            }
-            winner_points, loser_points = PointsCalculator.calculate(match_result, match['season_id'])
-            points_p1, points_p2 = winner_points, loser_points
-        else:
-            match_result = {
-                'wo_type': 'none',
-                'sets_winner': p2_sets,
-                'sets_loser': p1_sets,
-                'games_winner': p2_games,
-                'games_loser': p1_games
-            }
-            winner_points, loser_points = PointsCalculator.calculate(match_result, match['season_id'])
-            points_p1, points_p2 = loser_points, winner_points
-        
-        # Update match
-        db.execute('''
-            UPDATE ranking_matches
-            SET status = %s, winner_id = %s, score = %s, sets_p1 = %s, sets_p2 = %s,
-                games_p1 = %s, games_p2 = %s, points_p1 = %s, points_p2 = %s, played_at = %s, added_by = %s
-            WHERE id = %s
-        ''', ('completed', winner_id, score, p1_sets, p2_sets, p1_games, p2_games,
-              points_p1, points_p2, datetime.utcnow(), request.user_id, match_id))
-        
-        # Update or insert statistics
-        winner_user = db.execute('SELECT short_name FROM users WHERE id = %s', (winner_id,)).fetchone()
-        p1_user = db.execute('SELECT short_name FROM users WHERE id = %s', (match['player1_id'],)).fetchone()
-        p2_user = db.execute('SELECT short_name FROM users WHERE id = %s', (match['player2_id'],)).fetchone()
-        
-        existing_stat = db.execute(
-            'SELECT id FROM match_statistics_unified WHERE ranking_match_id = %s',
-            (match_id,)
-        ).fetchone()
-        
-        if existing_stat:
-            db.execute('''
-                UPDATE match_statistics_unified
-                SET winner_id = %s, winner_name = TRIM(%s), score = %s, match_date = %s
-                WHERE ranking_match_id = %s
-            ''', (winner_id, winner_user['short_name'], score, datetime.utcnow(), match_id))
-        else:
-            db.execute('''
-                INSERT INTO match_statistics_unified (
-                    ranking_match_id, player1_id, player2_id,
-                    player1_name, player2_name, winner_id, winner_name,
-                    score, match_type, match_date, season_id, added_by
-                ) VALUES (%s, %s, %s, TRIM(%s), TRIM(%s), %s, TRIM(%s), %s, %s, %s, %s, %s)
-            ''', (
-                match_id, match['player1_id'], match['player2_id'],
-                p1_user['short_name'], p2_user['short_name'],
-                winner_id, winner_user['short_name'],
-                score, 'Ranking', datetime.utcnow(), match['season_id'], request.user_id
-            ))
-        
-        # Update participant stats
-        for player_id, is_winner, sets_won, sets_lost, games_won, games_lost, points in [
-            (match['player1_id'], winner_id == match['player1_id'], p1_sets, p2_sets, p1_games, p2_games, points_p1),
-            (match['player2_id'], winner_id == match['player2_id'], p2_sets, p1_sets, p2_games, p1_games, points_p2)
-        ]:
-            db.execute('''
-                UPDATE ranking_participants
-                SET total_points = total_points + %s,
-                    wins = wins + %s,
-                    losses = losses + %s,
-                    sets_won = sets_won + %s,
-                    sets_lost = sets_lost + %s,
-                    games_won = games_won + %s,
-                    games_lost = games_lost + %s
-                WHERE season_id = %s AND user_id = %s
-            ''', (points, 1 if is_winner else 0, 0 if is_winner else 1,
-                  sets_won, sets_lost, games_won, games_lost,
-                  match['season_id'], player_id))
-        
-        # Update positions after match result
-        _update_positions(db, match['season_id'])
+        # Use unified method
+        _update_match_result(db, match_id, winner_id, score, 'none', 
+                           p1_sets, p2_sets, p1_games, p2_games, request.user_id)
         
         db.commit()
         db.close()
@@ -292,14 +320,51 @@ def submit_match_result(match_id):
         db.close()
         return jsonify({'error': str(e)}), 400
 
+@ranking_bp.route('/matches/<int:match_id>/wo', methods=['POST'])
+@require_admin_auth
+def set_wo_result(match_id):
+    data = request.get_json()
+    winner_id = data.get('winner_id')
+    comment = data.get('comment', '')
+    
+    db = get_db()
+    match = db.execute('''
+        SELECT rm.*, rr.season_id, rr.status as round_status, rs.status as season_status
+        FROM ranking_matches rm
+        JOIN ranking_rounds rr ON rm.round_id = rr.id
+        JOIN ranking_seasons rs ON rr.season_id = rs.id
+        WHERE rm.id = %s
+    ''', (match_id,)).fetchone()
+    
+    if not match:
+        return jsonify({'error': 'Partida não encontrada'}), 404
+    
+    if match['season_status'] != 'active':
+        return jsonify({'error': 'Temporada não está ativa'}), 400
+    
+    if match['round_status'] != 'open':
+        return jsonify({'error': 'Rodada não está aberta'}), 400
+    
+    try:
+        wo_score = f'W.O. - {comment}'
+        _update_match_result(db, match_id, winner_id, wo_score, 'admin', 
+                           0, 0, 0, 0, request.user_id)
+        
+        db.commit()
+        db.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.close()
+        return jsonify({'error': str(e)}), 400
+
 def _update_positions(db, season_id):
     """Update participant positions based on total points and tie-breaking rules"""
     participants = db.execute('''
-        SELECT user_id, (total_points + temp_points) as total,
+        SELECT user_id, total_points, temp_points, (total_points + temp_points) as total,
                wins, (sets_won - sets_lost) as set_diff, (games_won - games_lost) as game_diff
         FROM ranking_participants
         WHERE season_id = %s AND is_active = true
-        ORDER BY total DESC, wins DESC, set_diff DESC, game_diff DESC
+        ORDER BY (total_points + temp_points) DESC, wins DESC, (sets_won - sets_lost) DESC, (games_won - games_lost) DESC
     ''', (season_id,)).fetchall()
     
     # Apply head-to-head for remaining ties
@@ -405,88 +470,6 @@ def get_all_open_matches():
         ORDER BY rr.round_number DESC, rm.created_at DESC
     ''').fetchall()
     return jsonify([dict(match) for match in matches])
-
-@ranking_bp.route('/matches/<int:match_id>/wo', methods=['POST'])
-@require_admin_auth
-def set_wo_result(match_id):
-    data = request.get_json()
-    winner_id = data.get('winner_id')
-    comment = data.get('comment', '')
-    
-    db = get_db()
-    match = db.execute('''
-        SELECT rm.*, rr.season_id, rr.status as round_status, rs.status as season_status,
-               u1.short_name as p1_name, u2.short_name as p2_name
-        FROM ranking_matches rm
-        JOIN ranking_rounds rr ON rm.round_id = rr.id
-        JOIN ranking_seasons rs ON rr.season_id = rs.id
-        JOIN users u1 ON rm.player1_id = u1.id
-        JOIN users u2 ON rm.player2_id = u2.id
-        WHERE rm.id = %s
-    ''', (match_id,)).fetchone()
-    
-    if not match:
-        return jsonify({'error': 'Partida não encontrada'}), 404
-    
-    # Verify season is active
-    if match['season_status'] != 'active':
-        return jsonify({'error': 'Temporada não está ativa'}), 400
-    
-    # Verify round is open
-    if match['round_status'] != 'open':
-        return jsonify({'error': 'Rodada não está aberta'}), 400
-    
-    try:
-        # Calculate W.O. points
-        from src.services.points_calculator import PointsCalculator
-        match_result = {'wo_type': 'admin'}
-        winner_points, loser_points = PointsCalculator.calculate(match_result, match['season_id'])
-        
-        points_p1 = winner_points if winner_id == match['player1_id'] else loser_points
-        points_p2 = winner_points if winner_id == match['player2_id'] else loser_points
-        
-        # Update match
-        wo_score = f'W.O. - {comment}'
-        db.execute('''
-            UPDATE ranking_matches
-            SET status = %s, winner_id = %s, wo_type = %s, points_p1 = %s, points_p2 = %s, score = %s
-            WHERE id = %s
-        ''', ('completed', winner_id, 'admin', points_p1, points_p2, wo_score, match_id))
-        
-        # Add to statistics
-        winner_user = db.execute('SELECT short_name FROM users WHERE id = %s AND deleted_at IS NULL', (winner_id,)).fetchone()
-        db.execute('''
-            INSERT INTO match_statistics_unified (
-                ranking_match_id, player1_id, player2_id,
-                player1_name, player2_name, winner_id, winner_name,
-                score, match_type, match_date, season_id, added_by
-            ) VALUES (%s, %s, %s, TRIM(%s), TRIM(%s), %s, TRIM(%s), %s, %s, %s, %s, %s)
-        ''', (
-            match_id, match['player1_id'], match['player2_id'],
-            match['p1_name'], match['p2_name'],
-            winner_id, winner_user['short_name'],
-            wo_score, 'Ranking', match.get('played_at') or 'NOW()', match['season_id'], request.user_id
-        ))
-        
-        # Update participant stats
-        for player_id, is_winner, points in [
-            (match['player1_id'], winner_id == match['player1_id'], points_p1),
-            (match['player2_id'], winner_id == match['player2_id'], points_p2)
-        ]:
-            wo_field = 'wo_wins' if is_winner else 'wo_losses'
-            db.execute(f'''
-                UPDATE ranking_participants
-                SET total_points = total_points + %s, {wo_field} = {wo_field} + 1
-                WHERE season_id = %s AND user_id = %s
-            ''', (points, match['season_id'], player_id))
-        
-        _update_positions(db, match['season_id'])
-        db.commit()
-        db.close()
-        return jsonify({'success': True})
-    except Exception as e:
-        db.close()
-        return jsonify({'error': str(e)}), 400
 
 @ranking_bp.route('/seasons/<int:season_id>/participants', methods=['POST'])
 @require_admin_auth
@@ -855,7 +838,7 @@ def get_recent_results():
     limit = request.args.get('limit', 20, type=int)
     db = get_db()
     results = db.execute('''
-        SELECT rm.*, rr.round_number, rr.month,
+        SELECT rm.*, rr.round_number, rr.month, rr.season_id,
                u1.short_name as player1_name, u2.short_name as player2_name, 
                uw.short_name as winner_name,
                ua.short_name as added_by_name, ua.id as added_by_id
@@ -869,7 +852,38 @@ def get_recent_results():
         ORDER BY rm.played_at DESC, rm.id DESC
         LIMIT %s
     ''', (limit,)).fetchall()
-    return jsonify([dict(r) for r in results])
+    
+    # Add group_type to each result
+    enriched_results = []
+    for result in results:
+        result_dict = dict(result)
+        
+        # Get the elite cutoff for this season
+        config = RankingConfigService.get_config(result['season_id'])
+        elite_cutoff = config.get('elite_cutoff', 10)
+        
+        # Get both players' positions to determine group type
+        p1_position = db.execute(
+            'SELECT position FROM ranking_participants WHERE season_id = %s AND user_id = %s',
+            (result['season_id'], result['player1_id'])
+        ).fetchone()
+        p2_position = db.execute(
+            'SELECT position FROM ranking_participants WHERE season_id = %s AND user_id = %s',
+            (result['season_id'], result['player2_id'])
+        ).fetchone()
+        
+        # Determine group type based on players' positions
+        # If either player is in elite (position <= elite_cutoff), it's an elite match
+        if (p1_position and p1_position['position'] <= elite_cutoff) or \
+           (p2_position and p2_position['position'] <= elite_cutoff):
+            result_dict['group_type'] = 'elite'
+        else:
+            result_dict['group_type'] = 'challenger'
+        
+        enriched_results.append(result_dict)
+    
+    db.close()
+    return jsonify(enriched_results)
 
 @ranking_bp.route('/player-on-fire', methods=['GET'])
 def get_player_on_fire():

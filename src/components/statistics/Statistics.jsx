@@ -732,7 +732,7 @@ export default function Statistics() {
                       <div className="text-sm text-muted-foreground">
                         ({match.player1_games} - {match.player2_games} games)
                       </div>
-                      <div className={`text-xs font-medium ${match.winner_name === player1 ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className="text-xs font-medium text-green-600">
                         Vencedor: {match.winner_name}
                       </div>
                     </div>

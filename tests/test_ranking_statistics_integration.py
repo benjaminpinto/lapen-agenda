@@ -139,10 +139,17 @@ def test_amistoso_match_creates_statistics_entry(setup_db):
     """Test that amistoso matches create statistics entries"""
     db = get_db()
     
+    # Create court first
+    db.execute("""
+        INSERT INTO courts (id, name, type, active)
+        VALUES (9999, 'Test Court', 'Saibro', true)
+        ON CONFLICT (id) DO NOTHING
+    """)
+    
     # Create schedule
     db.execute("""
         INSERT INTO schedules (id, court_id, date, start_time, player1_name, player2_name, match_type)
-        VALUES (9999, 1, '2025-01-15', '10:00', 'P1', 'P2', 'Amistoso')
+        VALUES (9999, 9999, '2025-01-15', '10:00', 'P1', 'P2', 'Amistoso')
     """)
     db.commit()
     
@@ -178,5 +185,6 @@ def test_amistoso_match_creates_statistics_entry(setup_db):
     # Cleanup
     db.execute("DELETE FROM match_statistics_unified WHERE schedule_id = 9999")
     db.execute("DELETE FROM schedules WHERE id = 9999")
+    db.execute("DELETE FROM courts WHERE id = 9999")
     db.commit()
     db.close()

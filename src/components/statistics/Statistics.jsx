@@ -213,18 +213,26 @@ export default function Statistics() {
 
     const sortedMatches = [...matches].sort((a, b) => new Date(b.match_date) - new Date(a.match_date))
     
-    sortedMatches.forEach((match, index) => {
+    // Calculate current streak
+    for (let index = 0; index < sortedMatches.length; index++) {
+      const match = sortedMatches[index]
       const isWin = match.winner_name === player1
       
-      // Current streak: only count from most recent match
       if (index === 0) {
         currentStreakType = isWin ? 'win' : 'loss'
         currentStreak = 1
       } else if ((currentStreakType === 'win' && isWin) || (currentStreakType === 'loss' && !isWin)) {
         currentStreak++
+      } else {
+        break
       }
+    }
+    
+    // Calculate max streaks
+    for (let index = 0; index < sortedMatches.length; index++) {
+      const match = sortedMatches[index]
+      const isWin = match.winner_name === player1
       
-      // Max streaks: track throughout all matches
       if (tempType === null) {
         tempType = isWin ? 'win' : 'loss'
         tempStreak = 1
@@ -236,7 +244,7 @@ export default function Statistics() {
         tempType = isWin ? 'win' : 'loss'
         tempStreak = 1
       }
-    })
+    }
     
     // Final max streak update
     if (tempType === 'win') maxWinStreak = Math.max(maxWinStreak, tempStreak)
@@ -732,7 +740,7 @@ export default function Statistics() {
                       <div className="text-sm text-muted-foreground">
                         ({match.player1_games} - {match.player2_games} games)
                       </div>
-                      <div className="text-xs font-medium text-green-600">
+                      <div className={`text-xs font-medium ${match.winner_name === player1 ? 'text-green-600' : 'text-red-600'}`}>
                         Vencedor: {match.winner_name}
                       </div>
                     </div>

@@ -8,7 +8,7 @@ class PointsCalculator:
         """Calculate points for both players based on match result"""
         config = RankingConfigService.get_config(season_id)
         
-        if match_result['wo_type'] != 'none':
+        if match_result['wo_type'] in ['admin', 'forfeit', 'user']:
             # W.O. points
             winner_points = config['wo_win_points']
             loser_points = config['wo_loss_points']

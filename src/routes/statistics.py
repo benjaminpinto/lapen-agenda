@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from src.auth import require_auth
 from src.database import get_db
 from src.logger import get_logger
+from src.routes.ranking import _update_match_result
 from src.utils.score_parser import parse_score
 
 logger = get_logger()
@@ -27,12 +28,6 @@ def add_match_result():
             if not schedule:
                 return jsonify({'error': 'Partida não encontrada'}), 404
             
-            p1 = schedule['player1_name']
-            p2 = schedule['player2_name']
-            match_type = schedule['match_type']
-            match_date = schedule['date']
-            season_id = None
-            
             # Check if this schedule is linked to a ranking match
             linked_ranking_match = db.execute('''
                 SELECT rm.*, rr.season_id, rr.status as round_status
@@ -42,136 +37,47 @@ def add_match_result():
             ''', (schedule_id,)).fetchone()
             
             if linked_ranking_match:
-                # Update the ranking match
-                ranking_match_id = linked_ranking_match['id']
-                season_id = linked_ranking_match['season_id']
-                match_type = 'Ranking'
-                
-                winner_id = linked_ranking_match['player1_id'] if winner_name in [p1, schedule['player1_name']] else linked_ranking_match['player2_id']
+                # Use unified method for ranking matches
+                winner_id = linked_ranking_match['player1_id'] if winner_name in [schedule['player1_name']] else linked_ranking_match['player2_id']
                 parsed = parse_score(score)
                 
-                from src.services.points_calculator import PointsCalculator
-                match_result = {
-                    'wo_type': 'none',
-                    'sets_winner': max(parsed['p1_sets'], parsed['p2_sets']),
-                    'sets_loser': min(parsed['p1_sets'], parsed['p2_sets']),
-                    'games_winner': parsed['p1_games'] if winner_id == linked_ranking_match['player1_id'] else parsed['p2_games'],
-                    'games_loser': parsed['p2_games'] if winner_id == linked_ranking_match['player1_id'] else parsed['p1_games']
-                }
-                winner_points, loser_points = PointsCalculator.calculate(match_result, season_id)
+                # Detect W.O. from score string
+                wo_type = 'user' if 'W.O.' in score or 'w.o.' in score.lower() else 'none'
                 
-                db.execute('''
-                    UPDATE ranking_matches
-                    SET status = 'completed', winner_id = %s, score = %s, 
-                        sets_p1 = %s, sets_p2 = %s, games_p1 = %s, games_p2 = %s,
-                        points_p1 = %s, points_p2 = %s, played_at = NOW(), added_by = %s
-                    WHERE id = %s
-                ''', (winner_id, score, parsed['p1_sets'], parsed['p2_sets'], 
-                      parsed['p1_games'], parsed['p2_games'],
-                      winner_points if winner_id == linked_ranking_match['player1_id'] else loser_points,
-                      winner_points if winner_id == linked_ranking_match['player2_id'] else loser_points,
-                      request.user_id, ranking_match_id))
-                
-                for player_id, is_winner, sets_won, sets_lost, games_won, games_lost, points in [
-                    (linked_ranking_match['player1_id'], winner_id == linked_ranking_match['player1_id'], 
-                     parsed['p1_sets'], parsed['p2_sets'], parsed['p1_games'], parsed['p2_games'],
-                     winner_points if winner_id == linked_ranking_match['player1_id'] else loser_points),
-                    (linked_ranking_match['player2_id'], winner_id == linked_ranking_match['player2_id'], 
-                     parsed['p2_sets'], parsed['p1_sets'], parsed['p2_games'], parsed['p1_games'],
-                     winner_points if winner_id == linked_ranking_match['player2_id'] else loser_points)
-                ]:
-                    db.execute('''
-                        UPDATE ranking_participants
-                        SET total_points = total_points + %s, wins = wins + %s, losses = losses + %s,
-                            sets_won = sets_won + %s, sets_lost = sets_lost + %s,
-                            games_won = games_won + %s, games_lost = games_lost + %s
-                        WHERE season_id = %s AND user_id = %s
-                    ''', (points, 1 if is_winner else 0, 0 if is_winner else 1,
-                          sets_won, sets_lost, games_won, games_lost, season_id, player_id))
-                
-                # Update positions after updating participant stats
-                from src.routes.ranking import _update_positions
-                _update_positions(db, season_id)
-                
-                # For linked ranking matches, insert statistics with ranking_match_id only
-                p1_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (p1, p1)).fetchone()
-                p2_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (p2, p2)).fetchone()
-                winner_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (winner_name, winner_name)).fetchone()
-                
-                db.execute('''
-                    INSERT INTO match_statistics_unified (
-                        schedule_id, ranking_match_id, player1_id, player2_id,
-                        player1_name, player2_name, winner_id, winner_name,
-                        score, match_type, match_date, season_id, added_by
-                    ) VALUES (%s, %s, %s, %s, TRIM(%s), TRIM(%s), %s, TRIM(%s), %s, %s, %s, %s, %s)
-                ''', (
-                    None, ranking_match_id,
-                    p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None,
-                    p1, p2,
-                    winner_user['id'] if winner_user else None, winner_name,
-                    score, match_type, match_date, season_id, request.user_id
-                ))
+                _update_match_result(db, linked_ranking_match['id'], winner_id, score, wo_type, 
+                                   parsed['p1_sets'], parsed['p2_sets'], parsed['p1_games'], parsed['p2_games'], request.user_id)
                 
                 db.commit()
                 return jsonify({'message': 'Resultado adicionado com sucesso'}), 201
-        else:
+        
+        elif ranking_match_id:
+            # Direct ranking match - use unified method
             match = db.execute('''
-                SELECT rm.*, u1.short_name as p1, u2.short_name as p2, rr.season_id
+                SELECT rm.*, u1.short_name as p1, u2.short_name as p2
                 FROM ranking_matches rm
                 JOIN users u1 ON rm.player1_id = u1.id
                 JOIN users u2 ON rm.player2_id = u2.id
-                JOIN ranking_rounds rr ON rm.round_id = rr.id
                 WHERE rm.id = %s
             ''', (ranking_match_id,)).fetchone()
             
             if not match:
                 return jsonify({'error': 'Partida não encontrada'}), 404
             
-            p1 = match['p1']
-            p2 = match['p2']
-            match_type = 'Ranking'
-            match_date = match.get('played_at') or match.get('created_at')
-            season_id = match['season_id']
-            
-            winner_id = match['player1_id'] if winner_name == p1 else match['player2_id']
+            winner_id = match['player1_id'] if winner_name == match['p1'] else match['player2_id']
             parsed = parse_score(score)
             
-            from src.services.points_calculator import PointsCalculator
-            match_result = {
-                'wo_type': 'none',
-                'sets_winner': max(parsed['p1_sets'], parsed['p2_sets']),
-                'sets_loser': min(parsed['p1_sets'], parsed['p2_sets']),
-                'games_winner': parsed['p1_games'] if winner_id == match['player1_id'] else parsed['p2_games'],
-                'games_loser': parsed['p2_games'] if winner_id == match['player1_id'] else parsed['p1_games']
-            }
-            winner_points, loser_points = PointsCalculator.calculate(match_result, season_id)
+            # Detect W.O. from score string
+            wo_type = 'user' if 'W.O.' in score or 'w.o.' in score.lower() else 'none'
             
-            db.execute('''
-                UPDATE ranking_matches
-                SET status = 'completed', winner_id = %s, score = %s, played_at = NOW(), added_by = %s
-                WHERE id = %s
-            ''', (winner_id, score, request.user_id, ranking_match_id))
+            _update_match_result(db, ranking_match_id, winner_id, score, wo_type,
+                               parsed['p1_sets'], parsed['p2_sets'], parsed['p1_games'], parsed['p2_games'], request.user_id)
             
-            for player_id, is_winner, points in [
-                (match['player1_id'], winner_id == match['player1_id'], winner_points if winner_id == match['player1_id'] else loser_points),
-                (match['player2_id'], winner_id == match['player2_id'], winner_points if winner_id == match['player2_id'] else loser_points)
-            ]:
-                db.execute('''
-                    UPDATE ranking_participants
-                    SET total_points = total_points + %s, wins = wins + %s, losses = losses + %s
-                    WHERE season_id = %s AND user_id = %s
-                ''', (points, 1 if is_winner else 0, 0 if is_winner else 1, season_id, player_id))
-            
-            # Update positions after updating participant stats
-            from src.routes.ranking import _update_positions
-            _update_positions(db, season_id)
-        
             db.commit()
             return jsonify({'message': 'Resultado adicionado com sucesso'}), 201
         
-        # Non-ranking schedule - insert statistics with schedule_id
-        p1_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (p1, p1)).fetchone()
-        p2_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (p2, p2)).fetchone()
+        # Non-ranking schedule - insert statistics only
+        p1_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (schedule['player1_name'], schedule['player1_name'])).fetchone()
+        p2_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (schedule['player2_name'], schedule['player2_name'])).fetchone()
         winner_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (winner_name, winner_name)).fetchone()
         
         db.execute('''
@@ -183,9 +89,9 @@ def add_match_result():
         ''', (
             schedule_id, None,
             p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None,
-            p1, p2,
+            schedule['player1_name'], schedule['player2_name'],
             winner_user['id'] if winner_user else None, winner_name,
-            score, match_type, match_date, season_id, request.user_id
+            score, schedule['match_type'], schedule['date'], None, request.user_id
         ))
         
         db.commit()
@@ -288,7 +194,7 @@ def get_past_matches():
     try:
         schedule_matches = db.execute('''
             SELECT s.id, s.date, s.start_time, s.player1_name, s.player2_name, s.match_type,
-                   rm.id as ranking_match_id
+                   rm.id as ranking_match_id, rm.player1_id, rm.player2_id
             FROM schedules s
             LEFT JOIN match_statistics_unified mr ON s.id = mr.schedule_id
             LEFT JOIN ranking_matches rm ON s.id = rm.schedule_id

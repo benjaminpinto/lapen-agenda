@@ -824,20 +824,57 @@ def recalculate_ranking(season_id):
         
         # Recalculate from all completed matches
         matches = db.execute('''
-            SELECT rm.id, rm.player1_id, rm.player2_id, rm.winner_id, rm.points_p1, rm.points_p2,
-                   rm.sets_p1, rm.sets_p2, rm.games_p1, rm.games_p2, rm.wo_type
+            SELECT rm.id, rm.player1_id, rm.player2_id, rm.winner_id, rm.score, rm.wo_type
             FROM ranking_matches rm
             JOIN ranking_rounds rr ON rm.round_id = rr.id
             WHERE rr.season_id = %s AND rm.status = 'completed'
         ''', (season['id'],)).fetchall()
         
         for match in matches:
+            # Parse score and recalculate points
+            if match['wo_type'] != 'none':
+                # W.O. match - no sets/games
+                p1_sets = p2_sets = p1_games = p2_games = 0
+                match_result = {'wo_type': match['wo_type']}
+            else:
+                # Regular match - parse score
+                p1_sets, p2_sets, p1_games, p2_games = PointsCalculator.parse_score(match['score'])
+                if match['winner_id'] == match['player1_id']:
+                    match_result = {
+                        'wo_type': 'none',
+                        'sets_winner': p1_sets,
+                        'sets_loser': p2_sets,
+                        'games_winner': p1_games,
+                        'games_loser': p2_games
+                    }
+                else:
+                    match_result = {
+                        'wo_type': 'none',
+                        'sets_winner': p2_sets,
+                        'sets_loser': p1_sets,
+                        'games_winner': p2_games,
+                        'games_loser': p1_games
+                    }
+            
+            # Calculate points
+            winner_points, loser_points = PointsCalculator.calculate(match_result, season['id'])
+            points_p1 = winner_points if match['winner_id'] == match['player1_id'] else loser_points
+            points_p2 = winner_points if match['winner_id'] == match['player2_id'] else loser_points
+            
+            # Update match with recalculated values
+            db.execute('''
+                UPDATE ranking_matches
+                SET sets_p1 = %s, sets_p2 = %s, games_p1 = %s, games_p2 = %s,
+                    points_p1 = %s, points_p2 = %s
+                WHERE id = %s
+            ''', (p1_sets, p2_sets, p1_games, p2_games, points_p1, points_p2, match['id']))
+            
             # Update participant stats for each match
             for player_id, is_winner, sets_won, sets_lost, games_won, games_lost, points in [
                 (match['player1_id'], match['winner_id'] == match['player1_id'], 
-                 match['sets_p1'], match['sets_p2'], match['games_p1'], match['games_p2'], match['points_p1']),
+                 p1_sets, p2_sets, p1_games, p2_games, points_p1),
                 (match['player2_id'], match['winner_id'] == match['player2_id'], 
-                 match['sets_p2'], match['sets_p1'], match['games_p2'], match['games_p1'], match['points_p2'])
+                 p2_sets, p1_sets, p2_games, p1_games, points_p2)
             ]:
                 update_fields = [
                     'total_points = total_points + %s',

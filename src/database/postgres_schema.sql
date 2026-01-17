@@ -255,7 +255,7 @@ CREATE TABLE IF NOT EXISTS ranking_matches (
     sets_p2 INTEGER DEFAULT 0,
     games_p1 INTEGER DEFAULT 0,
     games_p2 INTEGER DEFAULT 0,
-    wo_type VARCHAR(20) CHECK (wo_type IN ('none', 'admin', 'forfeit')) DEFAULT 'none',
+    wo_type VARCHAR(20) CHECK (wo_type IN ('none', 'admin', 'forfeit', 'user')) DEFAULT 'none',
     points_p1 INTEGER DEFAULT 0,
     points_p2 INTEGER DEFAULT 0,
     played_at TIMESTAMP,

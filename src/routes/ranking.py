@@ -327,6 +327,12 @@ def set_wo_result(match_id):
     winner_id = data.get('winner_id')
     comment = data.get('comment', '')
     
+    # Ensure winner_id is an integer
+    try:
+        winner_id = int(winner_id)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'ID do vencedor inválido'}), 400
+    
     db = get_db()
     match = db.execute('''
         SELECT rm.*, rr.season_id, rr.status as round_status, rs.status as season_status
@@ -347,7 +353,7 @@ def set_wo_result(match_id):
     
     try:
         wo_score = f'W.O. - {comment}'
-        _update_match_result(db, match_id, winner_id, wo_score, 'admin', 
+        _update_match_result(db, match_id, winner_id, wo_score, 'user', 
                            0, 0, 0, 0, request.user_id)
         
         db.commit()
@@ -793,6 +799,69 @@ def update_participant_temp_points(season_id, user_id):
             SET temp_points = %s
             WHERE season_id = %s AND user_id = %s
         ''', (temp_points, season['id'], user_id))
+        _update_positions(db, season['id'])
+        db.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@ranking_bp.route('/seasons/<int:season_id>/recalculate', methods=['POST'])
+@require_admin_auth
+def recalculate_ranking(season_id):
+    db = get_db()
+    season = db.execute('SELECT id FROM ranking_seasons WHERE id = %s', (season_id,)).fetchone()
+    if not season:
+        return jsonify({'error': 'Temporada não encontrada'}), 404
+    
+    try:
+        # Reset all participant stats to zero, keep temp_points separate
+        db.execute('''
+            UPDATE ranking_participants 
+            SET total_points = 0, wins = 0, losses = 0, sets_won = 0, sets_lost = 0,
+                games_won = 0, games_lost = 0, wo_wins = 0, wo_losses = 0
+            WHERE season_id = %s
+        ''', (season['id'],))
+        
+        # Recalculate from all completed matches
+        matches = db.execute('''
+            SELECT rm.id, rm.player1_id, rm.player2_id, rm.winner_id, rm.points_p1, rm.points_p2,
+                   rm.sets_p1, rm.sets_p2, rm.games_p1, rm.games_p2, rm.wo_type
+            FROM ranking_matches rm
+            JOIN ranking_rounds rr ON rm.round_id = rr.id
+            WHERE rr.season_id = %s AND rm.status = 'completed'
+        ''', (season['id'],)).fetchall()
+        
+        for match in matches:
+            # Update participant stats for each match
+            for player_id, is_winner, sets_won, sets_lost, games_won, games_lost, points in [
+                (match['player1_id'], match['winner_id'] == match['player1_id'], 
+                 match['sets_p1'], match['sets_p2'], match['games_p1'], match['games_p2'], match['points_p1']),
+                (match['player2_id'], match['winner_id'] == match['player2_id'], 
+                 match['sets_p2'], match['sets_p1'], match['games_p2'], match['games_p1'], match['points_p2'])
+            ]:
+                update_fields = [
+                    'total_points = total_points + %s',
+                    'wins = wins + %s',
+                    'losses = losses + %s',
+                    'sets_won = sets_won + %s',
+                    'sets_lost = sets_lost + %s',
+                    'games_won = games_won + %s',
+                    'games_lost = games_lost + %s'
+                ]
+                update_values = [points, 1 if is_winner else 0, 0 if is_winner else 1,
+                                sets_won, sets_lost, games_won, games_lost]
+                
+                if match['wo_type'] != 'none':
+                    wo_field = 'wo_wins' if is_winner else 'wo_losses'
+                    update_fields.append(f'{wo_field} = {wo_field} + 1')
+                
+                db.execute(f'''
+                    UPDATE ranking_participants
+                    SET {', '.join(update_fields)}
+                    WHERE season_id = %s AND user_id = %s
+                ''', (*update_values, season['id'], player_id))
+        
+        # Update positions
         _update_positions(db, season['id'])
         db.commit()
         return jsonify({'success': True})

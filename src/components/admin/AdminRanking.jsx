@@ -5,7 +5,7 @@ import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Badge} from '@/components/ui/badge'
-import {ArrowLeft, Calendar, Plus, Settings, Users} from 'lucide-react'
+import {ArrowLeft, Calendar, Plus, RefreshCw, Settings, Users} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
@@ -13,6 +13,7 @@ const AdminRanking = () => {
   const navigate = useNavigate()
   const [seasons, setSeasons] = useState([])
   const [loading, setLoading] = useState(true)
+  const [recalculating, setRecalculating] = useState(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [newSeason, setNewSeason] = useState({
     year: new Date().getFullYear(),
@@ -103,6 +104,27 @@ const AdminRanking = () => {
       }
     } catch (error) {
       toast({ title: 'Erro ao criar temporada', variant: 'destructive' })
+    }
+  }
+
+  const recalculateRanking = async (seasonId) => {
+    setRecalculating(seasonId)
+    try {
+      const response = await fetchWithAuth(`/api/ranking/seasons/${seasonId}/recalculate`, {
+        method: 'POST'
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        toast({ title: 'Ranking recalculado com sucesso' })
+      } else {
+        toast({ title: data.error || 'Erro ao recalcular ranking', variant: 'destructive' })
+      }
+    } catch (error) {
+      toast({ title: 'Erro ao recalcular ranking', variant: 'destructive' })
+    } finally {
+      setRecalculating(null)
     }
   }
 
@@ -227,9 +249,21 @@ const AdminRanking = () => {
                     </Button>
                   )}
                   {season.status === 'active' && (
-                    <Button size="sm" variant="destructive" onClick={() => closeSeason(season.id)} className="w-full sm:w-auto">
-                      Finalizar Temporada
-                    </Button>
+                    <>
+                      <Button size="sm" variant="destructive" onClick={() => closeSeason(season.id)} className="w-full sm:w-auto">
+                        Finalizar Temporada
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => recalculateRanking(season.id)} 
+                        disabled={recalculating === season.id}
+                        className="w-full sm:w-auto"
+                      >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${recalculating === season.id ? 'animate-spin' : ''}`} />
+                        {recalculating === season.id ? 'Recalculando...' : 'Recalcular Ranking'}
+                      </Button>
+                    </>
                   )}
                   <Button variant="outline" size="sm" onClick={() => navigate(`/admin/ranking/config/${season.id}`)} className="w-full sm:w-auto">
                     <Settings className="h-4 w-4 mr-2" />

@@ -1,22 +1,27 @@
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useToast } from '@/contexts/ToastContext'
+import {useState} from 'react'
+import {Button} from '@/components/ui/button'
+import {Label} from '@/components/ui/label'
+import {Textarea} from '@/components/ui/textarea'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {useToast} from '@/contexts/ToastContext'
 
 const WOForm = ({ match, onSubmit, onCancel }) => {
+  console.log('Match object:', match)
   const [winnerId, setWinnerId] = useState('')
   const [comment, setComment] = useState('')
   const [loading, setLoading] = useState(false)
-  const { showToast } = useToast()
+  const { toast } = useToast()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!winnerId) {
-      showToast('Selecione o vencedor', 'error')
+    console.log('Winner ID:', winnerId, 'Type:', typeof winnerId)
+    
+    if (!winnerId || winnerId === '') {
+      toast({
+        title: 'Selecione o vencedor',
+        variant: 'destructive'
+      })
       return
     }
 
@@ -48,8 +53,8 @@ const WOForm = ({ match, onSubmit, onCancel }) => {
                 <input
                   type="radio"
                   name="winner"
-                  value={match.player1_id}
-                  checked={winnerId === match.player1_id.toString()}
+                  value={match.player1_id || ''}
+                  checked={winnerId === (match.player1_id ? match.player1_id.toString() : '')}
                   onChange={(e) => setWinnerId(e.target.value)}
                 />
                 <span>{match.player1_name}</span>
@@ -58,8 +63,8 @@ const WOForm = ({ match, onSubmit, onCancel }) => {
                 <input
                   type="radio"
                   name="winner"
-                  value={match.player2_id}
-                  checked={winnerId === match.player2_id.toString()}
+                  value={match.player2_id || ''}
+                  checked={winnerId === (match.player2_id ? match.player2_id.toString() : '')}
                   onChange={(e) => setWinnerId(e.target.value)}
                 />
                 <span>{match.player2_name}</span>

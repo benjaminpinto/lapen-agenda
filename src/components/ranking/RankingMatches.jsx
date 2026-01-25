@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Calendar, CheckCircle } from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Badge} from '@/components/ui/badge'
+import {Button} from '@/components/ui/button'
+import {Calendar, CheckCircle} from 'lucide-react'
 
 const RankingMatches = ({ seasonId }) => {
   const [matches, setMatches] = useState({ elite: [], challenger: [] })
@@ -66,6 +66,8 @@ const RankingMatches = ({ seasonId }) => {
 
   const MatchCard = ({ match }) => {
     const isCompleted = match.status === 'completed'
+    const isWO = isCompleted && match.score?.includes('W.O.')
+    const woComment = isWO ? match.score.replace(/^W\.O\.\s*-?\s*/, '').trim() : ''
     
     return (
       <div className="p-4 border-b last:border-b-0 hover:bg-gray-50">
@@ -80,9 +82,20 @@ const RankingMatches = ({ seasonId }) => {
           <div className="text-center">
             {isCompleted ? (
               <div className="text-xs font-mono">
-                {match.score.split(', ').map((set, i) => (
-                  <div key={i}>{set.replace('-', ' - ')}</div>
-                ))}
+                {isWO ? (
+                  <div>
+                    <div>W.O.</div>
+                    {woComment && (
+                      <div className="text-[10px] text-gray-500 mt-0.5 max-w-[120px] mx-auto">{woComment}</div>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {match.score.split(', ').map((set, i) => (
+                      <div key={i}>{set.replace('-', ' - ')}</div>
+                    ))}
+                  </>
+                )}
                 <div className="border-t border-gray-300 my-1"></div>
                 <div className="text-gray-600">
                   {match.points_p1 > 0 ? '+' : ''}{match.points_p1} | {match.points_p2 > 0 ? '+' : ''}{match.points_p2}

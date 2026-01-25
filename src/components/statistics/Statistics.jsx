@@ -266,7 +266,7 @@ export default function Statistics() {
     matches.forEach(m => {
       const opponent = m.player1_name === player1 ? m.player2_name : m.player1_name
       if (!opponentStats[opponent]) opponentStats[opponent] = { wins: 0, losses: 0 }
-      if (m.winner_name === player1) opponentStats[opponent].wins++
+      if (m.winner_name?.trim() === player1?.trim()) opponentStats[opponent].wins++
       else opponentStats[opponent].losses++
     })
 
@@ -740,7 +740,7 @@ export default function Statistics() {
                       <div className="text-sm text-muted-foreground">
                         ({match.player1_games} - {match.player2_games} games)
                       </div>
-                      <div className={`text-xs font-medium ${match.winner_name === player1 ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`text-xs font-medium ${match.winner_name?.trim() === player1?.trim() ? 'text-green-600' : 'text-red-600'}`}>
                         Vencedor: {match.winner_name}
                       </div>
                     </div>

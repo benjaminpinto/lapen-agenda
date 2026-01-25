@@ -14,12 +14,14 @@ ranking_bp = Blueprint('ranking', __name__, url_prefix='/api/ranking')
 
 def require_auth(f):
     def decorated_function(*args, **kwargs):
-        token = request.headers.get('Authorization')
+        token = request.cookies.get('access_token')
+        if not token:
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                token = auth_header[7:]
+        
         if not token:
             return jsonify({'error': 'Autenticação necessária'}), 401
-        
-        if token.startswith('Bearer '):
-            token = token[7:]
         
         user_id = verify_token(token)
         if not user_id:
@@ -321,7 +323,7 @@ def submit_match_result(match_id):
         return jsonify({'error': str(e)}), 400
 
 @ranking_bp.route('/matches/<int:match_id>/wo', methods=['POST'])
-@require_admin_auth
+@require_auth
 def set_wo_result(match_id):
     data = request.get_json()
     winner_id = data.get('winner_id')

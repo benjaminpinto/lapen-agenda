@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import {useEffect, useState} from 'react'
+import {Card, CardContent} from '@/components/ui/card'
+import {Badge} from '@/components/ui/badge'
 import BackButton from '@/components/ui/BackButton'
-import { CheckCircle, User, Clock } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import {CheckCircle, Clock, User} from 'lucide-react'
+import {formatDistanceToNow} from 'date-fns'
+import {ptBR} from 'date-fns/locale'
 
 const RecentResults = ({ onBack }) => {
   const [results, setResults] = useState([])
@@ -50,6 +50,8 @@ const RecentResults = ({ onBack }) => {
     }) : 'Data não disponível'
     
     const isRanking = result.source === 'ranking'
+    const isWO = result.score?.includes('W.O.')
+    const woComment = isWO ? result.score.replace(/^W\.O\.\s*-?\s*/, '').trim() : ''
 
     return (
       <Card className="mb-4">
@@ -87,8 +89,13 @@ const RecentResults = ({ onBack }) => {
               )}
             </div>
             <div className="text-center px-4">
-              {isRanking && result.wo_type !== 'none' ? (
-                <span className="text-sm text-gray-500">W.O.</span>
+              {isWO ? (
+                <div>
+                  <span className="text-sm text-gray-500">W.O.</span>
+                  {woComment && (
+                    <div className="text-[10px] text-gray-500 mt-1 max-w-[120px] mx-auto">{woComment}</div>
+                  )}
+                </div>
               ) : (
                 <div className="text-xs font-mono">
                   {result.score ? (

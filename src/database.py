@@ -1,8 +1,14 @@
 import os
 import time
 
-import psycopg2
-from psycopg2.extras import RealDictCursor
+try:
+    import psycopg
+    from psycopg.rows import dict_row
+    PSYCOPG_VERSION = 3
+except ImportError:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+    PSYCOPG_VERSION = 2
 
 
 def init_db():
@@ -13,8 +19,11 @@ def init_db():
     # Wait for PostgreSQL to be ready
     for attempt in range(30):
         try:
-            conn = psycopg2.connect(postgres_url, cursor_factory=RealDictCursor)
-            conn.autocommit = True
+            if PSYCOPG_VERSION == 3:
+                conn = psycopg.connect(postgres_url, row_factory=dict_row, autocommit=True)
+            else:
+                conn = psycopg2.connect(postgres_url, cursor_factory=RealDictCursor)
+                conn.autocommit = True
             cursor = conn.cursor()
             
             # Check if already initialized
@@ -44,7 +53,7 @@ def init_db():
                         for statement in statements:
                             try:
                                 cursor.execute(statement)
-                            except psycopg2.Error as e:
+                            except Exception as e:
                                 # Skip if already exists
                                 if 'already exists' not in str(e):
                                     print(f"Error in {migration_file}: {e}")
@@ -53,7 +62,7 @@ def init_db():
             cursor.close()
             conn.close()
             return
-        except psycopg2.OperationalError:
+        except Exception:
             if attempt == 29:
                 raise
             time.sleep(1)
@@ -95,17 +104,28 @@ def get_db():
     # Retry connection up to 3 times
     for attempt in range(3):
         try:
-            conn = psycopg2.connect(
-                postgres_url,
-                cursor_factory=RealDictCursor,
-                connect_timeout=10,
-                keepalives=1,
-                keepalives_idle=30,
-                keepalives_interval=10,
-                keepalives_count=5
-            )
+            if PSYCOPG_VERSION == 3:
+                conn = psycopg.connect(
+                    postgres_url,
+                    row_factory=dict_row,
+                    connect_timeout=10,
+                    keepalives=1,
+                    keepalives_idle=30,
+                    keepalives_interval=10,
+                    keepalives_count=5
+                )
+            else:
+                conn = psycopg2.connect(
+                    postgres_url,
+                    cursor_factory=RealDictCursor,
+                    connect_timeout=10,
+                    keepalives=1,
+                    keepalives_idle=30,
+                    keepalives_interval=10,
+                    keepalives_count=5
+                )
             return DBConnection(conn)
-        except psycopg2.OperationalError as e:
+        except Exception as e:
             if attempt == 2:
                 raise
             time.sleep(0.5 * (attempt + 1))

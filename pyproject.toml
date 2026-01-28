@@ -2,7 +2,7 @@
 name = "lapen-agenda"
 version = "1.0.0"
 description = "Tennis court management system with betting platform"
-requires-python = ">=3.9,<3.13"
+requires-python = "==3.12.*"
 dependencies = [
     "Flask==3.0.0",
     "Flask-CORS==4.0.0",

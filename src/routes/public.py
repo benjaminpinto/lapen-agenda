@@ -57,7 +57,7 @@ def is_time_blocked(date, start_time, court_id=None):
     recurring = db.execute('''
         SELECT * FROM recurring_schedules 
         WHERE day_of_week = %s AND start_date <= %s AND end_date >= %s
-        AND (%s IS NULL OR court_id = %s)
+        AND (CAST(%s AS INTEGER) IS NULL OR court_id = %s)
     ''', (day_of_week, date, date, court_id, court_id)).fetchall()
 
     for schedule in recurring:
@@ -126,7 +126,7 @@ def get_available_times():
     recurring = db.execute('''
         SELECT * FROM recurring_schedules 
         WHERE day_of_week = %s AND start_date <= %s AND end_date >= %s
-        AND (%s IS NULL OR court_id = %s)
+        AND (CAST(%s AS INTEGER) IS NULL OR court_id = %s)
     ''', (day_of_week, date, date, court_id, court_id)).fetchall()
 
     # Check blocked times efficiently

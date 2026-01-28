@@ -3,12 +3,12 @@
   "ignoreCommand": "bash -c 'if [ \"$VERCEL_GIT_COMMIT_REF\" = \"gh-pages\" ]; then exit 0; else exit 1; fi'",
   "functions": {
     "api/**/*.py": {
-      "runtime": "python3.11"
+      "runtime": "python3.9"
     }
   },
   "build": {
     "env": {
-      "PYTHON_VERSION": "3.11"
+      "PYTHON_VERSION": "3.9"
     }
   },
   "git": {

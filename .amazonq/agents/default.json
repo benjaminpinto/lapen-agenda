@@ -39,8 +39,6 @@
     "fs_write",
     "report_issue",
     "use_aws",
-    "@context7/resolve-library-id",
-    "@context7/get-library-docs",
     "@playwright/browser_close",
     "@playwright/browser_resize",
     "@playwright/browser_console_messages",
@@ -64,7 +62,10 @@
     "@playwright/browser_wait_for",
     "@n8n-mcp/search_workflows",
     "@n8n-mcp/execute_workflow",
-    "@n8n-mcp/get_workflow_details"
+    "@n8n-mcp/get_workflow_details",
+    "@context7/resolve-library-id",
+    "@context7/get-library-docs",
+    "@context7/query-docs"
   ],
   "toolAliases": {},
   "allowedTools": [
@@ -73,8 +74,6 @@
     "use_aws",
     "execute_bash",
     "fs_write",
-    "@context7/resolve-library-id",
-    "@context7/get-library-docs",
     "@playwright/browser_close",
     "@playwright/browser_resize",
     "@playwright/browser_console_messages",
@@ -96,7 +95,10 @@
     "@playwright/browser_tabs",
     "@playwright/browser_wait_for",
     "@n8n-mcp/search_workflows",
-    "@n8n-mcp/get_workflow_details"
+    "@n8n-mcp/get_workflow_details",
+    "@context7/resolve-library-id",
+    "@context7/get-library-docs",
+    "@context7/query-docs"
   ],
   "toolsSettings": {
     "use_aws": {

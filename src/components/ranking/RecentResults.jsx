@@ -60,8 +60,12 @@ const RecentResults = ({ onBack }) => {
             <div className="flex items-center gap-2">
               {isRanking ? (
                 <>
-                  <Badge variant={result.group_type === 'elite' ? 'default' : 'outline'}>
-                    {result.group_type === 'elite' ? 'Elite' : 'Challenger'}
+                  <Badge variant={
+                    result.group_type === 'elite' ? 'default' : 
+                    result.group_type === 'challenger' ? 'outline' : 'secondary'
+                  }>
+                    {result.group_type === 'elite' ? 'Elite' : 
+                     result.group_type === 'challenger' ? 'Challenger' : 'Next Gen'}
                   </Badge>
                   <span className="text-sm text-gray-500">
                     Rodada {result.round_number} - {months[result.month - 1]}

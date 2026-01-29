@@ -178,14 +178,18 @@ const SeasonConfig = () => {
         <CardHeader>
           <CardTitle>Grupos</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-3 gap-4">
           <div>
-            <Label>Corte Elite</Label>
-            <Input value={config.elite_cutoff || 0} onChange={(e) => updateConfig('elite_cutoff', e.target.value)} />
+            <Label>Corte Elite (1-X)</Label>
+            <Input type="number" value={config.elite_cutoff || 0} onChange={(e) => updateConfig('elite_cutoff', e.target.value)} />
+          </div>
+          <div>
+            <Label>Corte Challenger (X+1-Y)</Label>
+            <Input type="number" value={config.challenger_cutoff || 0} onChange={(e) => updateConfig('challenger_cutoff', e.target.value)} />
           </div>
           <div>
             <Label>Partidas/Rodada</Label>
-            <Input value={config.matches_per_round || 0} onChange={(e) => updateConfig('matches_per_round', e.target.value)} />
+            <Input type="number" value={config.matches_per_round || 0} onChange={(e) => updateConfig('matches_per_round', e.target.value)} />
           </div>
         </CardContent>
       </Card>

@@ -362,6 +362,7 @@ const SeasonRounds = () => {
       {selectedRound && matches.length > 0 && (() => {
         const eliteMatches = matches.filter(m => m.group_type === 'elite')
         const challengerMatches = matches.filter(m => m.group_type === 'challenger')
+        const nextgenMatches = matches.filter(m => m.group_type === 'nextgen')
         
         const MatchCard = ({ match }) => (
           <div key={match.id} className="bg-white border rounded-lg p-3 space-y-2">
@@ -433,6 +434,22 @@ const SeasonRounds = () => {
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                     {challengerMatches.map(match => <MatchCard key={match.id} match={match} />)}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
+            {nextgenMatches.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <span className="text-green-600">🌱</span>
+                    Next Gen ({nextgenMatches.length} partidas)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    {nextgenMatches.map(match => <MatchCard key={match.id} match={match} />)}
                   </div>
                 </CardContent>
               </Card>

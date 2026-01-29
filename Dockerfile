@@ -15,8 +15,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements-local.txt .
+RUN pip install --no-cache-dir -r requirements-local.txt
 
 # Copy package files and install Node dependencies
 COPY package*.json .

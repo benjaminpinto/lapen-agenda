@@ -154,7 +154,10 @@ const RankingMatches = ({ seasonId }) => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Elite</span>
+              <span className="flex items-center gap-2">
+                <span className="text-amber-600">👑</span>
+                Elite
+              </span>
               <Badge variant="default">
                 {filteredMatches('elite').length} partidas
               </Badge>
@@ -178,7 +181,10 @@ const RankingMatches = ({ seasonId }) => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Challenger</span>
+              <span className="flex items-center gap-2">
+                <span className="text-blue-600">⚔️</span>
+                Challenger
+              </span>
               <Badge variant="outline">
                 {filteredMatches('challenger').length} partidas
               </Badge>
@@ -202,7 +208,10 @@ const RankingMatches = ({ seasonId }) => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Next Gen</span>
+              <span className="flex items-center gap-2">
+                <span className="text-green-600">🌱</span>
+                Next Gen
+              </span>
               <Badge variant="secondary">
                 {filteredMatches('nextgen').length} partidas
               </Badge>

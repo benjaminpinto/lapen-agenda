@@ -192,7 +192,7 @@ const RankingLeaderboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Trophy className="h-5 w-5 text-yellow-500" />
+                <span className="text-amber-600">👑</span>
                 <span>Elite</span>
               </div>
               <Badge variant="default">{leaderboard.elite.length} jogadores</Badge>
@@ -222,7 +222,7 @@ const RankingLeaderboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Award className="h-5 w-5 text-blue-500" />
+                <span className="text-blue-600">⚔️</span>
                 <span>Challenger</span>
               </div>
               <Badge variant="outline">{leaderboard.challenger.length} jogadores</Badge>
@@ -252,7 +252,7 @@ const RankingLeaderboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Medal className="h-5 w-5 text-green-500" />
+                <span className="text-green-600">🌱</span>
                 <span>Next Gen</span>
               </div>
               <Badge variant="secondary">{leaderboard.nextgen.length} jogadores</Badge>

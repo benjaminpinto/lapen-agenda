@@ -5,7 +5,7 @@ import {Button} from '@/components/ui/button'
 import {Calendar, CheckCircle} from 'lucide-react'
 
 const RankingMatches = ({ seasonId }) => {
-  const [matches, setMatches] = useState({ elite: [], challenger: [] })
+  const [matches, setMatches] = useState({ elite: [], challenger: [], nextgen: [] })
   const [filter, setFilter] = useState('scheduled')
   const [loading, setLoading] = useState(true)
   const [roundTitle, setRoundTitle] = useState('Partidas')
@@ -42,7 +42,8 @@ const RankingMatches = ({ seasonId }) => {
         
         const elite = enrichedData.filter(m => m.group_type === 'elite')
         const challenger = enrichedData.filter(m => m.group_type === 'challenger')
-        setMatches({ elite, challenger })
+        const nextgen = enrichedData.filter(m => m.group_type === 'nextgen')
+        setMatches({ elite, challenger, nextgen })
         
         // Set round title from first match
         if (data.length > 0) {
@@ -149,11 +150,14 @@ const RankingMatches = ({ seasonId }) => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Elite</span>
+              <span className="flex items-center gap-2">
+                <span className="text-amber-600">👑</span>
+                Elite
+              </span>
               <Badge variant="default">
                 {filteredMatches('elite').length} partidas
               </Badge>
@@ -177,7 +181,10 @@ const RankingMatches = ({ seasonId }) => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Challenger</span>
+              <span className="flex items-center gap-2">
+                <span className="text-blue-600">⚔️</span>
+                Challenger
+              </span>
               <Badge variant="outline">
                 {filteredMatches('challenger').length} partidas
               </Badge>
@@ -187,6 +194,33 @@ const RankingMatches = ({ seasonId }) => {
             {filteredMatches('challenger').length > 0 ? (
               <div>
                 {filteredMatches('challenger').map((match) => (
+                  <MatchCard key={match.id} match={match} />
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center text-gray-500">
+                Nenhuma partida {filter === 'scheduled' ? 'pendente' : 'finalizada'}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <span className="text-green-600">🌱</span>
+                Next Gen
+              </span>
+              <Badge variant="secondary">
+                {filteredMatches('nextgen').length} partidas
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {filteredMatches('nextgen').length > 0 ? (
+              <div>
+                {filteredMatches('nextgen').map((match) => (
                   <MatchCard key={match.id} match={match} />
                 ))}
               </div>

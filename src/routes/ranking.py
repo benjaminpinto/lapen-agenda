@@ -141,6 +141,7 @@ def get_leaderboard(season_id):
     
     config = RankingConfigService.get_config(season['id'])
     elite_cutoff = config['elite_cutoff']
+    challenger_cutoff = config['challenger_cutoff']
     
     query = '''
         SELECT rp.*, u.name, u.short_name
@@ -155,7 +156,9 @@ def get_leaderboard(season_id):
     if group == 'elite':
         participants = participants[:elite_cutoff]
     elif group == 'challenger':
-        participants = participants[elite_cutoff:]
+        participants = participants[elite_cutoff:challenger_cutoff]
+    elif group == 'nextgen':
+        participants = participants[challenger_cutoff:]
     
     return jsonify([dict(p) for p in participants])
 
@@ -961,16 +964,14 @@ def get_recent_results():
         LIMIT %s
     ''', (limit,)).fetchall()
     
-    # Add group_type to each result
     enriched_results = []
     for result in results:
         result_dict = dict(result)
         
-        # Get the elite cutoff for this season
         config = RankingConfigService.get_config(result['season_id'])
-        elite_cutoff = config.get('elite_cutoff', 10)
+        elite_cutoff = config.get('elite_cutoff', 8)
+        challenger_cutoff = config.get('challenger_cutoff', 16)
         
-        # Get both players' positions to determine group type
         p1_position = db.execute(
             'SELECT position FROM ranking_participants WHERE season_id = %s AND user_id = %s',
             (result['season_id'], result['player1_id'])
@@ -980,13 +981,14 @@ def get_recent_results():
             (result['season_id'], result['player2_id'])
         ).fetchone()
         
-        # Determine group type based on players' positions
-        # If either player is in elite (position <= elite_cutoff), it's an elite match
         if (p1_position and p1_position['position'] <= elite_cutoff) or \
            (p2_position and p2_position['position'] <= elite_cutoff):
             result_dict['group_type'] = 'elite'
-        else:
+        elif (p1_position and p1_position['position'] <= challenger_cutoff) or \
+             (p2_position and p2_position['position'] <= challenger_cutoff):
             result_dict['group_type'] = 'challenger'
+        else:
+            result_dict['group_type'] = 'nextgen'
         
         enriched_results.append(result_dict)
     
@@ -997,18 +999,16 @@ def get_recent_results():
 def get_player_on_fire():
     db = get_db()
     
-    # Get active season
     active_season = db.execute("SELECT id FROM ranking_seasons WHERE status = 'active'").fetchone()
     if not active_season:
-        return jsonify({'elite': [], 'challenger': []})
+        return jsonify({'elite': [], 'challenger': [], 'nextgen': []})
     
     season_id = active_season['id']
     
-    # Get configuration for cutoffs
     config = RankingConfigService.get_config(season_id)
-    elite_cutoff = config.get('elite_cutoff', 10)
+    elite_cutoff = config.get('elite_cutoff', 8)
+    challenger_cutoff = config.get('challenger_cutoff', 16)
     
-    # Get all participants with their positions to determine category
     participants = db.execute('''
         SELECT rp.user_id, rp.position, u.short_name, u.name
         FROM ranking_participants rp
@@ -1018,7 +1018,6 @@ def get_player_on_fire():
     
     participants_map = {p['user_id']: dict(p) for p in participants}
     
-    # Get all matches with winners for the season ordered by date
     matches = db.execute('''
         SELECT rm.player1_id, rm.player2_id, rm.winner_id, rm.played_at
         FROM ranking_matches rm
@@ -1027,7 +1026,6 @@ def get_player_on_fire():
         ORDER BY rm.played_at ASC, rm.id ASC
     ''', (season_id,)).fetchall()
     
-    # Calculate streaks
     streaks = {uid: 0 for uid in participants_map.keys()}
     
     for match in matches:
@@ -1035,27 +1033,24 @@ def get_player_on_fire():
         p2 = match['player2_id']
         winner = match['winner_id']
         
-        # Skip if winner is not set (should not happen for completed matches but safety check)
         if not winner:
             continue
             
-        # Update P1
         if p1 in streaks:
             if p1 == winner:
                 streaks[p1] += 1
             else:
                 streaks[p1] = 0
                 
-        # Update P2
         if p2 in streaks:
             if p2 == winner:
                 streaks[p2] += 1
             else:
                 streaks[p2] = 0
     
-    # Group by category and sort
     elite_streaks = []
     challenger_streaks = []
+    nextgen_streaks = []
     
     for uid, streak in streaks.items():
         if streak > 0:
@@ -1069,14 +1064,17 @@ def get_player_on_fire():
             
             if player['position'] <= elite_cutoff:
                 elite_streaks.append(player_data)
-            else:
+            elif player['position'] <= challenger_cutoff:
                 challenger_streaks.append(player_data)
+            else:
+                nextgen_streaks.append(player_data)
     
-    # Sort by streak descending
     elite_streaks.sort(key=lambda x: x['streak'], reverse=True)
     challenger_streaks.sort(key=lambda x: x['streak'], reverse=True)
+    nextgen_streaks.sort(key=lambda x: x['streak'], reverse=True)
     
     return jsonify({
         'elite': elite_streaks[:5],
-        'challenger': challenger_streaks[:5]
+        'challenger': challenger_streaks[:5],
+        'nextgen': nextgen_streaks[:5]
     })

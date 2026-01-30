@@ -24,6 +24,7 @@ class DrawEngine:
         
         config = RankingConfigService.get_config(round_info['season_id'])
         elite_cutoff = config['elite_cutoff']
+        challenger_cutoff = config['challenger_cutoff']
         
         # Get active participants ordered by position
         participants = db.execute('''
@@ -36,16 +37,18 @@ class DrawEngine:
         if len(participants) < 2:
             raise ValueError("Participantes insuficientes para realizar o sorteio")
         
-        # Split into Elite and Challenger groups
+        # Split into Elite, Challenger, and Next Gen groups
         elite_players = participants[:elite_cutoff]
-        challenger_players = participants[elite_cutoff:]
+        challenger_players = participants[elite_cutoff:challenger_cutoff]
+        nextgen_players = participants[challenger_cutoff:]
         
         # Generate matches for each group
         elite_matches = DrawEngine._generate_group_matches(elite_players, 'elite', round_id)
         challenger_matches = DrawEngine._generate_group_matches(challenger_players, 'challenger', round_id)
+        nextgen_matches = DrawEngine._generate_group_matches(nextgen_players, 'nextgen', round_id)
         
         # Save matches to database
-        all_matches = elite_matches + challenger_matches
+        all_matches = elite_matches + challenger_matches + nextgen_matches
         for match in all_matches:
             db.execute('''
                 INSERT INTO ranking_matches (round_id, player1_id, player2_id, group_type)

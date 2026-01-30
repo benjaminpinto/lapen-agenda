@@ -235,8 +235,7 @@ const AdminRanking = () => {
                     Temporada {season.year}{season.description ? ` - ${season.description}` : ''}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {season.start_date.split('T')[0].split('-').reverse().join('/')} - {' '}
-                    {season.end_date.split('T')[0].split('-').reverse().join('/')}
+                    {new Date(season.start_date).toLocaleDateString('pt-BR')} - {new Date(season.end_date).toLocaleDateString('pt-BR')}
                   </p>
                   <div className="mt-2">
                     {getStatusBadge(season.status)}

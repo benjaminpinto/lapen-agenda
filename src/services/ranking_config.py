@@ -5,6 +5,7 @@ class RankingConfigService:
     
     DEFAULT_CONFIG = {
         'elite_cutoff': 8,
+        'challenger_cutoff': 16,
         'matches_per_round': 2,
         'win_points': 100,
         'loss_points': 25,

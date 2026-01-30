@@ -6,7 +6,7 @@ import {Award, Medal, Trophy} from 'lucide-react'
 import RankingMatches from './RankingMatches'
 
 const RankingLeaderboard = () => {
-  const [leaderboard, setLeaderboard] = useState({ elite: [], challenger: [] })
+  const [leaderboard, setLeaderboard] = useState({ elite: [], challenger: [], nextgen: [] })
   const [loading, setLoading] = useState(true)
   const [seasons, setSeasons] = useState([])
   const [selectedSeason, setSelectedSeason] = useState(null)
@@ -45,15 +45,17 @@ const RankingLeaderboard = () => {
   const fetchLeaderboard = async () => {
     setLoading(true)
     try {
-      const [eliteResponse, challengerResponse] = await Promise.all([
+      const [eliteResponse, challengerResponse, nextgenResponse] = await Promise.all([
         fetch(`/api/ranking/leaderboard/${selectedSeason}?group=elite`),
-        fetch(`/api/ranking/leaderboard/${selectedSeason}?group=challenger`)
+        fetch(`/api/ranking/leaderboard/${selectedSeason}?group=challenger`),
+        fetch(`/api/ranking/leaderboard/${selectedSeason}?group=nextgen`)
       ])
 
-      if (eliteResponse.ok && challengerResponse.ok) {
+      if (eliteResponse.ok && challengerResponse.ok && nextgenResponse.ok) {
         const elite = await eliteResponse.json()
         const challenger = await challengerResponse.json()
-        setLeaderboard({ elite, challenger })
+        const nextgen = await nextgenResponse.json()
+        setLeaderboard({ elite, challenger, nextgen })
       }
     } catch (error) {
       console.error('Erro ao carregar ranking:', error)
@@ -63,8 +65,6 @@ const RankingLeaderboard = () => {
   }
 
   const getPositionIcon = (position, group) => {
-    // For Elite: positions 1, 2, 3 get icons
-    // For Challenger: positions 1, 2, 3 within the group get icons (which are positions 9, 10, 11 overall)
     if (group === 'elite') {
       switch (position) {
         case 1:
@@ -76,9 +76,19 @@ const RankingLeaderboard = () => {
         default:
           return null
       }
-    } else {
-      // Challenger group: first 3 players get icons
+    } else if (group === 'challenger') {
       switch (position - leaderboard.elite.length) {
+        case 1:
+          return <Trophy className="h-5 w-5 text-yellow-500" />
+        case 2:
+          return <Medal className="h-5 w-5 text-gray-400" />
+        case 3:
+          return <Award className="h-5 w-5 text-amber-600" />
+        default:
+          return null
+      }
+    } else {
+      switch (position - leaderboard.elite.length - leaderboard.challenger.length) {
         case 1:
           return <Trophy className="h-5 w-5 text-yellow-500" />
         case 2:
@@ -177,12 +187,12 @@ const RankingLeaderboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Trophy className="h-5 w-5 text-yellow-500" />
+                <span className="text-amber-600">👑</span>
                 <span>Elite</span>
               </div>
               <Badge variant="default">{leaderboard.elite.length} jogadores</Badge>
@@ -212,7 +222,7 @@ const RankingLeaderboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Award className="h-5 w-5 text-blue-500" />
+                <span className="text-blue-600">⚔️</span>
                 <span>Challenger</span>
               </div>
               <Badge variant="outline">{leaderboard.challenger.length} jogadores</Badge>
@@ -233,6 +243,36 @@ const RankingLeaderboard = () => {
             ) : (
               <div className="p-6 text-center text-gray-500">
                 Nenhum jogador no grupo Challenger
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="text-green-600">🌱</span>
+                <span>Next Gen</span>
+              </div>
+              <Badge variant="secondary">{leaderboard.nextgen.length} jogadores</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {leaderboard.nextgen.length > 0 ? (
+              <div>
+                {leaderboard.nextgen.map((player, index) => (
+                  <PlayerRow 
+                    key={player.user_id} 
+                    player={player} 
+                    index={index} 
+                    group="nextgen" 
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center text-gray-500">
+                Nenhum jogador no grupo Next Gen
               </div>
             )}
           </CardContent>

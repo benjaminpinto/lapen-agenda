@@ -5,19 +5,19 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/c
 import {Dialog, DialogContent} from '@/components/ui/dialog'
 import {useToast} from '@/components/hooks/use-toast'
 import {
-  Award,
-  BarChart3,
-  ChevronDown,
-  ChevronUp,
-  Flame,
-  Heart,
-  History,
-  Share2,
-  Skull,
-  Target,
-  TrendingUp,
-  Trophy,
-  X
+    Award,
+    BarChart3,
+    ChevronDown,
+    ChevronUp,
+    Flame,
+    Heart,
+    History,
+    Share2,
+    Skull,
+    Target,
+    TrendingUp,
+    Trophy,
+    X
 } from 'lucide-react'
 import {Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip} from 'recharts'
 import RecentResults from '../ranking/RecentResults'
@@ -211,11 +211,12 @@ export default function Statistics() {
     let tempStreak = 0
     let tempType = null
 
-    const sortedMatches = [...matches].sort((a, b) => new Date(b.match_date) - new Date(a.match_date))
+    const sortedMatchesDesc = [...matches].sort((a, b) => new Date(b.match_date) - new Date(a.match_date))
+    const sortedMatchesAsc = [...matches].sort((a, b) => new Date(a.match_date) - new Date(b.match_date))
     
-    // Calculate current streak
-    for (let index = 0; index < sortedMatches.length; index++) {
-      const match = sortedMatches[index]
+    // Calculate current streak (newest to oldest)
+    for (let index = 0; index < sortedMatchesDesc.length; index++) {
+      const match = sortedMatchesDesc[index]
       const isWin = match.winner_name === player1
       
       if (index === 0) {
@@ -228,9 +229,9 @@ export default function Statistics() {
       }
     }
     
-    // Calculate max streaks
-    for (let index = 0; index < sortedMatches.length; index++) {
-      const match = sortedMatches[index]
+    // Calculate max streaks (oldest to newest for chronological order)
+    for (let index = 0; index < sortedMatchesAsc.length; index++) {
+      const match = sortedMatchesAsc[index]
       const isWin = match.winner_name === player1
       
       if (tempType === null) {

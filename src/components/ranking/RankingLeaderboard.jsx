@@ -4,12 +4,15 @@ import {Badge} from '@/components/ui/badge'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Award, Medal, Trophy} from 'lucide-react'
 import RankingMatches from './RankingMatches'
+import PointsHistory from './PointsHistory'
 
 const RankingLeaderboard = () => {
   const [leaderboard, setLeaderboard] = useState({ elite: [], challenger: [], nextgen: [] })
   const [loading, setLoading] = useState(true)
   const [seasons, setSeasons] = useState([])
   const [selectedSeason, setSelectedSeason] = useState(null)
+  const [selectedParticipant, setSelectedParticipant] = useState(null)
+  const [showPointsHistory, setShowPointsHistory] = useState(false)
 
   useEffect(() => {
     fetchSeasons()
@@ -104,7 +107,13 @@ const RankingLeaderboard = () => {
   const PlayerRow = ({ player, index, group }) => {
     const totalPoints = (player.total_points || 0) + (player.temp_points || 0)
     return (
-      <div className="flex items-center justify-between p-4 border-b last:border-b-0 hover:bg-gray-50">
+      <div 
+        className="flex items-center justify-between p-4 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer"
+        onClick={() => {
+          setSelectedParticipant(player.id)
+          setShowPointsHistory(true)
+        }}
+      >
         <div className="flex items-center space-x-4">
           <div className="flex items-center justify-center w-8 h-8">
             {getPositionIcon(player.position, group) || (
@@ -280,6 +289,12 @@ const RankingLeaderboard = () => {
       </div>
 
       <RankingMatches seasonId={selectedSeason} />
+
+      <PointsHistory 
+        participantId={selectedParticipant}
+        open={showPointsHistory}
+        onClose={() => setShowPointsHistory(false)}
+      />
     </div>
   )
 }

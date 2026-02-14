@@ -30,7 +30,7 @@ class DrawEngine:
         participants = db.execute('''
             SELECT rp.*, u.name FROM ranking_participants rp
             JOIN users u ON rp.user_id = u.id
-            WHERE rp.season_id = %s AND rp.is_active = true
+            WHERE rp.season_id = %s AND rp.is_active = true AND u.lapen_approved = TRUE AND u.deleted_at IS NULL
             ORDER BY rp.position ASC
         ''', (round_info['season_id'],)).fetchall()
         

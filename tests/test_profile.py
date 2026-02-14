@@ -136,8 +136,15 @@ def test_get_users_short_names(setup_db):
     from main import app
     
     with app.test_client() as client:
+        # Create users and approve them for LAPEN
         create_test_user(client, email='user1@test.com', short_name='John Doe')
         create_test_user(client, email='user2@test.com', short_name='Jane Smith')
+        
+        # Approve users
+        db = get_db()
+        db.execute("UPDATE users SET lapen_approved = TRUE WHERE email IN ('user1@test.com', 'user2@test.com')")
+        db.commit()
+        db.close()
     
     response = client.get('/api/public/users/short-names')
     

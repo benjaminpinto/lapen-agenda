@@ -146,8 +146,8 @@ class TestPointsCalculator:
     def test_parse_score_three_sets(self, setup_db):
         """Test parsing a three-set score with super tiebreak"""
         p1_sets, p2_sets, p1_games, p2_games = PointsCalculator.parse_score("6-4, 4-6, 10-8")
-        # Third set is super tiebreak, doesn't count as a set
-        assert p1_sets == 1
+        # Super tiebreak counts as a set and points count as games
+        assert p1_sets == 2
         assert p2_sets == 1
         assert p1_games == 20
         assert p2_games == 18

@@ -80,11 +80,11 @@ def test_liga_schedule_links_to_ranking_match(client, auth_headers, setup_db):
     ).fetchone()['id']
     
     user1_id = db.execute(
-        "INSERT INTO users (email, password_hash, name, short_name, is_verified) VALUES ('player1@integtest.com', 'hash', 'Player One', 'TestP1', true) RETURNING id"
+        "INSERT INTO users (email, password_hash, name, short_name, is_verified, lapen_approved) VALUES ('player1@integtest.com', 'hash', 'Player One', 'TestP1', true, true) RETURNING id"
     ).fetchone()['id']
     
     user2_id = db.execute(
-        "INSERT INTO users (email, password_hash, name, short_name, is_verified) VALUES ('player2@integtest.com', 'hash', 'Player Two', 'TestP2', true) RETURNING id"
+        "INSERT INTO users (email, password_hash, name, short_name, is_verified, lapen_approved) VALUES ('player2@integtest.com', 'hash', 'Player Two', 'TestP2', true, true) RETURNING id"
     ).fetchone()['id']
     
     db.execute(

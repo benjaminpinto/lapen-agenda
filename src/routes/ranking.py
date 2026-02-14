@@ -147,7 +147,7 @@ def get_leaderboard(season_id):
         SELECT rp.*, u.name, u.short_name
         FROM ranking_participants rp
         JOIN users u ON rp.user_id = u.id
-        WHERE rp.season_id = %s AND rp.is_active = true
+        WHERE rp.season_id = %s AND rp.is_active = true AND u.lapen_approved = TRUE AND u.deleted_at IS NULL
         ORDER BY rp.position ASC
     '''
     
@@ -995,6 +995,80 @@ def get_recent_results():
     db.close()
     return jsonify(enriched_results)
 
+@ranking_bp.route('/participants/<int:participant_id>/points-history', methods=['GET'])
+def get_participant_points_history(participant_id):
+    db = get_db()
+    
+    participant = db.execute('''
+        SELECT rp.*, u.short_name, rs.year
+        FROM ranking_participants rp
+        JOIN users u ON rp.user_id = u.id
+        JOIN ranking_seasons rs ON rp.season_id = rs.id
+        WHERE rp.id = %s
+    ''', (participant_id,)).fetchone()
+    
+    if not participant:
+        return jsonify({'error': 'Participante não encontrado'}), 404
+    
+    matches = db.execute('''
+        SELECT rm.*, rr.round_number, rr.month,
+               u1.short_name as player1_name, u2.short_name as player2_name,
+               uw.short_name as winner_name
+        FROM ranking_matches rm
+        JOIN ranking_rounds rr ON rm.round_id = rr.id
+        JOIN users u1 ON rm.player1_id = u1.id
+        JOIN users u2 ON rm.player2_id = u2.id
+        LEFT JOIN users uw ON rm.winner_id = uw.id
+        WHERE rr.season_id = %s 
+          AND (rm.player1_id = %s OR rm.player2_id = %s)
+          AND rm.status = 'completed'
+        ORDER BY rr.round_number ASC, rm.played_at ASC
+    ''', (participant['season_id'], participant['user_id'], participant['user_id'])).fetchall()
+    
+    history = []
+    running_total = participant['temp_points']
+    
+    if participant['temp_points'] > 0:
+        history.append({
+            'type': 'temp_points',
+            'description': 'Pontos Temporários (Ranking Anterior)',
+            'points': participant['temp_points'],
+            'running_total': running_total
+        })
+    
+    for match in matches:
+        is_player1 = match['player1_id'] == participant['user_id']
+        points = match['points_p1'] if is_player1 else match['points_p2']
+        opponent = match['player2_name'] if is_player1 else match['player1_name']
+        is_winner = match['winner_id'] == participant['user_id']
+        
+        running_total += points
+        
+        history.append({
+            'type': 'match',
+            'round_number': match['round_number'],
+            'month': match['month'],
+            'opponent': opponent,
+            'score': match['score'],
+            'result': 'Vitória' if is_winner else 'Derrota',
+            'wo_type': match['wo_type'],
+            'group_type': match['group_type'],
+            'points': points,
+            'running_total': running_total,
+            'played_at': match['played_at']
+        })
+    
+    return jsonify({
+        'participant': {
+            'name': participant['short_name'],
+            'season_year': participant['year'],
+            'temp_points': participant['temp_points'],
+            'total_points': participant['total_points'],
+            'final_total': participant['temp_points'] + participant['total_points']
+        },
+        'history': history
+    })
+
 @ranking_bp.route('/player-on-fire', methods=['GET'])
 def get_player_on_fire():
     db = get_db()
@@ -1010,10 +1084,10 @@ def get_player_on_fire():
     challenger_cutoff = config.get('challenger_cutoff', 16)
     
     participants = db.execute('''
-        SELECT rp.user_id, rp.position, u.short_name, u.name
+        SELECT rp.*, u.short_name, u.name
         FROM ranking_participants rp
         JOIN users u ON rp.user_id = u.id
-        WHERE rp.season_id = %s AND rp.is_active = true
+        WHERE rp.season_id = %s AND rp.is_active = true AND u.lapen_approved = TRUE AND u.deleted_at IS NULL
     ''', (season_id,)).fetchall()
     
     participants_map = {p['user_id']: dict(p) for p in participants}

@@ -76,9 +76,9 @@ def add_match_result():
             return jsonify({'message': 'Resultado adicionado com sucesso'}), 201
         
         # Non-ranking schedule - insert statistics only
-        p1_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (schedule['player1_name'], schedule['player1_name'])).fetchone()
-        p2_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (schedule['player2_name'], schedule['player2_name'])).fetchone()
-        winner_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (winner_name, winner_name)).fetchone()
+        p1_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL AND lapen_approved = TRUE', (schedule['player1_name'], schedule['player1_name'])).fetchone()
+        p2_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL AND lapen_approved = TRUE', (schedule['player2_name'], schedule['player2_name'])).fetchone()
+        winner_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL AND lapen_approved = TRUE', (winner_name, winner_name)).fetchone()
         
         db.execute('''
             INSERT INTO match_statistics_unified (
@@ -248,8 +248,9 @@ def get_player_opponents(player_name):
     
     player = db.execute('''
         SELECT id FROM users 
-        WHERE unaccent(LOWER(TRIM(short_name))) = unaccent(LOWER(TRIM(%s))) 
-           OR unaccent(LOWER(TRIM(name))) = unaccent(LOWER(TRIM(%s)))
+        WHERE (unaccent(LOWER(TRIM(short_name))) = unaccent(LOWER(TRIM(%s))) 
+           OR unaccent(LOWER(TRIM(name))) = unaccent(LOWER(TRIM(%s))))
+           AND deleted_at IS NULL AND lapen_approved = TRUE
     ''', (player_name, player_name)).fetchone()
     if not player:
         logger.info(f'Player not found: {player_name}')

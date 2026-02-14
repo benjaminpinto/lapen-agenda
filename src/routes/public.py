@@ -88,7 +88,7 @@ def get_players_autocomplete():
 def get_users_short_names():
     """Get all users with both full name and short name for autocomplete"""
     db = get_db()
-    users = db.execute('SELECT DISTINCT name, short_name FROM users WHERE short_name IS NOT NULL AND deleted_at IS NULL ORDER BY short_name').fetchall()
+    users = db.execute('SELECT DISTINCT name, short_name FROM users WHERE short_name IS NOT NULL AND deleted_at IS NULL AND lapen_approved = TRUE ORDER BY short_name').fetchall()
     response = jsonify([{"name": user["name"], "short_name": user["short_name"]} for user in users])
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
@@ -180,8 +180,8 @@ def create_schedule():
         return jsonify({'error': 'Horário está bloqueado'}), 400
 
     # Get player IDs if they are registered users
-    p1_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (player1_name, player1_name)).fetchone()
-    p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (player2_name, player2_name)).fetchone()
+    p1_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL AND lapen_approved = TRUE', (player1_name, player1_name)).fetchone()
+    p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL AND lapen_approved = TRUE', (player2_name, player2_name)).fetchone()
     
     try:
         cursor = db.cursor()
@@ -256,8 +256,8 @@ def update_schedule(schedule_id):
             return jsonify({'error': 'Não é possível editar agendamento com apostas ativas', 'has_bets': True}), 400
 
     # Get player IDs if they are registered users
-    p1_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (player1_name, player1_name)).fetchone()
-    p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL', (player2_name, player2_name)).fetchone()
+    p1_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL AND lapen_approved = TRUE', (player1_name, player1_name)).fetchone()
+    p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL AND lapen_approved = TRUE', (player2_name, player2_name)).fetchone()
     
     try:
         db.execute('''

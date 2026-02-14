@@ -49,19 +49,15 @@ class PointsCalculator:
                 games = set_score.split('-')
                 g1, g2 = int(games[0]), int(games[1])
                 
-                # Third set is super tiebreak (10 points), counts as games only
-                if idx == 2:
-                    p1_games += g1
-                    p2_games += g2
+                # Add games
+                p1_games += g1
+                p2_games += g2
+                
+                # Count sets (all sets including super tiebreak)
+                if g1 > g2:
+                    p1_sets += 1
                 else:
-                    # Regular sets
-                    p1_games += g1
-                    p2_games += g2
-                    
-                    if g1 > g2:
-                        p1_sets += 1
-                    else:
-                        p2_sets += 1
+                    p2_sets += 1
             except (ValueError, IndexError):
                 continue
         

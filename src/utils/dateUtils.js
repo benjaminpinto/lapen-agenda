@@ -55,6 +55,21 @@ export const isPastDate = (dateString) => {
  * Format date for display (DD/MM/YYYY)
  */
 export const formatDateForDisplay = (dateString) => {
-  const [year, month, day] = dateString.split('-')
+  if (!dateString) return ''
+  
+  // If it's already in YYYY-MM-DD format, parse directly
+  if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    const [year, month, day] = dateString.split('-')
+    return `${day}/${month}/${year}`
+  }
+  
+  // Handle Date object or ISO string with UTC
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return dateString
+  
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const year = date.getUTCFullYear()
+  
   return `${day}/${month}/${year}`
 }

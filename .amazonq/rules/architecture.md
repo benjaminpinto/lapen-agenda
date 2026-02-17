@@ -365,6 +365,7 @@ Vercel Deployment
 - Finals qualification
 - **Schedule Integration** - Automatic linking between Liga schedules and ranking matches
 - **Statistics Integration** - Automatic ranking update when results are added via statistics
+- **Not Played Status** - Rounds can be closed with pending matches marked as "Não realizado" (0 points)
 
 ### Statistics Module
 - Player performance tracking

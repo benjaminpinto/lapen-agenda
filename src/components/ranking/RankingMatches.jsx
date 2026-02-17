@@ -9,6 +9,7 @@ const RankingMatches = ({ seasonId }) => {
   const [filter, setFilter] = useState('scheduled')
   const [loading, setLoading] = useState(true)
   const [roundTitle, setRoundTitle] = useState('Partidas')
+  const [hasOpenRound, setHasOpenRound] = useState(false)
 
   useEffect(() => {
     if (seasonId) {
@@ -26,6 +27,8 @@ const RankingMatches = ({ seasonId }) => {
       if (matchesRes.ok && leaderboardRes.ok) {
         const data = await matchesRes.json()
         const leaderboard = await leaderboardRes.json()
+        
+        setHasOpenRound(data.length > 0)
         
         // Create position map
         const positionMap = {}
@@ -172,7 +175,7 @@ const RankingMatches = ({ seasonId }) => {
               </div>
             ) : (
               <div className="p-6 text-center text-gray-500">
-                Nenhuma partida {filter === 'scheduled' ? 'pendente' : 'finalizada'}
+                {hasOpenRound ? `Nenhuma partida ${filter === 'scheduled' ? 'pendente' : 'finalizada'}` : 'Nenhuma rodada aberta'}
               </div>
             )}
           </CardContent>
@@ -199,7 +202,7 @@ const RankingMatches = ({ seasonId }) => {
               </div>
             ) : (
               <div className="p-6 text-center text-gray-500">
-                Nenhuma partida {filter === 'scheduled' ? 'pendente' : 'finalizada'}
+                {hasOpenRound ? `Nenhuma partida ${filter === 'scheduled' ? 'pendente' : 'finalizada'}` : 'Nenhuma rodada aberta'}
               </div>
             )}
           </CardContent>
@@ -226,7 +229,7 @@ const RankingMatches = ({ seasonId }) => {
               </div>
             ) : (
               <div className="p-6 text-center text-gray-500">
-                Nenhuma partida {filter === 'scheduled' ? 'pendente' : 'finalizada'}
+                {hasOpenRound ? `Nenhuma partida ${filter === 'scheduled' ? 'pendente' : 'finalizada'}` : 'Nenhuma rodada aberta'}
               </div>
             )}
           </CardContent>

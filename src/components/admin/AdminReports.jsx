@@ -15,6 +15,7 @@ import {
     XCircle
 } from 'lucide-react'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
+import {getLocalDateString} from '@/utils/dateUtils'
 
 const AdminReports = () => {
     const [reports, setReports] = useState(null)
@@ -53,7 +54,7 @@ const AdminReports = () => {
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `betting-report-${new Date().toISOString().split('T')[0]}.json`
+        a.download = `betting-report-${getLocalDateString()}.json`
         a.click()
         URL.revokeObjectURL(url)
     }

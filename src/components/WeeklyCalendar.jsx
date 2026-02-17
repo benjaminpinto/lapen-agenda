@@ -1,8 +1,9 @@
 import {useEffect, useState} from 'react'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
-import {ChevronLeft, ChevronRight, Clock, Ban, RotateCcw} from 'lucide-react'
+import {Ban, ChevronLeft, ChevronRight, RotateCcw} from 'lucide-react'
 import MatchTypeBadge from './ui/MatchTypeBadge'
+import {getLocalDateString} from '@/utils/dateUtils'
 
 const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
     const [currentWeek, setCurrentWeek] = useState(new Date())
@@ -10,7 +11,7 @@ const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
     const [recurringSchedules, setRecurringSchedules] = useState([])
 
     useEffect(() => {
-        fetchWeekSchedules(currentWeek.toISOString().split('T')[0])
+        fetchWeekSchedules(getLocalDateString(currentWeek))
         fetchHolidays()
         fetchRecurringSchedules()
     }, [currentWeek])
@@ -65,18 +66,18 @@ const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
     }
 
     const getSchedulesForDay = (date) => {
-        const dateStr = date.toISOString().split('T')[0]
+        const dateStr = getLocalDateString(date)
         return weekSchedules.filter(schedule => schedule.date === dateStr)
     }
 
     const getHolidaysForDay = (date) => {
-        const dateStr = date.toISOString().split('T')[0]
+        const dateStr = getLocalDateString(date)
         return holidays.filter(holiday => holiday.date === dateStr)
     }
 
     const getRecurringForDay = (date) => {
         const dayOfWeek = (date.getDay() + 6) % 7 // Convert Sunday=0 to Monday=0
-        const dateStr = date.toISOString().split('T')[0]
+        const dateStr = getLocalDateString(date)
         return recurringSchedules.filter(schedule => 
             schedule.day_of_week === dayOfWeek &&
             dateStr >= schedule.start_date &&
@@ -115,7 +116,7 @@ const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
             <div className="block sm:hidden space-y-3">
                 {weekDays.map((day, index) => {
                     const daySchedules = getSchedulesForDay(day)
-                    const isToday = day.toDateString() === new Date().toDateString()
+                    const isToday = getLocalDateString(day) === getLocalDateString()
 
                     return (
                         <Card key={day.toISOString()}
@@ -215,7 +216,7 @@ const WeeklyCalendar = ({weekSchedules, fetchWeekSchedules}) => {
             <div className="hidden sm:grid grid-cols-7 gap-2">
                 {weekDays.map((day, index) => {
                     const daySchedules = getSchedulesForDay(day)
-                    const isToday = day.toDateString() === new Date().toDateString()
+                    const isToday = getLocalDateString(day) === getLocalDateString()
 
                     return (
                         <Card key={day.toISOString()}

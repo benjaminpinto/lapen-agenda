@@ -1,11 +1,27 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Calendar, CalendarDays, Clock, Trophy, DollarSign, MapPin, Users, RotateCcw, FileText, Mail, Instagram, TrendingUp, Award, Flame, ArrowRight, BarChart3, Swords } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import {Link, useNavigate} from 'react-router-dom'
+import {Button} from '@/components/ui/button'
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
+import {Badge} from '@/components/ui/badge'
+import {
+  ArrowRight,
+  Award,
+  BarChart3,
+  Calendar,
+  CalendarDays,
+  Clock,
+  FileText,
+  Flame,
+  Instagram,
+  Mail,
+  MapPin,
+  Swords,
+  TrendingUp,
+  Trophy,
+  Users
+} from 'lucide-react'
+import {useEffect, useState} from 'react'
 import MatchTypeBadge from './ui/MatchTypeBadge'
-import { useAuth } from '@/contexts/AuthContext'
+import {useAuth} from '@/contexts/AuthContext'
 
 const Home = () => {
   const navigate = useNavigate()

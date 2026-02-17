@@ -8,6 +8,7 @@ import {Badge} from '@/components/ui/badge'
 import {ArrowLeft, Calendar, Plus, RefreshCw, Settings, Users} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
+import {formatDateForDisplay, getCurrentYear} from '@/utils/dateUtils'
 
 const AdminRanking = () => {
   const navigate = useNavigate()
@@ -16,7 +17,7 @@ const AdminRanking = () => {
   const [recalculating, setRecalculating] = useState(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [newSeason, setNewSeason] = useState({
-    year: new Date().getFullYear(),
+    year: getCurrentYear(),
     start_date: '',
     end_date: '',
     description: ''
@@ -92,7 +93,7 @@ const AdminRanking = () => {
         toast({ title: 'Temporada criada com sucesso' })
         setShowCreateForm(false)
         setNewSeason({
-          year: new Date().getFullYear() + 1,
+          year: getCurrentYear() + 1,
           start_date: '',
           end_date: '',
           description: ''
@@ -235,7 +236,7 @@ const AdminRanking = () => {
                     Temporada {season.year}{season.description ? ` - ${season.description}` : ''}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {new Date(season.start_date).toLocaleDateString('pt-BR')} - {new Date(season.end_date).toLocaleDateString('pt-BR')}
+                    {formatDateForDisplay(season.start_date)} - {formatDateForDisplay(season.end_date)}
                   </p>
                   <div className="mt-2">
                     {getStatusBadge(season.status)}

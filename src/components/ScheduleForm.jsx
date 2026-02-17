@@ -12,6 +12,7 @@ import {AlertCircle, Calendar as CalendarIcon, Clock, MedalIcon, Trophy, Users} 
 import {useToast} from '@/contexts/ToastContext'
 import {useAuth} from '@/contexts/AuthContext'
 import {fetchWithAuth} from '@/utils/fetchWithAuth'
+import {getLocalDateString} from '@/utils/dateUtils'
 
 const ScheduleForm = () => {
   const { canBookCourts, user } = useAuth()
@@ -207,10 +208,7 @@ const ScheduleForm = () => {
     }
   }
 
-  const getTodayDate = () => {
-    const today = new Date()
-    return today.toISOString().split('T')[0]
-  }
+
 
   if (!canBookCourts) {
     return (
@@ -429,7 +427,7 @@ const ScheduleForm = () => {
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                min={getTodayDate()}
+                min={getLocalDateString()}
                 required
               />
             </div>

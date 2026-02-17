@@ -24,6 +24,7 @@ import WeeklyCalendar from './WeeklyCalendar'
 import MonthSelector from './ui/MonthSelector'
 import MatchTypeBadge from './ui/MatchTypeBadge'
 import {fetchWithAuth} from '@/utils/fetchWithAuth'
+import {getCurrentMonth, getCurrentYear, getLocalDateString} from '@/utils/dateUtils'
 
 const ScheduleView = () => {
     const [searchParams] = useSearchParams()
@@ -38,8 +39,8 @@ const ScheduleView = () => {
     const [players, setPlayers] = useState([])
     const [stats, setStats] = useState({})
     const [hidePastDates, setHidePastDates] = useState(true)
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+    const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth())
+    const [selectedYear, setSelectedYear] = useState(getCurrentYear())
     const [deletingSchedule, setDeletingSchedule] = useState(null)
     const [showBetsWarning, setShowBetsWarning] = useState(false)
     const [isFinishedMatch, setIsFinishedMatch] = useState(false)
@@ -417,7 +418,7 @@ const ScheduleView = () => {
                         }}
                     />
                     {(() => {
-                        const today = new Date().toISOString().split('T')[0]
+                        const today = getLocalDateString()
                         const futureSchedules = {}
                         const pastSchedules = {}
 

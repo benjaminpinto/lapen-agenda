@@ -651,16 +651,29 @@ def open_round(round_id):
 @ranking_bp.route('/rounds/<int:round_id>/close', methods=['PUT'])
 @require_admin_auth
 def close_round(round_id):
+    data = request.get_json() or {}
+    mark_pending_as_not_played = data.get('mark_pending_as_not_played', False)
+    
     db = get_db()
     try:
-        # Check if all matches have results
         pending = db.execute(
             'SELECT COUNT(*) as count FROM ranking_matches WHERE round_id = %s AND status = %s',
             (round_id, 'scheduled')
         ).fetchone()
         
         if pending['count'] > 0:
-            return jsonify({'error': f'{pending["count"]} partida(s) ainda sem resultado'}), 400
+            if not mark_pending_as_not_played:
+                return jsonify({
+                    'error': f'{pending["count"]} partida(s) ainda sem resultado',
+                    'pending_count': pending['count']
+                }), 400
+            
+            db.execute('''
+                UPDATE ranking_matches
+                SET status = 'not_played', score = 'Não realizado', 
+                    points_p1 = 0, points_p2 = 0
+                WHERE round_id = %s AND status = 'scheduled'
+            ''', (round_id,))
         
         db.execute('UPDATE ranking_rounds SET status = %s WHERE id = %s', ('closed', round_id))
         db.commit()

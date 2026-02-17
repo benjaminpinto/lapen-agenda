@@ -248,7 +248,7 @@ CREATE TABLE IF NOT EXISTS ranking_matches (
     player1_id INTEGER NOT NULL REFERENCES users(id),
     player2_id INTEGER NOT NULL REFERENCES users(id),
     group_type VARCHAR(20) CHECK (group_type IN ('elite', 'challenger', 'nextgen')) NOT NULL,
-    status VARCHAR(20) CHECK (status IN ('scheduled', 'completed', 'cancelled', 'wo')) DEFAULT 'scheduled',
+    status VARCHAR(20) CHECK (status IN ('scheduled', 'completed', 'cancelled', 'wo', 'not_played')) DEFAULT 'scheduled',
     winner_id INTEGER REFERENCES users(id),
     score TEXT,
     sets_p1 INTEGER DEFAULT 0,

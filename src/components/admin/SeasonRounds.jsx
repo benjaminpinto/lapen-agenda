@@ -31,6 +31,10 @@ const SeasonRounds = () => {
   const [newRound, setNewRound] = useState({ month: '', description: '' })
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [roundToCancel, setRoundToCancel] = useState(null)
+  const [closeDialogOpen, setCloseDialogOpen] = useState(false)
+  const [roundToClose, setRoundToClose] = useState(null)
+  const [pendingCount, setPendingCount] = useState(0)
+  const [markAsNotPlayed, setMarkAsNotPlayed] = useState(false)
   const { toast } = useToast()
 
   const months = [
@@ -233,14 +237,24 @@ const SeasonRounds = () => {
     try {
       const response = await fetchWithAuth(`/api/ranking/rounds/${roundId}/close`, {
         method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mark_pending_as_not_played: markAsNotPlayed })
       })
 
       if (response.ok) {
         toast({ title: 'Rodada fechada', variant: 'default' })
+        setCloseDialogOpen(false)
+        setMarkAsNotPlayed(false)
         fetchRounds()
       } else {
         const error = await response.json()
-        toast({ title: error.error || 'Erro ao fechar rodada', variant: 'destructive' })
+        if (error.pending_count) {
+          setPendingCount(error.pending_count)
+          setRoundToClose(roundId)
+          setCloseDialogOpen(true)
+        } else {
+          toast({ title: error.error || 'Erro ao fechar rodada', variant: 'destructive' })
+        }
       }
     } catch (error) {
       toast({ title: 'Erro ao fechar rodada', variant: 'destructive' })
@@ -342,7 +356,10 @@ const SeasonRounds = () => {
                     </>
                   )}
                   {round.status === 'open' && (
-                    <Button size="sm" variant="outline" onClick={() => closeRound(round.id)} className="w-full sm:w-auto">
+                    <Button size="sm" variant="outline" onClick={() => {
+                      setRoundToClose(round.id)
+                      closeRound(round.id)
+                    }} className="w-full sm:w-auto">
                       Fechar Rodada
                     </Button>
                   )}
@@ -469,6 +486,42 @@ const SeasonRounds = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={cancelDraw}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Partidas Pendentes</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>Existem {pendingCount} partida(s) ainda sem resultado.</p>
+              <div className="flex items-start space-x-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="mark-not-played"
+                  checked={markAsNotPlayed}
+                  onChange={(e) => setMarkAsNotPlayed(e.target.checked)}
+                  className="mt-1"
+                />
+                <label htmlFor="mark-not-played" className="text-sm cursor-pointer">
+                  Marcar partidas pendentes como "Não realizado" (0 pontos para ambos jogadores)
+                </label>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setMarkAsNotPlayed(false)
+              setCloseDialogOpen(false)
+            }}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => closeRound(roundToClose)}
+              disabled={!markAsNotPlayed}
+              className={!markAsNotPlayed ? 'opacity-50 cursor-not-allowed' : ''}
+            >
+              Fechar Rodada
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

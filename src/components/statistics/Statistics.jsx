@@ -23,6 +23,7 @@ import {Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip} from 'rechart
 import RecentResults from '../ranking/RecentResults'
 import ShareableStatsCard from './ShareableStatsCard'
 import html2canvas from 'html2canvas'
+import {formatDateForDisplay} from '@/utils/dateUtils'
 
 export default function Statistics() {
   const [players, setPlayers] = useState([])
@@ -735,7 +736,7 @@ export default function Statistics() {
                         {match.player1_name} vs {match.player2_name}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {new Date(match.match_date).toLocaleDateString('pt-BR')} • {match.match_type}
+                        {formatDateForDisplay(match.match_date)} • {match.match_type}
                       </div>
                     </div>
                     <div className="text-right">

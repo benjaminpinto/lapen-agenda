@@ -5,6 +5,7 @@ import BackButton from '@/components/ui/BackButton'
 import {CheckCircle, Clock, User} from 'lucide-react'
 import {formatDistanceToNow} from 'date-fns'
 import {ptBR} from 'date-fns/locale'
+import {formatDateForDisplay} from '@/utils/dateUtils'
 
 const RecentResults = ({ onBack }) => {
   const [results, setResults] = useState([])
@@ -75,7 +76,7 @@ const RecentResults = ({ onBack }) => {
                 <>
                   <Badge variant="secondary">{result.match_type}</Badge>
                   <span className="text-sm text-gray-500">
-                    {new Date(result.match_date).toLocaleDateString('pt-BR')}
+                    {formatDateForDisplay(result.match_date)}
                   </span>
                 </>
               )}

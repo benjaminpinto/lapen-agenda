@@ -48,9 +48,10 @@ def add_match_result():
                                    parsed['p1_sets'], parsed['p2_sets'], parsed['p1_games'], parsed['p2_games'], request.user_id)
                 
                 db.commit()
+                db.close()
                 return jsonify({'message': 'Resultado adicionado com sucesso'}), 201
         
-        elif ranking_match_id:
+        if ranking_match_id:
             # Direct ranking match - use unified method
             match = db.execute('''
                 SELECT rm.*, u1.short_name as p1, u2.short_name as p2

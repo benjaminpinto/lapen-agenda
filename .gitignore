@@ -79,3 +79,4 @@ src/static/
 
 # Vercel
 .vercel
+/src/database/backups/

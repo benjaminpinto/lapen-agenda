@@ -9,6 +9,7 @@ import MatchResultForm from '@/components/shared/MatchResultForm'
 import WOForm from '@/components/admin/WOForm'
 import {Calendar, Clock} from 'lucide-react'
 import {fetchWithAuth} from '@/utils/fetchWithAuth'
+import {formatDateForDisplay} from '@/utils/dateUtils'
 
 export default function AddMatchResult() {
     const [pastMatches, setPastMatches] = useState([])
@@ -179,7 +180,7 @@ export default function AddMatchResult() {
                                                 <div className="text-right text-sm text-muted-foreground">
                                                     <div className="flex items-center gap-1">
                                                         <Calendar className="h-3 w-3"/>
-                                                        {new Date(match.date).toLocaleDateString('pt-BR')}
+                                                        {formatDateForDisplay(match.date)}
                                                     </div>
                                                     <div className="flex items-center gap-1 mt-1">
                                                         <Clock className="h-3 w-3"/>
@@ -220,7 +221,7 @@ export default function AddMatchResult() {
                                                 <div className="text-right text-sm text-muted-foreground">
                                                     <div className="flex items-center gap-1">
                                                         <Calendar className="h-3 w-3"/>
-                                                        {new Date(match.date).toLocaleDateString('pt-BR')}
+                                                        {formatDateForDisplay(match.date)}
                                                     </div>
                                                     <div className="flex items-center gap-1 mt-1">
                                                         <Clock className="h-3 w-3"/>
@@ -282,7 +283,7 @@ export default function AddMatchResult() {
                                 {selectedMatch.player1_name} vs {selectedMatch.player2_name}
                             </div>
                             <div className="text-sm text-muted-foreground mt-1">
-                                {new Date(selectedMatch.date).toLocaleDateString('pt-BR')} • {selectedMatch.start_time} • {selectedMatch.match_type}
+                                {formatDateForDisplay(selectedMatch.date)} • {selectedMatch.start_time} • {selectedMatch.match_type}
                             </div>
                         </div>
 
@@ -307,7 +308,7 @@ export default function AddMatchResult() {
                                 {selectedMatch.player1_name} vs {selectedMatch.player2_name}
                             </div>
                             <div className="text-sm text-muted-foreground mt-1">
-                                {new Date(selectedMatch.date).toLocaleDateString('pt-BR')} • {selectedMatch.start_time} • {selectedMatch.match_type}
+                                {formatDateForDisplay(selectedMatch.date)} • {selectedMatch.start_time} • {selectedMatch.match_type}
                             </div>
                         </div>
 

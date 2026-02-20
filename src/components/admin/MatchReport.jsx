@@ -5,6 +5,7 @@ import {Button} from '@/components/ui/button'
 import {Badge} from '@/components/ui/badge'
 import {ArrowLeft, CheckCircle, Clock, Copy, Crown, Trophy, Users, Wallet, XCircle} from 'lucide-react'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
+import {formatDateForDisplay} from '@/utils/dateUtils'
 
 const MatchReport = () => {
     const {matchId} = useParams()
@@ -62,7 +63,7 @@ const MatchReport = () => {
                     <div>
                         <h1 className="text-3xl font-bold mb-2">Relatório da Partida</h1>
                         <p className="text-gray-600">
-                            {match.player1_name} vs {match.player2_name} - {new Date(match.date).toLocaleDateString('pt-BR')}
+                            {match.player1_name} vs {match.player2_name} - {formatDateForDisplay(match.date)}
                         </p>
                     </div>
                     <Badge className={`text-lg px-4 py-2 ${

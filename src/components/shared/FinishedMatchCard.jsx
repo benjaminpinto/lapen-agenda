@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Trophy, Wallet, Users, CheckCircle } from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {Card, CardContent} from '@/components/ui/card'
+import {Badge} from '@/components/ui/badge'
+import {CheckCircle, Trophy, Users, Wallet} from 'lucide-react'
 
 const FinishedMatchCard = ({ match, onClick, showWinner = false }) => {
   const [details, setDetails] = useState(null)
@@ -44,7 +44,7 @@ const FinishedMatchCard = ({ match, onClick, showWinner = false }) => {
                 {match.player1_name} vs {match.player2_name}
               </div>
               <div className="text-sm text-gray-500">
-                {new Date(match.date + 'T00:00:00').toLocaleDateString('pt-BR')} às {match.start_time}
+                {formatDateForDisplay(match.date)} às {match.start_time}
               </div>
             </div>
           </div>

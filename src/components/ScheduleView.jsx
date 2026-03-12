@@ -37,6 +37,10 @@ const ScheduleView = () => {
     const [whatsappMessage, setWhatsappMessage] = useState('')
     const [showWhatsappDialog, setShowWhatsappDialog] = useState(false)
     const [players, setPlayers] = useState([])
+    const [editPlayer1Suggestions, setEditPlayer1Suggestions] = useState([])
+    const [editPlayer2Suggestions, setEditPlayer2Suggestions] = useState([])
+    const [showEditPlayer1Suggestions, setShowEditPlayer1Suggestions] = useState(false)
+    const [showEditPlayer2Suggestions, setShowEditPlayer2Suggestions] = useState(false)
     const [stats, setStats] = useState({})
     const [hidePastDates, setHidePastDates] = useState(true)
     const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth())
@@ -104,7 +108,7 @@ const ScheduleView = () => {
 
     const fetchPlayers = async () => {
         try {
-            const response = await fetchWithAuth('/api/public/players')
+            const response = await fetchWithAuth('/api/public/users/short-names')
             if (response.ok) {
                 const data = await response.json()
                 setPlayers(data)
@@ -112,6 +116,33 @@ const ScheduleView = () => {
         } catch (error) {
             console.error('Error fetching players:', error)
         }
+    }
+
+    const normalizeString = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+    const handleEditPlayerInput = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }))
+        if (value.length > 0) {
+            const normalized = normalizeString(value)
+            const suggestions = players
+                .filter(p => normalizeString(p.short_name).includes(normalized) || normalizeString(p.name).includes(normalized))
+                .map(p => p.short_name)
+                .slice(0, 5)
+            if (field === 'player1_name') {
+                setEditPlayer1Suggestions(suggestions)
+                setShowEditPlayer1Suggestions(true)
+            } else {
+                setEditPlayer2Suggestions(suggestions)
+                setShowEditPlayer2Suggestions(true)
+            }
+        } else {
+            field === 'player1_name' ? setShowEditPlayer1Suggestions(false) : setShowEditPlayer2Suggestions(false)
+        }
+    }
+
+    const selectEditSuggestion = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }))
+        field === 'player1_name' ? setShowEditPlayer1Suggestions(false) : setShowEditPlayer2Suggestions(false)
     }
 
     const fetchStats = async () => {
@@ -477,10 +508,12 @@ const ScheduleView = () => {
                                                                         <MatchTypeBadge matchType={schedule.match_type} size="sm" />
                                                                     </div>
                                                                     <div className="flex justify-end space-x-1">
-                                                                        <Button variant="ghost" size="sm"
-                                                                            onClick={() => handleEdit(schedule)}>
-                                                                            <Edit className="h-4 w-4" />
-                                                                        </Button>
+                                                                        {schedule.match_type !== 'Liga' && (
+                                                                            <Button variant="ghost" size="sm"
+                                                                                onClick={() => handleEdit(schedule)}>
+                                                                                <Edit className="h-4 w-4" />
+                                                                            </Button>
+                                                                        )}
                                                                         <Button variant="ghost" size="sm"
                                                                             onClick={() => handleDeleteClick(schedule)}>
                                                                             <Trash2 className="h-4 w-4" />
@@ -507,10 +540,12 @@ const ScheduleView = () => {
                                                                         <MatchTypeBadge matchType={schedule.match_type} />
                                                                     </div>
                                                                     <div className="flex space-x-2">
-                                                                        <Button variant="ghost" size="sm"
-                                                                            onClick={() => handleEdit(schedule)}>
-                                                                            <Edit className="h-4 w-4" />
-                                                                        </Button>
+                                                                        {schedule.match_type !== 'Liga' && (
+                                                                            <Button variant="ghost" size="sm"
+                                                                                onClick={() => handleEdit(schedule)}>
+                                                                                <Edit className="h-4 w-4" />
+                                                                            </Button>
+                                                                        )}
                                                                         <Button variant="ghost" size="sm"
                                                                             onClick={() => handleDeleteClick(schedule)}>
                                                                             <Trash2 className="h-4 w-4" />
@@ -595,24 +630,48 @@ const ScheduleView = () => {
                     </DialogHeader>
 
                     <form onSubmit={handleUpdate} className="space-y-4">
-                        <div>
+                        <div className="relative">
                             <Label htmlFor="edit-player1">Jogador 1</Label>
                             <Input
                                 id="edit-player1"
                                 value={formData.player1_name}
-                                onChange={(e) => setFormData(prev => ({ ...prev, player1_name: e.target.value }))}
+                                onChange={(e) => handleEditPlayerInput('player1_name', e.target.value)}
+                                onFocus={() => formData.player1_name && setShowEditPlayer1Suggestions(true)}
+                                onBlur={() => setTimeout(() => setShowEditPlayer1Suggestions(false), 200)}
+                                autoComplete="off"
                                 required
                             />
+                            {showEditPlayer1Suggestions && editPlayer1Suggestions.length > 0 && (
+                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                    {editPlayer1Suggestions.map((s, i) => (
+                                        <div key={i} className="px-4 py-3 hover:bg-gray-100 cursor-pointer"
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            onClick={() => selectEditSuggestion('player1_name', s)}>{s}</div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
-                        <div>
+                        <div className="relative">
                             <Label htmlFor="edit-player2">Jogador 2</Label>
                             <Input
                                 id="edit-player2"
                                 value={formData.player2_name}
-                                onChange={(e) => setFormData(prev => ({ ...prev, player2_name: e.target.value }))}
+                                onChange={(e) => handleEditPlayerInput('player2_name', e.target.value)}
+                                onFocus={() => formData.player2_name && setShowEditPlayer2Suggestions(true)}
+                                onBlur={() => setTimeout(() => setShowEditPlayer2Suggestions(false), 200)}
+                                autoComplete="off"
                                 required
                             />
+                            {showEditPlayer2Suggestions && editPlayer2Suggestions.length > 0 && (
+                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                    {editPlayer2Suggestions.map((s, i) => (
+                                        <div key={i} className="px-4 py-3 hover:bg-gray-100 cursor-pointer"
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            onClick={() => selectEditSuggestion('player2_name', s)}>{s}</div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <div>

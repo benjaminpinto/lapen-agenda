@@ -195,24 +195,27 @@ def get_past_matches():
     try:
         schedule_matches = db.execute('''
             SELECT s.id, s.date, s.start_time, s.player1_name, s.player2_name, s.match_type,
-                   rm.id as ranking_match_id, rm.player1_id, rm.player2_id
+                   NULL as ranking_match_id, NULL as player1_id, NULL as player2_id
             FROM schedules s
             LEFT JOIN match_statistics_unified mr ON s.id = mr.schedule_id
-            LEFT JOIN ranking_matches rm ON s.id = rm.schedule_id
-            LEFT JOIN match_statistics_unified mr2 ON rm.id = mr2.ranking_match_id
-            WHERE s.deleted_at IS NULL AND mr.id IS NULL AND mr2.id IS NULL 
-                  AND s.date <= CURRENT_DATE AND (rm.status = 'scheduled' OR rm.status IS NULL)
+            WHERE s.deleted_at IS NULL AND mr.id IS NULL
+                  AND s.date <= CURRENT_DATE
+                  AND NOT EXISTS (
+                      SELECT 1 FROM ranking_matches rm WHERE rm.schedule_id = s.id
+                  )
             ORDER BY s.date DESC, s.start_time DESC
         ''').fetchall()
         
         ranking_matches = db.execute('''
-            SELECT rm.id, NULL as date, NULL as start_time, 
+            SELECT rm.id, s.date, s.start_time, 
                    u1.short_name as player1_name, u2.short_name as player2_name, 
                    'Ranking' as match_type, rm.id as ranking_match_id
             FROM ranking_matches rm
             JOIN users u1 ON rm.player1_id = u1.id
             JOIN users u2 ON rm.player2_id = u2.id
-            WHERE rm.status = 'scheduled' AND rm.schedule_id IS NULL
+            LEFT JOIN schedules s ON rm.schedule_id = s.id
+            LEFT JOIN match_statistics_unified msu ON rm.id = msu.ranking_match_id
+            WHERE rm.status = 'scheduled' AND msu.id IS NULL
         ''').fetchall()
         
         all_matches = []

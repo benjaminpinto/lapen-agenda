@@ -283,6 +283,7 @@ def delete_schedule(schedule_id):
         if match['status'] == 'finished':
             # Soft delete finished matches
             try:
+                db.execute('UPDATE ranking_matches SET schedule_id = NULL WHERE schedule_id = %s', (schedule_id,))
                 db.execute('UPDATE schedules SET deleted_at = CURRENT_TIMESTAMP WHERE id = %s', (schedule_id,))
                 db.commit()
                 return jsonify({'success': True, 'message': 'Agendamento excluído com sucesso'})
@@ -293,6 +294,7 @@ def delete_schedule(schedule_id):
         if any_bets['count'] > 0:
             # Soft delete instead of hard delete
             try:
+                db.execute('UPDATE ranking_matches SET schedule_id = NULL WHERE schedule_id = %s', (schedule_id,))
                 db.execute('UPDATE schedules SET deleted_at = CURRENT_TIMESTAMP WHERE id = %s', (schedule_id,))
                 db.commit()
                 return jsonify({'success': True, 'message': 'Agendamento excluído com sucesso'})

@@ -477,7 +477,7 @@ def get_all_open_matches():
         JOIN ranking_rounds rr ON rm.round_id = rr.id
         JOIN users u1 ON rm.player1_id = u1.id
         JOIN users u2 ON rm.player2_id = u2.id
-        WHERE rr.status = 'open'
+        WHERE rr.status = 'open' AND rm.schedule_id IS NULL AND rm.status = 'scheduled'
         ORDER BY rr.round_number DESC, rm.created_at DESC
     ''').fetchall()
     return jsonify([dict(match) for match in matches])

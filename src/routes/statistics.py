@@ -225,7 +225,10 @@ def get_past_matches():
                 match_dict['start_time'] = str(match_dict['start_time'])
             all_matches.append(match_dict)
         for m in ranking_matches:
-            all_matches.append(dict(m))
+            match_dict = dict(m)
+            if match_dict.get('start_time'):
+                match_dict['start_time'] = str(match_dict['start_time'])
+            all_matches.append(match_dict)
         return jsonify({'matches': all_matches})
     finally:
         db.close()

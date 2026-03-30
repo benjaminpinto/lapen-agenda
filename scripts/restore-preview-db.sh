@@ -30,8 +30,8 @@ fi
 PGPORT_PREVIEW=${PGPORT_PREVIEW:-5432}
 
 echo "Dropping all tables in schema public..."
-docker exec -e PGPASSWORD="$PGPASSWORD_PREVIEW" lapen-postgres psql -h "$PGHOST_PREVIEW" -p "$PGPORT_PREVIEW" -U "$PGUSER_PREVIEW" -d "$PGDATABASE_PREVIEW" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+docker exec -e PGPASSWORD="$PGPASSWORD_PREVIEW" lapen-backend psql -h "$PGHOST_PREVIEW" -p "$PGPORT_PREVIEW" -U "$PGUSER_PREVIEW" -d "$PGDATABASE_PREVIEW" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 
 echo "Restoring database from $BACKUP_FILE..."
-docker exec -i -e PGPASSWORD="$PGPASSWORD_PREVIEW" lapen-postgres psql -h "$PGHOST_PREVIEW" -p "$PGPORT_PREVIEW" -U "$PGUSER_PREVIEW" -d "$PGDATABASE_PREVIEW" < "$PROJECT_ROOT/$BACKUP_FILE"
+docker exec -i -e PGPASSWORD="$PGPASSWORD_PREVIEW" lapen-backend psql -h "$PGHOST_PREVIEW" -p "$PGPORT_PREVIEW" -U "$PGUSER_PREVIEW" -d "$PGDATABASE_PREVIEW" < "$PROJECT_ROOT/$BACKUP_FILE"
 echo "Preview database restored successfully!"

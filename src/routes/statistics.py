@@ -207,9 +207,10 @@ def get_past_matches():
         ''').fetchall()
         
         ranking_matches = db.execute('''
-            SELECT rm.id, s.date, s.start_time, 
-                   u1.short_name as player1_name, u2.short_name as player2_name, 
-                   'Ranking' as match_type, rm.id as ranking_match_id
+            SELECT rm.id, s.date, s.start_time,
+                   u1.short_name as player1_name, u2.short_name as player2_name,
+                   'Ranking' as match_type, rm.id as ranking_match_id,
+                   rm.player1_id, rm.player2_id
             FROM ranking_matches rm
             JOIN users u1 ON rm.player1_id = u1.id
             JOIN users u2 ON rm.player2_id = u2.id

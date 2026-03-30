@@ -1,3 +1,5 @@
+import datetime
+
 from flask import Blueprint, request, jsonify
 
 from src.auth import require_auth
@@ -230,6 +232,7 @@ def get_past_matches():
             if match_dict.get('start_time'):
                 match_dict['start_time'] = str(match_dict['start_time'])
             all_matches.append(match_dict)
+        all_matches.sort(key=lambda x: x.get('date') or datetime.date.min, reverse=True)
         return jsonify({'matches': all_matches})
     finally:
         db.close()

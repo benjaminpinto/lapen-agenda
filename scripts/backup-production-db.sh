@@ -19,5 +19,5 @@ PGPORT=${PGPORT:-5432}
 
 mkdir -p src/database/backups
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-docker exec -e PGPASSWORD="$PGPASSWORD" lapen-postgres pg_dump -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -n public --no-owner --no-privileges > src/database/backups/production_backup_${TIMESTAMP}.sql
+docker exec -e PGPASSWORD="$PGPASSWORD" lapen-backend pg_dump -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -n public --no-owner --no-privileges > src/database/backups/production_backup_${TIMESTAMP}.sql
 echo "Backup saved to src/database/backups/production_backup_${TIMESTAMP}.sql"

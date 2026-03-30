@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-PROJECT_ROOT="/Users/benjaminpinto/Developer/playground/lapen-agenda"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 if [ -z "$1" ]; then
     echo "Usage: $0 <backup_file>"

@@ -23,22 +23,27 @@ def setup_db():
     db = get_db()
     _cleanup(db)
 
-    court = db.execute(
-        "INSERT INTO courts (name, type, active) VALUES (%s, 'Saibro', true) RETURNING id",
+    db.execute(
+        "INSERT INTO courts (id, name, type, active) VALUES (9998, %s, 'Saibro', true) ON CONFLICT (id) DO NOTHING",
         (TEST_COURT_NAME,)
-    ).fetchone()
+    )
+    court_id = 9998
 
     pw = hash_password('test123')
+    db.execute(
+        "DELETE FROM users WHERE email = %s", (f'tester{EMAIL_SUFFIX}',)
+    )
     user = db.execute(
         "INSERT INTO users (email, password_hash, name, short_name, is_verified, lapen_approved) "
         "VALUES (%s, %s, 'Tester', 'Tester', true, true) RETURNING id",
         (f'tester{EMAIL_SUFFIX}', pw)
     ).fetchone()
 
+    db.execute("DELETE FROM schedules WHERE court_id = 9998")
     sched = db.execute(
         "INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, match_type) "
         "VALUES (%s, '2026-01-01', '08:00', 'A', 'B', 'Amistoso') RETURNING id",
-        (court['id'],)
+        (court_id,)
     ).fetchone()
 
     db.commit()
@@ -53,10 +58,11 @@ def setup_db():
 
 
 def _cleanup(db):
-    db.execute("DELETE FROM match_statistics_unified WHERE player1_name IN ('A', 'B')")
-    db.execute("DELETE FROM schedules WHERE player1_name = 'A' AND player2_name = 'B'")
+    db.execute("DELETE FROM match_statistics_unified WHERE player1_name IN ('A', 'B')"
+               " AND schedule_id IN (SELECT id FROM schedules WHERE court_id = 9998)")
+    db.execute("DELETE FROM schedules WHERE court_id = 9998")
     db.execute("DELETE FROM users WHERE email LIKE %s", (f'%{EMAIL_SUFFIX}',))
-    db.execute("DELETE FROM courts WHERE name = %s", (TEST_COURT_NAME,))
+    db.execute("DELETE FROM courts WHERE id = 9998")
 
 
 def _post(client, token, schedule_id, score):

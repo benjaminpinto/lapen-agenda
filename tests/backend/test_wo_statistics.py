@@ -3,7 +3,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 os.environ.setdefault('SECRET_KEY', 'test-secret-key-min-32-characters-long')
 os.environ.setdefault('ADMIN_PASSWORD', 'test-admin-password')
@@ -15,28 +15,28 @@ from src.auth import hash_password
 def setup_db():
     db = get_db()
     # Cleanup
-    db.execute("DELETE FROM match_statistics_unified WHERE ranking_match_id IN (SELECT id FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)))")
-    db.execute("DELETE FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025))")
-    db.execute("DELETE FROM ranking_draws WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025))")
-    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_season_config WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_temp_points_rules WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_participants WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_seasons WHERE year >= 2025")
+    db.execute("DELETE FROM match_statistics_unified WHERE ranking_match_id IN (SELECT id FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)))")
+    db.execute("DELETE FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000))")
+    db.execute("DELETE FROM ranking_draws WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000))")
+    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_season_config WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_temp_points_rules WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_participants WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_seasons WHERE year >= 9000")
     db.execute("DELETE FROM users WHERE email LIKE '%@wotest.com'")
     db.commit()
     db.close()
     yield
     # Cleanup after
     db = get_db()
-    db.execute("DELETE FROM match_statistics_unified WHERE ranking_match_id IN (SELECT id FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)))")
-    db.execute("DELETE FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025))")
-    db.execute("DELETE FROM ranking_draws WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025))")
-    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_season_config WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_temp_points_rules WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_participants WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_seasons WHERE year >= 2025")
+    db.execute("DELETE FROM match_statistics_unified WHERE ranking_match_id IN (SELECT id FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)))")
+    db.execute("DELETE FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000))")
+    db.execute("DELETE FROM ranking_draws WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000))")
+    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_season_config WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_temp_points_rules WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_participants WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_seasons WHERE year >= 9000")
     db.execute("DELETE FROM users WHERE email LIKE '%@wotest.com'")
     db.commit()
     db.close()
@@ -93,14 +93,14 @@ def test_wo_match_appears_in_statistics(setup_db):
     cursor = db.execute('''
         INSERT INTO ranking_seasons (year, start_date, end_date, status)
         VALUES (%s, %s, %s, %s) RETURNING id
-    ''', (2025, '2025-01-01', '2025-12-31', 'active'))
+    ''', (9000, '9000-01-01', '9000-12-31', 'active'))
     season_id = cursor.fetchone()['id']
     
     # Create round
     cursor = db.execute('''
         INSERT INTO ranking_rounds (season_id, round_number, month, year, status)
         VALUES (%s, %s, %s, %s, %s) RETURNING id
-    ''', (season_id, 1, 1, 2025, 'open'))
+    ''', (season_id, 1, 1, 9000, 'open'))
     round_id = cursor.fetchone()['id']
     
     # Create participants
@@ -166,14 +166,14 @@ def test_wo_match_counts_in_player_statistics(setup_db):
     cursor = db.execute('''
         INSERT INTO ranking_seasons (year, start_date, end_date, status)
         VALUES (%s, %s, %s, %s) RETURNING id
-    ''', (2025, '2025-01-01', '2025-12-31', 'active'))
+    ''', (9000, '9000-01-01', '9000-12-31', 'active'))
     season_id = cursor.fetchone()['id']
     
     # Create round
     cursor = db.execute('''
         INSERT INTO ranking_rounds (season_id, round_number, month, year, status)
         VALUES (%s, %s, %s, %s, %s) RETURNING id
-    ''', (season_id, 1, 1, 2025, 'open'))
+    ''', (season_id, 1, 1, 9000, 'open'))
     round_id = cursor.fetchone()['id']
     
     # Create participants
@@ -236,14 +236,14 @@ def test_wo_match_in_general_statistics(setup_db):
     cursor = db.execute('''
         INSERT INTO ranking_seasons (year, start_date, end_date, status)
         VALUES (%s, %s, %s, %s) RETURNING id
-    ''', (2025, '2025-01-01', '2025-12-31', 'active'))
+    ''', (9000, '9000-01-01', '9000-12-31', 'active'))
     season_id = cursor.fetchone()['id']
     
     # Create round
     cursor = db.execute('''
         INSERT INTO ranking_rounds (season_id, round_number, month, year, status)
         VALUES (%s, %s, %s, %s, %s) RETURNING id
-    ''', (season_id, 1, 1, 2025, 'open'))
+    ''', (season_id, 1, 1, 9000, 'open'))
     round_id = cursor.fetchone()['id']
     
     # Create participants

@@ -6,7 +6,7 @@ from src.auth import require_auth
 from src.database import get_db
 from src.logger import get_logger
 from src.routes.ranking import _update_match_result
-from src.utils.score_parser import parse_score
+from src.utils.score_parser import parse_score, validate_score
 
 logger = get_logger()
 statistics_bp = Blueprint('statistics', __name__, url_prefix='/api/statistics')
@@ -22,6 +22,10 @@ def add_match_result():
     
     if not winner_name or not score or (not schedule_id and not ranking_match_id):
         return jsonify({'error': 'Dados incompletos'}), 400
+    
+    is_valid, error_msg = validate_score(score)
+    if not is_valid:
+        return jsonify({'error': f'Placar inválido: {error_msg}'}), 400
     
     db = get_db()
     try:
@@ -335,7 +339,7 @@ def get_general_statistics():
         total_sets += parsed['p1_sets'] + parsed['p2_sets']
         total_games += parsed['p1_games'] + parsed['p2_games']
         
-        if parsed['p1_sets'] == parsed['p2_sets'] == 1:
+        if parsed['has_super_tiebreak']:
             super_tiebreaks += 1
         
         match_types[match['match_type']] = match_types.get(match['match_type'], 0) + 1

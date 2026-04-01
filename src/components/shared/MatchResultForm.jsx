@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {useEffect, useState} from 'react'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
@@ -13,6 +13,23 @@ const MatchResultForm = ({ match, onSubmit, onCancel }) => {
   const [set3P2, setSet3P2] = useState('')
   const { toast } = useToast()
 
+  const s1p1 = parseInt(set1P1) || 0
+  const s1p2 = parseInt(set1P2) || 0
+  const s2p1 = parseInt(set2P1) || 0
+  const s2p2 = parseInt(set2P2) || 0
+  const set1Done = set1P1 !== '' && set1P2 !== ''
+  const set2Done = set2P1 !== '' && set2P2 !== ''
+  const p1SetsLive = (s1p1 > s1p2 ? 1 : 0) + (s2p1 > s2p2 ? 1 : 0)
+  const p2SetsLive = (s1p2 > s1p1 ? 1 : 0) + (s2p2 > s2p1 ? 1 : 0)
+  const stbEnabled = set1Done && set2Done && p1SetsLive === 1 && p2SetsLive === 1
+
+  useEffect(() => {
+    if (!stbEnabled) {
+      setSet3P1('')
+      setSet3P2('')
+    }
+  }, [stbEnabled])
+
   const handleSubmit = () => {
     if (!set1P1 || !set1P2 || !set2P1 || !set2P2) {
       toast({ title: 'Preencha os dois primeiros sets', variant: 'destructive' })
@@ -24,12 +41,55 @@ const MatchResultForm = ({ match, onSubmit, onCancel }) => {
     const s2p1 = parseInt(set2P1)
     const s2p2 = parseInt(set2P2)
 
+    if (s1p1 === 0 && s1p2 === 0) {
+      toast({ title: '1º set não pode ser 0-0', variant: 'destructive' })
+      return
+    }
+    if (s2p1 === 0 && s2p2 === 0) {
+      toast({ title: '2º set não pode ser 0-0', variant: 'destructive' })
+      return
+    }
+    if (Math.max(s1p1, s1p2) > 7) {
+      toast({ title: '1º set inválido (máximo 7 games)', variant: 'destructive' })
+      return
+    }
+    if (Math.max(s2p1, s2p2) > 7) {
+      toast({ title: '2º set inválido (máximo 7 games)', variant: 'destructive' })
+      return
+    }
+    if (s1p1 === s1p2) {
+      toast({ title: '1º set sem vencedor claro', variant: 'destructive' })
+      return
+    }
+    if (s2p1 === s2p2) {
+      toast({ title: '2º set sem vencedor claro', variant: 'destructive' })
+      return
+    }
+
     const p1Sets = (s1p1 > s1p2 ? 1 : 0) + (s2p1 > s2p2 ? 1 : 0)
     const p2Sets = (s1p2 > s1p1 ? 1 : 0) + (s2p2 > s2p1 ? 1 : 0)
+    const needsSTB = p1Sets === 1 && p2Sets === 1
 
-    if (p1Sets === 1 && p2Sets === 1 && (!set3P1 || !set3P2)) {
+    if (needsSTB && (!set3P1 || !set3P2)) {
       toast({ title: 'Preencha o super tiebreak (terceiro set)', variant: 'destructive' })
       return
+    }
+    if (p1Sets !== 1 && (set3P1 || set3P2)) {
+      toast({ title: 'Terceiro set informado mas já há vencedor nos dois primeiros sets', variant: 'destructive' })
+      return
+    }
+
+    if (set3P1 && set3P2) {
+      const s3p1 = parseInt(set3P1)
+      const s3p2 = parseInt(set3P2)
+      if (Math.max(s3p1, s3p2) < 10) {
+        toast({ title: 'Super tiebreak inválido (mínimo 10 pontos)', variant: 'destructive' })
+        return
+      }
+      if (Math.abs(s3p1 - s3p2) < 2) {
+        toast({ title: 'Super tiebreak sem vencedor claro (diferença mínima de 2)', variant: 'destructive' })
+        return
+      }
     }
 
     let score = `${set1P1}-${set1P2}, ${set2P1}-${set2P2}`
@@ -88,9 +148,10 @@ const MatchResultForm = ({ match, onSubmit, onCancel }) => {
                   <Input
                     type="number"
                     min="0"
-                    max="15"
+                    max="99"
                     className="w-16 text-center"
                     value={set3P1}
+                    disabled={!stbEnabled}
                     onChange={(e) => setSet3P1(e.target.value)}
                   />
                 </td>
@@ -121,9 +182,10 @@ const MatchResultForm = ({ match, onSubmit, onCancel }) => {
                   <Input
                     type="number"
                     min="0"
-                    max="15"
+                    max="99"
                     className="w-16 text-center"
                     value={set3P2}
+                    disabled={!stbEnabled}
                     onChange={(e) => setSet3P2(e.target.value)}
                   />
                 </td>
@@ -132,7 +194,9 @@ const MatchResultForm = ({ match, onSubmit, onCancel }) => {
           </table>
         </div>
 
-        <p className="text-xs text-gray-500">STB - Super tiebreak (opcional)</p>
+        <p className="text-xs text-gray-500">
+          STB - Super tiebreak {stbEnabled ? <span className="text-amber-600 font-medium">(obrigatório)</span> : '(preenchido automaticamente quando necessário)'}
+        </p>
 
         <div className="flex gap-2">
           <Button onClick={handleSubmit}>Salvar</Button>

@@ -135,12 +135,14 @@ def get_player_statistics():
         params.append(match_type)
     
     matches = db.execute(f'''
-        SELECT m.*, u1.short_name as current_player1_name, u2.short_name as current_player2_name
+        SELECT m.*, u1.short_name as current_player1_name, u2.short_name as current_player2_name,
+               uw.short_name as current_winner_name
         FROM match_statistics_unified m
         LEFT JOIN users u1 ON m.player1_id = u1.id
         LEFT JOIN users u2 ON m.player2_id = u2.id
-        WHERE {" AND ".join(conditions)} 
-        ORDER BY m.match_date DESC
+        LEFT JOIN users uw ON m.winner_id = uw.id
+        WHERE {" AND ".join(conditions)}
+        ORDER BY m.match_date DESC, m.id ASC
     ''', params).fetchall()
     
     stats = {
@@ -161,9 +163,10 @@ def get_player_statistics():
         games_lost += parsed['p2_games'] if is_p1 else parsed['p1_games']
         
         stats['matches'].append({
+            'id': match['id'],
             'player1_name': match.get('current_player1_name') or match['player1_name'],
             'player2_name': match.get('current_player2_name') or match['player2_name'],
-            'winner_name': match['winner_name'],
+            'winner_name': match.get('current_winner_name') or match['winner_name'],
             'score': match['score'],
             'match_type': match['match_type'],
             'match_date': match['match_date'],

@@ -13,6 +13,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
+    "test:unit": "vitest run tests/frontend/",
     "test:cleanup": "npx --yes tsx e2e/cleanup.ts",
     "allure:generate": "allure generate allure-results --clean -o allure-report",
     "allure:open": "allure open allure-report",
@@ -52,6 +53,7 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "vite": "^6.0.1",
-    "vite-plugin-pwa": "^1.2.0"
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^4.1.2"
   }
 }

@@ -1,7 +1,7 @@
 import pytest
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from src.database import get_db
 from src.auth import hash_password
@@ -31,8 +31,8 @@ def get_auth_token(client, email):
 def setup_data():
     db = get_db()
     # Clean up in correct order (child tables first)
-    db.execute("DELETE FROM challenges")
-    db.execute("DELETE FROM match_statistics_unified WHERE match_type = 'Amistoso' OR added_by IN (SELECT id FROM users WHERE email LIKE '%@challengetest.com')")
+    db.execute("DELETE FROM challenges WHERE challenger_id IN (SELECT id FROM users WHERE email LIKE '%@challengetest.com') OR challenged_id IN (SELECT id FROM users WHERE email LIKE '%@challengetest.com')")
+    db.execute("DELETE FROM match_statistics_unified WHERE added_by IN (SELECT id FROM users WHERE email LIKE '%@challengetest.com')")
     db.execute("DELETE FROM schedules WHERE player1_name IN ('U1', 'U2') OR player2_name IN ('U1', 'U2')")
     db.execute("DELETE FROM users WHERE email LIKE '%@challengetest.com'")
     db.commit()
@@ -46,8 +46,8 @@ def setup_data():
     
     # Cleanup after in correct order
     db = get_db()
-    db.execute("DELETE FROM challenges")
-    db.execute("DELETE FROM match_statistics_unified WHERE match_type = 'Amistoso' OR added_by IN (SELECT id FROM users WHERE email LIKE '%@challengetest.com')")
+    db.execute("DELETE FROM challenges WHERE challenger_id IN (SELECT id FROM users WHERE email LIKE '%@challengetest.com') OR challenged_id IN (SELECT id FROM users WHERE email LIKE '%@challengetest.com')")
+    db.execute("DELETE FROM match_statistics_unified WHERE added_by IN (SELECT id FROM users WHERE email LIKE '%@challengetest.com')")
     db.execute("DELETE FROM schedules WHERE player1_name IN ('U1', 'U2') OR player2_name IN ('U1', 'U2')")
     db.execute("DELETE FROM users WHERE email LIKE '%@challengetest.com'")
     db.commit()

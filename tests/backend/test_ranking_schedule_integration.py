@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 os.environ.setdefault('SECRET_KEY', 'test-secret-key-min-32-characters-long')
 os.environ.setdefault('ADMIN_PASSWORD', 'test-admin-password')
@@ -24,8 +24,8 @@ def setup_db():
     db.execute("DELETE FROM match_statistics_unified WHERE schedule_id IN (SELECT id FROM schedules WHERE player1_name LIKE 'TestP%')")
     db.execute("DELETE FROM ranking_matches WHERE player1_id IN (SELECT id FROM users WHERE email LIKE '%@integtest.com')")
     db.execute("DELETE FROM ranking_participants WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@integtest.com')")
-    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year = 2025)")
-    db.execute("DELETE FROM ranking_seasons WHERE year = 2025")
+    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year = 9001)")
+    db.execute("DELETE FROM ranking_seasons WHERE year = 9001")
     db.execute("DELETE FROM schedules WHERE player1_name LIKE 'TestP%'")
     db.execute("DELETE FROM schedules WHERE court_id IN (SELECT id FROM courts WHERE name = 'Test Court')")
     db.execute("DELETE FROM users WHERE email LIKE '%@integtest.com'")
@@ -37,8 +37,8 @@ def setup_db():
     db.execute("DELETE FROM match_statistics_unified WHERE schedule_id IN (SELECT id FROM schedules WHERE player1_name LIKE 'TestP%')")
     db.execute("DELETE FROM ranking_matches WHERE player1_id IN (SELECT id FROM users WHERE email LIKE '%@integtest.com')")
     db.execute("DELETE FROM ranking_participants WHERE user_id IN (SELECT id FROM users WHERE email LIKE '%@integtest.com')")
-    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year = 2025)")
-    db.execute("DELETE FROM ranking_seasons WHERE year = 2025")
+    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year = 9001)")
+    db.execute("DELETE FROM ranking_seasons WHERE year = 9001")
     db.execute("DELETE FROM schedules WHERE player1_name LIKE 'TestP%'")
     db.execute("DELETE FROM schedules WHERE court_id IN (SELECT id FROM courts WHERE name = 'Test Court')")
     db.execute("DELETE FROM users WHERE email LIKE '%@integtest.com'")
@@ -71,11 +71,11 @@ def test_liga_schedule_links_to_ranking_match(client, auth_headers, setup_db):
     db = get_db()
     
     season_id = db.execute(
-        "INSERT INTO ranking_seasons (year, start_date, end_date, status) VALUES (2025, '2025-01-01', '2025-12-31', 'active') RETURNING id"
+        "INSERT INTO ranking_seasons (year, start_date, end_date, status) VALUES (9001, '9001-01-01', '9001-12-31', 'active') RETURNING id"
     ).fetchone()['id']
     
     round_id = db.execute(
-        "INSERT INTO ranking_rounds (season_id, round_number, month, year, status) VALUES (%s, 1, 1, 2025, 'open') RETURNING id",
+        "INSERT INTO ranking_rounds (season_id, round_number, month, year, status) VALUES (%s, 1, 1, 9001, 'open') RETURNING id",
         (season_id,)
     ).fetchone()['id']
     

@@ -63,8 +63,10 @@ describe('Date Utils - Timezone Boundary Cases', () => {
       const utcDate = new Date('2026-02-17T01:00:00Z') // 1 AM UTC
       const localDate = new Date('2026-02-16T22:00:00-03:00') // 10 PM UTC-3 (same moment)
       
-      expect(getLocalDateString(utcDate)).toBe('2026-02-17') // UTC date
-      expect(getLocalDateString(localDate)).toBe('2026-02-16') // Local date
+      // Both represent the same moment — getLocalDateString uses local (UTC-3) timezone,
+      // so both return the local date for that instant
+      expect(getLocalDateString(utcDate)).toBe('2026-02-16') // Local date in UTC-3
+      expect(getLocalDateString(localDate)).toBe('2026-02-16') // Local date in UTC-3
       expect(utcDate.getTime()).toBe(localDate.getTime()) // Same moment
     })
   })

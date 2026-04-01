@@ -3,7 +3,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 os.environ.setdefault('SECRET_KEY', 'test-secret-key-min-32-characters-long')
 os.environ.setdefault('ADMIN_PASSWORD', 'test-admin-password')
@@ -17,27 +17,27 @@ from src.auth import hash_password
 def setup_db():
     db = get_db()
     # Delete in correct order to avoid FK violations
-    db.execute("DELETE FROM match_statistics_unified WHERE ranking_match_id IN (SELECT id FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)))")
-    db.execute("DELETE FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025))")
-    db.execute("DELETE FROM ranking_draws WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025))")
-    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_season_config WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_temp_points_rules WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_participants WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_seasons WHERE year >= 2025")
+    db.execute("DELETE FROM match_statistics_unified WHERE ranking_match_id IN (SELECT id FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)))")
+    db.execute("DELETE FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000))")
+    db.execute("DELETE FROM ranking_draws WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000))")
+    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_season_config WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_temp_points_rules WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_participants WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_seasons WHERE year >= 9000")
     db.execute("DELETE FROM users WHERE email LIKE '%@ranktest.com'")
     db.commit()
     db.close()
     yield
     db = get_db()
-    db.execute("DELETE FROM match_statistics_unified WHERE ranking_match_id IN (SELECT id FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)))")
-    db.execute("DELETE FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025))")
-    db.execute("DELETE FROM ranking_draws WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025))")
-    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_season_config WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_temp_points_rules WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_participants WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 2025)")
-    db.execute("DELETE FROM ranking_seasons WHERE year >= 2025")
+    db.execute("DELETE FROM match_statistics_unified WHERE ranking_match_id IN (SELECT id FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)))")
+    db.execute("DELETE FROM ranking_matches WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000))")
+    db.execute("DELETE FROM ranking_draws WHERE round_id IN (SELECT id FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000))")
+    db.execute("DELETE FROM ranking_rounds WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_season_config WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_temp_points_rules WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_participants WHERE season_id IN (SELECT id FROM ranking_seasons WHERE year >= 9000)")
+    db.execute("DELETE FROM ranking_seasons WHERE year >= 9000")
     db.execute("DELETE FROM users WHERE email LIKE '%@ranktest.com'")
     db.commit()
     db.close()
@@ -46,7 +46,7 @@ def create_test_season():
     db = get_db()
     cursor = db.execute(
         'INSERT INTO ranking_seasons (year, start_date, end_date, description, status) VALUES (%s, %s, %s, %s, %s) RETURNING id',
-        (2025, '2025-01-01', '2025-12-31', 'Test Season', 'active')
+        (9000, '9000-01-01', '9000-12-31', 'Test Season', 'active')
     )
     season_id = cursor.fetchone()['id']
     RankingConfigService.set_config(season_id, RankingConfigService.DEFAULT_CONFIG, db)
@@ -166,11 +166,11 @@ class TestRankingSeasons:
         from main import app
         with app.test_client() as client:
             create_admin_user(client)
-            response = client.post('/api/ranking/seasons', 
+            response = client.post('/api/ranking/seasons',
                 json={
-                    'year': 2026,
-                    'start_date': '2026-01-01',
-                    'end_date': '2026-12-31',
+                    'year': 9002,
+                    'start_date': '9002-01-01',
+                    'end_date': '9002-12-31',
                     'description': 'Test'
                 }
             )

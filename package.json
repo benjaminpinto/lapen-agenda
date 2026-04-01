@@ -13,7 +13,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
-    "test:unit": "vitest run tests/frontend/",
+    "test:unit": "TZ=America/Sao_Paulo vitest run tests/frontend/",
     "test:cleanup": "npx --yes tsx e2e/cleanup.ts",
     "allure:generate": "allure generate allure-results --clean -o allure-report",
     "allure:open": "allure open allure-report",

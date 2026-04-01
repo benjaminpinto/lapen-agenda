@@ -5,7 +5,7 @@ import {
   getTomorrowDateString,
   isPastDate,
   isToday
-} from '../src/utils/dateUtils'
+} from '../../src/utils/dateUtils'
 
 describe('Date Utils - Timezone Boundary Cases', () => {
   beforeEach(() => {

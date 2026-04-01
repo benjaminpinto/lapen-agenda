@@ -31,19 +31,30 @@ jobs:
       with:
         python-version: '3.11'
     
-    - name: Install dependencies
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-local.txt
         pip install pytest pytest-cov
-    
+
+    - name: Install Node dependencies
+      run: npm ci
+
     - name: Initialize database
       env:
         DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_lapen_agenda
       run: |
         python -c "from src.database import get_db; db = get_db(); cursor = db.cursor(); cursor.execute(open('src/database/postgres_schema.sql').read()); cursor.execute('INSERT INTO courts (id, name, type, description, active) VALUES (1, \'Test Court\', \'Saibro\', \'Test court for CI\', true)'); db.commit(); db.close()"
-    
-    - name: Run unit tests
+
+    - name: Run frontend unit tests
+      run: npm run test:unit
+
+    - name: Run backend unit tests
       env:
         DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_lapen_agenda
         SECRET_KEY: test-secret-key-for-github-actions-minimum-32-characters
@@ -53,4 +64,4 @@ jobs:
         MERCADOPAGO_ACCESS_TOKEN: test-token
         MERCADOPAGO_PUBLIC_KEY: test-key
       run: |
-        pytest tests/ --cov=src --cov-report=term-missing
+        pytest tests/backend/ --cov=src --cov-report=term-missing

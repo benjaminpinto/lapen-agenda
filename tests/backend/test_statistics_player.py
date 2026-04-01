@@ -74,8 +74,8 @@ def _insert_match(db, *, player1_id, player2_id, winner_id,
     """Create a schedule then insert into match_statistics_unified (satisfies NOT NULL constraint)."""
     sched = db.execute("""
         INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, match_type)
-        VALUES (1, %s, '08:00', 'TEST_STAT', 'TEST_STAT', 'Amistoso') RETURNING id
-    """, (match_date,)).fetchone()
+        VALUES (%s, %s, '08:00', 'TEST_STAT', 'TEST_STAT', 'Amistoso') RETURNING id
+    """, (_test_court_id, match_date,)).fetchone()
     schedule_id = sched['id']
 
     row = db.execute("""

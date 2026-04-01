@@ -25,12 +25,22 @@ P2_ID  = 8802
 P3_ID  = 8803
 
 EMAIL_SUFFIX = '@stattest.com'
+TEST_COURT_NAME = 'TEST_STAT_COURT'
+
+_test_court_id = None
 
 
 @pytest.fixture(autouse=True)
 def setup_db():
+    global _test_court_id
     db = get_db()
     _cleanup(db)
+
+    court = db.execute(
+        "INSERT INTO courts (name, type, active) VALUES (%s, 'Saibro', true) RETURNING id",
+        (TEST_COURT_NAME,)
+    ).fetchone()
+    _test_court_id = court['id']
 
     db.execute("""
         INSERT INTO users (id, email, password_hash, name, short_name, is_verified, lapen_approved)
@@ -55,6 +65,7 @@ def _cleanup(db):
                (P1_ID, P2_ID, P3_ID, P1_ID, P2_ID, P3_ID))
     db.execute("DELETE FROM schedules WHERE player1_name = 'TEST_STAT' OR player2_name = 'TEST_STAT'")
     db.execute("DELETE FROM users WHERE email LIKE %s", (f'%{EMAIL_SUFFIX}',))
+    db.execute("DELETE FROM courts WHERE name = %s", (TEST_COURT_NAME,))
 
 
 def _insert_match(db, *, player1_id, player2_id, winner_id,

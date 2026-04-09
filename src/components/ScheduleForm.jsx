@@ -286,6 +286,7 @@ const ScheduleForm = () => {
                       match_type: 'Liga'
                     })
                     setSelectedMatch(null)
+                    setAvailableTimes([])
                   }}
                   className={`p-3 border-2 rounded-lg flex items-center gap-2 transition-all ${
                     formData.match_type === 'Liga'
@@ -310,6 +311,7 @@ const ScheduleForm = () => {
                       match_type: 'Amistoso'
                     })
                     setSelectedMatch(null)
+                    setAvailableTimes([])
                   }}
                   className={`p-3 border-2 rounded-lg flex items-center gap-2 transition-all ${
                     formData.match_type === 'Amistoso'
@@ -334,6 +336,7 @@ const ScheduleForm = () => {
                       match_type: 'Torneio'
                     })
                     setSelectedMatch(null)
+                    setAvailableTimes([])
                   }}
                   className={`p-3 border-2 rounded-lg flex items-center gap-2 transition-all ${
                     formData.match_type === 'Torneio'

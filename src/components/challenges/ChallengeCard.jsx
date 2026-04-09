@@ -6,6 +6,7 @@ import ChallengeProgress from './ChallengeProgress';
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
 import {useAuth} from '@/contexts/AuthContext';
+import {fetchWithAuth} from '@/utils/fetchWithAuth';
 
 const ChallengeCard = ({ challenge, onUpdate }) => {
     const { user } = useAuth();
@@ -17,12 +18,8 @@ const ChallengeCard = ({ challenge, onUpdate }) => {
     const handleAction = async (action) => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/challenges/${challenge.id}/${action}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            const response = await fetchWithAuth(`/api/challenges/${challenge.id}/${action}`, {
+                method: 'POST'
             });
 
             if (response.ok) {

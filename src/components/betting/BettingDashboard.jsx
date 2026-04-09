@@ -26,6 +26,7 @@ import FinishedMatchCard from '../shared/FinishedMatchCard'
 import PaymentForm from './PaymentForm'
 import html2canvas from 'html2canvas'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
+import {formatDateForDisplay} from '@/utils/dateUtils'
 
 const BettingDashboard = () => {
     const [matches, setMatches] = useState([])

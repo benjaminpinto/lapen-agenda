@@ -3,6 +3,7 @@ import {Card, CardContent} from '@/components/ui/card'
 import {Badge} from '@/components/ui/badge'
 import {CheckCircle, Trophy, Users, Wallet} from 'lucide-react'
 import {fetchWithAuth} from '@/utils/fetchWithAuth'
+import {formatDateForDisplay} from '@/utils/dateUtils'
 
 const FinishedMatchCard = ({ match, onClick, showWinner = false }) => {
   const [details, setDetails] = useState(null)

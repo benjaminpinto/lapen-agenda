@@ -177,6 +177,9 @@ def _update_match_result(db, match_id, winner_id, score, wo_type='none', sets_p1
     if not match:
         raise ValueError('Partida não encontrada')
     
+    if match['status'] == 'completed':
+        raise ValueError('Resultado já registrado para esta partida')
+    
     # Calculate points
     if wo_type != 'none':
         match_result = {'wo_type': wo_type}

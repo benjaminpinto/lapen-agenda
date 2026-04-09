@@ -11,6 +11,7 @@ import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} fro
 import {ArrowLeft, ChevronDown, Trophy, Users, Wallet} from 'lucide-react'
 import FinishedMatchCard from '../shared/FinishedMatchCard'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
+import {formatDateForDisplay} from '@/utils/dateUtils'
 
 const AdminMatches = () => {
     const [matches, setMatches] = useState([])

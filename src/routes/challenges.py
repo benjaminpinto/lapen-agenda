@@ -214,30 +214,8 @@ def delete_challenge(challenge_id):
 
 def get_challenge_progress(db, challenge):
     """Calculate progress for a challenge based on match statistics"""
+    from src.utils.score_parser import parse_score
     try:
-        # Query matches of type 'Amistoso' between the two players within the date range
-        # Note: We need to check both (p1=challenger AND p2=challenged) OR (p1=challenged AND p2=challenger)
-        # Assuming match_statistics_unified has detailed stats.
-        # If match_statistics_unified doesn't have game counts separated by player, we might need to parse the score.
-        # The schema shows 'score' text column, but also 'match_results' has details?
-        # Let's check 'match_statistics_unified' schema again.
-        # It has: player1_id, player2_id, winner_id, valid score text.
-        # Wait, 'ranking_matches' has 'games_p1', 'games_p2', 'sets_p1', 'sets_p2'.
-        # But 'Amistoso' matches might come from 'schedules' -> 'match_results'?
-        # The prompt says "all matches of type 'Amistoso' will count".
-        
-        # Let's look at match_results. It has winner_name and score.
-        # match_statistics_unified is a view or table? In the schema provided it's a TABLE.
-        # But looking at 'add_match_statistics_postgres.sql' (implied name) or similar, it might be populated by triggers or manually.
-        # I will use a robust query on 'match_statistics_unified' assuming it is kept up to date, 
-        # OR I will query 'schedules' + 'match_results'.
-        # Let's use 'match_statistics_unified' as it seems designed for this.
-        # PROBLEM: match_statistics_unified might not track games/sets count numerically if it just has 'score' text.
-        # Valid score format is usually "6/4 6/4". 
-        
-        # Current implementation of match_statistics_unified:
-        # columns: schedule_id, player1_id, player2_id, winner_id, match_type, match_date, score
-        
         query = '''
             SELECT player1_id, player2_id, winner_id, score 
             FROM match_statistics_unified
@@ -260,61 +238,25 @@ def get_challenge_progress(db, challenge):
         challenged_stats = {'victories': 0, 'games': 0, 'sets': 0}
         
         for m in matches:
-            # Determine who is who in this match
             p1_is_challenger = (m['player1_id'] == challenge['challenger_id'])
             
-            # Victories
             if m['winner_id'] == challenge['challenger_id']:
                 challenger_stats['victories'] += 1
             elif m['winner_id'] == challenge['challenged_id']:
                 challenged_stats['victories'] += 1
                 
-            # Parse Score for Sets and Games
-            # Score format assumption: "6-0 6-0" or "6/0 6/0" or "6/4 4/6 10/7"
-            score = m['score']
-            if score:
-                try:
-                    sets = score.replace(',', ' ').split()
-                    for s in sets:
-                        # Clean string
-                        s = s.strip()
-                        if not s: continue
-                        
-                        # Handle tiebreak format if needed, e.g. 7-6(4)
-                        # Simplified parsing: look for "/" or "-"
-                        if '/' in s:
-                            parts = s.split('/')
-                        elif '-' in s:
-                            parts = s.split('-')
-                        else:
-                            continue # Unknown format
-                            
-                        if len(parts) >= 2:
-                            # Remove potential tiebreak info like (7)
-                            g1_str = ''.join([c for c in parts[0] if c.isdigit()])
-                            g2_str = ''.join([c for c in parts[1] if c.isdigit()])
-                            
-                            if g1_str and g2_str:
-                                g1 = int(g1_str)
-                                g2 = int(g2_str)
-                                
-                                # Assign to correct player
-                                if p1_is_challenger:
-                                    challenger_stats['games'] += g1
-                                    challenged_stats['games'] += g2
-                                    if g1 > g2: challenger_stats['sets'] += 1
-                                    elif g2 > g1: challenged_stats['sets'] += 1
-                                else:
-                                    challenger_stats['games'] += g2
-                                    challenged_stats['games'] += g1
-                                    if g2 > g1: challenger_stats['sets'] += 1
-                                    elif g1 > g2: challenged_stats['sets'] += 1
-                except Exception as e:
-                    logger.error(f"Error parsing score '{score}': {e}")
-                    
-        # Calculate final metric based on target_type
-        # But we return all stats so UI can display breakdown
-        
+            parsed = parse_score(m['score'])
+            if p1_is_challenger:
+                challenger_stats['games'] += parsed['p1_games']
+                challenged_stats['games'] += parsed['p2_games']
+                challenger_stats['sets'] += parsed['p1_sets']
+                challenged_stats['sets'] += parsed['p2_sets']
+            else:
+                challenger_stats['games'] += parsed['p2_games']
+                challenged_stats['games'] += parsed['p1_games']
+                challenger_stats['sets'] += parsed['p2_sets']
+                challenged_stats['sets'] += parsed['p1_sets']
+                
         return {
             'challenger': challenger_stats,
             'challenged': challenged_stats,

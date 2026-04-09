@@ -4,7 +4,7 @@ import {Badge} from '@/components/ui/badge'
 import {Button} from '@/components/ui/button'
 import {Calendar, History} from 'lucide-react'
 import {useAuth} from '@/contexts/AuthContext'
-import MatchResultForm from './MatchResultForm'
+import MatchResultForm from '@/components/shared/MatchResultForm'
 import RecentResults from './RecentResults'
 import {useToast} from '@/contexts/ToastContext'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";

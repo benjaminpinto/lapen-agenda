@@ -5,16 +5,9 @@ from flask import Blueprint, request, jsonify
 
 from src.auth import require_approved_lapen_member
 from src.database import get_db
+from src.utils.time_utils import normalize_time
 
 public_bp = Blueprint('public', __name__, url_prefix='/api/public')
-
-def normalize_time(time_value):
-    """Convert time to string format for comparison"""
-    if isinstance(time_value, str):
-        return time_value
-    elif hasattr(time_value, 'strftime'):
-        return time_value.strftime('%H:%M')
-    return str(time_value)
 
 
 def generate_time_slots():
@@ -511,7 +504,7 @@ def get_public_dashboard_stats():
         SELECT c.name, COUNT(*) as bookings
         FROM schedules s
         JOIN courts c ON s.court_id = c.id
-        WHERE {month_condition}
+        WHERE {month_condition} AND s.deleted_at IS NULL
         GROUP BY c.id, c.name
         ORDER BY bookings DESC
         LIMIT 1
@@ -522,7 +515,7 @@ def get_public_dashboard_stats():
     game_stats = db.execute(f'''
         SELECT match_type, COUNT(*) as count
         FROM schedules
-        WHERE {month_condition}
+        WHERE {month_condition} AND deleted_at IS NULL
         GROUP BY match_type
     ''').fetchall()
 
@@ -531,9 +524,9 @@ def get_public_dashboard_stats():
     top_players = db.execute(f'''
         SELECT player_name, COUNT(*) as games
         FROM (
-            SELECT player1_name as player_name FROM schedules WHERE {month_condition}
+            SELECT player1_name as player_name FROM schedules WHERE {month_condition} AND deleted_at IS NULL
             UNION ALL
-            SELECT player2_name as player_name FROM schedules WHERE {month_condition}
+            SELECT player2_name as player_name FROM schedules WHERE {month_condition} AND deleted_at IS NULL
         )
         GROUP BY player_name
         ORDER BY games DESC

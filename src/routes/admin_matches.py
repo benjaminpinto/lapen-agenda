@@ -2,33 +2,8 @@ from flask import Blueprint, request, jsonify
 from src.database import get_db
 from src.email_service import send_winner_notification_email, send_bet_settlement_email
 from src.logger import get_logger
-from src.auth import verify_token, get_user_by_id
+from src.auth import require_admin_auth
 from decimal import Decimal
-
-def require_admin_auth(f):
-    from functools import wraps
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        token = request.cookies.get('access_token')
-        if not token:
-            auth_header = request.headers.get('Authorization')
-            if auth_header and auth_header.startswith('Bearer '):
-                token = auth_header[7:]
-        
-        if not token:
-            return jsonify({'error': 'Autenticação necessária'}), 401
-        
-        user_id = verify_token(token)
-        if not user_id:
-            return jsonify({'error': 'Token inválido ou expirado'}), 401
-        
-        user = get_user_by_id(user_id)
-        if not user or not user.get('is_admin'):
-            return jsonify({'error': 'Acesso negado'}), 403
-        
-        request.user_id = user_id
-        return f(*args, **kwargs)
-    return decorated_function
 
 logger = get_logger()
 

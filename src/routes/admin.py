@@ -3,45 +3,14 @@ import os
 
 from flask import Blueprint, request, jsonify
 
-from src.auth import verify_token, get_user_by_id, hash_password
+from src.auth import verify_token, get_user_by_id, hash_password, require_admin_auth
 from src.database import get_db
 from src.logger import get_logger
+from src.utils.time_utils import normalize_time
 
 logger = get_logger()
 
-def normalize_time(time_value):
-    """Convert time to string format for comparison"""
-    if isinstance(time_value, str):
-        return time_value
-    elif hasattr(time_value, 'strftime'):
-        return time_value.strftime('%H:%M')
-    return str(time_value)
-
 admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
-
-def require_admin_auth(f):
-    def decorated_function(*args, **kwargs):
-        token = request.cookies.get('access_token')
-        if not token:
-            auth_header = request.headers.get('Authorization')
-            if auth_header and auth_header.startswith('Bearer '):
-                token = auth_header[7:]
-        
-        if not token:
-            return jsonify({'error': 'Autenticação necessária'}), 401
-        
-        user_id = verify_token(token)
-        if not user_id:
-            return jsonify({'error': 'Token inválido ou expirado'}), 401
-        
-        user = get_user_by_id(user_id)
-        if not user or not user.get('is_admin'):
-            return jsonify({'error': 'Acesso negado'}), 403
-        
-        request.user_id = user_id
-        return f(*args, **kwargs)
-    decorated_function.__name__ = f.__name__
-    return decorated_function
 
 @admin_bp.route('/logout', methods=['POST'])
 def logout():

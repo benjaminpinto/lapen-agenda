@@ -18,21 +18,19 @@ def verify_password(password, hashed):
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
 def generate_token(user_id):
-    """Generate JWT token for user (deprecated - use generate_tokens)"""
-    payload = {
-        'user_id': user_id,
-        'exp': datetime.utcnow() + timedelta(days=7)
-    }
-    return jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256')
+    """Generate a single access token (for tests). Use generate_tokens() for production."""
+    access, _ = generate_tokens(user_id)
+    return access
 
 def generate_tokens(user_id, remember_me=False):
     """Generate access and refresh tokens"""
+    access_expiry = timedelta(days=7)
     refresh_expiry = timedelta(days=30 if remember_me else 7)
     
     access_payload = {
         'user_id': user_id,
         'type': 'access',
-        'exp': datetime.utcnow() + refresh_expiry
+        'exp': datetime.utcnow() + access_expiry
     }
     access_token = jwt.encode(access_payload, current_app.config['SECRET_KEY'], algorithm='HS256')
     
@@ -125,6 +123,31 @@ def require_auth(f):
         request.user_id = user_id
         return f(*args, **kwargs)
     
+    return decorated_function
+
+def require_admin_auth(f):
+    """Decorator to require admin authentication"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = request.cookies.get('access_token')
+        if not token:
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                token = auth_header[7:]
+        
+        if not token:
+            return jsonify({'error': 'Autenticação necessária'}), 401
+        
+        user_id = verify_token(token)
+        if not user_id:
+            return jsonify({'error': 'Token inválido ou expirado'}), 401
+        
+        user = get_user_by_id(user_id)
+        if not user or not user.get('is_admin'):
+            return jsonify({'error': 'Acesso negado'}), 403
+        
+        request.user_id = user_id
+        return f(*args, **kwargs)
     return decorated_function
 
 def require_approved_lapen_member(f):

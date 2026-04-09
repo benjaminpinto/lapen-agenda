@@ -33,10 +33,8 @@ const SeasonParticipants = () => {
   const fetchData = async () => {
     try {
       const [participantsRes, usersRes] = await Promise.all([
-        fetch(`/api/ranking/seasons/${id}/all-participants`, {
-        }),
-        fetch('/api/admin/users', {
-        })
+        fetchWithAuth(`/api/ranking/seasons/${id}/all-participants`),
+        fetchWithAuth('/api/admin/users')
       ])
 
       if (participantsRes.ok) {

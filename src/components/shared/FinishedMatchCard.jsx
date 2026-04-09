@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react'
 import {Card, CardContent} from '@/components/ui/card'
 import {Badge} from '@/components/ui/badge'
 import {CheckCircle, Trophy, Users, Wallet} from 'lucide-react'
+import {fetchWithAuth} from '@/utils/fetchWithAuth'
 
 const FinishedMatchCard = ({ match, onClick, showWinner = false }) => {
   const [details, setDetails] = useState(null)
@@ -14,14 +15,12 @@ const FinishedMatchCard = ({ match, onClick, showWinner = false }) => {
 
   const fetchMatchDetails = async (matchId) => {
     try {
-      const response = await fetch(`/api/betting/match/${matchId}/bets`)
+      const response = await fetchWithAuth(`/api/betting/match/${matchId}/bets`)
       const data = await response.json()
       
       // For finished matches, get winner info
       if (data.match?.status === 'finished') {
-        const resultResponse = await fetch(`/api/admin/matches/${matchId}/result`, {
-          credentials: 'include'
-        })
+        const resultResponse = await fetchWithAuth(`/api/admin/matches/${matchId}/result`)
         if (resultResponse.ok) {
           const resultData = await resultResponse.json()
           data.winner = resultData.winner_name

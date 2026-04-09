@@ -18,7 +18,7 @@ def get_users_for_challenge():
         cursor = db.execute('''
             SELECT id, name, short_name 
             FROM users 
-            WHERE deleted_at IS NULL
+            WHERE deleted_at IS NULL AND lapen_approved = TRUE
             ORDER BY name
         ''')
         users = cursor.fetchall()
@@ -43,10 +43,10 @@ def create_challenge():
     prize_comment = data.get('prize_comment')
 
     if not all([challenged_id, start_date, end_date, target_type]):
-        return jsonify({'error': 'Missing required fields'}), 400
+        return jsonify({'error': 'Campos obrigatórios não preenchidos'}), 400
 
     if challenger_id == challenged_id:
-        return jsonify({'error': 'Cannot challenge yourself'}), 400
+        return jsonify({'error': 'Não é possível desafiar a si mesmo'}), 400
 
     db = get_db()
     try:
@@ -57,7 +57,7 @@ def create_challenge():
         ''', (challenger_id, challenged_id, start_date, end_date, target_type, target_amount, prize_comment))
         db.commit()
         
-        return jsonify({'message': 'Challenge created successfully'}), 201
+        return jsonify({'message': 'Desafio criado com sucesso'}), 201
     except Exception as e:
         logger.error(f"Error creating challenge: {e}")
         return jsonify({'error': str(e)}), 500
@@ -149,15 +149,15 @@ def accept_challenge(challenge_id):
         challenge = cursor.fetchone()
         
         if not challenge:
-            return jsonify({'error': 'Challenge not found'}), 404
+            return jsonify({'error': 'Desafio não encontrado'}), 404
             
         if challenge['challenged_id'] != user_id:
-            return jsonify({'error': 'Unauthorized'}), 403
+            return jsonify({'error': 'Acesso negado'}), 403
             
         db.execute("UPDATE challenges SET status = 'active' WHERE id = %s", (challenge_id,))
         db.commit()
         
-        return jsonify({'message': 'Challenge accepted'}), 200
+        return jsonify({'message': 'Desafio aceito'}), 200
     finally:
         db.close()
 
@@ -172,15 +172,15 @@ def reject_challenge(challenge_id):
         challenge = cursor.fetchone()
         
         if not challenge:
-            return jsonify({'error': 'Challenge not found'}), 404
+            return jsonify({'error': 'Desafio não encontrado'}), 404
             
         if challenge['challenged_id'] != user_id:
-            return jsonify({'error': 'Unauthorized'}), 403
+            return jsonify({'error': 'Acesso negado'}), 403
             
         db.execute("UPDATE challenges SET status = 'rejected' WHERE id = %s", (challenge_id,))
         db.commit()
         
-        return jsonify({'message': 'Challenge rejected'}), 200
+        return jsonify({'message': 'Desafio recusado'}), 200
     finally:
         db.close()
         
@@ -195,20 +195,18 @@ def delete_challenge(challenge_id):
         challenge = cursor.fetchone()
         
         if not challenge:
-            return jsonify({'error': 'Challenge not found'}), 404
+            return jsonify({'error': 'Desafio não encontrado'}), 404
             
         if challenge['challenger_id'] != user_id:
-             return jsonify({'error': 'Unauthorized'}), 403
+             return jsonify({'error': 'Acesso negado'}), 403
              
         if challenge['status'] != 'pending':
-             return jsonify({'error': 'Cannot delete non-pending challenge'}), 400
+             return jsonify({'error': 'Só é possível cancelar desafios pendentes'}), 400
 
         db.execute("UPDATE challenges SET status = 'cancelled' WHERE id = %s", (challenge_id,))
-        # OR delete permanently: db.execute("DELETE FROM challenges WHERE id = %s", (challenge_id,))
-        # Keeping it cancelled is better for history
         db.commit()
         
-        return jsonify({'message': 'Challenge cancelled'}), 200
+        return jsonify({'message': 'Desafio cancelado'}), 200
     finally:
         db.close()
 

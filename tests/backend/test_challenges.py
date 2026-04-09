@@ -11,8 +11,8 @@ from src.routes.challenges import challenges_bp
 def create_user(email, name, short_name):
     db = get_db()
     cursor = db.execute('''
-        INSERT INTO users (email, password_hash, name, short_name, is_verified, is_lapen_member) 
-        VALUES (%s, %s, %s, %s, true, true) RETURNING id
+        INSERT INTO users (email, password_hash, name, short_name, is_verified, is_lapen_member, lapen_approved) 
+        VALUES (%s, %s, %s, %s, true, true, true) RETURNING id
     ''', (email, hash_password('password'), name, short_name))
     user_id = cursor.fetchone()['id']
     db.commit()
@@ -76,7 +76,7 @@ class TestChallenges:
             )
             assert response.status_code == 201
             data = response.get_json()
-            assert data['message'] == 'Challenge created successfully'
+            assert data['message'] == 'Desafio criado com sucesso'
 
             # 2. Check Database
             db = get_db()
@@ -102,7 +102,7 @@ class TestChallenges:
                 headers={'Authorization': f'Bearer {token}'}
             )
             assert response.status_code == 400
-            assert 'Cannot challenge yourself' in response.get_json()['error']
+            assert 'Não é possível desafiar a si mesmo' in response.get_json()['error']
 
     def test_get_users(self, setup_data):
         from main import app

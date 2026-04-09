@@ -72,6 +72,15 @@ class DBConnection:
         self.conn = conn
         self._cursor = None
     
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self.rollback()
+        self.close()
+        return False
+    
     def cursor(self):
         if not self._cursor:
             self._cursor = self.conn.cursor()
@@ -101,7 +110,6 @@ def get_db():
     if not postgres_url:
         raise ValueError('DATABASE_URL environment variable is required')
     
-    # Retry connection up to 3 times
     for attempt in range(3):
         try:
             if PSYCOPG_VERSION == 3:

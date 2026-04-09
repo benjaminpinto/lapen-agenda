@@ -937,36 +937,8 @@ def get_recent_results():
         LIMIT %s
     ''', (limit,)).fetchall()
     
-    enriched_results = []
-    for result in results:
-        result_dict = dict(result)
-        
-        config = RankingConfigService.get_config(result['season_id'])
-        elite_cutoff = config.get('elite_cutoff', 8)
-        challenger_cutoff = config.get('challenger_cutoff', 16)
-        
-        p1_position = db.execute(
-            'SELECT position FROM ranking_participants WHERE season_id = %s AND user_id = %s',
-            (result['season_id'], result['player1_id'])
-        ).fetchone()
-        p2_position = db.execute(
-            'SELECT position FROM ranking_participants WHERE season_id = %s AND user_id = %s',
-            (result['season_id'], result['player2_id'])
-        ).fetchone()
-        
-        if (p1_position and p1_position['position'] <= elite_cutoff) or \
-           (p2_position and p2_position['position'] <= elite_cutoff):
-            result_dict['group_type'] = 'elite'
-        elif (p1_position and p1_position['position'] <= challenger_cutoff) or \
-             (p2_position and p2_position['position'] <= challenger_cutoff):
-            result_dict['group_type'] = 'challenger'
-        else:
-            result_dict['group_type'] = 'nextgen'
-        
-        enriched_results.append(result_dict)
-    
     db.close()
-    return jsonify(enriched_results)
+    return jsonify([dict(r) for r in results])
 
 @ranking_bp.route('/participants/<int:participant_id>/points-history', methods=['GET'])
 def get_participant_points_history(participant_id):

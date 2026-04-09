@@ -3,6 +3,8 @@ from src.database import get_db
 class RankingConfigService:
     """Service for managing year-specific ranking configuration"""
     
+    _cache = {}
+    
     DEFAULT_CONFIG = {
         'elite_cutoff': 8,
         'challenger_cutoff': 16,
@@ -22,7 +24,10 @@ class RankingConfigService:
     
     @staticmethod
     def get_config(season_id):
-        """Get configuration for a season with defaults"""
+        """Get configuration for a season with defaults (cached)"""
+        if season_id in RankingConfigService._cache:
+            return RankingConfigService._cache[season_id]
+        
         db = get_db()
         config_rows = db.execute(
             'SELECT key, value, data_type FROM ranking_season_config WHERE season_id = %s',
@@ -45,11 +50,13 @@ class RankingConfigService:
             if key not in config:
                 config[key] = default_value
         
+        RankingConfigService._cache[season_id] = config
         return config
     
     @staticmethod
     def set_config(season_id, config_dict, db=None):
         """Set configuration for a season"""
+        RankingConfigService._cache.pop(season_id, None)
         should_close = False
         if db is None:
             db = get_db()

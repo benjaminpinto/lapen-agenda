@@ -133,10 +133,10 @@ def _update_match_result(db, match_id, winner_id, score, wo_type='none', sets_p1
     
     if not match:
         raise ValueError('Partida não encontrada')
-    
+
     if match['status'] == 'completed':
         raise ValueError('Resultado já registrado para esta partida')
-    
+
     # Calculate points
     if wo_type != 'none':
         match_result = {'wo_type': wo_type}
@@ -157,20 +157,25 @@ def _update_match_result(db, match_id, winner_id, score, wo_type='none', sets_p1
                 'games_winner': games_p2,
                 'games_loser': games_p1
             }
-    
+
     winner_points, loser_points = PointsCalculator.calculate(match_result, match['season_id'])
     points_p1 = winner_points if winner_id == match['player1_id'] else loser_points
     points_p2 = winner_points if winner_id == match['player2_id'] else loser_points
-    
-    # Update match
-    db.execute('''
+
+    # Atomic claim: only the first concurrent caller flips status from 'scheduled'.
+    # Without this WHERE clause, two simultaneous requests can both pass the status
+    # check above and double-increment ranking_participants.
+    cursor = db.execute('''
         UPDATE ranking_matches
         SET status = %s, winner_id = %s, score = %s, sets_p1 = %s, sets_p2 = %s,
-            games_p1 = %s, games_p2 = %s, wo_type = %s, points_p1 = %s, points_p2 = %s, 
+            games_p1 = %s, games_p2 = %s, wo_type = %s, points_p1 = %s, points_p2 = %s,
             played_at = %s, added_by = %s
-        WHERE id = %s
+        WHERE id = %s AND status = 'scheduled'
     ''', ('completed', winner_id, score, sets_p1, sets_p2, games_p1, games_p2, wo_type,
           points_p1, points_p2, datetime.utcnow(), added_by, match_id))
+
+    if cursor.rowcount == 0:
+        raise ValueError('Resultado já registrado para esta partida')
     
     # Update or insert statistics
     winner_user = db.execute('SELECT short_name FROM users WHERE id = %s', (winner_id,)).fetchone()

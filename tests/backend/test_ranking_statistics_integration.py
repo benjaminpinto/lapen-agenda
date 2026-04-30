@@ -188,3 +188,72 @@ def test_amistoso_match_creates_statistics_entry(setup_db):
     db.execute("DELETE FROM courts WHERE id = 9999")
     db.commit()
     db.close()
+
+def test_double_submit_does_not_double_count_participants(setup_db):
+    """Sequential second submission must raise and leave ranking_participants untouched."""
+    db = get_db()
+
+    _update_match_result(db, 9999, 9991, '6-4, 6-3', 'none', 2, 0, 12, 7, 9991)
+    db.commit()
+
+    before = dict(db.execute("""
+        SELECT total_points, wins, losses, sets_won, sets_lost, games_won, games_lost
+        FROM ranking_participants WHERE season_id = 9999 AND user_id = 9991
+    """).fetchone())
+
+    with pytest.raises(ValueError, match='já registrado'):
+        _update_match_result(db, 9999, 9991, '6-4, 6-3', 'none', 2, 0, 12, 7, 9991)
+    db.rollback()
+
+    after = dict(db.execute("""
+        SELECT total_points, wins, losses, sets_won, sets_lost, games_won, games_lost
+        FROM ranking_participants WHERE season_id = 9999 AND user_id = 9991
+    """).fetchone())
+
+    assert before == after
+    db.close()
+
+def test_atomic_claim_blocks_race_when_status_flips_mid_call(setup_db, monkeypatch):
+    """Race simulation: status flips to 'completed' between SELECT and UPDATE.
+    Conditional UPDATE must match 0 rows and raise without touching participants."""
+    from src.routes import ranking as ranking_module
+
+    db = get_db()
+
+    before = dict(db.execute("""
+        SELECT total_points, wins, sets_won, games_won
+        FROM ranking_participants WHERE season_id = 9999 AND user_id = 9991
+    """).fetchone())
+
+    original_execute = db.execute
+    flipped = {'done': False}
+
+    def racing_execute(query, params=None):
+        result = original_execute(query, params)
+        # After the initial SELECT returns 'scheduled', simulate a competing
+        # transaction that completes the match before our UPDATE fires.
+        if not flipped['done'] and 'SELECT rm.*' in query and 'JOIN ranking_rounds' in query:
+            flipped['done'] = True
+            other = get_db()
+            other.execute(
+                "UPDATE ranking_matches SET status = 'completed' WHERE id = %s",
+                (9999,)
+            )
+            other.commit()
+            other.close()
+        return result
+
+    monkeypatch.setattr(db, 'execute', racing_execute)
+
+    with pytest.raises(ValueError, match='já registrado'):
+        _update_match_result(db, 9999, 9991, '6-4, 6-3', 'none', 2, 0, 12, 7, 9991)
+    db.rollback()
+
+    monkeypatch.undo()
+    after = dict(db.execute("""
+        SELECT total_points, wins, sets_won, games_won
+        FROM ranking_participants WHERE season_id = 9999 AND user_id = 9991
+    """).fetchone())
+
+    assert before == after
+    db.close()

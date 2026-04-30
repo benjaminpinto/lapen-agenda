@@ -552,8 +552,10 @@ def create_round():
 @require_admin_auth
 def generate_draw(round_id):
     try:
-        matches = DrawEngine.generate_draw(round_id)
-        return jsonify({'success': True, 'matches': matches})
+        result = DrawEngine.generate_draw(round_id)
+        return jsonify({'success': True, **result})
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
         logger.error(f'Error generating draw: {str(e)}')
         return jsonify({'error': str(e)}), 400

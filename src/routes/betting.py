@@ -10,7 +10,8 @@ from src.logger import get_logger
 from src.payment_gateway import format_payment_response
 from src.utils.match_utils import is_match_eligible_for_betting, get_or_create_match, update_match_pool
 from src.utils.odds_calculator import calculate_odds, calculate_potential_return
-from src.utils.payment_processor import create_payment_intent, confirm_payment
+from src.utils.payment_processor import create_payment_intent, confirm_payment, refund_payment
+from src.utils.user_lookup import names_match
 
 logger = get_logger()
 
@@ -120,7 +121,14 @@ def place_bet():
     
     # Check if match is eligible for betting
     if not is_match_eligible_for_betting(schedule_id):
-        # Update betting_enabled to false for this match
+        # Payment was already confirmed above. Refund it before returning so the user
+        # isn't left out-of-pocket. Without this, the user pays and never gets a bet.
+        try:
+            refund_result = refund_payment(payment_intent_id, amount=float(amount), payment_method=payment_method)
+            logger.warning(f'Eligibility check failed post-payment, refund result: {refund_result}')
+        except Exception as refund_error:
+            logger.error(f'Refund attempt failed for {payment_intent_id}: {refund_error}')
+
         match_id = get_or_create_match(schedule_id)
         if match_id:
             db = get_db()
@@ -131,7 +139,7 @@ def place_bet():
                 pass
             finally:
                 db.close()
-        return jsonify({'error': 'Apostas encerradas - menos de 1 hora para o início da partida'}), 400
+        return jsonify({'error': 'Apostas encerradas - menos de 1 hora para o início da partida. Reembolso processado.'}), 400
     
     # Get or create match
     match_id = get_or_create_match(schedule_id)
@@ -158,9 +166,9 @@ def place_bet():
         if match_info['status'] != 'upcoming':
             return jsonify({'error': 'Apostas fechadas para esta partida'}), 400
         
-        # Validate player name
-        valid_players = [match_info['player1_name'], match_info['player2_name']]
-        if player_name not in valid_players:
+        # Validate player name (normalize: case-insensitive + trim)
+        if not (names_match(player_name, match_info['player1_name'])
+                or names_match(player_name, match_info['player2_name'])):
             return jsonify({'error': 'Jogador inválido'}), 400
         
         # Create bet record with temporary potential return
@@ -368,35 +376,48 @@ def get_match_bets(match_id):
 @betting_bp.route('/cancel-bet/<int:bet_id>', methods=['DELETE'])
 @require_auth
 def cancel_bet(bet_id):
-    """Cancel a bet (only for upcoming matches)"""
+    """Cancel a bet (only for upcoming matches). Issues real refund."""
     db = get_db()
     try:
-        # Check if bet exists and belongs to user
+        # Read bet + match info
         cursor = db.execute('''
-            SELECT b.id, b.amount, b.match_id, m.status as match_status
+            SELECT b.id, b.amount, b.match_id, b.payment_id, m.status as match_status
             FROM bets b
             JOIN matches m ON b.match_id = m.id
             WHERE b.id = %s AND b.user_id = %s AND b.status = 'active'
         ''', (bet_id, request.user_id))
-        
+
         bet = cursor.fetchone()
         if not bet:
             return jsonify({'error': 'Aposta não encontrada'}), 404
-        
+
         if bet['match_status'] != 'upcoming':
             return jsonify({'error': 'Não é possível cancelar aposta de partida em andamento'}), 400
-        
-        # Cancel bet
-        db.execute('UPDATE bets SET status = %s WHERE id = %s', ('refunded', bet_id))
-        
-        # Update match pool
+
+        # Atomic claim: only the first concurrent caller flips the bet from 'active'.
+        # Without this guard two simultaneous cancels both decrement the pool.
+        cursor = db.execute(
+            "UPDATE bets SET status = 'refunded' WHERE id = %s AND status = 'active'",
+            (bet_id,)
+        )
+        if cursor.rowcount != 1:
+            return jsonify({'error': 'Aposta já foi cancelada'}), 400
+
         update_match_pool(bet['match_id'], -float(bet['amount']))
-        
         db.commit()
-        
+
+        # Issue real refund. Stripe payment intents start with 'pi_'; otherwise treat as MP/PIX.
+        payment_method = 'card' if bet['payment_id'] and str(bet['payment_id']).startswith('pi_') else 'pix'
+        try:
+            refund_result = refund_payment(bet['payment_id'], amount=float(bet['amount']), payment_method=payment_method)
+            if not refund_result.get('success'):
+                logger.error(f'Refund failed for bet {bet_id}: {refund_result.get("error")}')
+        except Exception as refund_error:
+            logger.error(f'Refund attempt raised for bet {bet_id}: {refund_error}')
+
         logger.info(f'Bet cancelled: bet_id={bet_id}, user_id={request.user_id}')
         return jsonify({'message': 'Aposta cancelada com sucesso'})
-        
+
     except Exception as e:
         logger.error(f'Error cancelling bet {bet_id}: {str(e)}')
         return jsonify({'error': f'Erro ao cancelar aposta: {str(e)}'}), 500

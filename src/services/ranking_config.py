@@ -1,10 +1,16 @@
 from src.database import get_db
 
 class RankingConfigService:
-    """Service for managing year-specific ranking configuration"""
-    
+    """Service for managing year-specific ranking configuration.
+
+    No in-process cache: under multi-worker / serverless deployment a process-local
+    cache served stale config to other workers after set_config(). PostgreSQL reads
+    are cheap enough that direct lookup is fine.
+    """
+
+    # Kept as an empty dict so legacy callers that touch _cache directly still work.
     _cache = {}
-    
+
     DEFAULT_CONFIG = {
         'elite_cutoff': 8,
         'challenger_cutoff': 16,
@@ -24,16 +30,13 @@ class RankingConfigService:
     
     @staticmethod
     def get_config(season_id):
-        """Get configuration for a season with defaults (cached)"""
-        if season_id in RankingConfigService._cache:
-            return RankingConfigService._cache[season_id]
-        
+        """Get configuration for a season with defaults"""
         db = get_db()
         config_rows = db.execute(
             'SELECT key, value, data_type FROM ranking_season_config WHERE season_id = %s',
             (season_id,)
         ).fetchall()
-        
+
         config = {}
         for row in config_rows:
             value = row['value']
@@ -44,19 +47,16 @@ class RankingConfigService:
             elif row['data_type'] == 'boolean':
                 value = value.lower() == 'true'
             config[row['key']] = value
-        
-        # Fill in defaults for missing keys
+
         for key, default_value in RankingConfigService.DEFAULT_CONFIG.items():
             if key not in config:
                 config[key] = default_value
-        
-        RankingConfigService._cache[season_id] = config
+
         return config
-    
+
     @staticmethod
     def set_config(season_id, config_dict, db=None):
         """Set configuration for a season"""
-        RankingConfigService._cache.pop(season_id, None)
         should_close = False
         if db is None:
             db = get_db()

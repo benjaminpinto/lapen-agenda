@@ -187,21 +187,41 @@ def get_current_user():
 @auth_bp.route('/profile', methods=['PUT'])
 @require_auth
 def update_profile():
-    data = request.get_json()
+    data = request.get_json() or {}
+
+    name = (data.get('name') or '').strip()
+    short_name = (data.get('short_name') or '').strip()
+    email = (data.get('email') or '').lower().strip()
+    phone = (data.get('phone') or '').strip()
+    pix_key = (data.get('pix_key') or '').strip()
+
+    if not name or not short_name or not email:
+        return jsonify({'error': 'Nome, nome curto e email são obrigatórios'}), 400
+
+    if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
+        return jsonify({'error': 'Formato de email inválido'}), 400
+
     db = get_db()
-    
     try:
+        existing = db.execute(
+            'SELECT id FROM users WHERE email = %s AND id != %s AND deleted_at IS NULL',
+            (email, request.user_id)
+        ).fetchone()
+        if existing:
+            return jsonify({'error': 'Email já está em uso'}), 400
+
         db.execute('''
-            UPDATE users 
-            SET name = TRIM(%s), short_name = TRIM(%s), email = %s, phone = TRIM(%s), pix_key = TRIM(%s)
-            WHERE id = %s
-        ''', (data['name'], data['short_name'], data['email'], data.get('phone'), data.get('pix_key'), request.user_id))
+            UPDATE users
+            SET name = %s, short_name = %s, email = %s, phone = %s, pix_key = %s
+            WHERE id = %s AND deleted_at IS NULL
+        ''', (name, short_name, email, phone, pix_key, request.user_id))
         db.commit()
-        
+
         user = get_user_by_id(request.user_id)
         return jsonify({'user': user})
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        logger.error(f'Error updating profile for user {request.user_id}: {str(e)}')
+        return jsonify({'error': 'Falha ao atualizar perfil'}), 500
     finally:
         db.close()
 
@@ -215,16 +235,16 @@ def verify_email():
     
     db = get_db()
     try:
-        cursor = db.execute('SELECT id FROM users WHERE verification_token = %s', (token,))
+        cursor = db.execute(
+            'UPDATE users SET is_verified = TRUE, verification_token = NULL '
+            'WHERE verification_token = %s RETURNING id',
+            (token,)
+        )
         user = cursor.fetchone()
-        
         if not user:
             return jsonify({'error': 'Token de verificação inválido'}), 400
-        
-        db.execute('UPDATE users SET is_verified = %s, verification_token = NULL WHERE id = %s', 
-                  (True, user['id']))
         db.commit()
-        
+
         logger.info(f'Email verified for user {user["id"]}')
         return jsonify({'message': 'Email verificado com sucesso'})
         
@@ -321,24 +341,32 @@ def reset_password():
     
     db = get_db()
     try:
+        # Read first to check expiry (token-only WHERE so an expired token can be diagnosed).
         cursor = db.execute('SELECT id, reset_token_expires FROM users WHERE reset_token = %s', (token,))
         user = cursor.fetchone()
-        
+
         if not user:
             return jsonify({'error': 'Token inválido'}), 400
-        
+
         expires = user['reset_token_expires']
         if isinstance(expires, str):
             expires = datetime.fromisoformat(expires.replace('Z', '+00:00'))
-        
+
         if datetime.utcnow() > expires:
             return jsonify({'error': 'Token expirado'}), 400
-        
+
         new_password_hash = hash_password(new_password)
-        db.execute('UPDATE users SET password_hash = %s, reset_token = NULL, reset_token_expires = NULL WHERE id = %s',
-                  (new_password_hash, user['id']))
+        # Atomic single-use: only the first concurrent request with this token wins.
+        # Token is part of the WHERE clause so a second request finds no row.
+        cursor = db.execute(
+            'UPDATE users SET password_hash = %s, reset_token = NULL, reset_token_expires = NULL '
+            'WHERE id = %s AND reset_token = %s',
+            (new_password_hash, user['id'], token)
+        )
+        if cursor.rowcount != 1:
+            return jsonify({'error': 'Token já utilizado'}), 400
         db.commit()
-        
+
         logger.info(f'Password reset successful for user {user["id"]}')
         return jsonify({'message': 'Senha redefinida com sucesso'}), 200
     except Exception as e:

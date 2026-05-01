@@ -6,6 +6,7 @@ from flask import Blueprint, request, jsonify
 from src.auth import require_approved_lapen_member
 from src.database import get_db
 from src.utils.time_utils import normalize_time
+from src.utils.user_lookup import find_user_by_display_name
 
 public_bp = Blueprint('public', __name__, url_prefix='/api/public')
 
@@ -172,16 +173,16 @@ def create_schedule():
     if is_time_blocked(date, start_time, court_id):
         return jsonify({'error': 'Horário está bloqueado'}), 400
 
-    # Get player IDs if they are registered users
-    p1_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL AND lapen_approved = TRUE', (player1_name, player1_name)).fetchone()
-    p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL AND lapen_approved = TRUE', (player2_name, player2_name)).fetchone()
-    
+    # Resolve display names to registered users (canonical lookup).
+    p1_user = find_user_by_display_name(db, player1_name)
+    p2_user = find_user_by_display_name(db, player2_name)
+
     try:
         cursor = db.cursor()
         cursor.execute('''
             INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, player1_id, player2_id, match_type)
             VALUES (%s, %s, %s, TRIM(%s), TRIM(%s), %s, %s, %s) RETURNING id
-        ''', (court_id, date, start_time, player1_name, player2_name, 
+        ''', (court_id, date, start_time, player1_name, player2_name,
               p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None, match_type))
         schedule_id = cursor.fetchone()['id']
         
@@ -196,8 +197,13 @@ def create_schedule():
             ''', (p1_user['id'], p2_user['id'], p2_user['id'], p1_user['id'])).fetchone()
             
             if ranking_match:
-                db.execute('UPDATE ranking_matches SET schedule_id = %s WHERE id = %s', 
-                          (schedule_id, ranking_match['id']))
+                # Atomic link: only succeeds if the ranking match isn't already linked.
+                # Prevents two simultaneous schedule creations from clobbering each other.
+                db.execute(
+                    'UPDATE ranking_matches SET schedule_id = %s '
+                    'WHERE id = %s AND schedule_id IS NULL',
+                    (schedule_id, ranking_match['id'])
+                )
         
         db.commit()
         return jsonify({'success': True, 'message': 'Agendamento criado com sucesso'})
@@ -248,13 +254,12 @@ def update_schedule(schedule_id):
         if active_bets['count'] > 0:
             return jsonify({'error': 'Não é possível editar agendamento com apostas ativas', 'has_bets': True}), 400
 
-    # Get player IDs if they are registered users
-    p1_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL AND lapen_approved = TRUE', (player1_name, player1_name)).fetchone()
-    p2_user = db.execute('SELECT id FROM users WHERE (LOWER(short_name) = LOWER(%s) OR LOWER(name) = LOWER(%s)) AND deleted_at IS NULL AND lapen_approved = TRUE', (player2_name, player2_name)).fetchone()
-    
+    p1_user = find_user_by_display_name(db, player1_name)
+    p2_user = find_user_by_display_name(db, player2_name)
+
     try:
         db.execute('''
-            UPDATE schedules 
+            UPDATE schedules
             SET player1_name = TRIM(%s), player2_name = TRIM(%s), player1_id = %s, player2_id = %s, match_type = %s
             WHERE id = %s
         ''', (player1_name, player2_name, p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None, match_type, schedule_id))

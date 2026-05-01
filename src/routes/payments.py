@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 import stripe
 import os
+from src.auth import require_auth
 from src.database import get_db
 from src.logger import get_logger
 
@@ -126,9 +127,11 @@ def check_payment_status(payment_id):
         logger.error(f'Error checking payment {payment_id}: {e}')
         return jsonify({'error': str(e)}), 500
 
-@payments_bp.route('/history/<int:user_id>', methods=['GET'])
-def get_payment_history(user_id):
-    """Get payment history for a user"""
+@payments_bp.route('/history', methods=['GET'])
+@require_auth
+def get_payment_history():
+    """Get payment history for the authenticated user"""
+    user_id = request.user_id
     db = get_db()
     try:
         cursor = db.execute('''

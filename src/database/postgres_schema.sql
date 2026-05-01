@@ -48,7 +48,9 @@ CREATE TABLE IF NOT EXISTS users (
     is_admin BOOLEAN DEFAULT FALSE,
     deleted_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT users_name_trimmed CHECK (name = TRIM(name)),
+    CONSTRAINT users_short_name_trimmed CHECK (short_name IS NULL OR short_name = TRIM(short_name))
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);

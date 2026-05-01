@@ -1,8 +1,8 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from flask import Blueprint, request, jsonify
 
-from src.auth import require_auth
+from src.auth import require_auth, require_admin_auth
 from src.database import get_db
 from src.logger import get_logger
 
@@ -164,7 +164,7 @@ def get_available_matches():
 
 
 @matches_bp.route('/create', methods=['POST'])
-@require_auth
+@require_admin_auth
 def create_match():
     """Create a match from an existing schedule"""
     data = request.get_json()
@@ -175,13 +175,12 @@ def create_match():
 
     db = get_db()
     try:
-        # Check if schedule exists and is in the future
-        current_date = CURRENT_DATE
-        current_time = CURRENT_TIME
-        cursor = db.execute(f'''
-            SELECT * FROM schedules 
-            WHERE id = %s AND deleted_at IS NULL AND (date > {current_date} OR (date = {current_date} AND start_time > {current_time}))
-        ''', (schedule_id,))
+        now = datetime.now()
+        cursor = db.execute('''
+            SELECT * FROM schedules
+            WHERE id = %s AND deleted_at IS NULL
+              AND (date > %s OR (date = %s AND start_time > %s))
+        ''', (schedule_id, now.date(), now.date(), now.strftime('%H:%M')))
 
         schedule = cursor.fetchone()
         if not schedule:
@@ -218,20 +217,21 @@ def create_match():
 
 
 @matches_bp.route('/<int:match_id>/toggle-betting', methods=['POST'])
-@require_auth
+@require_admin_auth
 def toggle_betting(match_id):
     """Enable/disable betting for a match"""
     db = get_db()
     try:
-        cursor = db.execute('SELECT betting_enabled FROM matches WHERE id = %s', (match_id,))
-        match = cursor.fetchone()
-
-        if not match:
+        cursor = db.execute(
+            'UPDATE matches SET betting_enabled = NOT betting_enabled WHERE id = %s RETURNING betting_enabled',
+            (match_id,)
+        )
+        row = cursor.fetchone()
+        if not row:
             return jsonify({'error': 'Partida não encontrada'}), 404
 
-        new_status = not match['betting_enabled']
-        db.execute('UPDATE matches SET betting_enabled = %s WHERE id = %s', (new_status, match_id))
         db.commit()
+        new_status = row['betting_enabled']
 
         logger.info(f'Betting toggled for match {match_id}: {new_status}')
         return jsonify({
@@ -246,10 +246,21 @@ def toggle_betting(match_id):
         db.close()
 
 
+# Whitelist of allowed transitions. Settled matches stay settled — finished/cancelled are terminal.
+_ALLOWED_TRANSITIONS = {
+    'upcoming': {'live', 'cancelled'},
+    'live': {'finished', 'cancelled'},
+}
+
+
 @matches_bp.route('/<int:match_id>/status', methods=['PUT'])
-@require_auth
+@require_admin_auth
 def update_match_status(match_id):
-    """Update match status (upcoming, live, finished, cancelled)"""
+    """Update match status with whitelisted transitions only.
+
+    Settlement (finished/cancelled) belongs to admin_matches /finish and /cancel,
+    which run payouts/refunds. This route only handles non-settling transitions.
+    """
     data = request.get_json()
     status = data.get('status')
 
@@ -259,13 +270,18 @@ def update_match_status(match_id):
 
     db = get_db()
     try:
-        cursor = db.execute('SELECT id FROM matches WHERE id = %s', (match_id,))
-        if not cursor.fetchone():
-            return jsonify({'error': 'Partida não encontrada'}), 404
+        from_clause = ' OR '.join([f"status = '{s}'" for s, allowed in _ALLOWED_TRANSITIONS.items() if status in allowed]) or 'FALSE'
+        cursor = db.execute(
+            f'UPDATE matches SET status = %s WHERE id = %s AND ({from_clause})',
+            (status, match_id)
+        )
+        if cursor.rowcount == 0:
+            existing = db.execute('SELECT status FROM matches WHERE id = %s', (match_id,)).fetchone()
+            if not existing:
+                return jsonify({'error': 'Partida não encontrada'}), 404
+            return jsonify({'error': f"Transição inválida de '{existing['status']}' para '{status}'"}), 400
 
-        db.execute('UPDATE matches SET status = %s WHERE id = %s', (status, match_id))
         db.commit()
-
         logger.info(f'Match status updated: match_id={match_id}, status={status}')
         return jsonify({
             'message': 'Status da partida atualizado',

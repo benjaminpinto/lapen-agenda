@@ -71,9 +71,7 @@ def get_challenges():
     from flask import request as flask_request
     token = flask_request.cookies.get('access_token')
     user_id = None
-    
-    logger.info(f"Cookie token: {token[:50] if token else 'None'}...")
-    
+
     if token:
         from src.auth import verify_token
         user_id = verify_token(token)
@@ -137,6 +135,27 @@ def get_challenges():
     finally:
         db.close()
 
+def _atomic_challenge_transition(db, challenge_id, owner_column, owner_id, from_status, to_status):
+    """Atomically transition a challenge if it is currently in `from_status` AND
+    the user is the legitimate owner. Returns ('ok'|'not_found'|'forbidden'|'conflict')."""
+    cursor = db.execute(
+        f"UPDATE challenges SET status = %s "
+        f"WHERE id = %s AND status = %s AND {owner_column} = %s",
+        (to_status, challenge_id, from_status, owner_id)
+    )
+    if cursor.rowcount == 1:
+        return 'ok'
+    existing = db.execute(
+        f'SELECT challenger_id, challenged_id, status FROM challenges WHERE id = %s',
+        (challenge_id,)
+    ).fetchone()
+    if not existing:
+        return 'not_found'
+    if existing[owner_column] != owner_id:
+        return 'forbidden'
+    return 'conflict'
+
+
 @challenges_bp.route('/<int:challenge_id>/accept', methods=['POST'])
 @require_auth
 def accept_challenge(challenge_id):
@@ -144,19 +163,14 @@ def accept_challenge(challenge_id):
     user_id = request.user_id
     db = get_db()
     try:
-        # Verify user is the challenged one
-        cursor = db.execute('SELECT challenged_id FROM challenges WHERE id = %s', (challenge_id,))
-        challenge = cursor.fetchone()
-        
-        if not challenge:
+        outcome = _atomic_challenge_transition(db, challenge_id, 'challenged_id', user_id, 'pending', 'active')
+        if outcome == 'not_found':
             return jsonify({'error': 'Desafio não encontrado'}), 404
-            
-        if challenge['challenged_id'] != user_id:
+        if outcome == 'forbidden':
             return jsonify({'error': 'Acesso negado'}), 403
-            
-        db.execute("UPDATE challenges SET status = 'active' WHERE id = %s", (challenge_id,))
+        if outcome == 'conflict':
+            return jsonify({'error': 'Desafio não está mais pendente'}), 400
         db.commit()
-        
         return jsonify({'message': 'Desafio aceito'}), 200
     finally:
         db.close()
@@ -168,44 +182,33 @@ def reject_challenge(challenge_id):
     user_id = request.user_id
     db = get_db()
     try:
-        cursor = db.execute('SELECT challenged_id FROM challenges WHERE id = %s', (challenge_id,))
-        challenge = cursor.fetchone()
-        
-        if not challenge:
+        outcome = _atomic_challenge_transition(db, challenge_id, 'challenged_id', user_id, 'pending', 'rejected')
+        if outcome == 'not_found':
             return jsonify({'error': 'Desafio não encontrado'}), 404
-            
-        if challenge['challenged_id'] != user_id:
+        if outcome == 'forbidden':
             return jsonify({'error': 'Acesso negado'}), 403
-            
-        db.execute("UPDATE challenges SET status = 'rejected' WHERE id = %s", (challenge_id,))
+        if outcome == 'conflict':
+            return jsonify({'error': 'Desafio não está mais pendente'}), 400
         db.commit()
-        
         return jsonify({'message': 'Desafio recusado'}), 200
     finally:
         db.close()
-        
+
 @challenges_bp.route('/<int:challenge_id>', methods=['DELETE'])
 @require_auth
 def delete_challenge(challenge_id):
-    """Delete/Cancel a challenge (only by creator if pending, or admin?)"""
+    """Delete/Cancel a challenge (only by creator while pending)"""
     user_id = request.user_id
     db = get_db()
     try:
-        cursor = db.execute('SELECT challenger_id, status FROM challenges WHERE id = %s', (challenge_id,))
-        challenge = cursor.fetchone()
-        
-        if not challenge:
+        outcome = _atomic_challenge_transition(db, challenge_id, 'challenger_id', user_id, 'pending', 'cancelled')
+        if outcome == 'not_found':
             return jsonify({'error': 'Desafio não encontrado'}), 404
-            
-        if challenge['challenger_id'] != user_id:
-             return jsonify({'error': 'Acesso negado'}), 403
-             
-        if challenge['status'] != 'pending':
-             return jsonify({'error': 'Só é possível cancelar desafios pendentes'}), 400
-
-        db.execute("UPDATE challenges SET status = 'cancelled' WHERE id = %s", (challenge_id,))
+        if outcome == 'forbidden':
+            return jsonify({'error': 'Acesso negado'}), 403
+        if outcome == 'conflict':
+            return jsonify({'error': 'Só é possível cancelar desafios pendentes'}), 400
         db.commit()
-        
         return jsonify({'message': 'Desafio cancelado'}), 200
     finally:
         db.close()

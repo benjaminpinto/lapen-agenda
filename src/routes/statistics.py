@@ -7,6 +7,7 @@ from src.database import get_db
 from src.logger import get_logger
 from src.routes.ranking import _update_match_result
 from src.utils.score_parser import parse_score, validate_score
+from src.utils.user_lookup import find_user_by_display_name, names_match
 
 logger = get_logger()
 statistics_bp = Blueprint('statistics', __name__, url_prefix='/api/statistics')
@@ -44,7 +45,7 @@ def add_match_result():
             
             if linked_ranking_match:
                 # Use unified method for ranking matches
-                winner_id = linked_ranking_match['player1_id'] if winner_name in [schedule['player1_name']] else linked_ranking_match['player2_id']
+                winner_id = linked_ranking_match['player1_id'] if names_match(winner_name, schedule['player1_name']) else linked_ranking_match['player2_id']
                 parsed = parse_score(score)
                 
                 # Detect W.O. from score string
@@ -70,7 +71,7 @@ def add_match_result():
             if not match:
                 return jsonify({'error': 'Partida não encontrada'}), 404
             
-            winner_id = match['player1_id'] if winner_name == match['p1'] else match['player2_id']
+            winner_id = match['player1_id'] if names_match(winner_name, match['p1']) else match['player2_id']
             parsed = parse_score(score)
             
             # Detect W.O. from score string
@@ -83,9 +84,9 @@ def add_match_result():
             return jsonify({'message': 'Resultado adicionado com sucesso'}), 201
         
         # Non-ranking schedule - insert statistics only
-        p1_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL AND lapen_approved = TRUE', (schedule['player1_name'], schedule['player1_name'])).fetchone()
-        p2_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL AND lapen_approved = TRUE', (schedule['player2_name'], schedule['player2_name'])).fetchone()
-        winner_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL AND lapen_approved = TRUE', (winner_name, winner_name)).fetchone()
+        p1_user = find_user_by_display_name(db, schedule['player1_name'])
+        p2_user = find_user_by_display_name(db, schedule['player2_name'])
+        winner_user = find_user_by_display_name(db, winner_name)
         
         db.execute('''
             INSERT INTO match_statistics_unified (
@@ -120,8 +121,8 @@ def get_player_statistics():
     
     db = get_db()
     
-    # Get player IDs from names
-    p1_user = db.execute('SELECT id, short_name FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (player1, player1)).fetchone()
+    # Get player IDs from names (no approved filter — historical players included)
+    p1_user = find_user_by_display_name(db, player1, require_approved=False)
     if not p1_user:
         return jsonify({'error': 'Jogador não encontrado'}), 404
     
@@ -129,7 +130,7 @@ def get_player_statistics():
     params = [p1_user['id'], p1_user['id']]
     
     if player2:
-        p2_user = db.execute('SELECT id FROM users WHERE (LOWER(TRIM(short_name)) = LOWER(TRIM(%s)) OR LOWER(TRIM(name)) = LOWER(TRIM(%s))) AND deleted_at IS NULL', (player2, player2)).fetchone()
+        p2_user = find_user_by_display_name(db, player2, require_approved=False)
         if p2_user:
             conditions.append('((m.player1_id = %s AND m.player2_id = %s) OR (m.player1_id = %s AND m.player2_id = %s))')
             params.extend([p1_user['id'], p2_user['id'], p2_user['id'], p1_user['id']])

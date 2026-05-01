@@ -774,10 +774,12 @@ def update_participant_temp_points(season_id, user_id):
     temp_points = data.get('temp_points', 0)
     
     db = get_db()
-    season = db.execute('SELECT id FROM ranking_seasons WHERE id = %s', (season_id,)).fetchone()
+    season = db.execute('SELECT id, status FROM ranking_seasons WHERE id = %s', (season_id,)).fetchone()
     if not season:
         return jsonify({'error': 'Temporada não encontrada'}), 404
-    
+    if season['status'] != 'active':
+        return jsonify({'error': 'Pontos temporários só podem ser alterados em temporadas ativas'}), 400
+
     try:
         db.execute('''
             UPDATE ranking_participants

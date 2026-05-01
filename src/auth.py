@@ -10,8 +10,12 @@ from src.database import get_db
 
 
 def hash_password(password):
-    """Hash a password using bcrypt"""
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    """Hash a password using bcrypt with explicit 12 rounds.
+
+    Project policy requires minimum 12 rounds. bcrypt's library default is 12
+    today but explicit pinning prevents silent downgrades on library upgrades.
+    """
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(rounds=12)).decode('utf-8')
 
 def verify_password(password, hashed):
     """Verify a password against its hash"""

@@ -22,41 +22,41 @@ def finish_match(match_id):
     
     db = get_db()
     try:
-        # Check if match exists and is not already finished
-        cursor = db.execute('SELECT * FROM matches WHERE id = %s', (match_id,))
-        match = cursor.fetchone()
-        
-        if not match:
-            return jsonify({'error': 'Partida não encontrada'}), 404
-        
-        if match['status'] == 'finished':
+        # Atomic claim: only the first concurrent caller flips a non-finished match.
+        # Without this guard two simultaneous /finish calls both run settlement → duplicate
+        # match_results row and double-paid bet emails.
+        cursor = db.execute(
+            "UPDATE matches SET status = 'finished' WHERE id = %s AND status != 'finished' RETURNING id",
+            (match_id,)
+        )
+        if not cursor.fetchone():
+            existing = db.execute('SELECT id, status FROM matches WHERE id = %s', (match_id,)).fetchone()
+            if not existing:
+                return jsonify({'error': 'Partida não encontrada'}), 404
             return jsonify({'error': 'Partida já foi finalizada'}), 400
-        
+
         # Get total pool and calculate winnings
         cursor = db.execute('''
-            SELECT SUM(amount) as total_pool FROM bets 
+            SELECT SUM(amount) as total_pool FROM bets
             WHERE match_id = %s AND status = 'active'
         ''', (match_id,))
-        
+
         pool_result = cursor.fetchone()
         total_pool = Decimal(str(pool_result['total_pool'] or 0))
-        
+
         # Apply 20% house edge
         total_winnings = total_pool * Decimal('0.8')
-        
-        # Get winning bets
+
+        # Get winning bets (normalize names: case-insensitive + trim)
         cursor = db.execute('''
-            SELECT id, amount FROM bets 
-            WHERE match_id = %s AND player_name = %s AND status = 'active'
+            SELECT id, amount FROM bets
+            WHERE match_id = %s AND LOWER(TRIM(player_name)) = LOWER(TRIM(%s)) AND status = 'active'
         ''', (match_id, winner_name))
-        
+
         winning_bets = cursor.fetchall()
-        
+
         # Calculate total winning bet amount
         total_winning_amount = sum(Decimal(str(bet['amount'])) for bet in winning_bets)
-        
-        # Update match status
-        db.execute('UPDATE matches SET status = %s WHERE id = %s', ('finished', match_id))
         
         # Create match result record
         cursor = db.execute('''
@@ -87,7 +87,7 @@ def finish_match(match_id):
                 SELECT b.id, b.amount, b.user_id, u.name, u.email
                 FROM bets b
                 JOIN users u ON b.user_id = u.id
-                WHERE b.match_id = %s AND b.player_name = %s AND b.status = 'active'
+                WHERE b.match_id = %s AND LOWER(TRIM(b.player_name)) = LOWER(TRIM(%s)) AND b.status = 'active'
             ''', (match_id, winner_name))
             
             winning_bets_with_users = cursor.fetchall()
@@ -108,14 +108,14 @@ def finish_match(match_id):
             SELECT b.user_id, u.name, u.email
             FROM bets b
             JOIN users u ON b.user_id = u.id
-            WHERE b.match_id = %s AND b.player_name != %s AND b.status = 'active'
+            WHERE b.match_id = %s AND LOWER(TRIM(b.player_name)) != LOWER(TRIM(%s)) AND b.status = 'active'
         ''', (match_id, winner_name))
-        
+
         losing_users = cursor.fetchall()
-        
+
         db.execute('''
-            UPDATE bets SET status = %s 
-            WHERE match_id = %s AND player_name != %s AND status = 'active'
+            UPDATE bets SET status = %s
+            WHERE match_id = %s AND LOWER(TRIM(player_name)) != LOWER(TRIM(%s)) AND status = 'active'
         ''', ('lost', match_id, winner_name))
         
         # Send settlement emails to losing bettors
@@ -147,74 +147,73 @@ def cancel_match(match_id):
     
     db = get_db()
     try:
-        # Check if match exists
-        cursor = db.execute('SELECT * FROM matches WHERE id = %s', (match_id,))
-        match = cursor.fetchone()
-        
-        if not match:
-            return jsonify({'error': 'Partida não encontrada'}), 404
-        
-        if match['status'] == 'finished':
-            return jsonify({'error': 'Não é possível cancelar partida finalizada'}), 400
-        
+        # Atomic claim: only the first concurrent caller flips the match to 'cancelled'.
+        # Without this guard two simultaneous /cancel calls both call stripe.Refund.create
+        # for every bet → real money refunded twice.
+        cursor = db.execute(
+            "UPDATE matches SET status = 'cancelled' WHERE id = %s AND status NOT IN ('finished', 'cancelled') RETURNING id",
+            (match_id,)
+        )
+        if not cursor.fetchone():
+            existing = db.execute('SELECT id, status FROM matches WHERE id = %s', (match_id,)).fetchone()
+            if not existing:
+                return jsonify({'error': 'Partida não encontrada'}), 404
+            if existing['status'] == 'finished':
+                return jsonify({'error': 'Não é possível cancelar partida finalizada'}), 400
+            return jsonify({'error': 'Partida já foi cancelada'}), 400
+
         # Get all active bets for this match
         cursor = db.execute('''
             SELECT b.id, b.user_id, b.amount, b.payment_id
             FROM bets b
             WHERE b.match_id = %s AND b.status = 'active'
         ''', (match_id,))
-        
+
         active_bets = cursor.fetchall()
         refunded_count = 0
         failed_refunds = 0
-        
+
         # Process refunds for each bet
         for bet in active_bets:
             refund_status = 'pending'
             stripe_refund_id = None
             failure_reason = None
-            
+
             try:
-                # Check if mock mode is active
                 if os.getenv('STRIPE_MOCK_ACTIVE', 'false').lower() == 'true':
-                    # Mock refund - always succeed
                     refund_status = 'succeeded'
                     stripe_refund_id = f'mock_refund_{bet["id"]}'
                 else:
-                    # Real Stripe refund
+                    # idempotency_key prevents duplicate refunds even on retry/replay
                     stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
                     refund = stripe.Refund.create(
                         payment_intent=bet['payment_id'],
-                        amount=int(float(bet['amount']) * 100)  # Convert to cents
+                        amount=int(float(bet['amount']) * 100),
+                        idempotency_key=f'refund_bet_{bet["id"]}'
                     )
                     refund_status = refund.status
                     stripe_refund_id = refund.id
-                    
+
                 if refund_status == 'succeeded':
                     refunded_count += 1
                 else:
                     failed_refunds += 1
-                    
+
             except Exception as refund_error:
                 refund_status = 'failed'
                 failure_reason = str(refund_error)
                 failed_refunds += 1
-            
-            # Log refund attempt
+
             db.execute('''
                 INSERT INTO payment_logs (payment_id, event_type, status, amount, error_message, metadata)
                 VALUES (%s, %s, %s, %s, %s, %s)
             ''', (bet['payment_id'], 'refund_attempt', refund_status, bet['amount'], failure_reason, f'bet_id:{bet["id"]}'))
-        
-        # Update match status
-        db.execute('UPDATE matches SET status = %s WHERE id = %s', ('cancelled', match_id))
-        
-        # Update bet status
+
         db.execute('''
-            UPDATE bets SET status = %s 
+            UPDATE bets SET status = %s
             WHERE match_id = %s AND status = 'active'
         ''', ('refunded', match_id))
-        
+
         db.commit()
         
         logger.info(f'Match cancelled: match_id={match_id}, refunded={refunded_count}, failed={failed_refunds}, total={len(active_bets)}')
@@ -232,6 +231,7 @@ def cancel_match(match_id):
         db.close()
 
 @admin_matches_bp.route('/<int:match_id>/report', methods=['GET'])
+@require_admin_auth
 def get_match_report(match_id):
     """Get comprehensive match report with all betting details"""
     db = get_db()
@@ -309,6 +309,8 @@ def get_match_report(match_id):
 
 @admin_matches_bp.route('/<int:match_id>/result', methods=['GET'])
 def get_match_result(match_id):
+    """Public endpoint: winner + score for a finished match. Used by FinishedMatchCard
+    on the /betting page (anon users browsing matches must be able to see results)."""
     """Get match result information"""
     db = get_db()
     try:
@@ -330,6 +332,7 @@ def get_match_result(match_id):
         db.close()
 
 @admin_matches_bp.route('/reports', methods=['GET'])
+@require_admin_auth
 def get_betting_reports():
     """Get betting reports and statistics"""
     db = get_db()

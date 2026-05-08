@@ -393,7 +393,17 @@ def get_dashboard_stats():
 @require_admin_auth
 def get_users():
     db = get_db()
-    users = db.execute('SELECT id, email, name, short_name, phone, pix_key, is_admin, is_lapen_member, lapen_approved FROM users WHERE deleted_at IS NULL ORDER BY name').fetchall()
+    include_inactive = request.args.get('include_inactive', '').lower() in ('1', 'true', 'yes')
+    if include_inactive:
+        users = db.execute(
+            'SELECT id, email, name, short_name, phone, pix_key, is_admin, is_lapen_member, lapen_approved, '
+            '(deleted_at IS NULL) AS is_active FROM users ORDER BY name'
+        ).fetchall()
+    else:
+        users = db.execute(
+            'SELECT id, email, name, short_name, phone, pix_key, is_admin, is_lapen_member, lapen_approved, '
+            'TRUE AS is_active FROM users WHERE deleted_at IS NULL ORDER BY name'
+        ).fetchall()
     return jsonify([dict(user) for user in users])
 
 @admin_bp.route('/users/<int:user_id>', methods=['PUT'])

@@ -106,9 +106,16 @@ def test_schedule_edit_cannot_change_match_to_liga(setup_db):
     from main import app
 
     db = get_db()
-    court_id = db.execute(
-        "INSERT INTO courts (name, type, active) VALUES ('EditLiga Court', 'saibro', true) RETURNING id"
-    ).fetchone()['id']
+    court = db.execute('SELECT id FROM courts ORDER BY id LIMIT 1').fetchone()
+    if court:
+        court_id = court['id']
+    else:
+        court_id = db.execute(
+            "INSERT INTO courts (id, name, type, active) "
+            "VALUES (9998, 'EditLiga Court', 'saibro', true) "
+            "ON CONFLICT (id) DO UPDATE SET active = EXCLUDED.active "
+            "RETURNING id"
+        ).fetchone()['id']
     schedule_id = db.execute(
         "INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, match_type) "
         "VALUES (%s, '2026-06-10', '10:00', 'EditLiga A', 'EditLiga B', 'Amistoso') RETURNING id",

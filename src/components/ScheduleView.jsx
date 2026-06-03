@@ -168,6 +168,14 @@ const ScheduleView = () => {
             setShowBetsWarning(true)
             return
         }
+        if (schedule.match_type === 'Liga') {
+            toast({
+                title: "Edição indisponível",
+                description: "Partidas da Liga devem ser gerenciadas pelo fluxo da Liga.",
+                variant: "destructive"
+            })
+            return
+        }
         setEditingSchedule(schedule)
         setFormData({
             player1_name: schedule.player1_name,
@@ -621,7 +629,7 @@ const ScheduleView = () => {
 
             {/* Edit Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent className="max-w-md mx-4 sm:mx-auto">
+                <DialogContent className="w-[calc(100vw-2rem)] max-w-xl sm:mx-auto">
                     <DialogHeader>
                         <DialogTitle>Editar Agendamento</DialogTitle>
                         <DialogDescription>
@@ -683,7 +691,6 @@ const ScheduleView = () => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Amistoso">Amistoso</SelectItem>
-                                    <SelectItem value="Liga">Liga</SelectItem>
                                     <SelectItem value="Aula">Aula</SelectItem>
                                     <SelectItem value="Torneio">Torneio</SelectItem>
                                 </SelectContent>
@@ -795,4 +802,3 @@ const ScheduleView = () => {
 }
 
 export default ScheduleView
-

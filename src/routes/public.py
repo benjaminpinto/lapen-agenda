@@ -241,9 +241,12 @@ def update_schedule(schedule_id):
     db = get_db()
 
     # Check if schedule exists
-    existing = db.execute('SELECT id FROM schedules WHERE id = %s', (schedule_id,)).fetchone()
+    existing = db.execute('SELECT id, match_type FROM schedules WHERE id = %s', (schedule_id,)).fetchone()
     if not existing:
         return jsonify({'error': 'Agendamento não encontrado'}), 404
+
+    if existing['match_type'] == 'Liga' or match_type == 'Liga':
+        return jsonify({'error': 'Partidas da Liga não podem ser editadas pela agenda'}), 400
 
     # Check if schedule has active bets or finished match
     match = db.execute('SELECT id, status FROM matches WHERE schedule_id = %s', (schedule_id,)).fetchone()

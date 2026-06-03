@@ -1,6 +1,8 @@
-import pytest
-import sys
 import os
+import sys
+
+import pytest
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 # Set required env vars for tests
@@ -16,12 +18,16 @@ def setup_db():
     db = get_db()
     # Clean up test users
     db.execute("DELETE FROM users WHERE email LIKE 'test%@lapen.com' OR email LIKE 'admin%@lapen.com'")
+    db.execute("DELETE FROM schedules WHERE player1_name LIKE 'EditLiga%' OR player2_name LIKE 'EditLiga%'")
+    db.execute("DELETE FROM courts WHERE name = 'EditLiga Court'")
     db.commit()
     db.close()
     yield
     # Cleanup after test
     db = get_db()
     db.execute("DELETE FROM users WHERE email LIKE 'test%@lapen.com' OR email LIKE 'admin%@lapen.com'")
+    db.execute("DELETE FROM schedules WHERE player1_name LIKE 'EditLiga%' OR player2_name LIKE 'EditLiga%'")
+    db.execute("DELETE FROM courts WHERE name = 'EditLiga Court'")
     db.commit()
     db.close()
 
@@ -93,6 +99,42 @@ def test_schedule_booking_requires_auth(setup_db):
         })
         
         assert response.status_code == 401
+
+def test_schedule_edit_cannot_change_match_to_liga(setup_db):
+    """Generic schedule edits must not create Liga matches without ranking linkage."""
+    user_id, token = create_test_user('test_edit_liga@lapen.com', is_lapen=True, approved=True)
+    from main import app
+
+    db = get_db()
+    court_id = db.execute(
+        "INSERT INTO courts (name, type, active) VALUES ('EditLiga Court', 'saibro', true) RETURNING id"
+    ).fetchone()['id']
+    schedule_id = db.execute(
+        "INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, match_type) "
+        "VALUES (%s, '2026-06-10', '10:00', 'EditLiga A', 'EditLiga B', 'Amistoso') RETURNING id",
+        (court_id,)
+    ).fetchone()['id']
+    db.commit()
+    db.close()
+
+    with app.test_client() as client:
+        response = client.put(
+            f'/api/public/schedules/{schedule_id}',
+            headers={'Authorization': f'Bearer {token}'},
+            json={
+                'player1_name': 'EditLiga A',
+                'player2_name': 'EditLiga B',
+                'match_type': 'Liga'
+            }
+        )
+
+        assert response.status_code == 400
+        assert 'Liga' in response.get_json()['error']
+
+    db = get_db()
+    schedule = db.execute('SELECT match_type FROM schedules WHERE id = %s', (schedule_id,)).fetchone()
+    db.close()
+    assert schedule['match_type'] == 'Amistoso'
 
 def test_schedule_booking_requires_lapen_member(setup_db):
     """Test that non-LAPEN users cannot book"""

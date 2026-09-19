@@ -16,7 +16,7 @@ from src.routes.admin import admin_bp
 from src.routes.public import public_bp
 from src.routes.auth import auth_bp
 from src.routes.matches import matches_bp
-from src.routes.betting import betting_bp
+# from src.routes.betting import betting_bp  # DETACHED: módulo de apostas desativado
 from src.routes.admin_matches import admin_matches_bp
 from src.routes.payments import payments_bp
 from src.routes.webhooks import webhooks_bp
@@ -56,7 +56,7 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(public_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(matches_bp)
-app.register_blueprint(betting_bp)
+# app.register_blueprint(betting_bp)  # DETACHED: módulo de apostas desativado
 app.register_blueprint(admin_matches_bp)
 app.register_blueprint(payments_bp)
 app.register_blueprint(webhooks_bp, url_prefix='/api/webhooks')

@@ -1,6 +1,6 @@
 import {Link, useNavigate} from 'react-router-dom'
 import {Button} from '@/components/ui/button'
-import {Award, BarChart3, Calendar, Dices, Home, LogIn, LogOut, Menu, Settings, Swords, X} from 'lucide-react'
+import {Award, BarChart3, Calendar, Home, LogIn, LogOut, Menu, Settings, Swords, X} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
 import {useAuth} from '@/contexts/AuthContext'
 
@@ -63,12 +63,14 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                             </Button>
                         </Link>
 
+                        {/* DETACHED: módulo de apostas desativado
                         <Link to="/betting">
                             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
                                 <Dices className="h-4 w-4 mr-2"/>
                                 Apostas
                             </Button>
                         </Link>
+                        */}
 
                         <Link to="/ranking">
                             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
@@ -162,12 +164,14 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                                 </Button>
                             </Link>
 
+                            {/* DETACHED: módulo de apostas desativado
                             <Link to="/betting" onClick={() => setIsMobileMenuOpen(false)}>
                                 <Button variant="ghost" size="sm" className="w-full justify-start">
                                     <Dices className="h-4 w-4 mr-2"/>
                                     Apostas
                                 </Button>
                             </Link>
+                            */}
 
                             <Link to="/ranking" onClick={() => setIsMobileMenuOpen(false)}>
                                 <Button variant="ghost" size="sm" className="w-full justify-start">

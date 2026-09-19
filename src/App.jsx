@@ -29,8 +29,8 @@ import SignUpSuccess from './components/auth/SignUpSuccess'
 import EmailVerification from './components/auth/EmailVerification'
 import ForgotPassword from './components/auth/ForgotPassword'
 import ResetPassword from './components/auth/ResetPassword'
-import BettingDashboard from './components/betting/BettingDashboard'
-import MyBets from './components/betting/MyBets'
+// import BettingDashboard from './components/betting/BettingDashboard'  // DETACHED: módulo de apostas desativado
+// import MyBets from './components/betting/MyBets'  // DETACHED: módulo de apostas desativado
 import Profile from './components/Profile'
 import RankingLeaderboard from './components/ranking/RankingLeaderboard'
 import MyMatches from './components/ranking/MyMatches'
@@ -77,8 +77,8 @@ function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/betting" element={<BettingDashboard />} />
-            <Route path="/my-bets" element={<MyBets />} />
+            {/* <Route path="/betting" element={<BettingDashboard />} /> DETACHED: módulo de apostas desativado */}
+            {/* <Route path="/my-bets" element={<MyBets />} /> DETACHED: módulo de apostas desativado */}
             <Route path="/profile" element={<Profile />} />
             <Route path="/ranking" element={<RankingLeaderboard />} />
             <Route path="/ranking/my-matches" element={<MyMatches />} />

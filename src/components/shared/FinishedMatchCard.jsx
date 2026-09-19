@@ -15,23 +15,28 @@ const FinishedMatchCard = ({ match, onClick, showWinner = false }) => {
   }, [match.match_id])
 
   const fetchMatchDetails = async (matchId) => {
+    const data = {}
+
     try {
       const response = await fetchWithAuth(`/api/betting/match/${matchId}/bets`)
-      const data = await response.json()
-      
-      // For finished matches, get winner info
-      if (data.match?.status === 'finished') {
-        const resultResponse = await fetchWithAuth(`/api/admin/matches/${matchId}/result`)
-        if (resultResponse.ok) {
-          const resultData = await resultResponse.json()
-          data.winner = resultData.winner_name
-        }
+      if (response.ok) {
+        Object.assign(data, await response.json())
       }
-      
-      return data
     } catch (error) {
-      return null
+      // módulo de apostas desativado/indisponível — segue sem stats de apostas
     }
+
+    try {
+      const resultResponse = await fetchWithAuth(`/api/admin/matches/${matchId}/result`)
+      if (resultResponse.ok) {
+        const resultData = await resultResponse.json()
+        data.winner = resultData.winner_name
+      }
+    } catch (error) {
+      // sem resultado disponível
+    }
+
+    return data
   }
 
   return (

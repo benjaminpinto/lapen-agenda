@@ -1,4 +1,4 @@
-import { request } from '@playwright/test';
+import {request} from '@playwright/test';
 
 async function cleanup() {
   const apiContext = await request.newContext({
@@ -14,6 +14,16 @@ async function cleanup() {
       console.log(`✓ Cleaned up users with name "${name}":`, data);
     } catch (error) {
       console.error(`✗ Failed to cleanup "${name}":`, error);
+    }
+  }
+
+  // Tournament specs need E2E_TEST_SECRET on both sides: without it they skip themselves and there is nothing to clean
+  if (process.env.E2E_TEST_SECRET) {
+    try {
+      const response = await apiContext.delete('/api/test/tournaments/cleanup', { headers: { 'X-Test-Secret': process.env.E2E_TEST_SECRET } });
+      console.log('✓ Cleaned up test tournaments:', await response.json());
+    } catch (error) {
+      console.error('✗ Failed to cleanup tournaments:', error);
     }
   }
 

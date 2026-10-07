@@ -134,7 +134,20 @@ lapen-agenda/
 - **ranking_draws**: Draw history (id, round_id, player1_id, player2_id, group_type, drawn_at)
 - **match_scheduling_logs**: W.O. evidence (id, match_id, user_id, proposed_slots, created_at)
 
+### Tournament Module (independent of the ranking tables)
+- **tournaments**: Events (id, name, slug, description, location, start_date, end_date, registration_opens_at, registration_closes_at, rules_text, contact_info, match_format, no_ad, match_tiebreak_points, schedule_published_at, status). Only one tournament can be active (`registration_open`, `registration_closed`, `in_progress`) at a time, enforced by `idx_tournaments_single_active`
+- **tournament_categories**: Categories of a tournament (id, tournament_id, name, max_entries, min_entries, draw_format, group_target_size, qualifiers_per_group, num_seeds, wo_tolerance_min, min_rest_min, status, sort_order)
+- **tournament_registrations**: Sign-ups (id, category_id, user_id, full_name, display_name, email, phone, notes, status, seed, terms_accepted_at, data_consent_at, reviewed_at, rejection_reason, ip_hash). `user_id` is set only for approved LAPEN members. email/phone/ip_hash are never public
+- **tournament_groups** / **tournament_group_entries**: Round-robin groups and their members (final_position, manual_rank for admin tie decisions)
+- **tournament_matches**: Group and knockout matches (id, category_id, stage, group_id, round_number, bracket_position, entry1_id, entry2_id, entry1_source, entry2_source, winner_entry_id, next_match_id, next_slot, status, outcome, score, planned_date, planned_time, court_id, locked, played_at, result_by, result_at). A planned match holds a window (court, day, start time), one match per window (`idx_tournament_matches_slot`). No link to `schedules`
+- **tournament_sessions** / **tournament_session_courts**: Days and hours when courts belong to the tournament (play_date, start_time, end_time) and which courts (read from `courts`), cut into 90 minute windows
+- **tournament_slot_blocks**: Windows nobody can use (court_id, play_date, start_time)
+- **tournament_unavailability**: Times a registration cannot play (registration_id, play_date, start_time/end_time, NULL = whole day). Private, never public
+- **tournament_audit_log**: Draws, adjustments, reviews, results, tie decisions, schedule changes (id, tournament_id, category_id, action, payload JSONB, actor_user_id)
+- **match_statistics_unified** gains `tournament_match_id`. `chk_match_stats_single_source` requires exactly one of `schedule_id`, `ranking_match_id`, `tournament_match_id`
+
 ### Indexes
+- Tournament module: unique partial indexes for the single active tournament, live registrations per (category, lower(email)), (category, user_id) and (category, seed), knockout/group positions, one match per window (`tournament_matches` court+day+time) and `match_statistics_unified.tournament_match_id`
 - Performance indexes on: schedules(deleted_at), users(email), matches(schedule_id, status), bets(user_id, match_id, status), match_results(match_id), payment_logs(payment_id, event_type), match_statistics(player names, match_type, date), ranking tables (season_id, user_id, round_id, player_id)
 
 ## API Architecture
@@ -155,6 +168,9 @@ lapen-agenda/
 - **public_bp** (`/api/public`): Courts, players, schedules, availability
 - **ranking_bp** (`/api/ranking`): Seasons, rounds, participants, matches, draws
 - **statistics_bp** (`/api/statistics`): Player stats, match history, leaderboards
+- **tournaments_bp** (`/api/tournaments`): Public tournament screens (read) and sign-up
+- **admin_tournaments_bp** (`/api/admin/tournaments`): Tournaments, categories, registrations, draws, results (admin JWT)
+- **admin_tournament_schedule_bp** (`/api/admin/tournaments/<id>/schedule`): Sessions, windows, placing/swapping matches, distribution, publication, player impediments (admin JWT)
 - **webhooks_bp** (`/api/webhooks`): Mercado Pago payment notifications
 - **test_bp** (`/api/test`): Test utilities (development only)
 

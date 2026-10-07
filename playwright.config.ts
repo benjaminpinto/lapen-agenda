@@ -1,10 +1,12 @@
-import { defineConfig, devices } from '@playwright/test';
+import {defineConfig, devices} from '@playwright/test';
 import * as dotenv from 'dotenv';
 import * as os from 'node:os';
 
 if (!process.env.CI || process.env.CI === 'false') {
   dotenv.config();
 }
+
+const TOURNAMENT_SPECS = /tournament-(admin|public|schedule)\.spec\.ts/;
 
 const config = defineConfig({
   testDir: './e2e',
@@ -43,15 +45,37 @@ const config = defineConfig({
   projects: [
     {
       name: 'chromium',
+      testIgnore: TOURNAMENT_SPECS,
       use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'mobile-chrome',
+      testIgnore: TOURNAMENT_SPECS,
       use: { ...devices['Pixel 5'] },
     },
     {
       name: 'mobile-safari',
+      testIgnore: TOURNAMENT_SPECS,
       use: { ...devices['iPhone 12'] },
+    },
+    // Tournaments are global state (one active at a time) and the specs reset it, so they cannot run side by side:
+    // each spec file is a project and every project waits for the previous one.
+    {
+      name: 'tournament-admin',
+      testMatch: /tournament-admin\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'tournament-public',
+      testMatch: /tournament-public\.spec\.ts/,
+      dependencies: ['tournament-admin'],
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'tournament-schedule',
+      testMatch: /tournament-schedule\.spec\.ts/,
+      dependencies: ['tournament-public'],
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
   webServer: process.env.CI && process.env.CI !== 'false' ? undefined : {

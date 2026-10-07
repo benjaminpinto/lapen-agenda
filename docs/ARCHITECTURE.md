@@ -126,6 +126,14 @@ lapen-agenda/
 ### Statistics
 - **match_statistics** - Match results (id, schedule_id, player1_name, player2_name, winner_name, sets, games, match_type, match_date, added_by)
 
+### Tournament Module
+- **tournaments** / **tournament_categories** / **tournament_registrations**: events, categories (draw format, seeds, rest and W.O. rules) and sign-ups (private contact data)
+- **tournament_groups** / **tournament_group_entries** / **tournament_matches**: draw and matches (a planned match holds a window: court, day, start time)
+- **tournament_sessions** / **tournament_session_courts** / **tournament_slot_blocks**: schedule windows and blocked windows
+- **tournament_unavailability**: times a player cannot play (private)
+- **tournament_audit_log**: draws, results, schedule changes (who and when)
+- `match_statistics_unified.tournament_match_id`: one origin per result (schedule, ranking match or tournament match)
+
 ### Ranking System
 - **ranking_seasons** - Annual seasons (id, year, start_date, end_date, description, status)
 - **ranking_season_config** - Season-specific configuration
@@ -135,6 +143,39 @@ lapen-agenda/
 - **ranking_matches** - Ranking matches with results
 - **ranking_draws** - Draw history for transparency
 - **match_scheduling_logs** - W.O. evidence tracking
+
+## Tournament Module
+
+Independent of the ranking: its own `tournament_*` tables, services and screens (`/tournaments`, `/admin/tournaments`). Full design in [TOURNAMENT_REQUIREMENTS.md](TOURNAMENT_REQUIREMENTS.md) and [TOURNAMENT_IMPLEMENTATION_PLAN.md](TOURNAMENT_IMPLEMENTATION_PLAN.md), deploy notes in [TOURNAMENT_DEPLOY.md](TOURNAMENT_DEPLOY.md).
+
+```
+                 ┌───────────────────────────── Tournament module ─────────────────────────────┐
+ public screens  │  registration · draw (groups + knockout) · results · standings · schedule   │
+ /tournaments ◄──┤                                                                             │
+ admin panel  ◄──┤  tournament_service / _draw / _standings / _results / _public / _schedule   │
+ /admin/...      └───────┬──────────────────────────────────────────────────────┬──────────────┘
+                         │ writes (when a LAPEN member plays)                   │ reads (court names)
+                         ▼                                                      ▼
+              match_statistics_unified                                       courts
+              (match_type 'Torneio')
+```
+
+No other table of the application is touched: **court booking (`schedules`) is not an interface**. During an event the organizer blocks the courts in the normal admin and the tournament plans its own match calendar.
+
+### Backend
+- `tournament_draw.py` (pure): bracket size, ITF seeds, byes, snake groups, round robin, knockout skeleton.
+- `tournament_standings.py` (pure): ATP round-robin order (wins, matches played, head-to-head, % sets, % games, organizer).
+- `tournament_schedule.py` (pure): 90-minute windows, same person across categories (member or e-mail), conflict validator, automatic distribution (greedy by phase and round + local search, deterministic by seed).
+- `tournament_service.py`, `tournament_draw_service.py`, `tournament_results.py`, `tournament_schedule_service.py`, `tournament_public.py`: database side. Every write is one transaction; schedule edits lock the tournament row and the unique index on (court, day, time) is the safety net.
+- `tournament_seed.py`: tournaments in a known state for end-to-end tests (only reachable through `/api/test/tournaments/*`, which need `E2E_TEST_SECRET` and are closed in production).
+
+### Frontend
+- Public (mobile first): `src/components/tournament/` (home, tracking screen with 7 tabs, bracket, groups, sign-up form).
+- Admin (tablet and desktop, 768px and up; a notice on phones): `src/components/admin/tournament/` (tabs Dados, Categorias, Inscrições, Sorteio, Cronograma, Partidas).
+
+### Tests
+- `tests/backend/test_tournament_*.py`, `test_statistics_tournament.py`: unit and API (the engines are tested against a validator oracle, with mutation checks).
+- `e2e/tests/tournament-*.spec.ts`: three Playwright projects chained one after the other (global state), plus `statistics-tournament-filter.spec.ts`.
 
 ## API Architecture
 
@@ -154,6 +195,9 @@ lapen-agenda/
 - **public_bp** (`/api/public`): Courts, players, schedules, availability
 - **ranking_bp** (`/api/ranking`): Seasons, rounds, participants, matches, draws
 - **statistics_bp** (`/api/statistics`): Player stats, match history, leaderboards
+- **tournaments_bp** (`/api/tournaments`): Public tournament screens (read) and sign-up
+- **admin_tournaments_bp** (`/api/admin/tournaments`): Tournaments, categories, registrations, draws, results (admin JWT)
+- **admin_tournament_schedule_bp** (`/api/admin/tournaments/<id>/schedule`): Sessions, windows, placing/swapping matches, distribution, publication, player impediments (admin JWT)
 - **webhooks_bp** (`/api/webhooks`): Mercado Pago payment notifications
 - **test_bp** (`/api/test`): Test utilities (development only)
 

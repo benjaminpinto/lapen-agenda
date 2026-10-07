@@ -1,10 +1,9 @@
-import { useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useAuth } from './contexts/AuthContext'
-import { Toaster } from '@/components/ui/toaster'
-import { AuthProvider } from './contexts/AuthContext'
-import { ToastProvider } from './contexts/ToastContext'
-import { ThemeProvider } from './contexts/ThemeContext'
+import {useState} from 'react'
+import {BrowserRouter, Navigate, Route, Routes} from 'react-router-dom'
+import {AuthProvider, useAuth} from './contexts/AuthContext'
+import {Toaster} from '@/components/ui/toaster'
+import {ToastProvider} from './contexts/ToastContext'
+import {ThemeProvider} from './contexts/ThemeContext'
 import Header from './components/Header'
 import Home from './components/Home'
 import AdminLogin from './components/admin/AdminLogin'
@@ -21,6 +20,11 @@ import AdminRanking from './components/admin/AdminRanking'
 import SeasonConfig from './components/admin/SeasonConfig'
 import SeasonParticipants from './components/admin/SeasonParticipants'
 import SeasonRounds from './components/admin/SeasonRounds'
+import AdminTournaments from './components/admin/tournament/AdminTournaments'
+import AdminTournamentDetail from './components/admin/tournament/AdminTournamentDetail'
+import TournamentHome from './components/tournament/TournamentHome'
+import TournamentPage from './components/tournament/TournamentPage'
+import RegistrationForm from './components/tournament/RegistrationForm'
 import ScheduleForm from './components/ScheduleForm'
 import ScheduleView from './components/ScheduleView'
 import SignUp from './components/auth/SignUp'
@@ -82,6 +86,9 @@ function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
             <Route path="/profile" element={<Profile />} />
             <Route path="/ranking" element={<RankingLeaderboard />} />
             <Route path="/ranking/my-matches" element={<MyMatches />} />
+            <Route path="/tournaments" element={<TournamentHome />} />
+            <Route path="/tournaments/:slug" element={<TournamentPage />} />
+            <Route path="/tournaments/:slug/register" element={<RegistrationForm />} />
             <Route path="/statistics" element={<Statistics />} />
             <Route path="/challenges" element={<Challenges />} />
             <Route path="/statistics/add-result" element={loading ? <div>Carregando...</div> : (isAuthenticated ? <AddMatchResult /> : <Navigate to="/login" />)} />
@@ -195,6 +202,22 @@ function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
               element={
                 isAdminAuthenticated ?
                   <SeasonRounds /> :
+                  <Navigate to="/admin" />
+              }
+            />
+            <Route
+              path="/admin/tournaments"
+              element={
+                isAdminAuthenticated ?
+                  <AdminTournaments /> :
+                  <Navigate to="/admin" />
+              }
+            />
+            <Route
+              path="/admin/tournaments/:id"
+              element={
+                isAdminAuthenticated ?
+                  <AdminTournamentDetail /> :
                   <Navigate to="/admin" />
               }
             />

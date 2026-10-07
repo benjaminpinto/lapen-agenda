@@ -27,6 +27,8 @@ tags:
     description: Payment processing
   - name: Statistics
     description: Match statistics and player performance
+  - name: Tournaments
+    description: Tournament module (public sign-up and admin management)
 
 components:
   securitySchemes:
@@ -185,6 +187,544 @@ components:
         message:
           type: string
           example: "Operation completed successfully"
+
+    Tournament:
+      type: object
+      properties:
+        id: {type: integer, example: 1}
+        name: {type: string, example: "Copa LAPEN 2026"}
+        slug: {type: string, example: "copa-lapen-2026"}
+        description: {type: string, nullable: true}
+        location: {type: string, nullable: true}
+        start_date: {type: string, format: date, example: "2026-11-10"}
+        end_date: {type: string, format: date, example: "2026-11-12"}
+        registration_opens_at: {type: string, format: date-time, nullable: true, description: "Brazil local time, no timezone"}
+        registration_closes_at: {type: string, format: date-time, nullable: true, description: "Brazil local time, no timezone"}
+        rules_text: {type: string, nullable: true}
+        contact_info: {type: string, nullable: true}
+        match_format:
+          type: string
+          enum: [best_of_3_super_tb, pro_set_8, single_set_6]
+          description: Chosen when the tournament is created, locked after the first result
+        no_ad: {type: boolean}
+        match_tiebreak_points: {type: integer, example: 10}
+        status:
+          type: string
+          enum: [draft, registration_open, registration_closed, in_progress, finished, cancelled]
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+
+    TournamentCategory:
+      type: object
+      properties:
+        id: {type: integer}
+        tournament_id: {type: integer}
+        name: {type: string, example: "Masculino 3a Classe"}
+        max_entries: {type: integer, nullable: true, description: null means no limit}
+        min_entries: {type: integer, example: 4}
+        draw_format: {type: string, enum: [knockout, round_robin, groups_knockout]}
+        group_target_size: {type: integer, nullable: true, enum: [3, 4]}
+        qualifiers_per_group: {type: integer, nullable: true, enum: [1, 2]}
+        num_seeds: {type: integer}
+        wo_tolerance_min: {type: integer, example: 15}
+        min_rest_min: {type: integer, example: 30}
+        status:
+          type: string
+          enum: [awaiting_draw, drawn, published, group_stage, knockout_stage, finished]
+        sort_order: {type: integer}
+        counts:
+          type: object
+          description: Registrations per status (only on the tournament detail)
+          additionalProperties: {type: integer}
+
+    TournamentRegistration:
+      type: object
+      description: Admin view. Contact data is never exposed by public endpoints.
+      properties:
+        id: {type: integer}
+        category_id: {type: integer}
+        user_id: {type: integer, nullable: true, description: Set only for approved LAPEN members}
+        is_member: {type: boolean}
+        full_name: {type: string}
+        display_name: {type: string}
+        email: {type: string}
+        phone: {type: string, description: Digits only}
+        notes: {type: string, nullable: true}
+        status:
+          type: string
+          enum: [pending, confirmed, rejected, cancelled, waitlist, withdrawn]
+        seed: {type: integer, nullable: true}
+        rejection_reason: {type: string, nullable: true}
+        terms_accepted_at: {type: string, format: date-time}
+        data_consent_at: {type: string, format: date-time}
+        reviewed_at: {type: string, format: date-time, nullable: true}
+        created_at: {type: string, format: date-time}
+
+    TournamentError:
+      type: object
+      properties:
+        error: {type: string}
+        code: {type: string, description: "Stable machine-readable reason", example: active_tournament_exists}
+
+    TournamentMatch:
+      type: object
+      properties:
+        id: {type: integer}
+        stage: {type: string, enum: [group, knockout]}
+        group_id: {type: integer, nullable: true}
+        round_number: {type: integer}
+        round_name: {type: string, description: Knockout only, example: Semifinal}
+        bracket_position: {type: integer, description: 1-based order inside the round (inside the group for group matches)}
+        entry1: {$ref: '#/components/schemas/TournamentDrawEntry'}
+        entry2: {$ref: '#/components/schemas/TournamentDrawEntry'}
+        entry1_source: {type: string, nullable: true, description: "Where an open slot comes from, e.g. 1o Grupo A or Vencedor das quartas 2"}
+        entry2_source: {type: string, nullable: true}
+        status: {type: string, enum: [pending, completed]}
+        outcome: {type: string, nullable: true, enum: [normal, wo, double_wo, retired, bye]}
+        winner_entry_id: {type: integer, nullable: true}
+        score: {type: string, nullable: true, description: "From the first player's side. W.O. for a walkover, a trailing ret. for a retirement"}
+        played_at: {type: string, format: date-time, nullable: true}
+        next_match_id: {type: integer, nullable: true}
+        next_slot: {type: integer, nullable: true, enum: [1, 2]}
+
+    TournamentDrawEntry:
+      type: object
+      nullable: true
+      description: A registration placed in a slot. null for a bye or for a slot still waiting for its source.
+      properties:
+        registration_id: {type: integer}
+        display_name: {type: string}
+        seed: {type: integer, nullable: true}
+
+    TournamentDraw:
+      type: object
+      properties:
+        category: {$ref: '#/components/schemas/TournamentCategory'}
+        draw:
+          type: object
+          properties:
+            format: {type: string, enum: [knockout, round_robin, groups_knockout]}
+            groups:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: {type: integer}
+                  name: {type: string, example: A}
+                  entries:
+                    type: array
+                    items: {$ref: '#/components/schemas/TournamentDrawEntry'}
+                  matches:
+                    type: array
+                    items: {$ref: '#/components/schemas/TournamentMatch'}
+            knockout:
+              type: object
+              nullable: true
+              properties:
+                size: {type: integer, example: 8}
+                rounds:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      round_number: {type: integer}
+                      name: {type: string}
+                      matches:
+                        type: array
+                        items: {$ref: '#/components/schemas/TournamentMatch'}
+            knockout_pending:
+              type: boolean
+              description: True for groups_knockout when the qualifiers do not fill a bracket. The knockout phase is built when the groups end.
+        warnings:
+          type: array
+          items: {type: string}
+          description: Only on generation, e.g. pending registrations left out of the draw
+
+    TournamentResult:
+      type: object
+      properties:
+        match_id: {type: integer}
+        category: {$ref: '#/components/schemas/TournamentCategory'}
+        draw:
+          type: object
+          description: Same as TournamentDraw.draw, after the result and everything it set in motion
+        standings:
+          type: array
+          description: Group formats only
+          items: {$ref: '#/components/schemas/TournamentGroupStandings'}
+
+    TournamentGroupStandings:
+      type: object
+      properties:
+        id: {type: integer}
+        name: {type: string, example: A}
+        complete: {type: boolean, description: Every match of the group has a result}
+        blocked: {type: boolean, description: A tie that matters is waiting for the organizer}
+        confirmed: {type: boolean, description: Complete and not blocked. The qualifiers are final}
+        ties:
+          type: array
+          items:
+            type: object
+            properties:
+              entries:
+                type: array
+                items: {$ref: '#/components/schemas/TournamentDrawEntry'}
+              relevant: {type: boolean, description: True when the tie reaches the qualifying places}
+        rows:
+          type: array
+          items:
+            type: object
+            properties:
+              registration_id: {type: integer}
+              display_name: {type: string}
+              seed: {type: integer, nullable: true}
+              position: {type: integer, description: Tied players share a position}
+              tied: {type: boolean}
+              state:
+                type: string
+                enum: [provisional, open, qualified, eliminated, tie_pending]
+              played: {type: integer, description: Matches with a result, walkovers included}
+              played_on_court: {type: integer, description: Walkovers do not count}
+              wins: {type: integer}
+              losses: {type: integer}
+              sets_won: {type: integer}
+              sets_lost: {type: integer}
+              games_won: {type: integer}
+              games_lost: {type: integer}
+              sets_pct: {type: number}
+              games_pct: {type: number}
+
+    PublicTournament:
+      type: object
+      description: Public view. Drafts and cancelled tournaments are not public.
+      properties:
+        id: {type: integer}
+        name: {type: string}
+        slug: {type: string}
+        description: {type: string, nullable: true}
+        location: {type: string, nullable: true}
+        start_date: {type: string, format: date}
+        end_date: {type: string, format: date}
+        rules_text: {type: string, nullable: true}
+        contact_info: {type: string, nullable: true}
+        match_format: {type: string, enum: [best_of_3_super_tb, pro_set_8, single_set_6]}
+        no_ad: {type: boolean}
+        match_tiebreak_points: {type: integer}
+        format_text: {type: string, example: "2 sets sem vantagem + super tie-break de 10 pts"}
+        status: {type: string, enum: [registration_open, registration_closed, in_progress, finished]}
+        registration:
+          type: object
+          properties:
+            open: {type: boolean, description: True while the sign-up page accepts registrations}
+            state: {type: string, enum: [not_started, open, closed]}
+            opens_at: {type: string, format: date-time, nullable: true}
+            closes_at: {type: string, format: date-time, nullable: true}
+
+    PublicEntry:
+      type: object
+      nullable: true
+      description: A player. Only the display name and seed are ever public.
+      properties:
+        id: {type: integer}
+        display_name: {type: string}
+        seed: {type: integer, nullable: true}
+        withdrawn: {type: boolean}
+
+    PublicMatch:
+      type: object
+      properties:
+        id: {type: integer}
+        stage: {type: string, enum: [group, knockout]}
+        group: {type: string, nullable: true, example: A}
+        round_number: {type: integer}
+        round_name: {type: string, description: Knockout only}
+        position: {type: integer}
+        sides:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: object
+            properties:
+              entry: {$ref: '#/components/schemas/PublicEntry'}
+              source: {type: string, nullable: true, description: "Where an open slot comes from, e.g. 1o Grupo A, Vencedor das quartas 2 or Sem adversario (duplo W.O.). An empty side without source on a bye match is the BYE"}
+        status: {type: string, enum: [pending, completed]}
+        outcome: {type: string, nullable: true, enum: [normal, wo, double_wo, retired, bye]}
+        score: {type: string, nullable: true}
+        winner_side: {type: integer, nullable: true, enum: [1, 2]}
+        played_at: {type: string, format: date-time, nullable: true}
+        planned_date: {type: string, format: date, nullable: true}
+        planned_time: {type: string, nullable: true, example: "09:30"}
+        court: {type: string, nullable: true}
+
+    PublicCategorySummary:
+      type: object
+      properties:
+        id: {type: integer}
+        name: {type: string}
+        draw_format: {type: string, enum: [knockout, round_robin, groups_knockout]}
+        status: {type: string, enum: [awaiting_draw, published, group_stage, knockout_stage, finished], description: A draw that is only a preview shows as awaiting_draw}
+        stage:
+          type: object
+          properties:
+            current: {type: string, enum: [registration, groups, knockout, final, champion]}
+            steps:
+              type: array
+              items:
+                type: object
+                properties:
+                  key: {type: string}
+                  label: {type: string, example: "Mata-mata"}
+                  state: {type: string, enum: [done, current, upcoming]}
+        progress:
+          type: object
+          description: Matches with a result over matches to be played. Byes are not matches. Phases not built yet are not counted
+          properties:
+            done: {type: integer}
+            total: {type: integer}
+            group: {type: object, properties: {done: {type: integer}, total: {type: integer}}}
+            knockout: {type: object, properties: {done: {type: integer}, total: {type: integer}}}
+        capacity:
+          type: object
+          properties:
+            confirmed: {type: integer}
+            max_entries: {type: integer, nullable: true}
+            min_entries: {type: integer}
+        group_target_size: {type: integer, nullable: true}
+        qualifiers_per_group: {type: integer, nullable: true}
+        num_seeds: {type: integer}
+        wo_tolerance_min: {type: integer}
+        min_rest_min: {type: integer}
+        draw_published: {type: boolean}
+        champion: {$ref: '#/components/schemas/PublicEntry'}
+        runner_up: {$ref: '#/components/schemas/PublicEntry'}
+
+    PublicCategory:
+      type: object
+      description: Everything the tracking screen needs for one category, in a single response.
+      properties:
+        tournament: {$ref: '#/components/schemas/PublicTournament'}
+        category: {$ref: '#/components/schemas/PublicCategorySummary'}
+        entries:
+          type: array
+          description: Confirmed registrations only, seeds first
+          items: {$ref: '#/components/schemas/PublicEntry'}
+        groups:
+          type: array
+          items:
+            type: object
+            properties:
+              id: {type: integer}
+              name: {type: string}
+              complete: {type: boolean}
+              blocked: {type: boolean}
+              confirmed: {type: boolean}
+              qualifiers: {type: integer}
+              ties:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    entries:
+                      type: array
+                      items: {$ref: '#/components/schemas/PublicEntry'}
+                    relevant: {type: boolean}
+              rows:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    entry: {$ref: '#/components/schemas/PublicEntry'}
+                    position: {type: integer}
+                    tied: {type: boolean}
+                    state: {type: string, enum: [provisional, open, qualified, eliminated, tie_pending]}
+                    played: {type: integer}
+                    wins: {type: integer}
+                    losses: {type: integer}
+                    sets_won: {type: integer}
+                    sets_lost: {type: integer}
+                    sets_diff: {type: integer}
+                    games_won: {type: integer}
+                    games_lost: {type: integer}
+                    games_diff: {type: integer}
+                    destination: {type: string, nullable: true, example: "Semifinal 1", description: Where a qualified player goes next}
+              matches:
+                type: array
+                items: {$ref: '#/components/schemas/PublicMatch'}
+        bracket:
+          type: object
+          nullable: true
+          properties:
+            size: {type: integer}
+            rounds:
+              type: array
+              items:
+                type: object
+                properties:
+                  round_number: {type: integer}
+                  name: {type: string}
+                  matches:
+                    type: array
+                    items: {$ref: '#/components/schemas/PublicMatch'}
+        knockout_pending: {type: boolean, description: "True when the knockout phase will be drawn at the end of the groups"}
+        upcoming:
+          type: array
+          description: Up to 5 games ready to be played, scheduled ones first
+          items: {$ref: '#/components/schemas/PublicMatch'}
+        results:
+          type: array
+          description: Up to 5 most recent results
+          items: {$ref: '#/components/schemas/PublicMatch'}
+
+    ScheduleWindow:
+      type: object
+      description: A court on a day at a start time (90 minutes)
+      properties:
+        court_id: {type: integer}
+        date: {type: string, format: date}
+        time: {type: string, example: "08:00"}
+
+    ScheduleMatch:
+      type: object
+      properties:
+        id: {type: integer}
+        category_id: {type: integer}
+        category_name: {type: string}
+        stage: {type: string, enum: [group, knockout]}
+        round_number: {type: integer}
+        round_name: {type: string, example: "Grupo A · Rodada 1"}
+        group: {type: string, nullable: true}
+        status: {type: string, enum: [pending, completed]}
+        outcome: {type: string, nullable: true}
+        score: {type: string, nullable: true}
+        locked: {type: boolean, description: Pinned matches are not moved by the automatic distribution or by hand}
+        window: {allOf: [{$ref: '#/components/schemas/ScheduleWindow'}], nullable: true}
+        sides:
+          type: array
+          items:
+            type: object
+            properties:
+              registration_id: {type: integer, nullable: true}
+              name: {type: string, description: Display name or the origin of an open slot}
+              defined: {type: boolean}
+        people: {type: array, items: {type: integer}, description: Person ids (same member or e-mail share one)}
+
+    ScheduleConflict:
+      type: object
+      properties:
+        kind: {type: string, enum: [overlap, order, rest, unavailable, invalid_window]}
+        severity: {type: string, enum: [error, warning], description: Errors stop an edit. Warnings need confirmation (force)}
+        match_ids: {type: array, items: {type: integer}}
+        people: {type: array, items: {type: integer}}
+        people_names: {type: array, items: {type: string}}
+        message: {type: string}
+        detail: {type: object}
+
+    Schedule:
+      type: object
+      properties:
+        tournament:
+          type: object
+          properties:
+            id: {type: integer}
+            start_date: {type: string, format: date}
+            end_date: {type: string, format: date}
+            status: {type: string}
+            schedule_published_at: {type: string, format: date-time, nullable: true}
+        slot_minutes: {type: integer, example: 90}
+        courts:
+          type: array
+          description: Active courts (read only, from the courts table)
+          items: {type: object, properties: {id: {type: integer}, name: {type: string}}}
+        sessions:
+          type: array
+          items:
+            type: object
+            properties:
+              id: {type: integer}
+              date: {type: string, format: date}
+              start: {type: string, example: "08:00"}
+              end: {type: string, example: "17:00"}
+              court_ids: {type: array, items: {type: integer}}
+              windows: {type: integer}
+              leftover_minutes: {type: integer, description: Minutes at the end that do not make a whole window}
+        windows:
+          type: array
+          items:
+            type: object
+            properties:
+              court_id: {type: integer}
+              date: {type: string, format: date}
+              time: {type: string}
+              session_id: {type: integer}
+              blocked: {type: boolean}
+        matches:
+          type: array
+          items: {$ref: '#/components/schemas/ScheduleMatch'}
+        conflicts:
+          type: array
+          items: {$ref: '#/components/schemas/ScheduleConflict'}
+        summary:
+          type: object
+          properties:
+            pending: {type: integer}
+            placed: {type: integer}
+            unplaced: {type: integer}
+            windows: {type: integer}
+            free_windows: {type: integer}
+
+    ScheduleProposal:
+      type: object
+      description: A proposal. Nothing is written until it is applied
+      properties:
+        rng_seed: {type: integer, description: The same options and seed give the same proposal}
+        assignments:
+          type: array
+          items:
+            type: object
+            properties:
+              match_id: {type: integer}
+              court_id: {type: integer}
+              date: {type: string, format: date}
+              time: {type: string}
+              previous: {allOf: [{$ref: '#/components/schemas/ScheduleWindow'}], nullable: true}
+              label: {type: string}
+        unassign: {type: array, items: {type: integer}, description: Matches that had a window and ended up without one (redo)}
+        unplaced:
+          type: array
+          items:
+            type: object
+            properties:
+              match_id: {type: integer}
+              label: {type: string}
+              reasons: {type: array, items: {type: string}}
+        metrics:
+          type: object
+          properties:
+            placed: {type: integer}
+            ends_at: {type: string, format: date-time, nullable: true}
+            max_wait_minutes: {type: integer}
+            max_matches_per_person_day: {type: integer}
+        feasibility:
+          type: object
+          properties:
+            matches: {type: integer}
+            windows: {type: integer}
+            shortfall: {type: integer}
+            time_steps: {type: integer}
+            hint: {type: string}
+            busiest: {type: object, properties: {name: {type: string}, matches: {type: integer}}}
+        conflicts: {type: array, items: {$ref: '#/components/schemas/ScheduleConflict'}, description: Always empty unless something changed while computing}
+
+    TournamentUnavailabilityItem:
+      type: object
+      properties:
+        id: {type: integer}
+        date: {type: string, format: date}
+        start: {type: string, nullable: true, example: "14:00"}
+        end: {type: string, nullable: true, example: "18:00"}
+        whole_day: {type: boolean}
+        note: {type: string, nullable: true, maxLength: 200}
 
   responses:
     UnauthorizedError:
@@ -1193,3 +1733,2203 @@ paths:
                         win_rate:
                           type: number
                           format: float
+
+  /api/admin/tournaments:
+    get:
+      tags: [Tournaments]
+      summary: List tournaments (active first) with category and pending-registration counts
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Tournaments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tournaments:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Tournament'
+                        - type: object
+                          properties:
+                            categories_count: {type: integer}
+                            pending_registrations: {type: integer}
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+    post:
+      tags: [Tournaments]
+      summary: Create a tournament (always starts as draft)
+      description: The slug is generated from the name unless given. Defaults match_format best_of_3_super_tb, no_ad true, match_tiebreak_points 10.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, start_date, end_date]
+              properties:
+                name: {type: string}
+                slug: {type: string, pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'}
+                description: {type: string}
+                location: {type: string}
+                start_date: {type: string, format: date}
+                end_date: {type: string, format: date}
+                registration_opens_at: {type: string, example: "2026-11-01T08:00"}
+                registration_closes_at: {type: string, example: "2026-11-08T18:00"}
+                rules_text: {type: string}
+                contact_info: {type: string}
+                match_format: {type: string, enum: [best_of_3_super_tb, pro_set_8, single_set_6]}
+                no_ad: {type: boolean}
+                match_tiebreak_points: {type: integer}
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tournament: {$ref: '#/components/schemas/Tournament'}
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Slug already taken (code slug_taken)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    get:
+      tags: [Tournaments]
+      summary: Tournament with its categories and registration counts
+      description: Registrations whose deadline passed are closed lazily when this is read.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tournament: {$ref: '#/components/schemas/Tournament'}
+                  categories:
+                    type: array
+                    items: {$ref: '#/components/schemas/TournamentCategory'}
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+    put:
+      tags: [Tournaments]
+      summary: Update a tournament (partial)
+      description: The slug never changes. Finished or cancelled tournaments are read-only. match_format is locked after the first result (code format_locked).
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Any subset of the fields accepted on creation, except slug
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tournament: {$ref: '#/components/schemas/Tournament'}
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Read-only or format locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+    delete:
+      tags: [Tournaments]
+      summary: Delete a draft tournament (cascades to categories)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Not a draft (code not_draft)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/status:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    put:
+      tags: [Tournaments]
+      summary: Change the tournament status
+      description: |
+        Allowed moves: draft to registration_open or cancelled, registration_open to registration_closed or cancelled,
+        registration_closed to registration_open, in_progress or cancelled, in_progress to finished or cancelled.
+        Only one tournament can be active (registration_open, registration_closed, in_progress) at a time:
+        opening a second one returns 409 with code active_tournament_exists and the blocking tournament in active_tournament.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: {type: string, enum: [registration_open, registration_closed, in_progress, finished, cancelled]}
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tournament: {$ref: '#/components/schemas/Tournament'}
+        '400':
+          description: Unknown status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Invalid transition or guard failed (codes invalid_transition, no_categories, active_tournament_exists, registration_window_past, draw_published, no_draw, categories_unfinished)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/categories:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    post:
+      tags: [Tournaments]
+      summary: Create a category
+      description: groups_knockout needs group_target_size (3 or 4), qualifiers_per_group (1 or 2) and min_entries of at least 6. Group settings are dropped for other formats.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: {type: string}
+                draw_format: {type: string, enum: [knockout, round_robin, groups_knockout], default: knockout}
+                min_entries: {type: integer, default: 4}
+                max_entries: {type: integer, nullable: true}
+                group_target_size: {type: integer, enum: [3, 4]}
+                qualifiers_per_group: {type: integer, enum: [1, 2]}
+                num_seeds: {type: integer, default: 0}
+                wo_tolerance_min: {type: integer, default: 15}
+                min_rest_min: {type: integer, default: 30}
+                sort_order: {type: integer}
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  category: {$ref: '#/components/schemas/TournamentCategory'}
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Duplicate name (category_name_taken) or tournament locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/categories/{category_id}:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+      - {name: category_id, in: path, required: true, schema: {type: integer}}
+    put:
+      tags: [Tournaments]
+      summary: Update a category (partial)
+      description: Format, group settings and num_seeds are locked once the draw exists (code draw_exists). max_entries cannot drop below the confirmed count and num_seeds cannot drop below an assigned seed.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Any subset of the fields accepted on creation
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  category: {$ref: '#/components/schemas/TournamentCategory'}
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Locked, below_confirmed, seed_assigned or duplicate name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+    delete:
+      tags: [Tournaments]
+      summary: Delete a category without registrations and without a draw
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Has registrations or draw exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/registrations:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    get:
+      tags: [Tournaments]
+      summary: List registrations with per-category counts
+      description: Includes e-mail and phone (admin only). Search is accent-insensitive on name, display name, e-mail and phone.
+      security:
+        - BearerAuth: []
+      parameters:
+        - {name: category_id, in: query, schema: {type: integer}}
+        - {name: status, in: query, schema: {type: string, enum: [pending, confirmed, rejected, cancelled, waitlist, withdrawn]}}
+        - {name: q, in: query, schema: {type: string}}
+      responses:
+        '200':
+          description: Registrations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registrations:
+                    type: array
+                    items: {$ref: '#/components/schemas/TournamentRegistration'}
+                  counts:
+                    type: object
+                    description: category id to registrations per status
+                    additionalProperties:
+                      type: object
+                      additionalProperties: {type: integer}
+        '400':
+          description: Invalid status filter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+    post:
+      tags: [Tournaments]
+      summary: Register someone manually (for example received by WhatsApp)
+      description: Starts as confirmed unless status is pending. Respects the category capacity. Optional user_id links an approved LAPEN member.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category_id, full_name, email, phone]
+              properties:
+                category_id: {type: integer}
+                full_name: {type: string}
+                display_name: {type: string}
+                email: {type: string}
+                phone: {type: string}
+                notes: {type: string}
+                status: {type: string, enum: [pending, confirmed], default: confirmed}
+                user_id: {type: integer}
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registration: {$ref: '#/components/schemas/TournamentRegistration'}
+        '400':
+          description: Invalid data or user is not an approved LAPEN member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Category full, duplicate e-mail or member, draw exists, tournament locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/registrations/batch:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    post:
+      tags: [Tournaments]
+      summary: Confirm, reject or cancel several registrations
+      description: Always answers 200 with the items that worked and the ones that failed (each with error and code).
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids, status]
+              properties:
+                ids: {type: array, maxItems: 200, items: {type: integer}}
+                status: {type: string, enum: [confirmed, rejected, cancelled]}
+                rejection_reason: {type: string}
+      responses:
+        '200':
+          description: Per-item result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                    type: array
+                    items: {type: integer}
+                  failed:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: {type: integer}
+                        error: {type: string}
+                        code: {type: string, nullable: true}
+        '400':
+          description: Invalid ids or status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/registrations/{registration_id}:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+      - {name: registration_id, in: path, required: true, schema: {type: integer}}
+    patch:
+      tags: [Tournaments]
+      summary: Edit a registration (any subset of the fields)
+      description: |
+        status follows pending to confirmed/rejected/cancelled, waitlist to pending/confirmed/rejected/cancelled and confirmed to cancelled/withdrawn.
+        After the draw only withdrawn is allowed for confirmed entries, and it turns that player's pending matches into walkovers for the opponents (what was played stays). user_id links an approved LAPEN member (null unlinks).
+        seed needs a confirmed registration and a category with num_seeds. category_id moves it before the draw.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: {type: string, enum: [pending, confirmed, rejected, cancelled, withdrawn]}
+                rejection_reason: {type: string}
+                user_id: {type: integer, nullable: true}
+                seed: {type: integer, nullable: true}
+                category_id: {type: integer}
+                full_name: {type: string}
+                display_name: {type: string}
+                email: {type: string}
+                phone: {type: string}
+                notes: {type: string}
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registration: {$ref: '#/components/schemas/TournamentRegistration'}
+        '400':
+          description: Invalid data or user is not an approved LAPEN member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Invalid transition, category_full, draw_exists, seed_taken, duplicate_email, duplicate_member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/tournaments/{slug}/registrations:
+    post:
+      tags: [Tournaments]
+      summary: Public tournament sign-up
+      description: |
+        No login needed. With a valid token of an approved LAPEN member the registration is linked to that member.
+        The registration starts as pending, or waitlist when the category already has all its places confirmed.
+        At most 5 sign-ups per hour per client address. The response never contains contact data.
+        The field website is a honeypot: when filled the API answers 201 and stores nothing.
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category_id, full_name, email, phone, accepted_terms, data_consent]
+              properties:
+                category_id: {type: integer}
+                full_name: {type: string}
+                display_name: {type: string, description: Defaults to the first two names}
+                email: {type: string}
+                phone: {type: string, description: "With area code, 10 to 13 digits"}
+                notes: {type: string, maxLength: 500}
+                accepted_terms: {type: boolean, description: Must be true}
+                data_consent: {type: boolean, description: Must be true}
+                website: {type: string, description: "Honeypot, leave empty"}
+      responses:
+        '201':
+          description: Received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: {type: string}
+                  waitlisted: {type: boolean}
+                  registration:
+                    type: object
+                    nullable: true
+                    properties:
+                      id: {type: integer}
+                      category_id: {type: integer}
+                      display_name: {type: string}
+                      status: {type: string, enum: [pending, waitlist]}
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Tournament, category or draft not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Registrations not open yet or closed (codes registration_not_started, registration_closed), duplicate e-mail or member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '429':
+          description: Rate limited (code rate_limited)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/categories/{category_id}/draw:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+      - {name: category_id, in: path, required: true, schema: {type: integer}}
+    get:
+      tags: [Tournaments]
+      summary: Groups and bracket of a category (preview or published)
+      description: Without a draw, groups is empty and knockout is null.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: The draw
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TournamentDraw'}
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+    post:
+      tags: [Tournaments]
+      summary: Draw (or redraw) the preview from the confirmed registrations
+      description: |
+        Needs registrations closed (tournament registration_closed or in_progress) and no published draw.
+        Seeds (registration seed 1..n, no gaps) follow the ITF placement: seed 1 on the first line, seed 2 on the last,
+        3-4 and 5-8 drawn in their quarters and eighths. Byes go to the top seeds first and are then spread evenly.
+        groups_knockout deals seeds in a snake over balanced groups (3 or 4 players, none below 3) and, when
+        groups x qualifiers is a power of two, builds the knockout skeleton at once with slots such as "1o Grupo A"
+        (a runner-up never lands in the half of its own group winner). Otherwise knockout_pending is true.
+        The random seed of the draw is stored in the audit log (action draw_generated) so it can be replayed.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: The draw
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TournamentDraw'}
+        '400':
+          description: not_enough_entries, invalid_seeds or draw_failed (for example too many seeds)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: registration_not_closed, draw_published or tournament_locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+    put:
+      tags: [Tournaments]
+      summary: Swap two entries in the preview
+      description: Exchanges their places in the bracket (a bye follows its new player) or moves them between groups. Only while the category is in preview (drawn).
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [swap]
+              properties:
+                swap:
+                  type: array
+                  minItems: 2
+                  maxItems: 2
+                  items: {type: integer, description: Registration id}
+      responses:
+        '200':
+          description: The draw
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TournamentDraw'}
+        '400':
+          description: Not two different registrations, or both already in the same group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Registration not in this draw
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: not_preview, registration_not_closed or tournament_locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+    delete:
+      tags: [Tournaments]
+      summary: Undo the draw (back to awaiting_draw)
+      description: Allowed while no result has been recorded. Byes do not count as results.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Undone
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: no_draw, results_exist or tournament_locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/categories/{category_id}/draw/publish:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+      - {name: category_id, in: path, required: true, schema: {type: integer}}
+    post:
+      tags: [Tournaments]
+      summary: Publish the previewed draw
+      description: Freezes the draw. The confirmed registrations can no longer change and the draw cannot be redone without undoing it first. Recorded in the audit log with who sits where.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: The draw
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TournamentDraw'}
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: not_drawn, registration_not_closed or tournament_locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/matches/{match_id}/result:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+      - {name: match_id, in: path, required: true, schema: {type: integer}}
+    put:
+      tags: [Tournaments]
+      summary: Record the result of a match
+      description: |
+        Needs the tournament in progress, the draw published and both players known. Byes have no result.
+        Knockout: the winner moves into the next match. A double walkover leaves a void slot, so the opponent there advances by a bye.
+        Groups: when every group is settled the qualifiers enter the knockout phase (drawn then, with byes to the best campaigns, when they do not fill a bracket).
+        Statistics: a row is written when at least one player is a LAPEN member (not for byes or double walkovers).
+        Everything happens in one transaction. Two simultaneous requests for the same match: one 200, one 409 result_exists.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                outcome:
+                  type: string
+                  enum: [normal, wo, double_wo, retired]
+                  default: normal
+                winner_registration_id: {type: integer, description: Required except for double_wo. For retired, the player who stays}
+                score: {type: string, example: "6-4, 3-6, 10-8", description: "Required for normal and retired. Written from the first player's side. The winner must match it. Validated against the tournament match_format and match_tiebreak_points, with strict sets (6-0 to 6-4, 7-5, 7-6). A retired score has finished sets plus at most one unfinished set"}
+                played_at: {type: string, example: "2026-11-10", description: Defaults to the planned time of the match, or now}
+      responses:
+        '200':
+          description: The updated draw (and the group tables for group formats)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TournamentResult'}
+        '400':
+          description: Invalid outcome, winner or score (codes invalid_score, winner_mismatch)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: result_exists, tournament_not_started, draw_not_published, bye_match, match_not_ready or tournament_locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+    patch:
+      tags: [Tournaments]
+      summary: Correct a recorded result
+      description: |
+        Same body as PUT. Allowed while the next match has no result typed by an admin (automatic byes and walkovers downstream are undone and redone).
+        For a group match: while the knockout phase has no typed result. A correction drops any tie decision of that group.
+        The statistics row is updated in place.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                outcome:
+                  type: string
+                  enum: [normal, wo, double_wo, retired]
+                  default: normal
+                winner_registration_id: {type: integer, description: Required except for double_wo. For retired, the player who stays}
+                score: {type: string, example: "6-4, 3-6, 10-8", description: "Required for normal and retired. Written from the first player's side. The winner must match it. Validated against the tournament match_format and match_tiebreak_points, with strict sets (6-0 to 6-4, 7-5, 7-6). A retired score has finished sets plus at most one unfinished set"}
+                played_at: {type: string, example: "2026-11-10", description: Defaults to the planned time of the match, or now}
+      responses:
+        '200':
+          description: The updated draw (and the group tables for group formats)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TournamentResult'}
+        '400':
+          description: Invalid outcome, winner or score
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: no_result, next_match_played, automatic_result or the same states as PUT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+    delete:
+      tags: [Tournaments]
+      summary: Annul a result (back to pending)
+      description: Same rules as the correction. Removes the statistics row and takes the winner out of the next match.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: The updated draw (and the group tables for group formats)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TournamentResult'}
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: no_result, next_match_played or automatic_result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/categories/{category_id}/standings:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+      - {name: category_id, in: path, required: true, schema: {type: integer}}
+    get:
+      tags: [Tournaments]
+      summary: Group tables of a category
+      description: |
+        ATP round-robin order: wins, matches played on court, head-to-head (two players tied), % of sets, % of games, then the organizer.
+        A finished super tiebreak counts 1 set and 1 game to 0. A walkover is a win or a loss with no sets or games.
+        A retirement keeps the sets and games played. A double walkover is a loss for both.
+        Empty groups for knockout categories.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Tables
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  category: {$ref: '#/components/schemas/TournamentCategory'}
+                  qualifiers_per_group: {type: integer}
+                  groups:
+                    type: array
+                    items: {$ref: '#/components/schemas/TournamentGroupStandings'}
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/groups/{group_id}/tiebreak:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+      - {name: group_id, in: path, required: true, schema: {type: integer}}
+    put:
+      tags: [Tournaments]
+      summary: Decide a tie the criteria could not break
+      description: |
+        Send exactly the players of one tied set (see ties in the standings), best first. Only after the group is complete,
+        and while the knockout phase has no typed result. The decision is dropped when a result of the group changes.
+        A tie only blocks the group when it reaches the qualifying places.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [order]
+              properties:
+                order:
+                  type: array
+                  minItems: 2
+                  items: {type: integer, description: Registration id}
+      responses:
+        '200':
+          description: The tables after the decision
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  category: {$ref: '#/components/schemas/TournamentCategory'}
+                  qualifiers_per_group: {type: integer}
+                  groups:
+                    type: array
+                    items: {$ref: '#/components/schemas/TournamentGroupStandings'}
+        '400':
+          description: Not a list of two or more different registrations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Group not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: group_not_complete, not_a_tie, next_match_played or tournament_locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/tournaments:
+    get:
+      tags: [Tournaments]
+      summary: The active tournament and the finished ones
+      description: No login needed. Registrations whose deadline passed are closed when this is read.
+      responses:
+        '200':
+          description: Overview
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  current:
+                    nullable: true
+                    allOf:
+                      - $ref: '#/components/schemas/PublicTournament'
+                  history:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/PublicTournament'
+                        - type: object
+                          properties:
+                            categories:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  name: {type: string}
+                                  champion: {type: string, nullable: true}
+
+  /api/tournaments/{slug}:
+    parameters:
+      - {name: slug, in: path, required: true, schema: {type: string}}
+    get:
+      tags: [Tournaments]
+      summary: A tournament with its categories (stage, progress and capacity of each)
+      responses:
+        '200':
+          description: Tournament
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tournament: {$ref: '#/components/schemas/PublicTournament'}
+                  categories:
+                    type: array
+                    items: {$ref: '#/components/schemas/PublicCategorySummary'}
+                  progress: {type: object, properties: {done: {type: integer}, total: {type: integer}}}
+        '404':
+          description: Unknown, draft or cancelled tournament
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/tournaments/{slug}/categories/{category_id}:
+    parameters:
+      - {name: slug, in: path, required: true, schema: {type: string}}
+      - {name: category_id, in: path, required: true, schema: {type: integer}}
+    get:
+      tags: [Tournaments]
+      summary: One category for the tracking screen (groups, bracket, games and results in one request)
+      description: Before the draw is published, groups is empty and bracket is null. Contact data never appears.
+      responses:
+        '200':
+          description: Category
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PublicCategory'}
+        '404':
+          description: Unknown category, or not public
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/tournaments/{slug}/matches:
+    parameters:
+      - {name: slug, in: path, required: true, schema: {type: string}}
+    get:
+      tags: [Tournaments]
+      summary: Upcoming games or results of the whole tournament
+      description: Upcoming = both players known and no result, scheduled ones first by date and time (times only once the schedule is published). Results = most recent first. Up to 200.
+      parameters:
+        - {name: view, in: query, required: true, schema: {type: string, enum: [upcoming, results]}}
+        - {name: category, in: query, schema: {type: integer}}
+        - {name: stage, in: query, schema: {type: string, enum: [group, knockout]}}
+      responses:
+        '200':
+          description: Matches
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  view: {type: string}
+                  matches:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/PublicMatch'
+                        - type: object
+                          properties:
+                            category: {type: object, properties: {id: {type: integer}, name: {type: string}}}
+        '400':
+          description: Missing or invalid view or stage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/pending-summary:
+    get:
+      tags: [Tournaments]
+      summary: What waits for the organizer (dashboard shortcut)
+      description: For the active tournament, or the latest draft when none is active.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tournament:
+                    type: object
+                    nullable: true
+                    properties:
+                      id: {type: integer}
+                      name: {type: string}
+                      slug: {type: string}
+                      status: {type: string}
+                  pending_registrations: {type: integer}
+                  overdue_results: {type: integer, description: Games with a planned date already past and no result}
+                  ties_to_decide: {type: integer, description: Groups waiting for the organizer to break a tie}
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/schedule:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    get:
+      tags: [Tournaments]
+      summary: "The schedule: sessions, windows, matches and conflicts"
+      description: |
+        Everything the schedule screen needs. Conflicts are recalculated on every read. Only matches of categories with a published draw appear.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: The schedule after the change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/schedule/sessions:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    post:
+      tags: [Tournaments]
+      summary: Create a session
+      description: |
+        A session is a stretch of one day when some courts belong to the tournament, cut into 90 minute windows from its start time (only whole windows fit). The date must be inside the tournament period. Two sessions cannot overlap on the same court.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [date, start, end, court_ids]
+              properties:
+                date: {type: string, format: date}
+                start: {type: string, example: "08:00"}
+                end: {type: string, example: "17:00"}
+                court_ids: {type: array, items: {type: integer}}
+      responses:
+        '201':
+          description: The schedule after the change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Refused (see code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/schedule/sessions/{session_id}:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+      - {name: session_id, in: path, required: true, schema: {type: integer}}
+    put:
+      tags: [Tournaments]
+      summary: Change a session
+      description: |
+        Refused with code window_in_use (and the matches listed) when a window that would disappear holds a match.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [date, start, end, court_ids]
+              properties:
+                date: {type: string, format: date}
+                start: {type: string}
+                end: {type: string}
+                court_ids: {type: array, items: {type: integer}}
+      responses:
+        '200':
+          description: The schedule after the change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Refused (see code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+    delete:
+      tags: [Tournaments]
+      summary: Delete a session
+      description: |
+        Refused with code window_in_use when any of its windows holds a match.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: The schedule after the change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Refused (see code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/schedule/blocks:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    put:
+      tags: [Tournaments]
+      summary: Block or unblock a window
+      description: |
+        Rain, maintenance. Blocking an occupied window answers 409 window_occupied until unplace is true, which sends the match back to the list.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [court_id, date, time, blocked]
+              properties:
+                court_id: {type: integer}
+                date: {type: string, format: date}
+                time: {type: string, example: "08:00"}
+                blocked: {type: boolean}
+                unplace: {type: boolean}
+      responses:
+        '200':
+          description: The schedule after the change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Refused (see code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/schedule/place:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    post:
+      tags: [Tournaments]
+      summary: Put a match in a free window, or move it
+      description: |
+        Errors (code schedule_conflict) always stop the edit. Warnings (code needs_confirmation, conflicts listed) stop it unless force is true. A taken window is window_taken, a locked match match_locked, a played one match_completed.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [match_id, court_id, date, time]
+              properties:
+                match_id: {type: integer}
+                court_id: {type: integer}
+                date: {type: string, format: date}
+                time: {type: string}
+                force: {type: boolean}
+      responses:
+        '200':
+          description: The schedule after the change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Refused (see code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/schedule/swap:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    post:
+      tags: [Tournaments]
+      summary: Swap two matches
+      description: |
+        Exchanges their windows. If one has none, the other loses its window and that one takes it. Same conflict rules as place.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [match_id, other_match_id]
+              properties:
+                match_id: {type: integer}
+                other_match_id: {type: integer}
+                force: {type: boolean}
+      responses:
+        '200':
+          description: The schedule after the change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Refused (see code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/schedule/matches/{match_id}:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+      - {name: match_id, in: path, required: true, schema: {type: integer}}
+    delete:
+      tags: [Tournaments]
+      summary: Take a match out of the schedule
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: The schedule after the change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Refused (see code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/schedule/matches/{match_id}/lock:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+      - {name: match_id, in: path, required: true, schema: {type: integer}}
+    put:
+      tags: [Tournaments]
+      summary: Pin or unpin a placed match
+      description: |
+        A pinned match stays where it is: the automatic distribution and manual moves leave it alone until it is unpinned.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [locked]
+              properties:
+                locked: {type: boolean}
+      responses:
+        '200':
+          description: The schedule after the change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Refused (see code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/schedule/distribute:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    post:
+      tags: [Tournaments]
+      summary: Propose where to put the pending matches
+      description: |
+        Writes nothing. Greedy construction by phase and round (the most constrained players first), then a local search by swaps and moves, deterministic for a given rng_seed. Hard rules: one match per window, no person in two places, rest between matches of a person and after the matches that feed a match, no match before them, unavailability, pinned and played matches untouched. Soft goals: finish early, short waits, at most 2 matches per person per day, rounds aligned.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category_ids: {type: array, items: {type: integer}, description: Default all categories with a published draw}
+                stage: {type: string, enum: [group, knockout]}
+                round_number: {type: integer, description: Only with stage knockout}
+                session_ids: {type: array, items: {type: integer}, description: Default all sessions}
+                from: {type: string, example: "2099-02-10T14:00", description: Local time. Nothing is placed before it}
+                redo: {type: boolean, description: Also replace matches that already have a window (pinned ones stay)}
+                rng_seed: {type: integer}
+      responses:
+        '200':
+          description: The proposal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleProposal'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/schedule/apply:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    post:
+      tags: [Tournaments]
+      summary: Apply a proposal
+      description: |
+        Revalidates everything in one transaction. A proposal that went stale (a window was taken or blocked, or it would create a conflict) is refused with code stale_proposal and nothing is written.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [assignments]
+              properties:
+                assignments:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      match_id: {type: integer}
+                      court_id: {type: integer}
+                      date: {type: string, format: date}
+                      time: {type: string}
+                unassign: {type: array, items: {type: integer}}
+      responses:
+        '200':
+          description: The schedule after the change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Refused (see code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/schedule/publish:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    post:
+      tags: [Tournaments]
+      summary: Publish the schedule
+      description: |
+        Until then the public sees no date, time or court. Needs at least one scheduled match (nothing_to_publish). After publishing, changes are public at once.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: The schedule after the change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Refused (see code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/schedule/unpublish:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+    post:
+      tags: [Tournaments]
+      summary: Hide the schedule from the public again
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: The schedule after the change
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Refused (see code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/admin/tournaments/{tournament_id}/registrations/{registration_id}/unavailability:
+    parameters:
+      - {name: tournament_id, in: path, required: true, schema: {type: integer}}
+      - {name: registration_id, in: path, required: true, schema: {type: integer}}
+    get:
+      tags: [Tournaments]
+      summary: Impediments of a registration
+      description: "Days and times when the player cannot play. Private: never in a public response. They count for every registration of the same person."
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: The impediments and the other categories of the same person
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registration: {type: object, properties: {id: {type: integer}, display_name: {type: string}, category_name: {type: string}}}
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/TournamentUnavailabilityItem'}
+                  also_in:
+                    type: array
+                    items: {type: object, properties: {registration_id: {type: integer}, category_id: {type: integer}, category_name: {type: string}}}
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+    put:
+      tags: [Tournaments]
+      summary: Replace the impediments of a registration
+      description: Each item is a date inside the tournament period and either no times (the whole day) or a start and an end. Up to 60.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      date: {type: string, format: date}
+                      start: {type: string, nullable: true}
+                      end: {type: string, nullable: true}
+                      note: {type: string, nullable: true}
+      responses:
+        '200':
+          description: The impediments after the change
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: {$ref: '#/components/schemas/TournamentUnavailabilityItem'}
+        '400':
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+        '409':
+          description: Refused (see code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'

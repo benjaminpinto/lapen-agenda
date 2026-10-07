@@ -41,12 +41,15 @@ jobs:
         ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         MAIL_MOCK_ACTIVE: true
         VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        # Tournament specs: the same value must be set as E2E_TEST_SECRET in the Vercel preview environment. Without it they skip.
+        E2E_TEST_SECRET: ${{ secrets.E2E_TEST_SECRET }}
     
     - name: Cleanup test data
       if: always()
       run: npx tsx e2e/cleanup.ts
       env:
         BASE_URL: ${{ github.event.client_payload.url }}
+        E2E_TEST_SECRET: ${{ secrets.E2E_TEST_SECRET }}
     
     - name: Check allure-results
       if: always()

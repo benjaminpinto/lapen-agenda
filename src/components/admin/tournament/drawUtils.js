@@ -28,5 +28,3 @@ export const drawEntries = (draw) => {
   }
   return [...seen.values()].sort((a, b) => a.display_name.localeCompare(b.display_name))
 }
-
-export const SCORE_HINT = 'Placar do ponto de vista do primeiro jogador. Ex.: 6-4, 3-6, 10-8'

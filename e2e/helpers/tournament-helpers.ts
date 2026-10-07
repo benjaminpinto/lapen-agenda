@@ -51,6 +51,15 @@ export async function loginAsAdmin(page: Page, admin: TestAdmin) {
   await page.waitForURL('**/admin/dashboard');
 }
 
+/** Fills the score grid of the result dialog: one [first player, second player] pair per column (1º set, 2º set, STB). */
+export async function fillScore(page: Page, sets: [number, number][]) {
+  const columns = ['set1', 'set2', 'stb'];
+  for (const [index, [first, second]] of sets.entries()) {
+    await page.getByTestId(`result-score-${columns[index]}-1`).fill(String(first));
+    await page.getByTestId(`result-score-${columns[index]}-2`).fill(String(second));
+  }
+}
+
 /** The admin area keeps its state in memory, so a page reload sends you back to the dashboard: navigate by clicking. */
 export async function openTournamentsList(page: Page) {
   await page.getByTestId('dashboard-tournaments-card').click();
@@ -91,6 +100,13 @@ export async function adminSession(request: APIRequestContext, admin: TestAdmin)
 export async function capCategory(request: APIRequestContext, admin: TestAdmin, tournamentId: number, categoryId: number, max: number) {
   await adminSession(request, admin);
   const response = await request.put(`/api/admin/tournaments/${tournamentId}/categories/${categoryId}`, { data: { max_entries: max } });
+  expect(response.ok(), await response.text()).toBeTruthy();
+}
+
+/** Change the match format of a tournament (the server allows it until the first result). */
+export async function setMatchFormat(request: APIRequestContext, admin: TestAdmin, tournamentId: number, matchFormat: 'best_of_3_super_tb' | 'pro_set_8' | 'single_set_6') {
+  await adminSession(request, admin);
+  const response = await request.put(`/api/admin/tournaments/${tournamentId}`, { data: { match_format: matchFormat } });
   expect(response.ok(), await response.text()).toBeTruthy();
 }
 

@@ -1,6 +1,6 @@
 import {Link, useNavigate} from 'react-router-dom'
 import {Button} from '@/components/ui/button'
-import {Award, BarChart3, Calendar, Home, LogIn, LogOut, Menu, Settings, Swords, X} from 'lucide-react'
+import {Award, BarChart3, Calendar, Home, LogIn, LogOut, Menu, Settings, Swords, Trophy, X} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
 import {useAuth} from '@/contexts/AuthContext'
 
@@ -48,7 +48,7 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <nav className="hidden md:flex items-center space-x-1">
+                    <nav className="hidden lg:flex items-center space-x-1">
                         <Link to="/">
                             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
                                 <Home className="h-4 w-4 mr-2"/>
@@ -76,6 +76,13 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
                                 <Award className="h-4 w-4 mr-2"/>
                                 Ranking
+                            </Button>
+                        </Link>
+
+                        <Link to="/tournaments" data-testid="nav-tournaments">
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                                <Trophy className="h-4 w-4 mr-2"/>
+                                Torneios
                             </Button>
                         </Link>
 
@@ -133,12 +140,13 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                     </nav>
 
                     {/* Mobile Menu Button */}
-                    <div className="flex items-center space-x-2 md:hidden">
+                    <div className="flex items-center space-x-2 lg:hidden">
                         {/* ThemeToggle removed */}
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            data-testid="mobile-menu-button"
                         >
                             {isMobileMenuOpen ? <X className="h-5 w-5"/> : <Menu className="h-5 w-5"/>}
                         </Button>
@@ -148,7 +156,7 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                 {/* Mobile Navigation */}
                 {isMobileMenuOpen && (
                     <nav
-                        className="md:hidden mt-4 pb-4 border-t pt-4 animate-in slide-in-from-top-5 fade-in duration-200">
+                        className="lg:hidden mt-4 pb-4 border-t pt-4 animate-in slide-in-from-top-5 fade-in duration-200">
                         <div className="flex flex-col space-y-2">
                             <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
                                 <Button variant="ghost" size="sm" className="w-full justify-start">
@@ -177,6 +185,13 @@ const Header = ({isAdminAuthenticated, setIsAdminAuthenticated}) => {
                                 <Button variant="ghost" size="sm" className="w-full justify-start">
                                     <Award className="h-4 w-4 mr-2"/>
                                     Ranking
+                                </Button>
+                            </Link>
+
+                            <Link to="/tournaments" onClick={() => setIsMobileMenuOpen(false)} data-testid="nav-tournaments-mobile">
+                                <Button variant="ghost" size="sm" className="w-full justify-start">
+                                    <Trophy className="h-4 w-4 mr-2"/>
+                                    Torneios
                                 </Button>
                             </Link>
 

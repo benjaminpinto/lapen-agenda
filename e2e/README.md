@@ -47,6 +47,22 @@ Comprehensive end-to-end tests for LAPEN Agenda covering critical user flows and
 - Header visibility
 - Back navigation
 
+### Tournament Tests (`tournament-admin`, `tournament-public`, `tournament-schedule`, `statistics-tournament-filter`)
+- Admin panel from an empty list to the first result, ties, confirmations, tablet and desktop layout
+- Public screens: tracking tabs, bracket, polling with a simulated clock, sign-up (success, duplicate, waiting list, honeypot, closed)
+- Schedule: sessions, automatic distribution, swap/move/pin by tap and by drag, rest warning, player impediments, publication
+- Statistics: the "Torneio" type filter
+
+Tournaments are global state (one active at a time), so the three `tournament-*` specs are separate Playwright projects chained one after the
+other (see `playwright.config.ts`). They build their data through `/api/test/tournaments/*`, which only answers when the server has
+`E2E_TEST_SECRET` and the request sends the same value in `X-Test-Secret`. **Without that variable the tournament specs skip themselves.**
+In CI set the `E2E_TEST_SECRET` secret in GitHub and the same variable in the Vercel *preview* environment (never in production, where the
+endpoints are closed anyway).
+
+```bash
+E2E_TEST_SECRET=some-secret npx playwright test --project=tournament-admin --project=tournament-public --project=tournament-schedule
+```
+
 ## Running Tests
 
 ### Install Dependencies

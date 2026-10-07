@@ -315,7 +315,7 @@ def get_general_statistics():
     params = []
     
     if season_filter == 'amistosos':
-        conditions.append("match_type != 'Ranking'")
+        conditions.append("match_type NOT IN ('Ranking', 'Torneio')")
     elif season_filter:
         conditions.append('season_id = %s')
         params.append(season_filter)

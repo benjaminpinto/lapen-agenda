@@ -63,6 +63,9 @@ Client → CORS → Route Handler → Auth Middleware → Input Validation → B
 | `payments_bp` | `/api/payments` | JWT |
 | `ranking_bp` | `/api/ranking` | JWT / Admin |
 | `statistics_bp` | `/api/statistics` | JWT |
+| `tournaments_bp` | `/api/tournaments` | None (public read + sign-up) |
+| `admin_tournaments_bp` | `/api/admin/tournaments` | Admin JWT (`users.is_admin`) |
+| `admin_tournament_schedule_bp` | `/api/admin/tournaments/<id>/schedule` | Admin JWT |
 | `challenges_bp` | `/api/challenges` | JWT |
 | `admin_bp` | `/api/admin` | Session cookie |
 | `admin_matches_bp` | `/api/admin/matches` | Session cookie |

@@ -2,14 +2,20 @@ import {useEffect, useState} from 'react'
 import {Link} from 'react-router-dom'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {Button} from '@/components/ui/button'
-import {Award, Calendar, Clock, MapPin, Trophy, UserCog, Users} from 'lucide-react'
+import {Award, Calendar, Clock, MapPin, Medal, Trophy, UserCog, Users} from 'lucide-react'
+import {ADMIN_API, request} from './tournament/tournamentApi'
+import {fetchWithAuth} from '../../utils/fetchWithAuth.js'
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [tournamentSummary, setTournamentSummary] = useState(null)
 
     useEffect(() => {
         fetchDashboardStats()
+        request('GET', `${ADMIN_API}/pending-summary`).then((result) => {
+            if (result.ok) setTournamentSummary(result.data)
+        })
     }, [])
 
     const fetchDashboardStats = async () => {
@@ -130,7 +136,44 @@ const AdminDashboard = () => {
                         </CardContent>
                     </Card>
                 </Link>
+
+                <Link to="/admin/tournaments" data-testid="dashboard-tournaments-card">
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+                        <CardHeader className="text-center pb-2">
+                            <Medal className="h-8 w-8 text-amber-700 mx-auto" />
+                            <CardTitle className="text-lg whitespace-nowrap">Torneios</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center">
+                            <Button variant="ghost" size="sm">Gerenciar</Button>
+                        </CardContent>
+                    </Card>
+                </Link>
             </div>
+
+            {tournamentSummary?.tournament && (
+                <Card className="border-amber-300" data-testid="tournament-pending-card">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <Medal className="h-5 w-5 text-amber-700" /> {tournamentSummary.tournament.name}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid gap-2 sm:grid-cols-3">
+                        {[
+                            ['pending-registrations', tournamentSummary.pending_registrations, 'inscrição(ões) pendente(s)', 'inscricoes'],
+                            ['pending-results', tournamentSummary.overdue_results, 'resultado(s) atrasado(s)', 'partidas'],
+                            ['pending-ties', tournamentSummary.ties_to_decide, 'empate(s) a decidir', 'partidas'],
+                        ].map(([testId, count, label, tab]) => (
+                            <Link
+                                key={testId} to={`/admin/tournaments/${tournamentSummary.tournament.id}?tab=${tab}`} data-testid={testId}
+                                className={`rounded-md border p-3 min-h-[44px] ${count > 0 ? 'border-orange-400 bg-orange-50 text-orange-900' : 'border-stone-200 text-stone-500'}`}
+                            >
+                                <span className="text-2xl font-bold mr-2" data-testid={`${testId}-count`}>{count}</span>
+                                <span className="text-sm">{label}</span>
+                            </Link>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
         </div>
     )
 }

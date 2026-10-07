@@ -186,6 +186,21 @@ def require_approved_lapen_member(f):
     
     return decorated_function
 
+def get_optional_user():
+    """Return the logged-in user, or None when the request has no valid token.
+
+    For public endpoints that behave differently for logged-in users but never reject anonymous ones.
+    """
+    token = request.cookies.get('access_token')
+    if not token:
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header[7:]
+    if not token:
+        return None
+    user_id = verify_token(token)
+    return get_user_by_id(user_id) if user_id else None
+
 def get_user_by_id(user_id):
     """Get user by ID"""
     db = get_db()

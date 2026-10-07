@@ -293,6 +293,7 @@ export default function Statistics() {
                   <SelectItem value="">Todos</SelectItem>
                   <SelectItem value="Ranking">Ranking</SelectItem>
                   <SelectItem value="Amistoso">Amistoso</SelectItem>
+                  <SelectItem value="Torneio">Torneio</SelectItem>
                 </SelectContent>
               </Select>
             </div>

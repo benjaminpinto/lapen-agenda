@@ -24,6 +24,9 @@ from src.routes.test import test_bp
 from src.routes.ranking import ranking_bp
 from src.routes.statistics import statistics_bp
 from src.routes.challenges import challenges_bp
+from src.routes.tournaments import tournaments_bp
+from src.routes.admin_tournaments import admin_tournaments_bp
+from src.routes.admin_tournament_schedule import admin_tournament_schedule_bp
 from src.database import init_db
 from src.email_service import init_mail
 from src.logger import setup_logger
@@ -64,6 +67,9 @@ app.register_blueprint(test_bp)
 app.register_blueprint(ranking_bp)
 app.register_blueprint(statistics_bp)
 app.register_blueprint(challenges_bp)
+app.register_blueprint(tournaments_bp)
+app.register_blueprint(admin_tournaments_bp)
+app.register_blueprint(admin_tournament_schedule_bp)
 
 # Initialize Swagger (after blueprints, before catch-all route)
 swagger_config = {

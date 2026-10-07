@@ -139,6 +139,21 @@
 - ✅ Performance trends
 - ✅ Clay court themed charts
 
+## Tournaments
+- ✅ One active tournament at a time, several categories, a person may enter more than one
+- ✅ Public sign-up page (honeypot, hourly limit, waiting list when a category is full)
+- ✅ Admin panel: rules, categories, registrations (confirm, refuse, link to a LAPEN member), draw preview and publication
+- ✅ Draw: groups + knockout, knockout only or round robin; manual seeds (ITF placement), byes, groups by snake
+- ✅ Results by the admin only (normal, W.O., retirement), with correction, annulment and automatic propagation
+- ✅ Group tables in ATP order, explained to the public; ties no criterion can break are decided by the organizer
+- ✅ Public tracking screen: progress, groups with who advances, visual bracket, upcoming games, results, entries, rules
+- ✅ Match calendar: sessions cut into 90-minute windows, day grid by court, swap/move by tap or drag, pin, block a window
+- ✅ Automatic distribution of pending matches by phase (proposal first, apply after; rest of 60 minutes, order of rounds, no double booking)
+- ✅ Player impediments (days and times) respected by the distribution and warned about in manual edits
+- ✅ Schedule hidden from the public until published
+- ✅ Results feed the statistics module when a LAPEN member plays ("Torneio" type; friendlies do not include them)
+- ✅ Admin panel made for tablet and desktop; public screens made for phones
+
 ## UI/UX
 - ✅ Responsive design (mobile-first, 320px minimum)
 - ✅ Portuguese localization

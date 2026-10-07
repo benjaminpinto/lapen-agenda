@@ -239,7 +239,7 @@ Interpretei algumas respostas e preenchi lacunas. **Se alguma estiver errada, me
 - **RF-15** Com as vagas preenchidas por inscrições confirmadas, novas inscrições entram em **lista de espera**, e o formulário avisa antes do envio.
 - **RF-16** Após o envio: tela de sucesso com status "Pendente de confirmação" explicando que **o organizador entrará em contato pelo telefone informado** e que o nome aparece na aba **Inscritos** quando confirmado. **Nenhum e-mail é enviado (D-10).**
 - **RF-17** Anti-abuso: limite de requisições por IP e campo *honeypot* (sem CAPTCHA).
-- **RF-18** Estados da inscrição: `pending` → `confirmed` | `rejected`; `pending`/`confirmed` → `cancelled`; `waitlist` → `pending`/`confirmed` **por ação do admin** quando abre vaga; `withdrawn` (desistência após o sorteio, com as partidas pendentes virando W.O.).
+- **RF-18** Estados da inscrição: `pending` → `confirmed` | `rejected`; `pending`/`confirmed` → `cancelled`; `waitlist` → `pending`/`confirmed` **por ação do admin** quando abre vaga; `rejected`/`cancelled` → `pending` (**reabrir**, só antes do sorteio da categoria: volta para análise e a vaga só é checada ao confirmar; o motivo da recusa e o cabeça de chave são perdidos); `withdrawn` (desistência após o sorteio, com as partidas pendentes virando W.O.).
 
 ### 8.3 Gestão de inscrições (admin)
 

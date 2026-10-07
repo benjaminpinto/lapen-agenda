@@ -7,7 +7,9 @@ import {useToast} from '@/contexts/ToastContext'
 import ConfirmDialog from './ConfirmDialog'
 import {ADMIN_API, errorMessage, request} from './tournamentApi'
 import {OUTCOMES} from './labels'
-import {entryLabel, SCORE_HINT, sideLabel} from './drawUtils'
+import {entryLabel, sideLabel} from './drawUtils'
+import ScoreGrid from '@/components/shared/ScoreGrid'
+import {emptyGrid, gridFromScore, isFilled, needsSuperTiebreak, SCORE_COLUMNS, scoreFromGrid, winnerSide} from '@/utils/scoreGrid'
 
 const selectClass = 'h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm'
 const PLAYING = ['published', 'group_stage', 'knockout_stage', 'finished']
@@ -27,23 +29,50 @@ const resultText = (match) => {
 function ResultDialog({ tournament, match, mode, onClose, onSaved }) {
   const { toast } = useToast()
   const first = match.entry1, second = match.entry2
-  const winnerSide = match.winner_entry_id === first?.registration_id ? 1 : match.winner_entry_id === second?.registration_id ? 2 : 1
+  const columns = SCORE_COLUMNS[tournament.match_format] || SCORE_COLUMNS.best_of_3_super_tb
+  const recordedWinner = match.winner_entry_id === first?.registration_id ? 1 : match.winner_entry_id === second?.registration_id ? 2 : ''
   const [form, setForm] = useState({
     outcome: mode === 'correct' && match.outcome ? match.outcome : 'normal',
-    side: mode === 'correct' ? winnerSide : 1,
-    score: mode === 'correct' && match.score ? match.score.replace(/\s*ret\.$/, '') : '',
+    side: mode === 'correct' ? recordedWinner : '',
     played_at: match.played_at ? match.played_at.slice(0, 10) : '',
   })
+  const [grid, setGrid] = useState(() => (mode === 'correct' && ['normal', 'retired'].includes(match.outcome) && match.score ? gridFromScore(match.score) : emptyGrid()))
   const [saving, setSaving] = useState(false)
   const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }))
+  const changeScore = useCallback((key, index, value) => {
+    setGrid((current) => ({ ...current, [key]: current[key].map((cell, i) => (i === index ? value : cell)) }))
+  }, [])
+
+  const retired = form.outcome === 'retired'
   const needsScore = ['normal', 'retired'].includes(form.outcome)
+  const names = [entryLabel(first), entryLabel(second)]
+  // A normal result decides the winner by itself. A retirement is not decided by the score, so the organizer says who went on.
+  const scoreWinner = form.outcome === 'normal' ? winnerSide(grid, columns) : null
+  const stbEnabled = columns.length > 1 && (retired ? isFilled(grid.set1) && isFilled(grid.set2) : needsSuperTiebreak(grid))
+
+  const problem = () => {
+    if (form.outcome === 'double_wo') return null
+    if (needsScore && !isFilled(grid.set1)) return retired ? 'Informe o placar até a desistência' : (columns.length > 1 ? 'Preencha os dois primeiros sets' : 'Preencha o placar do set')
+    if (form.outcome === 'normal') {
+      if (columns.length > 1 && !isFilled(grid.set2)) return 'Preencha os dois primeiros sets'
+      if (columns.length > 1 && needsSuperTiebreak(grid) && !isFilled(grid.stb)) return 'Preencha o super tiebreak (terceiro set)'
+      return scoreWinner ? null : 'Placar sem vencedor claro'
+    }
+    return form.side ? null : 'Selecione o vencedor'
+  }
 
   const submit = async (event) => {
     event.preventDefault()
+    const message = problem()
+    if (message) {
+      toast({ title: message, variant: 'destructive' })
+      return
+    }
     setSaving(true)
+    const side = form.outcome === 'normal' ? scoreWinner : Number(form.side)
     const body = { outcome: form.outcome }
-    if (form.outcome !== 'double_wo') body.winner_registration_id = (Number(form.side) === 1 ? first : second).registration_id
-    if (needsScore) body.score = form.score
+    if (form.outcome !== 'double_wo') body.winner_registration_id = (side === 1 ? first : second).registration_id
+    if (needsScore) body.score = scoreFromGrid(grid, columns)
     if (form.played_at) body.played_at = form.played_at
     const result = await request(mode === 'correct' ? 'PATCH' : 'PUT', `${ADMIN_API}/${tournament.id}/matches/${match.id}/result`, body)
     setSaving(false)
@@ -60,7 +89,7 @@ function ResultDialog({ tournament, match, mode, onClose, onSaved }) {
       <DialogContent className="w-full max-w-lg" data-testid="result-dialog">
         <DialogHeader>
           <DialogTitle>{mode === 'correct' ? 'Corrigir resultado' : 'Lançar resultado'}</DialogTitle>
-          <DialogDescription data-testid="result-dialog-match">{entryLabel(first)} × {entryLabel(second)}</DialogDescription>
+          <DialogDescription data-testid="result-dialog-match">{names[0]} × {names[1]}</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
@@ -69,21 +98,25 @@ function ResultDialog({ tournament, match, mode, onClose, onSaved }) {
               {Object.entries(OUTCOMES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
           </div>
-          {form.outcome !== 'double_wo' && (
-            <div className="space-y-1.5">
-              <Label htmlFor="result-winner">{form.outcome === 'retired' ? 'Quem continuou (vencedor)' : 'Vencedor'}</Label>
-              <select id="result-winner" data-testid="result-winner" className={selectClass} value={form.side} onChange={set('side')}>
-                <option value={1}>{entryLabel(first)}</option>
-                <option value={2}>{entryLabel(second)}</option>
-              </select>
-            </div>
-          )}
           {needsScore && (
             <div className="space-y-1.5">
-              <Label htmlFor="result-score">{form.outcome === 'retired' ? 'Placar até a desistência' : 'Placar'}</Label>
-              <Input id="result-score" data-testid="result-score" required value={form.score} onChange={set('score')} placeholder="6-4, 3-6, 10-8" autoComplete="off" />
-              <p className="text-xs text-stone-500">{SCORE_HINT}</p>
+              <Label>{retired ? 'Placar até a desistência' : 'Placar'}</Label>
+              <ScoreGrid players={names} grid={grid} onChange={changeScore} columns={columns} stbEnabled={stbEnabled} testIdPrefix="result-score" />
             </div>
+          )}
+          {scoreWinner && (
+            <p className="text-sm text-stone-700" data-testid="result-winner-preview">Vencedor: <strong>{names[scoreWinner - 1]}</strong></p>
+          )}
+          {['wo', 'retired'].includes(form.outcome) && (
+            <fieldset className="space-y-2" data-testid="result-winner">
+              <legend className="text-sm font-medium leading-none mb-2">{retired ? 'Quem continuou (vencedor)' : 'Vencedor por W.O.'}</legend>
+              {[1, 2].map((side) => (
+                <label key={side} className="flex min-h-[44px] items-center gap-2 rounded-md border border-gray-200 px-3 text-sm">
+                  <input type="radio" name="result-winner" value={side} checked={Number(form.side) === side} onChange={set('side')} data-testid={`result-winner-${side}`} />
+                  <span>{names[side - 1]}</span>
+                </label>
+              ))}
+            </fieldset>
           )}
           <div className="space-y-1.5">
             <Label htmlFor="result-date">Data da partida (opcional)</Label>

@@ -4,11 +4,13 @@ import {
   collectConsoleErrors,
   createTestAdmin,
   E2E_SECRET,
+  fillScore,
   goToTab,
   loginAsAdmin,
   openTournament,
   openTournamentsList,
   seedTournament,
+  setMatchFormat,
   signUp,
   TestAdmin,
 } from '../helpers/tournament-helpers';
@@ -91,14 +93,15 @@ test.describe('Tournament admin panel', () => {
     const record = page.locator('[data-testid^="record-result-"]').first();
     const matchId = (await record.getAttribute('data-testid'))!.replace('record-result-', '');
     await record.click();
-    await page.getByTestId('result-score').fill('6-4, 6-3');
+    await fillScore(page, [[6, 4], [6, 3]]);
+    await expect(page.getByTestId('result-winner-preview')).toContainText('Vencedor:');
     await page.getByTestId('result-submit').click();
     await expect(page.getByTestId(`match-status-${matchId}`)).toContainText('6-4, 6-3');
 
     // A wrong score is explained and changes nothing
     const other = page.locator('[data-testid^="record-result-"]').first();
     await other.click();
-    await page.getByTestId('result-score').fill('6-5, 6-4');
+    await fillScore(page, [[6, 5], [6, 4]]);
     await page.getByTestId('result-submit').click();
     await expect(page.getByTestId('result-dialog')).toBeVisible();
     await page.getByTestId('result-cancel').click();
@@ -167,6 +170,76 @@ test.describe('Tournament admin panel', () => {
     await expect(pending).toHaveCount(2);
     await expect(page.locator('[data-testid^="reopen-registration-"]')).toHaveCount(0);
     await expect(page.getByText('Recusada: Teste de reabertura')).toHaveCount(0);
+  });
+
+  test('the result dialog is the same score grid used in the rest of the app', async ({ page, request }) => {
+    const seeded = await seedTournament(request, 'groups_in_progress');
+    await loginAsAdmin(page, admin);
+    await openTournament(page, seeded.slug);
+    await goToTab(page, 'partidas');
+    await page.locator('[data-testid^="record-result-"]').first().click();
+
+    // Player rows by set, and the winner follows from the score
+    const grid = page.getByTestId('result-score-grid');
+    await expect(grid).toContainText('1º Set');
+    await expect(grid).toContainText('STB');
+    await expect(page.getByTestId('result-winner-preview')).toHaveCount(0);
+    await expect(page.getByTestId('result-score-stb-1')).toBeDisabled();
+
+    // The super tiebreak opens only when the sets are split 1-1
+    await fillScore(page, [[6, 4], [3, 6]]);
+    await expect(page.getByTestId('result-score-stb-1')).toBeEnabled();
+    await expect(page.getByTestId('result-winner-preview')).toHaveCount(0);
+    await fillScore(page, [[6, 4], [3, 6], [10, 8]]);
+    await expect(page.getByTestId('result-winner-preview')).toContainText('Vencedor:');
+    await fillScore(page, [[6, 4], [6, 3]]);
+    await expect(page.getByTestId('result-score-stb-1')).toBeDisabled();
+    await expect(page.getByTestId('result-score-stb-1')).toHaveValue('');
+
+    // A W.O. has no score: the organizer names the winner
+    await page.getByTestId('result-outcome').selectOption('wo');
+    await expect(grid).toHaveCount(0);
+    await expect(page.getByTestId('result-winner-preview')).toHaveCount(0);
+    await page.getByTestId('result-submit').click();
+    await expect(page.getByTestId('result-dialog')).toBeVisible();  // no winner chosen yet
+    await page.getByTestId('result-winner-2').check();
+    await page.getByTestId('result-submit').click();
+    await expect(page.getByTestId('result-dialog')).toHaveCount(0);
+  });
+
+  test('one-set formats ask for a single set', async ({ page, request }) => {
+    const seeded = await seedTournament(request, 'before_draw');
+    await setMatchFormat(request, admin, seeded.tournament_id, 'pro_set_8');  // the format is fixed once the draw has byes, so change it first
+    await loginAsAdmin(page, admin);
+    await openTournament(page, seeded.slug);
+    await goToTab(page, 'sorteio');
+    for (const category of seeded.categories) {
+      await page.getByTestId(`draw-generate-${category.id}`).click();
+      await expect(page.getByTestId(`draw-preview-${category.id}`)).toBeVisible();
+      await page.getByTestId(`draw-publish-${category.id}`).click();
+      await expect(page.getByTestId(`draw-undo-${category.id}`)).toBeVisible();
+    }
+    await page.getByTestId('action-in_progress').click();
+    await expect(page.getByTestId('tournament-status')).toHaveText('Em andamento');
+    await goToTab(page, 'partidas');
+    const record = page.locator('[data-testid^="record-result-"]').first();
+    const matchId = (await record.getAttribute('data-testid'))!.replace('record-result-', '');
+    await record.click();
+
+    await expect(page.getByTestId('result-score-grid')).toContainText('Set');
+    await expect(page.getByTestId('result-score-set1-1')).toBeVisible();
+    await expect(page.getByTestId('result-score-set2-1')).toHaveCount(0);
+    await expect(page.getByTestId('result-score-stb-1')).toHaveCount(0);
+
+    // The server still judges the set: 8-7 is not a finished pro set
+    await fillScore(page, [[8, 7]]);
+    await expect(page.getByTestId('result-winner-preview')).toContainText('Vencedor:');
+    await page.getByTestId('result-submit').click();
+    await expect(page.getByTestId('result-dialog')).toBeVisible();
+
+    await fillScore(page, [[8, 6]]);
+    await page.getByTestId('result-submit').click();
+    await expect(page.getByTestId(`match-status-${matchId}`)).toContainText('8-6');
   });
 
   test('cancelling a tournament asks for confirmation', async ({ page, request }) => {

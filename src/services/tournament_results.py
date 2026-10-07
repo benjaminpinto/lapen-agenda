@@ -46,8 +46,11 @@ def _withdrawn(db, registration_id):
     return bool(row) and row['status'] == 'withdrawn'
 
 
-def _qualifiers(category):
-    return category['qualifiers_per_group'] if category['draw_format'] == 'groups_knockout' else 1
+def _qualifiers(category, group_size=1):
+    """Places that matter in a group: the ones that advance, or every place in round robin (the table is the result)."""
+    if category['draw_format'] == 'groups_knockout':
+        return category['qualifiers_per_group']
+    return group_size if category['draw_format'] == 'round_robin' else 1
 
 
 def _total_rounds(db, category_id):
@@ -169,7 +172,6 @@ def _settle_all(db, category_id, actor_id=None):
 # --- groups: tables, qualification, category status ---------------------------------------------------------------
 
 def group_tables(db, tournament, category):
-    qualifiers = _qualifiers(category)
     groups = db.execute('SELECT id, name FROM tournament_groups WHERE category_id = %s ORDER BY name', (category['id'],)).fetchall()
     members = db.execute(
         'SELECT ge.group_id, ge.registration_id, ge.manual_rank FROM tournament_group_entries ge '
@@ -184,7 +186,7 @@ def group_tables(db, tournament, category):
             [m['registration_id'] for m in mine],
             [{'entry1': m['entry1_id'], 'entry2': m['entry2_id'], 'status': m['status'], 'outcome': m['outcome'],
               'winner': m['winner_entry_id'], 'score': m['score']} for m in matches if m['group_id'] == group['id']],
-            qualifiers, tournament['match_format'], tournament['match_tiebreak_points'],
+            _qualifiers(category, len(mine)), tournament['match_format'], tournament['match_tiebreak_points'],
             {m['registration_id']: m['manual_rank'] for m in mine if m['manual_rank'] is not None})
         tables.append({'group': group, 'result': result})
     return tables
@@ -500,7 +502,7 @@ def set_group_tiebreak(db, tournament_id, group_id, order, actor_id):
     undecided = standings.compute_standings(
         members, [dict(entry1=m['entry1_id'], entry2=m['entry2_id'], status=m['status'], outcome=m['outcome'], winner=m['winner_entry_id'], score=m['score'])
                   for m in db.execute("SELECT * FROM tournament_matches WHERE group_id = %s", (group_id,)).fetchall()],
-        _qualifiers(category), tournament['match_format'], tournament['match_tiebreak_points'])
+        _qualifiers(category, len(members)), tournament['match_format'], tournament['match_tiebreak_points'])
     if set(order) not in [set(tie['entries']) for tie in undecided['ties']]:
         raise TournamentError('Esses inscritos não estão empatados: o empate é decidido só entre quem os critérios não separam.', 409, code='not_a_tie')
     if _played_downstream(db, {'stage': 'group', 'category_id': category['id']}):

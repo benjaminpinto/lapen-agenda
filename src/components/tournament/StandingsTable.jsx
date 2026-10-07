@@ -11,6 +11,7 @@ const STATE_BAR = {
   qualified: 'border-l-amber-700',
   tie_pending: 'border-l-orange-600',
   eliminated: 'border-l-stone-300 dark:border-l-stone-600',
+  placed: 'border-l-stone-400 dark:border-l-stone-500',
   open: 'border-l-transparent',
 }
 const STATE_CELL = {
@@ -18,6 +19,7 @@ const STATE_CELL = {
   qualified: 'bg-amber-100/70 dark:bg-amber-900/30',
   tie_pending: 'bg-orange-50 dark:bg-orange-950/30',
   eliminated: 'text-muted-foreground',
+  placed: '',
   open: '',
 }
 const STATE_BADGE = {
@@ -25,7 +27,16 @@ const STATE_BADGE = {
   qualified: 'border-amber-800 bg-amber-800 text-white',
   tie_pending: 'border-orange-500 bg-orange-100 text-orange-900 dark:bg-orange-900/40 dark:text-orange-200',
   eliminated: 'border-stone-300 bg-stone-100 text-stone-600 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300',
+  placed: 'border-stone-400 bg-stone-100 text-stone-800 dark:border-stone-500 dark:bg-stone-800 dark:text-stone-200',
 }
+
+/** Round robin has no next phase: the table is the final result, so a finished group shows places, not qualified/eliminated. */
+const roundRobinState = (row) => {
+  if (row.state === 'provisional') return 'open'
+  if (!['qualified', 'eliminated'].includes(row.state)) return row.state
+  return row.position === 1 ? 'qualified' : 'placed'
+}
+const placeLabel = (row) => (row.position === 1 ? 'Campeão' : `${row.position}º lugar`)
 
 const signed = (n) => (n > 0 ? `+${n}` : String(n))
 
@@ -41,7 +52,7 @@ function destinationOf(row, groupName, bracket) {
 }
 
 /** The table of one group, in the order the organizer's rules produce (see TiebreakExplainer). */
-export default function StandingsTable({ group, bracket }) {
+export default function StandingsTable({ group, bracket, roundRobin = false }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm" data-testid={`standings-${group.name}`}>
@@ -58,8 +69,10 @@ export default function StandingsTable({ group, bracket }) {
           </tr>
         </thead>
         <tbody>
-          {group.rows.map((row) => {
-            const destination = destinationOf(row, group.name, bracket)
+          {group.rows.map((source) => {
+            const row = roundRobin ? { ...source, state: roundRobinState(source) } : source
+            const destination = roundRobin ? null : destinationOf(row, group.name, bracket)
+            const label = roundRobin && ['qualified', 'placed'].includes(row.state) ? placeLabel(row) : STATE_LABEL[row.state]
             return (
               <tr key={row.entry.id} data-testid={`standings-row-${row.entry.id}`} data-state={row.state} className="border-t">
                 <td className={`border-l-4 py-2 pl-1.5 align-top font-semibold tabular-nums ${STATE_BAR[row.state]} ${STATE_CELL[row.state]}`}>
@@ -71,9 +84,9 @@ export default function StandingsTable({ group, bracket }) {
                     {row.entry.display_name}
                     {row.entry.withdrawn ? <span className="ml-1 text-xs font-normal">(desistiu)</span> : null}
                   </div>
-                  {STATE_LABEL[row.state] && (
+                  {label && (
                     <span data-testid={`standings-state-${row.entry.id}`} className={`mt-1 inline-flex whitespace-nowrap rounded-full border px-2 py-0.5 text-[0.7rem] font-semibold ${STATE_BADGE[row.state]}`}>
-                      {STATE_LABEL[row.state]}
+                      {label}
                     </span>
                   )}
                   {destination && (

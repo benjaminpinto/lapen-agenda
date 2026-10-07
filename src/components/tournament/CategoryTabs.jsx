@@ -75,9 +75,9 @@ export function GroupsTab({ data }) {
   return (
     <div className="space-y-4" data-testid="tab-grupos">
       <div className="grid gap-4 lg:grid-cols-2">
-        {data.groups.map((group) => <GroupCard key={group.id} group={group} bracket={data.bracket} />)}
+        {data.groups.map((group) => <GroupCard key={group.id} group={group} bracket={data.bracket} roundRobin={category.draw_format === 'round_robin'} />)}
       </div>
-      <TiebreakExplainer />
+      <TiebreakExplainer roundRobin={category.draw_format === 'round_robin'} />
     </div>
   )
 }
@@ -143,7 +143,7 @@ export function RulesTab({ tournament, category, slug }) {
           <p className="whitespace-pre-line text-sm" data-testid="rules-contact">{tournament.contact_info}</p>
         </section>
       )}
-      <TiebreakExplainer open />
+      <TiebreakExplainer open roundRobin={category.draw_format === 'round_robin'} />
       {tournament.registration.open && (
         <Link to={`/tournaments/${slug}/register`} data-testid="rules-register-link">
           <Button type="button" className="min-h-[44px] bg-amber-700 text-white hover:bg-amber-800">Inscrever-se</Button>

@@ -544,13 +544,43 @@ def test_a_round_robin_category_finishes_with_its_last_match(client, people):
     tournament, category, _ = started_tournament(client, headers, 4, draw_format='round_robin')
     matches = draw_matches(draw_of(client, headers, tournament, category))
     assert len(matches) == 6
-    for number, match in enumerate(matches, start=1):
-        response = play(client, headers, tournament, match, score='6-0, 6-0')
+    for number, match in enumerate(matches, start=1):  # the lower registration wins: a strict 1st to 4th, no ties
+        first_wins = match['entry1']['registration_id'] < match['entry2']['registration_id']
+        response = play(client, headers, tournament, match, side=1 if first_wins else 2)
         assert response.status_code == 200
         assert category_status(category['id']) == ('group_stage' if number < 6 else 'finished')
     table = standings(client, headers, tournament, category)
     assert table['qualifiers_per_group'] == 1 and table['groups'][0]['confirmed'] is True
-    assert response.get_json()['standings'][0]['rows'][0]['state'] == 'qualified'
+    rows = response.get_json()['standings'][0]['rows']
+    assert [row['position'] for row in rows] == [1, 2, 3, 4] and not any(row['tied'] for row in rows)
+    assert rows[0]['state'] == 'qualified'
+
+
+def test_a_round_robin_tie_for_a_lower_place_waits_for_the_organizer(client, people):
+    headers = people.admin.headers
+    tournament, category, _ = started_tournament(client, headers, 4, draw_format='round_robin')
+    group = draw_of(client, headers, tournament, category)['groups'][0]
+    champion, *others = sorted({e['registration_id'] for m in group['matches'] for e in (m['entry1'], m['entry2'])})
+    beats = {others[0]: others[1], others[1]: others[2], others[2]: others[0]}  # the other three chase each other in a circle
+    for match in group['matches']:
+        first, second = match['entry1']['registration_id'], match['entry2']['registration_id']
+        first_wins = first == champion or (second != champion and beats[first] == second)
+        assert play(client, headers, tournament, match, side=1 if first_wins else 2,
+                    score='6-4, 6-4' if first_wins else '4-6, 4-6').status_code == 200
+
+    table = standings(client, headers, tournament, category)['groups'][0]
+    assert (table['complete'], table['blocked'], table['confirmed']) == (True, True, False)
+    assert [(row['registration_id'], row['state']) for row in table['rows'][:1]] == [(champion, 'qualified')]
+    assert {row['state'] for row in table['rows'][1:]} == {'tie_pending'} and all(row['tied'] for row in table['rows'][1:])
+    assert category_status(category['id']) == 'group_stage'
+
+    url = f"/api/admin/tournaments/{tournament['id']}/groups/{group['id']}/tiebreak"
+    decided = client.put(url, json={'order': [others[2], others[0], others[1]]}, headers=headers)
+    assert decided.status_code == 200
+    rows = decided.get_json()['groups'][0]['rows']
+    assert [row['registration_id'] for row in rows] == [champion, others[2], others[0], others[1]]
+    assert [row['position'] for row in rows] == [1, 2, 3, 4] and not any(row['tied'] for row in rows)
+    assert category_status(category['id']) == 'finished'
 
 
 def test_standings_of_a_knockout_category_are_empty(client, people):

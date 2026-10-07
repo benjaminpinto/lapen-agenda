@@ -8,7 +8,7 @@ function groupStatus(group) {
 }
 
 /** A group: its table and, below, its games. */
-export default function GroupCard({ group, bracket }) {
+export default function GroupCard({ group, bracket, roundRobin = false }) {
   const decided = group.matches.filter((m) => m.status === 'completed').length
   return (
     <section className="overflow-hidden rounded-lg border bg-card" data-testid={`group-card-${group.name}`} data-complete={group.complete ? 'true' : 'false'}>
@@ -18,13 +18,15 @@ export default function GroupCard({ group, bracket }) {
           {groupStatus(group)} · {decided}/{group.matches.length} jogos
         </span>
       </header>
-      <StandingsTable group={group} bracket={bracket} />
-      <p className="px-3 pb-2 text-xs text-muted-foreground">
-        {group.qualifiers === 1 ? 'Avança o 1º colocado.' : `Avançam os ${group.qualifiers} primeiros colocados.`}
-      </p>
+      <StandingsTable group={group} bracket={bracket} roundRobin={roundRobin} />
+      {!roundRobin && (
+        <p className="px-3 pb-2 text-xs text-muted-foreground">
+          {group.qualifiers === 1 ? 'Avança o 1º colocado.' : `Avançam os ${group.qualifiers} primeiros colocados.`}
+        </p>
+      )}
       {group.blocked && (
         <p className="mx-3 mb-3 rounded-md border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-900 dark:border-orange-700 dark:bg-orange-950/30 dark:text-orange-200" data-testid={`group-tie-notice-${group.name}`}>
-          Há empate na zona de classificação que os critérios não resolvem. O organizador vai decidir e a tabela será atualizada.
+          {roundRobin ? 'Há empate que os critérios não resolvem.' : 'Há empate na zona de classificação que os critérios não resolvem.'} O organizador vai decidir e a tabela será atualizada.
         </p>
       )}
       <details className="group border-t" open={!group.complete || undefined} data-testid={`group-matches-${group.name}`}>

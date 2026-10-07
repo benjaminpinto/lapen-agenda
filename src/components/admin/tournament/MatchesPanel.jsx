@@ -19,6 +19,13 @@ const STATE_LABEL = {
   provisional: 'Avança (provisório)', open: '—', qualified: 'Classificado', eliminated: 'Eliminado', tie_pending: 'Empate — decisão do organizador',
 }
 
+/** Round robin has no next phase: a finished group shows places, not qualified/eliminated. */
+const stateLabel = (row, roundRobin) => {
+  if (!roundRobin) return STATE_LABEL[row.state]
+  if (['qualified', 'eliminated'].includes(row.state)) return row.position === 1 ? 'Campeão' : `${row.position}º lugar`
+  return STATE_LABEL[row.state === 'provisional' ? 'open' : row.state]
+}
+
 const resultText = (match) => {
   if (match.status !== 'completed') return null
   if (match.outcome === 'bye') return 'BYE'
@@ -133,7 +140,7 @@ function ResultDialog({ tournament, match, mode, onClose, onSaved }) {
   )
 }
 
-function Standings({ tournament, group, onChanged }) {
+function Standings({ tournament, group, roundRobin, onChanged }) {
   const { toast } = useToast()
   const [ranks, setRanks] = useState({})
   const decide = async (tie) => {
@@ -154,7 +161,7 @@ function Standings({ tournament, group, onChanged }) {
 
   return (
     <div className="rounded-md border border-stone-200 bg-white p-3" data-testid={`standings-${group.name}`}>
-      <p className="font-semibold text-stone-900 mb-2">Grupo {group.name}</p>
+      {!roundRobin && <p className="font-semibold text-stone-900 mb-2">Grupo {group.name}</p>}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -171,7 +178,7 @@ function Standings({ tournament, group, onChanged }) {
                 <td className="px-1">{row.played}</td><td className="px-1">{row.wins}</td><td className="px-1">{row.losses}</td>
                 <td className="px-1 whitespace-nowrap">{row.sets_won - row.sets_lost > 0 ? '+' : ''}{row.sets_won - row.sets_lost}</td>
                 <td className="px-1 whitespace-nowrap">{row.games_won - row.games_lost > 0 ? '+' : ''}{row.games_won - row.games_lost}</td>
-                <td className="pl-2 text-xs" data-testid={`standing-state-${group.name}-${row.registration_id}`}>{STATE_LABEL[row.state]}</td>
+                <td className="pl-2 text-xs" data-testid={`standing-state-${group.name}-${row.registration_id}`}>{stateLabel(row, roundRobin)}</td>
               </tr>
             ))}
           </tbody>
@@ -289,9 +296,9 @@ export default function MatchesPanel({ tournament, categories, reload }) {
 
       {groups.length > 0 && (
         <section className="space-y-3" data-testid="standings-section">
-          <h3 className="font-semibold text-stone-900">Classificação dos grupos</h3>
+          <h3 className="font-semibold text-stone-900">{current.draw_format === 'round_robin' ? 'Classificação' : 'Classificação dos grupos'}</h3>
           <div className="grid gap-3 lg:grid-cols-2">
-            {groups.map((group) => <Standings key={group.id} tournament={tournament} group={group} onChanged={() => { load(); reload() }} />)}
+            {groups.map((group) => <Standings key={group.id} tournament={tournament} group={group} roundRobin={current.draw_format === 'round_robin'} onChanged={() => { load(); reload() }} />)}
           </div>
         </section>
       )}

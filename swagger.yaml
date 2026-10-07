@@ -2360,7 +2360,8 @@ paths:
       tags: [Tournaments]
       summary: Edit a registration (any subset of the fields)
       description: |
-        status follows pending to confirmed/rejected/cancelled, waitlist to pending/confirmed/rejected/cancelled and confirmed to cancelled/withdrawn.
+        status follows pending to confirmed/rejected/cancelled, waitlist to pending/confirmed/rejected/cancelled, confirmed to cancelled/withdrawn and rejected or cancelled back to pending (reopen).
+        Reopening is only possible before the draw, clears the rejection reason and the seed, and does not use a place (the capacity is checked when it is confirmed again). It fails with duplicate_email or duplicate_member when the same person already holds a live registration in the category. withdrawn is final.
         After the draw only withdrawn is allowed for confirmed entries, and it turns that player's pending matches into walkovers for the opponents (what was played stays). user_id links an approved LAPEN member (null unlinks).
         seed needs a confirmed registration and a category with num_seeds. category_id moves it before the draw.
       security:

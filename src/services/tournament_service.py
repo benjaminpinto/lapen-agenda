@@ -37,8 +37,9 @@ REGISTRATION_TRANSITIONS = {
     'pending': {'confirmed', 'rejected', 'cancelled'},
     'waitlist': {'pending', 'confirmed', 'rejected', 'cancelled'},
     'confirmed': {'cancelled', 'withdrawn'},
-    'rejected': set(),
-    'cancelled': set(),
+    # Reopened as pending (never straight to confirmed), so the capacity check stays in the confirm step
+    'rejected': {'pending'},
+    'cancelled': {'pending'},
     'withdrawn': set(),
 }
 
@@ -636,8 +637,8 @@ def _check_registration_transition(current, target, category_status):
             raise TournamentError('A desistência só vale depois da publicação da chave. Antes disso, cancele a inscrição.', 409,
                                   code='draw_not_published')
     elif category_status != 'awaiting_draw' and (current == 'confirmed' or target in ('confirmed', 'pending')):
-        raise TournamentError('O sorteio desta categoria já foi feito: use desistência para quem está na chave.', 409,
-                              code='draw_exists')
+        advice = 'a inscrição não pode mais ser reaberta.' if current in ('rejected', 'cancelled') else 'use desistência para quem está na chave.'
+        raise TournamentError(f'O sorteio desta categoria já foi feito: {advice}', 409, code='draw_exists')
 
 
 def create_registration_manual(db, tournament_id, data, actor_id):

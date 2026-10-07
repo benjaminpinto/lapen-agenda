@@ -244,11 +244,62 @@ def test_confirm_reject_and_cancel(client, people):
     cancelled = patch_registration(client, headers, tournament['id'], c, status='cancelled')
     assert cancelled.status_code == 200 and cancelled.get_json()['registration']['seed'] is None
 
-    # Terminal states do not come back
-    assert patch_registration(client, headers, tournament['id'], b, status='confirmed').status_code == 409
-    assert patch_registration(client, headers, tournament['id'], c, status='pending').get_json()['code'] == 'invalid_transition'
+    # Rejected and cancelled can only be reopened (as pending), never jump back to confirmed
+    assert patch_registration(client, headers, tournament['id'], b, status='confirmed').get_json()['code'] == 'invalid_transition'
+    assert patch_registration(client, headers, tournament['id'], c, status='confirmed').get_json()['code'] == 'invalid_transition'
+    # A withdrawal is final
+    sql("UPDATE tournament_registrations SET status = 'withdrawn' WHERE id = %s", (a,))
+    assert patch_registration(client, headers, tournament['id'], a, status='pending').get_json()['code'] == 'invalid_transition'
     assert patch_registration(client, headers, tournament['id'], a, status='bogus').status_code == 400
     assert 'registration_updated' in audit_actions(tournament['id'])
+
+
+def test_rejected_and_cancelled_registrations_can_be_reopened(client, people):
+    headers = people.admin.headers
+    tournament, category = open_tournament(client, headers, 'Test Tourn Reopen', min_entries=2, max_entries=2, num_seeds=1)
+    rejected, cancelled = (signup(client, tournament, category, f'{n}@example.com') for n in ('rej', 'can'))
+    patch_registration(client, headers, tournament['id'], rejected, status='rejected', rejection_reason='Fora da faixa etária')
+    patch_registration(client, headers, tournament['id'], cancelled, status='confirmed')
+    patch_registration(client, headers, tournament['id'], cancelled, seed=1)
+    patch_registration(client, headers, tournament['id'], cancelled, status='cancelled')
+
+    reopened = patch_registration(client, headers, tournament['id'], rejected, status='pending')
+    assert reopened.status_code == 200
+    assert (reopened.get_json()['registration']['status'], reopened.get_json()['registration']['rejection_reason']) == ('pending', None)
+    reopened = patch_registration(client, headers, tournament['id'], cancelled, status='pending')
+    assert (reopened.get_json()['registration']['status'], reopened.get_json()['registration']['seed']) == ('pending', None)
+
+    # Reopening does not use a place: the capacity is checked when it is confirmed again
+    for n in range(2):
+        patch_registration(client, headers, tournament['id'], signup(client, tournament, category, f'full{n}@example.com'), status='confirmed')
+    full = patch_registration(client, headers, tournament['id'], cancelled, status='confirmed')
+    assert full.status_code == 409 and full.get_json()['code'] == 'category_full'
+
+
+def test_reopening_is_blocked_by_a_live_registration_with_the_same_email(client, people):
+    headers = people.admin.headers
+    tournament, category = open_tournament(client, headers, 'Test Tourn ReopenDup')
+    first = signup(client, tournament, category, 'again@example.com')
+    patch_registration(client, headers, tournament['id'], first, status='rejected')
+    signup(client, tournament, category, 'again@example.com')  # a rejected person may sign up again
+
+    blocked = patch_registration(client, headers, tournament['id'], first, status='pending')
+    assert blocked.status_code == 409 and blocked.get_json()['code'] == 'duplicate_email'
+    assert registration_row(first)['status'] == 'rejected'
+
+
+def test_reopening_is_blocked_once_the_category_is_drawn(client, people):
+    headers = people.admin.headers
+    tournament, category = open_tournament(client, headers, 'Test Tourn ReopenDrawn')
+    rejected, cancelled = (signup(client, tournament, category, f'{n}@example.com') for n in ('rej', 'can'))
+    patch_registration(client, headers, tournament['id'], rejected, status='rejected')
+    patch_registration(client, headers, tournament['id'], cancelled, status='cancelled')
+
+    sql("UPDATE tournament_categories SET status = 'published' WHERE id = %s", (category['id'],))
+    for registration_id in (rejected, cancelled):
+        blocked = patch_registration(client, headers, tournament['id'], registration_id, status='pending')
+        assert blocked.status_code == 409 and blocked.get_json()['code'] == 'draw_exists'
+        assert 'reaberta' in blocked.get_json()['error']
 
 
 def test_places_are_limited_and_a_freed_place_goes_to_the_waitlist(client, people):

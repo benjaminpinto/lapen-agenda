@@ -263,6 +263,7 @@ export default function RegistrationsPanel({ tournament, categories, reload }) {
     if (['pending', 'waitlist'].includes(registration.status) && before) items.push({ key: 'confirm', label: 'Confirmar', primary: true, run: () => patch(registration, { status: 'confirmed' }, 'Inscrição confirmada') })
     if (['pending', 'waitlist'].includes(registration.status)) items.push({ key: 'reject', label: 'Recusar', run: () => setRejecting([registration.id]) })
     if (['pending', 'waitlist', 'confirmed'].includes(registration.status) && (before || registration.status !== 'confirmed')) items.push({ key: 'cancel', label: 'Cancelar', run: () => patch(registration, { status: 'cancelled' }, 'Inscrição cancelada') })
+    if (['rejected', 'cancelled'].includes(registration.status) && before) items.push({ key: 'reopen', label: 'Reabrir', run: () => patch(registration, { status: 'pending' }, 'Inscrição reaberta: voltou para pendente') })
     if (registration.status === 'confirmed' && !before) items.push({ key: 'withdraw', label: 'Desistência', run: () => patch(registration, { status: 'withdrawn' }, 'Desistência registrada: os jogos pendentes viraram W.O.') })
     return items
   }

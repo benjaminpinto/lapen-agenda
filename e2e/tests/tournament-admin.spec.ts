@@ -144,6 +144,31 @@ test.describe('Tournament admin panel', () => {
     await expect(page.locator('[data-testid^="registration-status-"]').filter({ hasText: 'Pendente' })).toHaveCount(2);
   });
 
+  test('a rejected or cancelled registration can be reopened as pending', async ({ page, request }) => {
+    await seedTournament(request, 'registration_open');
+    await loginAsAdmin(page, admin);
+    await page.getByTestId('pending-registrations').click();
+    const pending = page.locator('[data-testid^="registration-status-"]').filter({ hasText: 'Pendente' });
+    await expect(pending).toHaveCount(2);
+    await expect(page.locator('[data-testid^="reopen-registration-"]')).toHaveCount(0);
+
+    await page.locator('[data-testid^="reject-registration-"]').first().click();
+    await page.getByTestId('reject-reason').fill('Teste de reabertura');
+    await page.getByTestId('reject-confirm').click();
+    await expect(page.locator('[data-testid^="registration-status-"]').filter({ hasText: 'Recusada' })).toHaveCount(1);
+    await expect(page.getByText('Recusada: Teste de reabertura')).toBeVisible();
+
+    await page.locator('[data-testid^="cancel-registration-"]').first().click();
+    await expect(page.locator('[data-testid^="registration-status-"]').filter({ hasText: 'Cancelada' })).toHaveCount(1);
+    await expect(page.locator('[data-testid^="reopen-registration-"]')).toHaveCount(2);
+
+    await page.locator('[data-testid^="reopen-registration-"]').first().click();
+    await page.locator('[data-testid^="reopen-registration-"]').first().click();
+    await expect(pending).toHaveCount(2);
+    await expect(page.locator('[data-testid^="reopen-registration-"]')).toHaveCount(0);
+    await expect(page.getByText('Recusada: Teste de reabertura')).toHaveCount(0);
+  });
+
   test('cancelling a tournament asks for confirmation', async ({ page, request }) => {
     const seeded = await seedTournament(request, 'registration_open');
     await loginAsAdmin(page, admin);

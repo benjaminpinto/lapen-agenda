@@ -4,6 +4,7 @@ import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {useToast} from '@/contexts/ToastContext'
+import CategoryChips from './CategoryChips'
 import ConfirmDialog from './ConfirmDialog'
 import {ADMIN_API, errorMessage, request} from './tournamentApi'
 import {OUTCOMES} from './labels'
@@ -284,9 +285,7 @@ export default function MatchesPanel({ tournament, categories, reload }) {
           {tournament.status === 'registration_closed' ? 'Inicie o torneio para lançar resultados.' : 'Os resultados só podem ser lançados com o torneio em andamento.'}
         </p>
       )}
-      <select data-testid="matches-category" aria-label="Categoria" className={selectClass} value={current.id} onChange={(event) => { setDraw(null); setCategoryId(event.target.value) }}>
-        {playable.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-      </select>
+      <CategoryChips testId="matches-category" categories={playable} value={current.id} onChange={(id) => { setDraw(null); setCategoryId(id) }} />
 
       {groups.length > 0 && (
         <section className="space-y-3" data-testid="standings-section">

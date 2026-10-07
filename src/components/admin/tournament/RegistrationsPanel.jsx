@@ -6,6 +6,7 @@ import {Textarea} from '@/components/ui/textarea'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {CalendarOff, MessageCircle, Plus, Search} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
+import CategoryChips from './CategoryChips'
 import StatusBadge from './StatusBadge'
 import UnavailabilityDialog from './schedule/UnavailabilityDialog'
 import {ADMIN_API, errorMessage, request} from './tournamentApi'
@@ -272,11 +273,8 @@ export default function RegistrationsPanel({ tournament, categories, reload }) {
 
   return (
     <div data-testid="registrations-panel" className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <select data-testid="filter-category" aria-label="Categoria" className={selectClass} value={filters.category} onChange={(event) => setFilters({ ...filters, category: event.target.value })}>
-          <option value="">Todas as categorias</option>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+      <CategoryChips testId="filter-category" categories={categories} allLabel="Todas" value={filters.category} onChange={(category) => setFilters({ ...filters, category })} />
+      <div className="grid gap-3 md:grid-cols-3">
         <select data-testid="filter-status" aria-label="Situação" className={selectClass} value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
           <option value="">Todas as situações</option>
           {Object.entries(REGISTRATION_STATUS).map(([value, info]) => <option key={value} value={value}>{info.label}</option>)}

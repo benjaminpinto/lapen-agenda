@@ -144,7 +144,7 @@ const Home = () => {
         <TrendingUp className="mr-2 h-5 w-5 text-primary" />
         Acesso Rápido
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4 mb-10">
         <QuickActionCard
           to="/view"
           icon={<Users className="h-6 w-6 text-purple-600" />}
@@ -167,7 +167,17 @@ const Home = () => {
           color="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/50"
         />
         <QuickActionCard
+          to="/tournaments"
+          testId="home-quick-tournaments"
+          icon={<Trophy className="h-6 w-6 text-orange-600" />}
+          title="Torneios"
+          description="Inscrições e chaves"
+          color="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-900/50"
+        />
+        <QuickActionCard
           to="/challenges"
+          testId="home-quick-challenges"
+          className="hidden md:block"
           icon={<Swords className="h-6 w-6 text-green-600" />}
           title="Desafios"
           description="Crie disputas"
@@ -336,8 +346,8 @@ const Home = () => {
   )
 }
 
-const QuickActionCard = ({ to, icon, title, description, color }) => (
-  <Link to={to} className="block">
+const QuickActionCard = ({ to, icon, title, description, color, className = 'block', testId }) => (
+  <Link to={to} className={className} data-testid={testId}>
     <div className={`h-full p-4 rounded-xl border transition-all duration-300 hover:scale-105 hover:shadow-md ${color} flex flex-col items-center text-center justify-center gap-2`}>
       <div className="p-2 bg-white dark:bg-black/20 rounded-full shadow-sm">
         {icon}

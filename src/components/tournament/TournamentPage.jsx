@@ -7,11 +7,13 @@ import {TOURNAMENT_STATUS} from '@/components/admin/tournament/labels'
 import {BracketTab, EntriesTab, GroupsTab, ProgressTab, RulesTab} from './CategoryTabs'
 import MatchListTab from './MatchListTab'
 import RefreshBar from './RefreshBar'
+import ScheduleTab from './ScheduleTab'
 import {formatDate} from './format'
 import {PUBLIC_API} from './tournamentApi'
 import useTournamentData from './useTournamentData'
 
 const TABS = [
+  { key: 'cronograma', label: 'Cronograma' },
   { key: 'andamento', label: 'Andamento' },
   { key: 'grupos', label: 'Grupos' },
   { key: 'chave', label: 'Chave' },
@@ -35,9 +37,11 @@ export default function TournamentPage() {
   const tournament = page.data?.tournament
   const categories = page.data?.categories || []
   const category = categories.find((c) => c.id === Number(params.get('categoria'))) || categories[0]
+  const tabs = tournament?.schedule_published ? TABS : TABS.filter((t) => t.key !== 'cronograma')
   const requestedTab = params.get('aba')
-  const tab = TABS.some((t) => t.key === requestedTab) ? requestedTab : 'andamento'
-  const detail = useTournamentData(category ? `${PUBLIC_API}/${slug}/categories/${category.id}` : null)
+  const tab = tabs.some((t) => t.key === requestedTab) ? requestedTab : 'andamento'
+  const scheduleTab = tab === 'cronograma'
+  const detail = useTournamentData(!scheduleTab && category ? `${PUBLIC_API}/${slug}/categories/${category.id}` : null)
 
   const choose = (key, value) => setParams((previous) => {
     const next = new URLSearchParams(previous)
@@ -79,7 +83,7 @@ export default function TournamentPage() {
 
       {category && (
         <>
-          {categories.length > 1 && (
+          {!scheduleTab && categories.length > 1 && (
             <div className="flex flex-wrap gap-2" role="group" aria-label="Categoria" data-testid="category-chips">
               {categories.map((c) => (
                 <button
@@ -94,7 +98,7 @@ export default function TournamentPage() {
           )}
 
           <div role="tablist" aria-label="Seções do torneio" className="flex gap-1 overflow-x-auto border-b" data-testid="tournament-tabs">
-            {TABS.map((t) => (
+            {tabs.map((t) => (
               <button
                 key={t.key} type="button" role="tab" aria-selected={t.key === tab} data-testid={`tab-button-${t.key}`}
                 onClick={() => choose('aba', t.key)}
@@ -105,13 +109,14 @@ export default function TournamentPage() {
             ))}
           </div>
 
-          {!listTab && <RefreshBar updatedAt={detail.updatedAt} refreshing={page.refreshing || detail.refreshing} error={page.error || detail.error} onRefresh={refreshAll} />}
+          {!listTab && !scheduleTab && <RefreshBar updatedAt={detail.updatedAt} refreshing={page.refreshing || detail.refreshing} error={page.error || detail.error} onRefresh={refreshAll} />}
 
-          <div role="tabpanel" aria-label={TABS.find((t) => t.key === tab).label}>
-            {listTab && <MatchListTab key={`${category.id}-${tab}`} slug={slug} categoryId={category.id} view={tab === 'jogos' ? 'upcoming' : 'results'} published={tournament.schedule_published} />}
-            {!listTab && detail.error && !detail.data && <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800" data-testid="category-error">{detail.error}</p>}
-            {!listTab && detail.loading && <p className="py-8 text-center text-sm text-muted-foreground" data-testid="category-loading">Carregando…</p>}
-            {!listTab && detail.data && (
+          <div role="tabpanel" aria-label={tabs.find((t) => t.key === tab).label}>
+            {scheduleTab && <ScheduleTab slug={slug} />}
+            {!scheduleTab && listTab && <MatchListTab key={`${category.id}-${tab}`} slug={slug} categoryId={category.id} view={tab === 'jogos' ? 'upcoming' : 'results'} published={tournament.schedule_published} />}
+            {!scheduleTab && !listTab && detail.error && !detail.data && <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800" data-testid="category-error">{detail.error}</p>}
+            {!scheduleTab && !listTab && detail.loading && <p className="py-8 text-center text-sm text-muted-foreground" data-testid="category-loading">Carregando…</p>}
+            {!scheduleTab && !listTab && detail.data && (
               <>
                 {tab === 'andamento' && <ProgressTab data={detail.data} onTab={(key) => choose('aba', key)} />}
                 {tab === 'grupos' && <GroupsTab data={detail.data} />}

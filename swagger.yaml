@@ -457,6 +457,62 @@ components:
         planned_time: {type: string, nullable: true, example: "09:30"}
         court: {type: string, nullable: true}
 
+    PublicSchedule:
+      type: object
+      description: The published day grid of a tournament. Read-only; published is false and the arrays are empty until the organizer publishes.
+      properties:
+        tournament: {$ref: '#/components/schemas/PublicTournament'}
+        published: {type: boolean}
+        slot_minutes: {type: integer, example: 90}
+        courts:
+          type: array
+          items:
+            type: object
+            properties:
+              id: {type: integer}
+              name: {type: string}
+        windows:
+          type: array
+          description: Every cell of the grid (a session court on a day at a start time), so the screen draws the same table the organizer sees
+          items:
+            type: object
+            properties:
+              court_id: {type: integer}
+              date: {type: string, format: date}
+              time: {type: string, example: "16:00"}
+              blocked: {type: boolean}
+        matches:
+          type: array
+          description: Only matches that already have a date, time and court
+          items:
+            type: object
+            properties:
+              id: {type: integer}
+              category_id: {type: integer}
+              category_name: {type: string}
+              stage: {type: string, enum: [group, knockout]}
+              round_number: {type: integer}
+              round_name: {type: string, example: "Grupo C · Rodada 1"}
+              group: {type: string, nullable: true}
+              status: {type: string, enum: [pending, completed]}
+              outcome: {type: string, nullable: true, enum: [normal, wo, double_wo, retired, bye]}
+              score: {type: string, nullable: true}
+              window:
+                type: object
+                properties:
+                  court_id: {type: integer}
+                  date: {type: string, format: date}
+                  time: {type: string, example: "16:00"}
+              sides:
+                type: array
+                minItems: 2
+                maxItems: 2
+                items:
+                  type: object
+                  properties:
+                    name: {type: string}
+                    defined: {type: boolean}
+
     PublicCategorySummary:
       type: object
       properties:
@@ -3092,6 +3148,26 @@ paths:
                             category: {type: object, properties: {id: {type: integer}, name: {type: string}}}
         '400':
           description: Missing or invalid view or stage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentError'
+
+  /api/tournaments/{slug}/schedule:
+    parameters:
+      - {name: slug, in: path, required: true, schema: {type: string}}
+    get:
+      tags: [Tournaments]
+      summary: The published schedule grid (days, courts, times) of the tournament
+      description: Read-only. published is false and the arrays are empty until the organizer publishes the schedule. Only matches that already have a date, time and court are listed; the full match list comes from the category and matches endpoints.
+      responses:
+        '200':
+          description: Schedule
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PublicSchedule'}
+        '404':
+          description: Unknown, draft or cancelled tournament
           content:
             application/json:
               schema:

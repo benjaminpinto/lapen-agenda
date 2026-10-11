@@ -75,3 +75,9 @@ def category(slug, category_id):
 def matches(slug):
     return _read(lambda db: public.list_matches(
         db, slug, request.args.get('view'), request.args.get('category', type=int), request.args.get('stage') or None))
+
+
+@tournaments_bp.route('/<slug>/schedule', methods=['GET'])
+@svc.tournament_errors
+def schedule(slug):
+    return _read(lambda db: public.get_schedule(db, slug))

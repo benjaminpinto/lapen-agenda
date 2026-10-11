@@ -8,6 +8,8 @@ import re
 
 from src.services import tournament_draw as draw
 from src.services import tournament_results as results
+from src.services import tournament_schedule as sched
+from src.services import tournament_schedule_service as schedule_service
 from src.services.tournament_service import ACTIVE_STATUSES, DRAWN_CATEGORY_STATUSES, TournamentError
 from src.utils.time_utils import local_now
 
@@ -20,6 +22,15 @@ LIST_LIMIT = 200
 
 def _iso(value):
     return value.isoformat() if value is not None else None
+
+
+def _hhmm(value):
+    return value.strftime('%H:%M') if value is not None else None
+
+
+def _window(key):
+    """(court_id, date, time) -> the JSON the grid uses to place a match."""
+    return None if key is None else {'court_id': key[0], 'date': key[1].isoformat(), 'time': _hhmm(key[2])}
 
 
 def format_text(tournament):
@@ -352,3 +363,37 @@ def list_matches(db, slug, view, category_id=None, stage=None):
 def _total_rounds(db, category_id):
     return db.execute("SELECT COALESCE(MAX(round_number), 0) AS n FROM tournament_matches WHERE category_id = %s AND stage = 'knockout'",
                       (category_id,)).fetchone()['n']
+
+
+def get_schedule(db, slug):
+    """The published day-by-day schedule (date, time and court of every placed match), across all categories.
+
+    Read-only and empty until the organizer publishes: no conflicts, no unscheduled list and no contact data. The windows
+    mark every cell of the grid so the public screen draws the same court-by-time table the organizer sees.
+    """
+    now = local_now()
+    tournament = _load_tournament(db, slug)
+    empty = {'tournament': _tournament(tournament, now), 'published': False, 'slot_minutes': sched.SLOT_MINUTES,
+             'courts': [], 'windows': [], 'matches': []}
+    if tournament['schedule_published_at'] is None:
+        return empty
+
+    state = schedule_service.State(db, tournament)
+    matches = []
+    for match in state.matches:
+        if match['window'] is None:
+            continue
+        row = state.rows[match['id']]
+        matches.append({
+            'id': match['id'], 'category_id': match['category_id'], 'category_name': state.category_by_id[match['category_id']]['name'],
+            'stage': match['stage'], 'round_number': match['round_number'], 'round_name': state.round_name(row),
+            'group': row['group_name'], 'status': match['status'], 'outcome': row['outcome'], 'score': row['score'],
+            'window': _window(match['window']),
+            'sides': [{'name': state.side_name(row, slot), 'defined': row[f'entry{slot}_id'] is not None} for slot in (1, 2)],
+        })
+    return {
+        'tournament': _tournament(tournament, now), 'published': True, 'slot_minutes': sched.SLOT_MINUTES,
+        'courts': [{'id': c['id'], 'name': c['name']} for c in state.courts if c['active']],
+        'windows': [{'court_id': w.court_id, 'date': w.date.isoformat(), 'time': _hhmm(w.time), 'blocked': w.blocked} for w in state.windows],
+        'matches': matches,
+    }

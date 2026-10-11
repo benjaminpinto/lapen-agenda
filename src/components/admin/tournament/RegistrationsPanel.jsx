@@ -4,7 +4,7 @@ import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Textarea} from '@/components/ui/textarea'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
-import {CalendarOff, MessageCircle, Plus, Search} from 'lucide-react'
+import {CalendarOff, Check, MessageCircle, Plus, Search} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
 import CategoryChips from './CategoryChips'
 import StatusBadge from './StatusBadge'
@@ -13,6 +13,8 @@ import {ADMIN_API, errorMessage, request} from './tournamentApi'
 import {REGISTRATION_STATUS} from './labels'
 
 const selectClass = 'h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm'
+
+const normalizeText = (value) => (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 
 const Field = ({ label, id, children }) => (
   <div className="space-y-1.5"><Label htmlFor={id}>{label}</Label>{children}</div>
@@ -65,8 +67,8 @@ function EditDialog({ registration, categories, tournament, onClose, onSaved }) 
   }, [])
 
   const shown = useMemo(() => {
-    const term = search.trim().toLowerCase()
-    return members.filter((u) => !term || `${u.name} ${u.short_name || ''} ${u.email}`.toLowerCase().includes(term)).slice(0, 30)
+    const term = normalizeText(search.trim())
+    return members.filter((u) => !term || normalizeText(`${u.name} ${u.short_name || ''} ${u.email}`).includes(term))
   }, [members, search])
 
   const submit = async (event) => {
@@ -118,11 +120,31 @@ function EditDialog({ registration, categories, tournament, onClose, onSaved }) 
           <div className="space-y-1.5 rounded-md border border-stone-200 p-3">
             <Label htmlFor="member-search">Vínculo com membro LAPEN (só aprovados)</Label>
             <Input id="member-search" data-testid="edit-member-search" placeholder="Buscar por nome ou e-mail" value={search} onChange={(event) => setSearch(event.target.value)} />
-            <select data-testid="edit-member" className={selectClass} value={form.user_id} onChange={set('user_id')}>
-              <option value="">— sem vínculo —</option>
-              {form.user_id !== '' && !shown.some((u) => u.id === Number(form.user_id)) && <option value={form.user_id}>Membro #{form.user_id} (vinculado)</option>}
-              {shown.map((u) => <option key={u.id} value={u.id}>{u.name} · {u.email}</option>)}
-            </select>
+            <div className="max-h-48 overflow-y-auto rounded-md border border-stone-200 bg-white" data-testid="edit-member-list">
+              <button
+                type="button" onClick={() => setForm((current) => ({ ...current, user_id: '' }))} data-testid="member-option-none"
+                className={`flex min-h-[44px] w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-stone-50 ${form.user_id === '' ? 'bg-amber-50 font-semibold' : ''}`}
+              >
+                <span>— sem vínculo —</span>
+                {form.user_id === '' && <Check className="h-4 w-4 text-amber-700" aria-hidden="true" />}
+              </button>
+              {form.user_id !== '' && !members.some((u) => u.id === Number(form.user_id)) && (
+                <div className="flex items-center justify-between bg-amber-50 px-3 py-2 text-sm font-semibold">
+                  <span>Membro #{form.user_id} (vinculado)</span>
+                  <Check className="h-4 w-4 text-amber-700" aria-hidden="true" />
+                </div>
+              )}
+              {shown.map((u) => (
+                <button
+                  key={u.id} type="button" onClick={() => setForm((current) => ({ ...current, user_id: u.id }))} data-testid={`member-option-${u.id}`}
+                  className={`flex min-h-[44px] w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-stone-50 ${Number(form.user_id) === u.id ? 'bg-amber-50 font-semibold' : ''}`}
+                >
+                  <span className="min-w-0 truncate">{u.name} · {u.email}</span>
+                  {Number(form.user_id) === u.id && <Check className="h-4 w-4 shrink-0 text-amber-700" aria-hidden="true" />}
+                </button>
+              ))}
+              {shown.length === 0 && <p className="px-3 py-2 text-sm text-stone-500">Nenhum membro encontrado.</p>}
+            </div>
             <p className="text-xs text-stone-500">O vínculo faz o resultado aparecer nas estatísticas do membro.</p>
           </div>
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">

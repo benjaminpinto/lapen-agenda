@@ -75,7 +75,7 @@ export default function SessionDialog({ tournament, courts, session, onClose, on
               {courts.map((c) => (
                 <label key={c.id} className="flex min-h-[40px] items-center gap-2 text-sm">
                   <input type="checkbox" className="h-5 w-5 accent-amber-700" checked={form.court_ids.includes(c.id)} onChange={() => toggleCourt(c.id)} data-testid={`session-court-${c.id}`} />
-                  {c.name}
+                  {c.name}{c.type ? ` (${c.type})` : ''}
                 </label>
               ))}
             </div>

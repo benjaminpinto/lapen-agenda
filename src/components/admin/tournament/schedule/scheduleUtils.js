@@ -61,7 +61,11 @@ export function conflictLevels(conflicts) {
   return levels
 }
 
-export const courtName = (courts, id) => courts.find((c) => c.id === id)?.name ?? `Quadra #${id}`
+export const courtName = (courts, id) => {
+  const court = courts.find((c) => c.id === id)
+  if (!court) return `Quadra #${id}`
+  return court.type ? `${court.name} (${court.type})` : court.name
+}
 
 export const publishedText = (value) => {
   if (!value) return null

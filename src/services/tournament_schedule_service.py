@@ -81,7 +81,7 @@ class State:
         self.sessions = self._sessions(db, tid)
         self.blocks = {(r['court_id'], r['play_date'], r['start_time']) for r in db.execute(
             'SELECT court_id, play_date, start_time FROM tournament_slot_blocks WHERE tournament_id = %s', (tid,)).fetchall()}
-        self.courts = db.execute('SELECT id, name, COALESCE(active, TRUE) AS active FROM courts ORDER BY id').fetchall()
+        self.courts = db.execute('SELECT id, name, type, COALESCE(active, TRUE) AS active FROM courts ORDER BY id').fetchall()
         self.court_name = {c['id']: c['name'] for c in self.courts}
         self.windows = sched.build_windows(self.sessions, self.blocks, [c['id'] for c in self.courts])
         self.valid = {w.key for w in self.windows if not w.blocked}
@@ -228,7 +228,7 @@ def schedule_payload(state):
         'tournament': {'id': t['id'], 'start_date': _iso(t['start_date']), 'end_date': _iso(t['end_date']), 'status': t['status'],
                        'schedule_published_at': _iso(t['schedule_published_at'])},
         'slot_minutes': sched.SLOT_MINUTES,
-        'courts': [{'id': c['id'], 'name': c['name']} for c in state.courts if c['active']],
+        'courts': [{'id': c['id'], 'name': c['name'], 'type': c['type']} for c in state.courts if c['active']],
         'sessions': [{'id': s['id'], 'date': s['date'].isoformat(), 'start': _hhmm(s['start']), 'end': _hhmm(s['end']),
                       'court_ids': s['court_ids'], 'leftover_minutes': sched.session_leftover_minutes(s),
                       'windows': sum(1 for w in state.windows if w.session_id == s['id'])} for s in state.sessions],

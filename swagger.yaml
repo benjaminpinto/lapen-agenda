@@ -471,6 +471,7 @@ components:
             properties:
               id: {type: integer}
               name: {type: string}
+              type: {type: string, example: Saibro}
         windows:
           type: array
           description: Every cell of the grid (a session court on a day at a start time), so the screen draws the same table the organizer sees
@@ -691,7 +692,7 @@ components:
         courts:
           type: array
           description: Active courts (read only, from the courts table)
-          items: {type: object, properties: {id: {type: integer}, name: {type: string}}}
+          items: {type: object, properties: {id: {type: integer}, name: {type: string}, type: {type: string, example: Saibro}}}
         sessions:
           type: array
           items:

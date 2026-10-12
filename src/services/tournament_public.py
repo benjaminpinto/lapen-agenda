@@ -91,7 +91,7 @@ def _person(people, registration_id):
 def _matches(db, category_id, published):
     """The category's matches. Until the schedule is published, no date, time or court is shown."""
     rows = db.execute(
-        "SELECT m.*, c.name || ' (' || c.type || ')' AS court_name FROM tournament_matches m LEFT JOIN courts c ON c.id = m.court_id "
+        'SELECT m.*, c.name AS court_name FROM tournament_matches m LEFT JOIN courts c ON c.id = m.court_id '
         'WHERE m.category_id = %s ORDER BY m.stage, m.round_number, m.bracket_position', (category_id,)).fetchall()
     if published:
         return rows

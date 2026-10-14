@@ -1,4 +1,6 @@
+import {Printer} from 'lucide-react'
 import {useMemo, useState} from 'react'
+import {Button} from '@/components/ui/button'
 import {
     buildDays,
     courtName,
@@ -7,6 +9,7 @@ import {
     toneFor,
     windowKey
 } from '@/components/admin/tournament/schedule/scheduleUtils'
+import PrintSchedule from './PrintSchedule'
 import RefreshBar from './RefreshBar'
 import {PUBLIC_API} from './tournamentApi'
 import useTournamentData from './useTournamentData'
@@ -53,20 +56,26 @@ export default function ScheduleTab({ slug }) {
 
       {data?.published && current && (
         <>
-          <div role="tablist" aria-label="Dias do cronograma" className="flex flex-wrap gap-1" data-testid="schedule-days">
-            {days.map((d) => {
-              const placed = [...d.windows.values()].filter((w) => byWindow.has(windowKey(w))).length
-              const isCurrent = d.date === current.date
-              return (
-                <button
-                  key={d.date} type="button" role="tab" aria-selected={isCurrent} data-testid={`schedule-day-${d.date}`}
-                  onClick={() => setDay(d.date)}
-                  className={`min-h-[44px] rounded-md border px-3 text-sm font-medium ${isCurrent ? 'border-amber-800 bg-amber-800 text-white' : 'bg-card hover:bg-muted'}`}
-                >
-                  {dayTitle(d.date)} <span className="text-xs opacity-80">· {placed}/{d.windows.size}</span>
-                </button>
-              )
-            })}
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div role="tablist" aria-label="Dias do cronograma" className="flex flex-wrap gap-1" data-testid="schedule-days">
+              {days.map((d) => {
+                const placed = [...d.windows.values()].filter((w) => byWindow.has(windowKey(w))).length
+                const isCurrent = d.date === current.date
+                return (
+                  <button
+                    key={d.date} type="button" role="tab" aria-selected={isCurrent} data-testid={`schedule-day-${d.date}`}
+                    onClick={() => setDay(d.date)}
+                    className={`min-h-[44px] rounded-md border px-3 text-sm font-medium ${isCurrent ? 'border-amber-800 bg-amber-800 text-white' : 'bg-card hover:bg-muted'}`}
+                  >
+                    {dayTitle(d.date)} <span className="text-xs opacity-80">· {placed}/{d.windows.size}</span>
+                  </button>
+                )
+              })}
+            </div>
+            <Button type="button" variant="outline" size="sm" className="min-h-[44px]" onClick={() => window.print()} data-testid="schedule-print-button">
+              <Printer className="mr-2 h-4 w-4" aria-hidden="true" />
+              Imprimir cronograma
+            </Button>
           </div>
 
           <div className="overflow-x-auto rounded-lg border bg-card">
@@ -100,6 +109,7 @@ export default function ScheduleTab({ slug }) {
               </tbody>
             </table>
           </div>
+          <PrintSchedule data={data} days={days} byWindow={byWindow} updatedAt={updatedAt} />
         </>
       )}
     </div>

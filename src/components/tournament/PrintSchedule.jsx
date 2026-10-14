@@ -1,19 +1,8 @@
-import {createPortal} from 'react-dom'
+import PrintRoot from '@/components/ui/PrintRoot'
 import {courtName, dayTitle, windowKey} from '@/components/admin/tournament/schedule/scheduleUtils'
 import {formatDate} from './format'
 
 const DAYS_PER_SHEET = 4
-
-// Only mounted on the Cronograma tab, so these rules never touch printing anywhere else.
-// On paper the app is hidden and only the sheets show: A4 landscape, black on white, no fills (saves ink).
-const PRINT_CSS = `
-@media screen { .schedule-print { display: none; } }
-@media print {
-  @page { size: A4 landscape; margin: 8mm; }
-  html, body { background: #fff !important; }
-  body > *:not(.schedule-print) { display: none !important; }
-  .schedule-print { display: block; background: #fff; color: #000; }
-}`
 
 function Day({ day, data, byWindow }) {
   return (
@@ -67,9 +56,8 @@ export default function PrintSchedule({ data, days, byWindow, updatedAt }) {
   ].filter(Boolean).join(' · ')
   const updated = updatedAt?.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 
-  return createPortal(
-    <div className="schedule-print" data-testid="print-schedule">
-      <style>{PRINT_CSS}</style>
+  return (
+    <PrintRoot testId="print-schedule">
       {sheets.map((sheet, index) => (
         <section key={index} className="break-after-page last:break-after-auto" data-testid={`print-sheet-${index + 1}`}>
           <header className="mb-2 border-b border-black pb-1 text-[9pt] leading-tight">
@@ -88,7 +76,6 @@ export default function PrintSchedule({ data, days, byWindow, updatedAt }) {
           </div>
         </section>
       ))}
-    </div>,
-    document.body,
+    </PrintRoot>
   )
 }

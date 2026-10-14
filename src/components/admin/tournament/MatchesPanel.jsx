@@ -7,13 +7,12 @@ import {useToast} from '@/contexts/ToastContext'
 import CategoryChips from './CategoryChips'
 import ConfirmDialog from './ConfirmDialog'
 import {ADMIN_API, errorMessage, request} from './tournamentApi'
-import {OUTCOMES} from './labels'
+import {OUTCOMES, PLAYING_STATUSES} from './labels'
 import {entryLabel, sideLabel} from './drawUtils'
 import ScoreGrid from '@/components/shared/ScoreGrid'
 import {emptyGrid, gridFromScore, isFilled, needsSuperTiebreak, SCORE_COLUMNS, scoreFromGrid, winnerSide} from '@/utils/scoreGrid'
 
 const selectClass = 'h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm'
-const PLAYING = ['published', 'group_stage', 'knockout_stage', 'finished']
 
 const STATE_LABEL = {
   provisional: 'Avança (provisório)', open: '—', qualified: 'Classificado', eliminated: 'Eliminado', tie_pending: 'Empate — decisão do organizador',
@@ -239,7 +238,7 @@ function MatchRow({ match, tournament, onRecord, onCorrect, onAnnul }) {
 
 export default function MatchesPanel({ tournament, categories, reload }) {
   const { toast } = useToast()
-  const playable = categories.filter((category) => PLAYING.includes(category.status))
+  const playable = categories.filter((category) => PLAYING_STATUSES.includes(category.status))
   const [categoryId, setCategoryId] = useState('')
   const [draw, setDraw] = useState(null)
   const [groups, setGroups] = useState([])

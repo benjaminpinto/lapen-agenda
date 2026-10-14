@@ -12,6 +12,7 @@ import CategoriesPanel from './CategoriesPanel'
 import RegistrationsPanel from './RegistrationsPanel'
 import DrawPanel from './DrawPanel'
 import MatchesPanel from './MatchesPanel'
+import PrintPanel from './PrintPanel'
 import SchedulePanel from './schedule/SchedulePanel'
 import {ADMIN_API, errorMessage, request} from './tournamentApi'
 import {formatDate, TOURNAMENT_STATUS} from './labels'
@@ -33,6 +34,7 @@ const TABS = [
   ['sorteio', 'Sorteio'],
   ['cronograma', 'Cronograma'],
   ['partidas', 'Partidas'],
+  ['imprimir', 'Imprimir folhas'],
 ]
 
 export default function AdminTournamentDetail() {
@@ -161,6 +163,7 @@ export default function AdminTournamentDetail() {
         <TabsContent value="sorteio" className="mt-4"><DrawPanel {...panelProps} /></TabsContent>
         <TabsContent value="cronograma" className="mt-4"><SchedulePanel {...panelProps} /></TabsContent>
         <TabsContent value="partidas" className="mt-4"><MatchesPanel {...panelProps} /></TabsContent>
+        <TabsContent value="imprimir" className="mt-4"><PrintPanel {...panelProps} /></TabsContent>
       </Tabs>
 
       <ConfirmDialog

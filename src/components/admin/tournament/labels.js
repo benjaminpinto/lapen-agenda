@@ -26,6 +26,9 @@ export const REGISTRATION_STATUS = {
   withdrawn: { label: 'Desistiu', className: 'bg-red-50 text-red-700 border-red-200' },
 }
 
+// Categories whose draw is published: their games can get results (and be printed)
+export const PLAYING_STATUSES = ['published', 'group_stage', 'knockout_stage', 'finished']
+
 export const DRAW_FORMATS = {
   knockout: 'Eliminatória simples',
   round_robin: 'Todos contra todos',

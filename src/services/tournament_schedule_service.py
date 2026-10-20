@@ -219,6 +219,7 @@ def schedule_payload(state):
             'id': m['id'], 'category_id': m['category_id'], 'category_name': category['name'], 'stage': m['stage'],
             'round_number': m['round_number'], 'round_name': state.round_name(row), 'group': row['group_name'],
             'status': m['status'], 'outcome': row['outcome'], 'score': row['score'], 'locked': m['locked'],
+            'winner_registration_id': row['winner_entry_id'], 'played_at': _iso(row['played_at']),
             'window': _window_json(m['window']),
             'sides': [{'registration_id': row[f'entry{slot}_id'], 'name': state.side_name(row, slot),
                        'defined': row[f'entry{slot}_id'] is not None} for slot in (1, 2)],

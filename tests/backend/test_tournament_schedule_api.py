@@ -138,6 +138,18 @@ def test_a_played_match_cannot_be_moved(event):
         assert (response.status_code, response.get_json()['code']) == (409, 'match_completed')
 
 
+def test_a_played_match_carries_who_won_and_when(event):
+    event.session()
+    match = group_matches(event)[0]
+    assert match['winner_registration_id'] is None and match['played_at'] is None
+    assert event.place(match['id'], event.courts[0], DAY1, '08:00').status_code == 200
+    sql("UPDATE tournament_matches SET status = 'completed', outcome = 'normal', winner_entry_id = entry2_id, score = '6-0, 6-0', "
+        "played_at = %s WHERE id = %s", (DAY1, match['id']))
+    played = event.matches(id=match['id'])[0]
+    assert played['winner_registration_id'] == event.players(played)[1]
+    assert played['played_at'].startswith(DAY1)
+
+
 # --- conflicts ---------------------------------------------------------------------------------------------------------
 
 def test_rest_is_a_warning_that_needs_confirmation(event):
@@ -338,6 +350,17 @@ def test_the_public_sees_times_only_after_publishing(event):
     event.call('post', '/unpublish')
     assert next(m for m in public_matches(event.client, slug) if m['id'] == match['id'])['planned_time'] is None
     assert {'schedule_published', 'schedule_unpublished'} <= set(audit_actions(event.tid))
+
+
+def test_the_public_grid_says_which_side_won(event):
+    event.session()
+    match = group_matches(event)[0]
+    assert event.place(match['id'], event.courts[0], DAY1, '08:00').status_code == 200
+    assert event.call('post', '/publish').status_code == 200
+    grid = lambda: next(m for m in event.client.get(f"/api/tournaments/{event.t['slug']}/schedule").get_json()['matches'] if m['id'] == match['id'])
+    assert grid()['winner_side'] is None
+    sql("UPDATE tournament_matches SET status = 'completed', outcome = 'normal', winner_entry_id = entry2_id, score = '0-6, 0-6' WHERE id = %s", (match['id'],))
+    assert grid()['winner_side'] == 2
 
 
 def test_publishing_needs_at_least_one_scheduled_match(event):

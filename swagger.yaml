@@ -512,6 +512,7 @@ components:
               status: {type: string, enum: [pending, completed]}
               outcome: {type: string, nullable: true, enum: [normal, wo, double_wo, retired, bye]}
               score: {type: string, nullable: true}
+              winner_side: {type: integer, nullable: true, enum: [1, 2], description: 'Which side won (null while pending and after a double W.O.)'}
               window:
                 type: object
                 properties:
@@ -669,6 +670,8 @@ components:
         status: {type: string, enum: [pending, completed]}
         outcome: {type: string, nullable: true}
         score: {type: string, nullable: true}
+        winner_registration_id: {type: integer, nullable: true, description: Null while pending and after a double W.O.}
+        played_at: {type: string, format: date-time, nullable: true}
         locked: {type: boolean, description: Pinned matches are not moved by the automatic distribution or by hand}
         window: {allOf: [{$ref: '#/components/schemas/ScheduleWindow'}], nullable: true}
         sides:

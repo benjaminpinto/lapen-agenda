@@ -4,7 +4,7 @@ import {Button} from '@/components/ui/button'
 import PrintRoot from '@/components/ui/PrintRoot'
 import {gridFromScore, SCORE_COLUMNS} from '@/utils/scoreGrid'
 import {sideLabel} from './drawUtils'
-import {DRAW_FORMATS, formatDate, MATCH_FORMATS, PLAYING_STATUSES} from './labels'
+import {categoryMatchFormat, DRAW_FORMATS, formatDate, MATCH_FORMATS, PLAYING_STATUSES} from './labels'
 import {ADMIN_API, errorMessage, request} from './tournamentApi'
 
 const NOTE = { wo: 'W.O.', double_wo: 'Duplo W.O.', retired: 'Desistência' }
@@ -61,7 +61,8 @@ function Block({ title, matches, columns }) {
 
 /** The category's sheet: header with the tournament data, then the games of every group and round. */
 function Sheet({ tournament, category, draw, updated }) {
-  const columns = SCORE_COLUMNS[tournament.match_format] || SCORE_COLUMNS.best_of_3_super_tb
+  const matchFormat = categoryMatchFormat(tournament, category)
+  const columns = SCORE_COLUMNS[matchFormat] || SCORE_COLUMNS.best_of_3_super_tb
   const blocks = [
     ...draw.groups.map((group) => ({
       key: `group-${group.id}`,
@@ -77,7 +78,7 @@ function Sheet({ tournament, category, draw, updated }) {
   const total = blocks.reduce((sum, block) => sum + block.matches.length, 0)
   const info = [
     DRAW_FORMATS[category.draw_format],
-    MATCH_FORMATS[tournament.match_format],
+    MATCH_FORMATS[matchFormat],
     `${formatDate(tournament.start_date)} a ${formatDate(tournament.end_date)}`,
     tournament.location,
   ].filter(Boolean).join(' · ')

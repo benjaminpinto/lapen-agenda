@@ -144,6 +144,60 @@ def test_match_format_is_locked_after_the_first_result(client, people):
     assert client.put(url, json={'match_format': 'pro_set_8', 'location': 'Quadra 1'}, headers=headers).status_code == 200
 
 
+def test_a_category_can_override_the_match_format(client, people):
+    headers = people.admin.headers
+    tournament = create_tournament(client, headers, 'Test Tourn Cat Format', match_format='single_set_6', no_ad=False)
+    follows = create_category(client, headers, tournament['id'], 'Masculino')
+    own = create_category(client, headers, tournament['id'], 'Feminino', match_format='pro_set_8', no_ad=True, match_tiebreak_points=7)
+    assert (follows['match_format'], follows['no_ad'], follows['match_tiebreak_points']) == (None, None, None)
+    assert (own['match_format'], own['no_ad'], own['match_tiebreak_points']) == ('pro_set_8', True, 7)
+
+    detail = client.get(f"/api/admin/tournaments/{tournament['id']}", headers=headers).get_json()['categories']
+    effective = {c['name']: c['effective_format'] for c in detail}
+    assert effective['Masculino'] == {'match_format': 'single_set_6', 'no_ad': False, 'match_tiebreak_points': 10}
+    assert effective['Feminino'] == {'match_format': 'pro_set_8', 'no_ad': True, 'match_tiebreak_points': 7}
+
+    url = f"/api/admin/tournaments/{tournament['id']}/categories/{own['id']}"
+    cleared = client.put(url, json={'match_format': None, 'no_ad': None, 'match_tiebreak_points': None}, headers=headers)
+    assert cleared.status_code == 200
+    assert [cleared.get_json()['category'][key] for key in ('match_format', 'no_ad', 'match_tiebreak_points')] == [None, None, None]
+
+
+def test_each_format_field_falls_back_on_its_own():
+    tournament = {'match_format': 'single_set_6', 'no_ad': True, 'match_tiebreak_points': 10}
+    assert svc.effective_format(tournament) == tournament
+    assert svc.effective_format(tournament, {'match_format': None, 'no_ad': None}) == tournament
+    assert svc.effective_format(tournament, {'match_format': 'pro_set_8', 'no_ad': False}) == {
+        'match_format': 'pro_set_8', 'no_ad': False, 'match_tiebreak_points': 10}  # False is an override, not "unset"
+
+
+@pytest.mark.parametrize('changes', [
+    {'match_format': 'best_of_5'}, {'no_ad': 'sim'}, {'match_tiebreak_points': 0}, {'match_tiebreak_points': 21},
+    {'match_tiebreak_points': True},
+])
+def test_category_rejects_invalid_match_format_values(client, people, changes):
+    tournament = create_tournament(client, people.admin.headers)
+    response = client.post(f"/api/admin/tournaments/{tournament['id']}/categories", json={'name': 'Feminino', **changes},
+                           headers=people.admin.headers)
+    assert response.status_code == 400
+
+
+def test_category_match_format_is_locked_after_its_first_result(client, people):
+    headers = people.admin.headers
+    tournament = create_tournament(client, headers, 'Test Tourn Cat Lock')
+    played = create_category(client, headers, tournament['id'], 'Masculino')
+    idle = create_category(client, headers, tournament['id'], 'Feminino')
+    match_id = seed_completed_match(played['id'])  # no recorded result yet: automatic results do not lock
+    url = lambda category: f"/api/admin/tournaments/{tournament['id']}/categories/{category['id']}"  # noqa: E731
+    assert client.put(url(played), json={'match_format': 'pro_set_8'}, headers=headers).status_code == 200
+
+    sql('UPDATE tournament_matches SET result_by = %s WHERE id = %s', (people.admin.id, match_id))
+    locked = client.put(url(played), json={'match_format': 'single_set_6'}, headers=headers)
+    assert locked.status_code == 409 and locked.get_json()['code'] == 'format_locked'
+    assert client.put(url(played), json={'match_format': 'pro_set_8', 'name': 'Masculino A'}, headers=headers).status_code == 200
+    assert client.put(url(idle), json={'match_format': 'single_set_6'}, headers=headers).status_code == 200  # the other category is free
+
+
 # --- status machine ---------------------------------------------------------------------------
 
 def test_opening_registrations_requires_a_category(client, people):

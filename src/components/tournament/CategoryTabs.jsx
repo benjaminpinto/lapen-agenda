@@ -115,7 +115,7 @@ export function EntriesTab({ data, registrationOpen }) {
 
 export function RulesTab({ tournament, category, slug }) {
   const rows = [
-    ['Formato das partidas', tournament.format_text],
+    ['Formato das partidas', category.format_text ?? tournament.format_text],
     ['Cabeças de chave', category.num_seeds ? String(category.num_seeds) : null],
     ['Tolerância para W.O.', category.wo_tolerance_min ? `${category.wo_tolerance_min} minutos` : null],
     ['Descanso entre jogos do mesmo atleta', category.min_rest_min ? `${category.min_rest_min} minutos` : null],

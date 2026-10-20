@@ -54,8 +54,10 @@ UNIQUE_VIOLATION = '23505'
 TOURNAMENT_FIELDS = ('name', 'description', 'location', 'start_date', 'end_date', 'registration_opens_at',
                      'registration_closes_at', 'rules_text', 'contact_info', 'match_format', 'no_ad',
                      'match_tiebreak_points')
+# A category may override these three tournament settings (NULL follows the tournament)
+FORMAT_FIELDS = ('match_format', 'no_ad', 'match_tiebreak_points')
 CATEGORY_FIELDS = ('name', 'max_entries', 'min_entries', 'draw_format', 'group_target_size', 'qualifiers_per_group',
-                   'num_seeds', 'wo_tolerance_min', 'min_rest_min', 'sort_order')
+                   'num_seeds', 'wo_tolerance_min', 'min_rest_min', 'sort_order') + FORMAT_FIELDS
 # Changing these after the draw would invalidate it
 CATEGORY_DRAW_FIELDS = ('draw_format', 'group_target_size', 'qualifiers_per_group', 'num_seeds')
 REGISTRATION_CONTACT_FIELDS = ('full_name', 'display_name', 'email', 'phone', 'notes')
@@ -211,12 +213,20 @@ def serialize_tournament(row):
     }
 
 
-def serialize_category(row, counts=None):
+def effective_format(tournament, category=None):
+    """The match format a category is played under: its own override, field by field, else the tournament's."""
+    own = category or {}
+    return {key: tournament[key] if own.get(key) is None else own[key] for key in FORMAT_FIELDS}
+
+
+def serialize_category(row, counts=None, tournament=None):
     data = {key: row[key] for key in ('id', 'tournament_id', 'name', 'max_entries', 'min_entries', 'draw_format',
                                       'group_target_size', 'qualifiers_per_group', 'num_seeds', 'wo_tolerance_min',
-                                      'min_rest_min', 'status', 'sort_order')}
+                                      'min_rest_min', 'status', 'sort_order') + FORMAT_FIELDS}
     if counts is not None:
         data['counts'] = counts
+    if tournament is not None:
+        data['effective_format'] = effective_format(tournament, row)
     return data
 
 
@@ -248,6 +258,14 @@ def _other_active_tournament(db, exclude_id=None):
         'SELECT id, name, slug FROM tournaments WHERE status = ANY(%s) AND id <> COALESCE(%s, -1) LIMIT 1',
         (list(ACTIVE_STATUSES), exclude_id)
     ).fetchone()
+
+
+def _has_results(db, category_id):
+    """True once an organizer recorded a result in the category (byes and automatic walkovers do not count)."""
+    return db.execute(
+        "SELECT 1 FROM tournament_matches WHERE category_id = %s AND status = 'completed' AND result_by IS NOT NULL LIMIT 1",
+        (category_id,)
+    ).fetchone() is not None
 
 
 def _has_completed_matches(db, tournament_id):
@@ -422,7 +440,7 @@ def get_tournament_detail(db, tournament_id):
     counts = category_counts(db, tournament_id)
     return {
         'tournament': serialize_tournament(tournament),
-        'categories': [serialize_category(c, counts.get(c['id'])) for c in categories],
+        'categories': [serialize_category(c, counts.get(c['id']), tournament) for c in categories],
     }
 
 
@@ -474,7 +492,14 @@ def _category_values(data, current=None):
         'wo_tolerance_min': _int(pick('wo_tolerance_min'), 'Tolerância de W.O.', 0, 120, default=15),
         'min_rest_min': _int(pick('min_rest_min'), 'Descanso mínimo', 0, 240, default=60),
         'sort_order': _int(pick('sort_order'), 'Ordem', 0, 10000),
+        'match_format': pick('match_format') or None,
+        'no_ad': pick('no_ad'),
+        'match_tiebreak_points': _int(pick('match_tiebreak_points'), 'Pontos do match tie-break', 1, 20),
     }
+    if values['match_format'] is not None and values['match_format'] not in MATCH_FORMATS:
+        raise TournamentError('Formato de partida inválido.')
+    if values['no_ad'] is not None and not isinstance(values['no_ad'], bool):
+        raise TournamentError('Sem vantagem deve ser verdadeiro ou falso.')
     if grouped:
         size = _int(pick('group_target_size'), 'Tamanho do grupo', 3, 4)
         qualifiers = _int(pick('qualifiers_per_group'), 'Classificados por grupo', 1, 2)
@@ -526,6 +551,9 @@ def update_category(db, tournament_id, category_id, data, actor_id):
     if locked and current['status'] != 'awaiting_draw':
         raise TournamentError('Desfaça o sorteio da categoria antes de mudar o formato da chave ou os cabeças de chave.', 409,
                               code='draw_exists')
+    if (any(key in changed for key in FORMAT_FIELDS) and effective_format(tournament, values) != effective_format(tournament, current)
+            and _has_results(db, category_id)):
+        raise TournamentError('A categoria já tem resultados: o formato da partida não pode mais mudar.', 409, code='format_locked')
     if 'max_entries' in changed and values['max_entries'] is not None:
         confirmed = category_counts(db, tournament_id).get(category_id, {}).get('confirmed', 0)
         if values['max_entries'] < confirmed:

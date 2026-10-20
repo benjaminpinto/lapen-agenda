@@ -599,6 +599,52 @@ def test_other_formats_validate_their_own_scores(client, people):
     assert play(client, headers, tournament, match, score='8-6').status_code == 200
 
 
+def late_category(client, headers, tournament, name, n, **extra):
+    """A category created after the tournament started: filled, drawn and published."""
+    made = create_category(client, headers, tournament['id'], name, **extra)
+    for i in range(n):
+        add_registration(made['id'], f'{name[:3].lower()}{i}')
+    generate_draw(client, headers, tournament, made)
+    assert client.post(draw_url(tournament, made, '/publish'), headers=headers).status_code == 200
+    return made
+
+
+def test_a_category_plays_under_its_own_match_format(client, people):
+    headers = people.admin.headers
+    tournament, men, _ = started_tournament(client, headers, 4)  # the tournament plays 2 sets + super tie-break
+    women = late_category(client, headers, tournament, 'Feminino', 4, match_format='pro_set_8')
+
+    woman_match = first_ready(client, headers, tournament, women)
+    assert play(client, headers, tournament, woman_match, score='6-4, 6-3').status_code == 400
+    assert play(client, headers, tournament, woman_match, score='8-5').status_code == 200
+
+    man_match = first_ready(client, headers, tournament, men)
+    assert play(client, headers, tournament, man_match, score='8-5').status_code == 400
+    assert play(client, headers, tournament, man_match, score='6-4, 6-3').status_code == 200
+
+
+def test_a_category_can_override_only_the_match_tiebreak_points(client, people):
+    headers = people.admin.headers
+    tournament, men, _ = started_tournament(client, headers, 4)  # super tie-break to 10
+    women = late_category(client, headers, tournament, 'Feminino', 4, match_tiebreak_points=7)
+
+    assert play(client, headers, tournament, knockout_round(draw_of(client, headers, tournament, women), 1)[0], score='6-4, 3-6, 7-5').status_code == 200
+    assert play(client, headers, tournament, knockout_round(draw_of(client, headers, tournament, men), 1)[0], score='6-4, 3-6, 7-5').status_code == 400
+
+
+def test_group_standings_read_the_scores_in_the_category_format(client, people):
+    headers = people.admin.headers
+    tournament, _, _ = started_tournament(client, headers, 4)
+    robin = late_category(client, headers, tournament, 'Feminino', 4, draw_format='round_robin', match_format='pro_set_8')
+    for match in draw_of(client, headers, tournament, robin)['groups'][0]['matches']:
+        assert play(client, headers, tournament, match, score='8-5').status_code == 200
+
+    table = standings(client, headers, tournament, robin)['groups'][0]
+    assert table['complete'] is True
+    assert sum(row['wins'] for row in table['rows']) == 6
+    assert sum(row['games_won'] for row in table['rows']) == 6 * 13
+
+
 def test_the_match_tiebreak_points_follow_the_tournament(client, people):
     headers = people.admin.headers
     tournament, category, _ = started_tournament(client, headers, 4, tournament={'match_tiebreak_points': 7})

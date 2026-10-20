@@ -41,6 +41,9 @@ export const MATCH_FORMATS = {
   single_set_6: 'Set único até 6 games',
 }
 
+// The match format a category is played under: its own, or else the tournament's
+export const categoryMatchFormat = (tournament, category) => category?.effective_format?.match_format ?? tournament.match_format
+
 export const OUTCOMES = {
   normal: 'Placar normal',
   wo: 'W.O.',

@@ -27,28 +27,53 @@ export function changeMessage({ tournamentName, match, courts }) {
   return [`⚠️ *${tournamentName}* — alteração de horário`, '', `*${match.category_name}* · ${match.round_name}`, gameTitle(match), when].join('\n')
 }
 
-const winnerName = (match) => match.sides.find((side) => side.registration_id === match.winner_registration_id)?.name
+const side = (match, slot) => match.sides[slot - 1].name
+const winnerSide = (match) => match.sides.findIndex((s) => match.winner_registration_id && s.registration_id === match.winner_registration_id) + 1 || null
 
-const resultLine = (match) => {
-  const [first, second] = match.sides.map((side) => (side.name === winnerName(match) ? `*${side.name}*` : side.name))
-  return `• ${first} × ${second}: ${resultLabel(match)}`
-}
-
-/** The day wrapped up: results by category (winner in bold), then the games of the next day that has any. */
-export function summaryText({ tournamentName, day, matches, courts }) {
+/**
+ * What the day's summary says, shared by the message and the image: the results of `day` by category, the games of `day`
+ * still without a result ("Jogos de hoje" when `day` is `today`) and the games of the next day that has any. A result has the players in match order, the side that won (1, 2 or null) and the score.
+ */
+export function summaryData({ day, matches, courts, today }) {
   const byTime = (a, b) => `${a.window.time} ${a.window.court_id}`.localeCompare(`${b.window.time} ${b.window.court_id}`)
   const results = matches.filter((m) => m.window?.date === day && m.status === 'completed' && m.outcome !== 'bye').sort(byTime)
-  const nextDay = [...new Set(matches.filter((m) => m.status === 'pending' && m.window && m.window.date > day).map((m) => m.window.date))].sort()[0]
+  const nextDay = [...new Set(matches.filter((m) => m.status === 'pending' && m.window && m.window.date > day).map((m) => m.window.date))].sort()[0] ?? null
   const next = matches.filter((m) => m.status === 'pending' && m.window?.date === nextDay).sort(byTime)
-
-  const lines = [`🎾 *${tournamentName}* — resumo de ${dayTitle(day)}`, '', '🏆 *Resultados do dia*']
-  if (results.length === 0) lines.push('Nenhum resultado lançado neste dia.')
-  for (const category of [...new Set(results.map((m) => m.category_name))]) {
-    lines.push(`_${category}_`, ...results.filter((m) => m.category_name === category).map(resultLine))
+  const pending = matches.filter((m) => m.status === 'pending' && m.window?.date === day).sort(byTime)
+  const game = (m) => ({ id: m.id, time: m.window.time, court: courtName(courts, m.window.court_id), category: m.category_name, first: side(m, 1), second: side(m, 2) })
+  return {
+    day,
+    categories: [...new Set(results.map((m) => m.category_name))].map((name) => ({
+      name,
+      games: results.filter((m) => m.category_name === name).map((m) => ({ id: m.id, first: side(m, 1), second: side(m, 2), winner: winnerSide(m), score: resultLabel(m) })),
+    })),
+    total: results.length,
+    pending: pending.map(game),
+    pendingTitle: day === today ? 'Jogos de hoje' : `Pendentes de ${dayTitle(day)}`,
+    nextDay,
+    next: next.map(game),
   }
-  if (next.length > 0) {
-    lines.push('', `🗓️ *Jogos de ${dayTitle(nextDay)}*`)
-    lines.push(...next.map((m) => `• ${m.window.time} · ${courtName(courts, m.window.court_id)} · ${m.category_name} · ${gameTitle(m)}`))
+}
+
+/** The day wrapped up as a message: results by category (winner in bold), the games still to play that day, then the next day's. */
+export function summaryText({ tournamentName, day, matches, courts, today }) {
+  const data = summaryData({ day, matches, courts, today })
+  const lines = [`🎾 *${tournamentName}* — resumo de ${dayTitle(day)}`, '', '🏆 *Resultados do dia*']
+  if (data.total === 0) lines.push('Nenhum resultado lançado neste dia.')
+  for (const category of data.categories) {
+    lines.push(`_${category.name}_`)
+    for (const game of category.games) {
+      const [first, second] = [game.first, game.second].map((name, index) => (game.winner === index + 1 ? `*${name}*` : name))
+      lines.push(`• ${first} × ${second}: ${game.score}`)
+    }
+  }
+  if (data.pending.length > 0) {
+    lines.push('', `🕒 *${data.pendingTitle}*`)
+    lines.push(...data.pending.map((m) => `• ${m.time} · ${m.court} · ${m.category} · ${m.first} × ${m.second}`))
+  }
+  if (data.next.length > 0) {
+    lines.push('', `🗓️ *Jogos de ${dayTitle(data.nextDay)}*`)
+    lines.push(...data.next.map((m) => `• ${m.time} · ${m.court} · ${m.category} · ${m.first} × ${m.second}`))
   }
   return lines.join('\n')
 }

@@ -1,10 +1,12 @@
 import {useCallback, useEffect, useMemo, useState} from 'react'
-import {AlertTriangle, Eye, EyeOff, Lock, Pencil, Plus, Trash2, Unlock, X} from 'lucide-react'
+import {AlertTriangle, Eye, EyeOff, Lock, Pencil, Plus, Share2, Trash2, Unlock, X} from 'lucide-react'
 import {Button} from '@/components/ui/button'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {useToast} from '@/contexts/ToastContext'
 import ConfirmDialog from '../ConfirmDialog'
 import {ADMIN_API, errorMessage, request} from '../tournamentApi'
+import ShareDialog from '../live/ShareDialog'
+import {changeMessage} from '../live/messages'
 import ConflictsPanel from './ConflictsPanel'
 import DistributePanel from './DistributePanel'
 import ScheduleGrid from './ScheduleGrid'
@@ -26,6 +28,7 @@ export default function SchedulePanel({ tournament }) {
   const [sessionDialog, setSessionDialog] = useState(null)
   const [deleting, setDeleting] = useState(null)
   const [attention, setAttention] = useState(null)
+  const [share, setShare] = useState(null)              // WhatsApp message about a match that changed time
   const [publishing, setPublishing] = useState(false)
   const [busy, setBusy] = useState(false)
   const terminal = ['finished', 'cancelled'].includes(tournament.status)
@@ -192,6 +195,9 @@ export default function SchedulePanel({ tournament }) {
                         <Button type="button" size="sm" variant="outline" onClick={() => lock(selectedMatch.id, !selectedMatch.locked)} disabled={busy} data-testid="selection-lock" className="min-h-[44px]">
                           {selectedMatch.locked ? <><Unlock className="mr-1 h-4 w-4" aria-hidden="true" />Liberar</> : <><Lock className="mr-1 h-4 w-4" aria-hidden="true" />Fixar</>}
                         </Button>
+                        <Button type="button" size="sm" variant="outline" onClick={() => setShare(changeMessage({ tournamentName: tournament.name, match: selectedMatch, courts: schedule.courts }))} data-testid="selection-notify" className="min-h-[44px]">
+                          <Share2 className="mr-1 h-4 w-4" aria-hidden="true" />Avisar horário
+                        </Button>
                         <Button type="button" size="sm" variant="outline" onClick={() => unplace(selectedMatch.id)} disabled={busy || selectedMatch.locked} data-testid="selection-unplace" className="min-h-[44px]">Remover do horário</Button>
                       </>
                     )}
@@ -257,6 +263,7 @@ export default function SchedulePanel({ tournament }) {
         description="A partir de agora o público vê data, hora e quadra de cada partida, e qualquer troca aparece na hora."
         onConfirm={() => setPublished(true)} onCancel={() => setPublishing(false)}
       />
+      {share && <ShareDialog description="Aviso de horário, para enviar no grupo do torneio" text={share} onClose={() => setShare(null)} />}
       {attention && (
         <Dialog open onOpenChange={(next) => { if (!next) setAttention(null) }}>
           <DialogContent className="w-full max-w-xl" data-testid="attention-dialog">

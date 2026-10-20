@@ -331,6 +331,30 @@ def test_the_match_format_as_a_sentence(fmt, points, advantage, text):
     assert public.format_text({'match_format': fmt, 'match_tiebreak_points': points, 'no_ad': advantage}) == text
 
 
+def test_a_category_override_changes_its_sentence():
+    tournament = {'match_format': 'best_of_3_super_tb', 'match_tiebreak_points': 10, 'no_ad': True}
+    assert public.format_text(tournament, {'match_format': 'pro_set_8', 'no_ad': None, 'match_tiebreak_points': None}) == 'Set pro até 8 games, sem vantagem'
+    assert public.format_text(tournament, {'match_format': None, 'no_ad': False, 'match_tiebreak_points': 7}) == '2 sets com vantagem + super tie-break de 7 pts'
+
+
+def test_the_header_says_so_when_categories_play_different_formats(client, people):
+    headers = people.admin.headers
+    tournament = create_tournament(client, headers, 'Test Tourn Mixed')
+    create_category(client, headers, tournament['id'], 'Masculino')
+    create_category(client, headers, tournament['id'], 'Feminino', match_format='pro_set_8')
+    assert set_status(client, headers, tournament['id'], 'registration_open').status_code == 200
+    slug = tournament['slug']
+
+    body = get(client, f'/api/tournaments/{slug}')
+    assert body['tournament']['format_text'] == 'Formato por categoria'
+    assert {c['name']: c['format_text'] for c in body['categories']} == {
+        'Masculino': '2 sets sem vantagem + super tie-break de 10 pts', 'Feminino': 'Set pro até 8 games, sem vantagem'}
+    assert category_of(client, slug, 'Feminino')['category']['format_text'] == 'Set pro até 8 games, sem vantagem'
+
+    sql("UPDATE tournament_categories SET match_format = 'pro_set_8' WHERE tournament_id = %s", (tournament['id'],))
+    assert get(client, f'/api/tournaments/{slug}')['tournament']['format_text'] == 'Set pro até 8 games, sem vantagem'
+
+
 # --- games and results lists ------------------------------------------------------------------------------------------------------
 
 def test_the_games_and_results_lists(client, seed):

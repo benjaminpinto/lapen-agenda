@@ -10,7 +10,7 @@ from src.services import tournament_draw as draw
 from src.services import tournament_results as results
 from src.services import tournament_schedule as sched
 from src.services import tournament_schedule_service as schedule_service
-from src.services.tournament_service import ACTIVE_STATUSES, DRAWN_CATEGORY_STATUSES, TournamentError
+from src.services.tournament_service import ACTIVE_STATUSES, DRAWN_CATEGORY_STATUSES, TournamentError, effective_format
 from src.utils.time_utils import local_now
 
 PUBLIC_STATUSES = ACTIVE_STATUSES + ('finished',)
@@ -18,6 +18,7 @@ GROUP_LABEL = re.compile(r'^\d+º Grupo \w+$')
 UPCOMING_LIMIT = 5
 RESULTS_LIMIT = 5
 LIST_LIMIT = 200
+MIXED_FORMAT_TEXT = 'Formato por categoria'
 
 
 def _iso(value):
@@ -33,14 +34,25 @@ def _window(key):
     return None if key is None else {'court_id': key[0], 'date': key[1].isoformat(), 'time': _hhmm(key[2])}
 
 
-def format_text(tournament):
-    """The match format as a sentence, e.g. '2 sets sem vantagem + super tie-break de 10 pts'."""
-    advantage = 'sem vantagem' if tournament['no_ad'] else 'com vantagem'
-    if tournament['match_format'] == 'best_of_3_super_tb':
-        return f"2 sets {advantage} + super tie-break de {tournament['match_tiebreak_points']} pts"
-    if tournament['match_format'] == 'pro_set_8':
+def format_text(tournament, category=None):
+    """The match format of a category (the tournament's when it has no override) as a sentence, e.g. '2 sets sem vantagem + super tie-break de 10 pts'."""
+    played = effective_format(tournament, category)
+    advantage = 'sem vantagem' if played['no_ad'] else 'com vantagem'
+    if played['match_format'] == 'best_of_3_super_tb':
+        return f"2 sets {advantage} + super tie-break de {played['match_tiebreak_points']} pts"
+    if played['match_format'] == 'pro_set_8':
         return f'Set pro até 8 games, {advantage}'
     return f'Set único até 6 games, {advantage}'
+
+
+def _header_format_text(db, tournament):
+    """The sentence when every category plays the same format, otherwise a pointer to the category tabs."""
+    categories = db.execute(
+        'SELECT match_format, no_ad, match_tiebreak_points FROM tournament_categories WHERE tournament_id = %s', (tournament['id'],)).fetchall()
+    texts = {format_text(tournament, category) for category in categories}
+    if len(texts) > 1:
+        return MIXED_FORMAT_TEXT
+    return texts.pop() if texts else format_text(tournament)
 
 
 def _registration_state(tournament, now):
@@ -53,14 +65,14 @@ def _registration_state(tournament, now):
     return dict(window, open=True, state='open')
 
 
-def _tournament(tournament, now):
+def _tournament(db, tournament, now):
     return {
         'id': tournament['id'], 'name': tournament['name'], 'slug': tournament['slug'],
         'description': tournament['description'], 'location': tournament['location'],
         'start_date': _iso(tournament['start_date']), 'end_date': _iso(tournament['end_date']),
         'rules_text': tournament['rules_text'], 'contact_info': tournament['contact_info'],
         'match_format': tournament['match_format'], 'no_ad': tournament['no_ad'],
-        'match_tiebreak_points': tournament['match_tiebreak_points'], 'format_text': format_text(tournament),
+        'match_tiebreak_points': tournament['match_tiebreak_points'], 'format_text': _header_format_text(db, tournament),
         'status': tournament['status'], 'registration': _registration_state(tournament, now),
         'schedule_published': tournament['schedule_published_at'] is not None,
     }
@@ -195,6 +207,7 @@ def _category_summary(db, tournament, category, people, matches):
     confirmed = sum(1 for p in people.values() if p['status'] == 'confirmed')
     return {
         'id': category['id'], 'name': category['name'], 'draw_format': category['draw_format'],
+        'format_text': format_text(tournament, category),
         'status': 'awaiting_draw' if category['status'] == 'drawn' else category['status'],
         'stage': _stage(category, matches), 'progress': _progress(matches),
         'capacity': {'confirmed': confirmed, 'max_entries': category['max_entries'], 'min_entries': category['min_entries']},
@@ -219,8 +232,8 @@ def get_overview(db):
             people = _people(db, category['id'])
             champion, _ = _podium(db, tournament, category, people, _matches(db, category['id'], True))
             categories.append({'name': category['name'], 'champion': champion['display_name'] if champion else None})
-        history.append(dict(_tournament(tournament, now), categories=categories))
-    return {'current': _tournament(current, now) if current else None, 'history': history}
+        history.append(dict(_tournament(db, tournament, now), categories=categories))
+    return {'current': _tournament(db, current, now) if current else None, 'history': history}
 
 
 def get_tournament(db, slug):
@@ -232,7 +245,7 @@ def get_tournament(db, slug):
         done += summary['progress']['done']
         total += summary['progress']['total']
         categories.append(summary)
-    return {'tournament': _tournament(tournament, now), 'categories': categories, 'progress': {'done': done, 'total': total}}
+    return {'tournament': _tournament(db, tournament, now), 'categories': categories, 'progress': {'done': done, 'total': total}}
 
 
 def _entries(people):
@@ -322,7 +335,7 @@ def get_category(db, slug, category_id):
     upcoming = sorted((m for m in visible if _is_ready(m)), key=_upcoming_key)[:UPCOMING_LIMIT]
     recent = sorted((m for m in visible if m['status'] == 'completed' and m['outcome'] != 'bye'), key=_results_key, reverse=True)[:RESULTS_LIMIT]
     return {
-        'tournament': _tournament(tournament, now),
+        'tournament': _tournament(db, tournament, now),
         'category': _category_summary(db, tournament, category, people, matches),
         'entries': _entries(people),
         'groups': groups_data,
@@ -373,7 +386,7 @@ def get_schedule(db, slug):
     """
     now = local_now()
     tournament = _load_tournament(db, slug)
-    empty = {'tournament': _tournament(tournament, now), 'published': False, 'slot_minutes': sched.SLOT_MINUTES,
+    empty = {'tournament': _tournament(db, tournament, now), 'published': False, 'slot_minutes': sched.SLOT_MINUTES,
              'courts': [], 'windows': [], 'matches': []}
     if tournament['schedule_published_at'] is None:
         return empty
@@ -392,7 +405,7 @@ def get_schedule(db, slug):
             'sides': [{'name': state.side_name(row, slot), 'defined': row[f'entry{slot}_id'] is not None} for slot in (1, 2)],
         })
     return {
-        'tournament': _tournament(tournament, now), 'published': True, 'slot_minutes': sched.SLOT_MINUTES,
+        'tournament': _tournament(db, tournament, now), 'published': True, 'slot_minutes': sched.SLOT_MINUTES,
         'courts': [{'id': c['id'], 'name': c['name'], 'type': c['type']} for c in state.courts if c['active']],
         'windows': [{'court_id': w.court_id, 'date': w.date.isoformat(), 'time': _hhmm(w.time), 'blocked': w.blocked} for w in state.windows],
         'matches': matches,

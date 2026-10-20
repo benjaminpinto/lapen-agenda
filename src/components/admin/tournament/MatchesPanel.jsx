@@ -7,7 +7,7 @@ import {useToast} from '@/contexts/ToastContext'
 import CategoryChips from './CategoryChips'
 import ConfirmDialog from './ConfirmDialog'
 import {ADMIN_API, errorMessage, request} from './tournamentApi'
-import {OUTCOMES, PLAYING_STATUSES} from './labels'
+import {categoryMatchFormat, OUTCOMES, PLAYING_STATUSES} from './labels'
 import {entryLabel, sideLabel} from './drawUtils'
 import ScoreGrid from '@/components/shared/ScoreGrid'
 import {emptyGrid, gridFromScore, isFilled, needsSuperTiebreak, SCORE_COLUMNS, scoreFromGrid, winnerSide} from '@/utils/scoreGrid'
@@ -33,10 +33,10 @@ const resultText = (match) => {
   return match.score
 }
 
-function ResultDialog({ tournament, match, mode, onClose, onSaved }) {
+function ResultDialog({ tournament, category, match, mode, onClose, onSaved }) {
   const { toast } = useToast()
   const first = match.entry1, second = match.entry2
-  const columns = SCORE_COLUMNS[tournament.match_format] || SCORE_COLUMNS.best_of_3_super_tb
+  const columns = SCORE_COLUMNS[categoryMatchFormat(tournament, category)] || SCORE_COLUMNS.best_of_3_super_tb
   const recordedWinner = match.winner_entry_id === first?.registration_id ? 1 : match.winner_entry_id === second?.registration_id ? 2 : ''
   const [form, setForm] = useState({
     outcome: mode === 'correct' && match.outcome ? match.outcome : 'normal',
@@ -327,7 +327,7 @@ export default function MatchesPanel({ tournament, categories, reload }) {
         <p className="text-sm text-stone-600 bg-stone-100 rounded-md p-3" data-testid="knockout-pending-note">O mata-mata será sorteado quando os grupos terminarem.</p>
       )}
 
-      {dialog && <ResultDialog tournament={tournament} match={dialog.match} mode={dialog.mode} onClose={() => setDialog(null)} onSaved={applyResult} />}
+      {dialog && <ResultDialog tournament={tournament} category={current} match={dialog.match} mode={dialog.mode} onClose={() => setDialog(null)} onSaved={applyResult} />}
       <ConfirmDialog
         open={Boolean(annulling)} destructive busy={busy} title="Anular o resultado?"
         description="A partida volta a ficar pendente e o vencedor sai da partida seguinte. Só é possível se a partida seguinte ainda não tiver resultado."

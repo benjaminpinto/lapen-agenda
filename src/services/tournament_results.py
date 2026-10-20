@@ -23,9 +23,8 @@ from src.services import tournament_draw_service as draw_svc
 from src.services import tournament_standings as standings
 from src.services.tournament_schedule import SLOT_MINUTES
 from src.services.tournament_service import (
-    ACTIVE_STATUSES, DRAWN_CATEGORY_STATUSES, TERMINAL_STATUSES, TournamentError, get_category, get_tournament,
-    log_audit,
-    parse_id, serialize_category,
+    ACTIVE_STATUSES, DRAWN_CATEGORY_STATUSES, TERMINAL_STATUSES, TournamentError, effective_format, get_category,
+    get_tournament, log_audit, parse_id, serialize_category,
 )
 from src.utils.score_parser import parse_tournament_score, strip_retirement, validate_retired_score, validate_score
 from src.utils.time_utils import local_now
@@ -180,13 +179,14 @@ def group_tables(db, tournament, category):
         "SELECT group_id, entry1_id, entry2_id, status, outcome, winner_entry_id, score FROM tournament_matches "
         "WHERE category_id = %s AND stage = 'group'", (category['id'],)).fetchall()
     tables = []
+    fmt = effective_format(tournament, category)
     for group in groups:
         mine = [m for m in members if m['group_id'] == group['id']]
         result = standings.compute_standings(
             [m['registration_id'] for m in mine],
             [{'entry1': m['entry1_id'], 'entry2': m['entry2_id'], 'status': m['status'], 'outcome': m['outcome'],
               'winner': m['winner_entry_id'], 'score': m['score']} for m in matches if m['group_id'] == group['id']],
-            _qualifiers(category, len(mine)), tournament['match_format'], tournament['match_tiebreak_points'],
+            _qualifiers(category, len(mine)), fmt['match_format'], fmt['match_tiebreak_points'],
             {m['registration_id']: m['manual_rank'] for m in mine if m['manual_rank'] is not None})
         tables.append({'group': group, 'result': result})
     return tables
@@ -313,7 +313,7 @@ def _prepare(db, tournament_id, match_id):
     return tournament, category, match
 
 
-def _parse_result(db, tournament, match, data):
+def _parse_result(db, tournament, category, match, data):
     outcome = data.get('outcome', 'normal')
     if outcome not in OUTCOMES:
         raise TournamentError('Desfecho inválido: use normal, wo, double_wo ou retired.')
@@ -326,7 +326,8 @@ def _parse_result(db, tournament, match, data):
         if winner not in (match['entry1_id'], match['entry2_id']):
             raise TournamentError('O vencedor deve ser um dos dois jogadores da partida.')
 
-    fmt, points = tournament['match_format'], tournament['match_tiebreak_points']
+    played = effective_format(tournament, category)
+    fmt, points = played['match_format'], played['match_tiebreak_points']
     score = None
     if outcome == 'wo':
         score = 'W.O.'
@@ -413,7 +414,7 @@ def record_result(db, tournament_id, match_id, data, actor_id):
     tournament, category, match = _prepare(db, tournament_id, match_id)
     if match['status'] != 'pending':
         raise TournamentError('Esta partida já tem resultado. Para mudá-lo, corrija o resultado.', 409, code='result_exists')
-    parsed = _parse_result(db, tournament, match, data)
+    parsed = _parse_result(db, tournament, category, match, data)
     _apply(db, match, parsed, actor_id)
     log_audit(db, tournament_id, 'result_recorded', _audit_payload(parsed, match), category['id'], actor_id)
     _reconcile(db, tournament, category['id'], actor_id)
@@ -433,7 +434,7 @@ def _require_correctable(db, match):
 def correct_result(db, tournament_id, match_id, data, actor_id):
     tournament, category, match = _prepare(db, tournament_id, match_id)
     _require_correctable(db, match)
-    parsed = _parse_result(db, tournament, match, data)
+    parsed = _parse_result(db, tournament, category, match, data)
     before = _audit_payload({'outcome': match['outcome'], 'winner': match['winner_entry_id'], 'score': match['score']}, match)
     _clear_result(db, match_id, keep_statistics=True)
     _apply(db, _fetch(db, match_id), parsed, actor_id)
@@ -499,10 +500,11 @@ def set_group_tiebreak(db, tournament_id, group_id, order, actor_id):
     if not group['result']['complete']:
         raise TournamentError('O grupo ainda tem jogos a disputar: o empate só vale depois que ele terminar.', 409, code='group_not_complete')
     members = [row['registration_id'] for row in db.execute('SELECT registration_id FROM tournament_group_entries WHERE group_id = %s', (group_id,)).fetchall()]
+    played = effective_format(tournament, category)
     undecided = standings.compute_standings(
         members, [dict(entry1=m['entry1_id'], entry2=m['entry2_id'], status=m['status'], outcome=m['outcome'], winner=m['winner_entry_id'], score=m['score'])
                   for m in db.execute("SELECT * FROM tournament_matches WHERE group_id = %s", (group_id,)).fetchall()],
-        _qualifiers(category, len(members)), tournament['match_format'], tournament['match_tiebreak_points'])
+        _qualifiers(category, len(members)), played['match_format'], played['match_tiebreak_points'])
     if set(order) not in [set(tie['entries']) for tie in undecided['ties']]:
         raise TournamentError('Esses inscritos não estão empatados: o empate é decidido só entre quem os critérios não separam.', 409, code='not_a_tie')
     if _played_downstream(db, {'stage': 'group', 'category_id': category['id']}):

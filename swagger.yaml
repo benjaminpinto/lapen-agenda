@@ -205,7 +205,7 @@ components:
         match_format:
           type: string
           enum: [best_of_3_super_tb, pro_set_8, single_set_6]
-          description: Chosen when the tournament is created, locked after the first result
+          description: Chosen when the tournament is created, locked after the first result. Default for categories that do not set their own
         no_ad: {type: boolean}
         match_tiebreak_points: {type: integer, example: 10}
         status:
@@ -232,6 +232,20 @@ components:
           type: string
           enum: [awaiting_draw, drawn, published, group_stage, knockout_stage, finished]
         sort_order: {type: integer}
+        match_format:
+          type: string
+          nullable: true
+          enum: [best_of_3_super_tb, pro_set_8, single_set_6]
+          description: Overrides the tournament's match format, null follows the tournament. Locked after the first recorded result of the category (code format_locked)
+        no_ad: {type: boolean, nullable: true, description: Overrides the tournament's no-ad setting, null follows the tournament}
+        match_tiebreak_points: {type: integer, nullable: true, description: Overrides the tournament's super tie-break points, null follows the tournament}
+        effective_format:
+          type: object
+          description: The format the category is played under, each field resolved from the category or else the tournament (only on the tournament detail)
+          properties:
+            match_format: {type: string, enum: [best_of_3_super_tb, pro_set_8, single_set_6]}
+            no_ad: {type: boolean}
+            match_tiebreak_points: {type: integer}
         counts:
           type: object
           description: Registrations per status (only on the tournament detail)
@@ -410,7 +424,7 @@ components:
         match_format: {type: string, enum: [best_of_3_super_tb, pro_set_8, single_set_6]}
         no_ad: {type: boolean}
         match_tiebreak_points: {type: integer}
-        format_text: {type: string, example: "2 sets sem vantagem + super tie-break de 10 pts"}
+        format_text: {type: string, example: "2 sets sem vantagem + super tie-break de 10 pts", description: "The sentence when every category plays the same format, otherwise 'Formato por categoria' (each category has its own format_text)"}
         status: {type: string, enum: [registration_open, registration_closed, in_progress, finished]}
         registration:
           type: object
@@ -520,6 +534,7 @@ components:
         id: {type: integer}
         name: {type: string}
         draw_format: {type: string, enum: [knockout, round_robin, groups_knockout]}
+        format_text: {type: string, example: "Set pro até 8 games, sem vantagem", description: The match format of this category as a sentence}
         status: {type: string, enum: [awaiting_draw, published, group_stage, knockout_stage, finished], description: A draw that is only a preview shows as awaiting_draw}
         stage:
           type: object
@@ -2100,6 +2115,9 @@ paths:
                 wo_tolerance_min: {type: integer, default: 15}
                 min_rest_min: {type: integer, default: 30}
                 sort_order: {type: integer}
+                match_format: {type: string, nullable: true, enum: [best_of_3_super_tb, pro_set_8, single_set_6], description: Overrides the tournament's match format, null follows the tournament}
+                no_ad: {type: boolean, nullable: true, description: Overrides the tournament's no-ad setting, null follows the tournament}
+                match_tiebreak_points: {type: integer, nullable: true, description: Overrides the tournament's super tie-break points (1 to 20), null follows the tournament}
       responses:
         '201':
           description: Created
@@ -2147,7 +2165,7 @@ paths:
     put:
       tags: [Tournaments]
       summary: Update a category (partial)
-      description: Format, group settings and num_seeds are locked once the draw exists (code draw_exists). max_entries cannot drop below the confirmed count and num_seeds cannot drop below an assigned seed.
+      description: Format, group settings and num_seeds are locked once the draw exists (code draw_exists). The match format fields are locked once a result was recorded in the category and the format the category plays under would change (code format_locked). max_entries cannot drop below the confirmed count and num_seeds cannot drop below an assigned seed.
       security:
         - BearerAuth: []
       requestBody:
@@ -2791,7 +2809,7 @@ paths:
                   enum: [normal, wo, double_wo, retired]
                   default: normal
                 winner_registration_id: {type: integer, description: Required except for double_wo. For retired, the player who stays}
-                score: {type: string, example: "6-4, 3-6, 10-8", description: "Required for normal and retired. Written from the first player's side. The winner must match it. Validated against the tournament match_format and match_tiebreak_points, with strict sets (6-0 to 6-4, 7-5, 7-6). A retired score has finished sets plus at most one unfinished set"}
+                score: {type: string, example: "6-4, 3-6, 10-8", description: "Required for normal and retired. Written from the first player's side. The winner must match it. Validated against the match_format and match_tiebreak_points of the match's category (its own, or else the tournament's), with strict sets (6-0 to 6-4, 7-5, 7-6). A retired score has finished sets plus at most one unfinished set"}
                 played_at: {type: string, example: "2026-11-10", description: Defaults to the planned time of the match, or now}
       responses:
         '200':
@@ -2850,7 +2868,7 @@ paths:
                   enum: [normal, wo, double_wo, retired]
                   default: normal
                 winner_registration_id: {type: integer, description: Required except for double_wo. For retired, the player who stays}
-                score: {type: string, example: "6-4, 3-6, 10-8", description: "Required for normal and retired. Written from the first player's side. The winner must match it. Validated against the tournament match_format and match_tiebreak_points, with strict sets (6-0 to 6-4, 7-5, 7-6). A retired score has finished sets plus at most one unfinished set"}
+                score: {type: string, example: "6-4, 3-6, 10-8", description: "Required for normal and retired. Written from the first player's side. The winner must match it. Validated against the match_format and match_tiebreak_points of the match's category (its own, or else the tournament's), with strict sets (6-0 to 6-4, 7-5, 7-6). A retired score has finished sets plus at most one unfinished set"}
                 played_at: {type: string, example: "2026-11-10", description: Defaults to the planned time of the match, or now}
       responses:
         '200':

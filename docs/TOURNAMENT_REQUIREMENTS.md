@@ -228,6 +228,7 @@ Interpretei algumas respostas e preenchi lacunas. **Se alguma estiver errada, me
   - parâmetros: sem vantagem (padrão sim) e pontos do match tie-break (padrão 10).
 - **RF-03b** Regras **por categoria**: formato de chave (`knockout` | `round_robin` | `groups_knockout`); para grupos, tamanho alvo (3 ou 4), classificados por grupo (1 ou 2) e cruzamento (padrão 1A×2B); nº de cabeças de chave (sugerido pela tabela ITF, editável); tolerância de W.O. e descanso mínimo (informativos, exibidos no regulamento). **A ordem de desempate não é configurável (D-15).**
 - **RF-04** Após o sorteio, o formato de chave da categoria fica travado (alterar exige desfazer o sorteio). O formato de partida do torneio fica travado quando sair o primeiro resultado.
+- **RF-04b** O formato de partida do torneio é o padrão das categorias. Cada categoria pode ter o seu próprio (formato, sem vantagem e pontos do super tie-break, cada campo separadamente; vazio segue o torneio), por exemplo masculino com 2 sets + super tie-break e feminino com set pro até 8 games. O formato da categoria trava quando sair o primeiro resultado lançado nela. Na página pública, a aba Regulamento mostra o formato da categoria, e o cabeçalho do torneio mostra "Formato por categoria" quando elas diferem.
 
 ### 8.2 Inscrição pública
 

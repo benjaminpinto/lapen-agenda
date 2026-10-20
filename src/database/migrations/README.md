@@ -23,6 +23,7 @@ Pre-numbered migrations (`ranking_schema_postgres.sql`, `add_admin_field_postgre
 8. **012_add_not_played_status.sql** - Added 'not_played' status to ranking_matches
 9. **013_normalize_user_names.sql** - Trimmed whitespace in user names, enforced going forward
 10. **014_add_tournaments.sql** - Tournament module: `tournaments`, `tournament_categories`, `tournament_registrations`, `tournament_groups`, `tournament_group_entries`, `tournament_matches`, `tournament_sessions`, `tournament_session_courts`, `tournament_slot_blocks`, `tournament_unavailability`, `tournament_audit_log`; adds `match_statistics_unified.tournament_match_id` and replaces its two unnamed CHECKs with `chk_match_stats_single_source` (exactly one origin)
+11. **015_add_category_match_format.sql** - Adds nullable `match_format`, `no_ad` and `match_tiebreak_points` to `tournament_categories`: a category overrides the tournament's match format, NULL follows the tournament
 
 **Note:** 008-011 were never assigned — no gap to fill, just unused numbers between 007 and 012.
 

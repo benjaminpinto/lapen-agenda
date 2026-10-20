@@ -327,6 +327,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_tournaments_single_active
 CREATE INDEX IF NOT EXISTS idx_tournaments_status ON tournaments(status);
 
 -- Categories (provas) inside a tournament. NULL max_entries means no limit.
+-- match_format, no_ad and match_tiebreak_points override the tournament's, NULL follows the tournament.
 CREATE TABLE IF NOT EXISTS tournament_categories (
     id SERIAL PRIMARY KEY,
     tournament_id INTEGER NOT NULL REFERENCES tournaments(id) ON DELETE CASCADE,
@@ -342,7 +343,12 @@ CREATE TABLE IF NOT EXISTS tournament_categories (
     status VARCHAR(30) NOT NULL DEFAULT 'awaiting_draw',
     sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    match_format VARCHAR(30),
+    no_ad BOOLEAN,
+    match_tiebreak_points INTEGER,
     UNIQUE (tournament_id, name),
+    CONSTRAINT tournament_categories_match_format_valid CHECK (match_format IS NULL OR match_format IN ('best_of_3_super_tb', 'pro_set_8', 'single_set_6')),
+    CONSTRAINT tournament_categories_match_tiebreak_points_valid CHECK (match_tiebreak_points IS NULL OR match_tiebreak_points > 0),
     CONSTRAINT tournament_categories_entries_valid CHECK (min_entries >= 2 AND (max_entries IS NULL OR max_entries >= min_entries)),
     CONSTRAINT tournament_categories_draw_format_valid CHECK (draw_format IN ('knockout', 'round_robin', 'groups_knockout')),
     CONSTRAINT tournament_categories_group_size_valid CHECK (group_target_size IS NULL OR group_target_size IN (3, 4)),

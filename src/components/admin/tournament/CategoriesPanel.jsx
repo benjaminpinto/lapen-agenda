@@ -7,11 +7,11 @@ import {Pencil, Plus, Trash2} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
 import ConfirmDialog from './ConfirmDialog'
 import {ADMIN_API, errorMessage, request} from './tournamentApi'
-import {CATEGORY_STATUS, DRAW_FORMATS} from './labels'
+import {CATEGORY_STATUS, DRAW_FORMATS, MATCH_FORMATS} from './labels'
 
 const blank = {
   name: '', draw_format: 'knockout', min_entries: 4, max_entries: '', group_target_size: 4, qualifiers_per_group: 2,
-  num_seeds: 0, wo_tolerance_min: 15, min_rest_min: 60,
+  num_seeds: 0, wo_tolerance_min: 15, min_rest_min: 60, match_format: '', no_ad: '', match_tiebreak_points: '',
 }
 
 const selectClass = 'h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm'
@@ -23,6 +23,7 @@ function CategoryDialog({ tournament, category, onClose, onSaved }) {
   const [form, setForm] = useState(editing ? { ...blank, ...Object.fromEntries(Object.entries(category).map(([k, v]) => [k, v ?? ''])) } : blank)
   const [saving, setSaving] = useState(false)
   const grouped = form.draw_format === 'groups_knockout'
+  const superTiebreak = (form.match_format || tournament.match_format) === 'best_of_3_super_tb'
   const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }))
 
   const submit = async (event) => {
@@ -33,6 +34,8 @@ function CategoryDialog({ tournament, category, onClose, onSaved }) {
       name: form.name, draw_format: form.draw_format, min_entries: number(form.min_entries), max_entries: number(form.max_entries),
       num_seeds: number(form.num_seeds), wo_tolerance_min: number(form.wo_tolerance_min), min_rest_min: number(form.min_rest_min),
       ...(grouped ? { group_target_size: number(form.group_target_size), qualifiers_per_group: number(form.qualifiers_per_group) } : {}),
+      match_format: form.match_format || null, no_ad: form.no_ad === '' ? null : String(form.no_ad) === 'true',
+      match_tiebreak_points: superTiebreak ? number(form.match_tiebreak_points) : null,
     }
     const result = editing
       ? await request('PUT', `${ADMIN_API}/${tournament.id}/categories/${category.id}`, payload)
@@ -87,6 +90,33 @@ function CategoryDialog({ tournament, category, onClose, onSaved }) {
               <Input id="category-seeds" data-testid="category-form-seeds" type="number" min="0" max="16" value={form.num_seeds} onChange={set('num_seeds')} />
             </div>
           </fieldset>
+          <div className="rounded-md border border-stone-200 p-3 space-y-3" data-testid="category-match-format">
+            <p className="text-sm font-semibold text-stone-800">Formato das partidas</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="category-match-format">Formato</Label>
+                <select id="category-match-format" data-testid="category-form-match-format" className={selectClass} value={form.match_format} onChange={set('match_format')}>
+                  <option value="">Igual ao torneio ({MATCH_FORMATS[tournament.match_format]})</option>
+                  {Object.entries(MATCH_FORMATS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="category-no-ad">Vantagem</Label>
+                <select id="category-no-ad" data-testid="category-form-no-ad" className={selectClass} value={form.no_ad === '' ? '' : String(form.no_ad)} onChange={set('no_ad')}>
+                  <option value="">Igual ao torneio ({tournament.no_ad ? 'sem vantagem' : 'com vantagem'})</option>
+                  <option value="true">Sem vantagem (no-ad)</option>
+                  <option value="false">Com vantagem</option>
+                </select>
+              </div>
+              {superTiebreak && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="category-tiebreak">Pontos do super tie-break</Label>
+                  <Input id="category-tiebreak" data-testid="category-form-tiebreak-points" type="number" min="1" max="20" value={form.match_tiebreak_points} onChange={set('match_tiebreak_points')} placeholder={`Torneio: ${tournament.match_tiebreak_points}`} />
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-stone-600">Fica travado depois do primeiro resultado da categoria.</p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="category-min">Mínimo de inscritos</Label>
@@ -163,6 +193,11 @@ export default function CategoriesPanel({ tournament, categories, reload }) {
                 <p className="text-xs text-stone-500">
                   {CATEGORY_STATUS[category.status]} · mín. {category.min_entries}{category.max_entries ? ` · máx. ${category.max_entries}` : ''} · {category.num_seeds} cabeça(s) de chave
                 </p>
+                {[category.match_format, category.no_ad, category.match_tiebreak_points].some((value) => value !== null && value !== undefined) && (
+                  <p className="text-xs text-stone-500" data-testid={`category-format-${category.id}`}>
+                    Partida: {MATCH_FORMATS[category.effective_format.match_format]}, {category.effective_format.no_ad ? 'sem vantagem' : 'com vantagem'}
+                  </p>
+                )}
                 <p className="text-xs text-stone-500" data-testid={`category-counts-${category.id}`}>
                   {category.counts.confirmed} confirmada(s) · {category.counts.pending} pendente(s) · {category.counts.waitlist} em espera
                 </p>

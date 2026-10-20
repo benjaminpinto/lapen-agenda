@@ -77,6 +77,11 @@ export default function TournamentPage() {
             <Button type="button" className="min-h-[44px] bg-amber-700 text-white hover:bg-amber-800">Inscrever-se</Button>
           </Link>
         )}
+        {tournament.status === 'in_progress' && tournament.schedule_published && (
+          <Link to={`/tournaments/${slug}/ao-vivo`} data-testid="header-live-link">
+            <Button type="button" variant="outline" className="min-h-[44px]">Ver ao vivo</Button>
+          </Link>
+        )}
       </header>
 
       {categories.length === 0 && <p className="rounded-lg border border-dashed bg-card px-4 py-8 text-center text-sm text-muted-foreground" data-testid="no-categories">Este torneio ainda não tem categorias.</p>}

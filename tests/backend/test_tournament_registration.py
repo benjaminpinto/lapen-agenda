@@ -409,7 +409,7 @@ def test_client_ip_hash_is_salted_stable_and_optional(client):
         assert svc.hash_client_ip(None) is None and svc.hash_client_ip('') is None
 
 
-@pytest.mark.parametrize('changes', [{'status': 'in_progress'}, {'status': 'finished'}, {'status': 'cancelled'}])
+@pytest.mark.parametrize('changes', [{'status': 'finished'}, {'status': 'cancelled'}])
 def test_manual_registration_is_blocked_once_the_tournament_moved_on(client, people, changes):
     headers = people.admin.headers
     tournament, category = open_tournament(client, headers, 'Test Tourn Late')
@@ -417,6 +417,24 @@ def test_manual_registration_is_blocked_once_the_tournament_moved_on(client, peo
     response = client.post(f"/api/admin/tournaments/{tournament['id']}/registrations", headers=headers,
                            json={'category_id': category['id'], 'full_name': 'Tarde Demais', 'email': 'x@example.com', 'phone': '24988887777'})
     assert response.status_code == 409
+    assert response.get_json()['code'] == 'tournament_locked'
+
+
+def test_manual_registration_while_in_progress_only_reaches_categories_without_a_draw(client, people):
+    headers = people.admin.headers
+    tournament, drawn = open_tournament(client, headers, 'Test Tourn Late Entry')
+    undrawn = create_category(client, headers, tournament['id'], 'Feminino')
+    sql('UPDATE tournaments SET status = %s WHERE id = %s', ('in_progress', tournament['id']))
+    sql("UPDATE tournament_categories SET status = 'published' WHERE id = %s", (drawn['id'],))
+    url = f"/api/admin/tournaments/{tournament['id']}/registrations"
+    person = {'full_name': 'Tarde Demais', 'email': 'x@example.com', 'phone': '24988887777'}
+
+    accepted = client.post(url, headers=headers, json={**person, 'category_id': undrawn['id']})
+    assert accepted.status_code == 201
+    assert accepted.get_json()['registration']['status'] == 'confirmed'
+
+    blocked = client.post(url, headers=headers, json={**person, 'category_id': drawn['id']})
+    assert blocked.status_code == 409 and blocked.get_json()['code'] == 'draw_exists'
 
 
 # --- admin: editing a registration ---------------------------------------------------------------

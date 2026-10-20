@@ -2079,7 +2079,7 @@ paths:
     post:
       tags: [Tournaments]
       summary: Create a category
-      description: groups_knockout needs group_target_size (3 or 4), qualifiers_per_group (1 or 2) and min_entries of at least 6. Group settings are dropped for other formats.
+      description: groups_knockout needs group_target_size (3 or 4), qualifiers_per_group (1 or 2) and min_entries of at least 6. Group settings are dropped for other formats. Allowed in any status except finished and cancelled, including in_progress (categories that already have a draw are not affected).
       security:
         - BearerAuth: []
       requestBody:
@@ -2122,7 +2122,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/TournamentError'
         '409':
-          description: Duplicate name (category_name_taken) or tournament locked
+          description: Duplicate name (category_name_taken) or tournament finished or cancelled (tournament_locked)
           content:
             application/json:
               schema:
@@ -2286,7 +2286,7 @@ paths:
     post:
       tags: [Tournaments]
       summary: Register someone manually (for example received by WhatsApp)
-      description: Starts as confirmed unless status is pending. Respects the category capacity. Optional user_id links an approved LAPEN member.
+      description: Starts as confirmed unless status is pending. Respects the category capacity. Optional user_id links an approved LAPEN member. Allowed while the tournament is in_progress, as long as the category has no draw yet (draw_exists otherwise). Refused when the tournament is finished or cancelled (tournament_locked).
       security:
         - BearerAuth: []
       requestBody:

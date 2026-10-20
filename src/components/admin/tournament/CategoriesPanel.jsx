@@ -122,7 +122,7 @@ export default function CategoriesPanel({ tournament, categories, reload }) {
   const [editing, setEditing] = useState(null) // null | 'new' | category
   const [removing, setRemoving] = useState(null)
   const [busy, setBusy] = useState(false)
-  const locked = ['in_progress', 'finished', 'cancelled'].includes(tournament.status)
+  const locked = ['finished', 'cancelled'].includes(tournament.status)
 
   const remove = async () => {
     setBusy(true)

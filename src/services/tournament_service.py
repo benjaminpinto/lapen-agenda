@@ -497,7 +497,7 @@ CATEGORY_UNIQUE = {
 
 def create_category(db, tournament_id, data, actor_id):
     tournament = get_tournament(db, tournament_id, lock=True)
-    if tournament['status'] in ('in_progress',) + TERMINAL_STATUSES:
+    if tournament['status'] in TERMINAL_STATUSES:
         raise TournamentError('Não é possível criar categorias neste estágio do torneio.', 409, code='tournament_locked')
     values = _category_values(data)
     if values['sort_order'] is None:
@@ -643,7 +643,7 @@ def _check_registration_transition(current, target, category_status):
 
 def create_registration_manual(db, tournament_id, data, actor_id):
     tournament = get_tournament(db, tournament_id)
-    if tournament['status'] in TERMINAL_STATUSES + ('in_progress',):
+    if tournament['status'] in TERMINAL_STATUSES:
         raise TournamentError('Não é possível inscrever neste estágio do torneio.', 409, code='tournament_locked')
     category = get_category(db, tournament_id, parse_id(data.get('category_id'), 'Categoria'), lock=True)
     if category['status'] != 'awaiting_draw':

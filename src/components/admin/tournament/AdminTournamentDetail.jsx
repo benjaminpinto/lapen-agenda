@@ -14,6 +14,7 @@ import DrawPanel from './DrawPanel'
 import MatchesPanel from './MatchesPanel'
 import PrintPanel from './PrintPanel'
 import SchedulePanel from './schedule/SchedulePanel'
+import LivePanel from './live/LivePanel'
 import {ADMIN_API, errorMessage, request} from './tournamentApi'
 import {formatDate, TOURNAMENT_STATUS} from './labels'
 
@@ -33,6 +34,7 @@ const TABS = [
   ['inscricoes', 'Inscrições'],
   ['sorteio', 'Sorteio'],
   ['cronograma', 'Cronograma'],
+  ['evento', 'Dia do evento'],
   ['partidas', 'Partidas'],
   ['imprimir', 'Imprimir folhas'],
 ]
@@ -42,8 +44,10 @@ export default function AdminTournamentDetail() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [params, setParams] = useSearchParams()
-  const tab = TABS.some(([key]) => key === params.get('tab')) ? params.get('tab') : 'dados'
   const [data, setData] = useState(null)
+  // While the tournament is on, the day-of-event tab is where the organizer lives
+  const fallbackTab = data?.tournament.status === 'in_progress' ? 'evento' : 'dados'
+  const tab = TABS.some(([key]) => key === params.get('tab')) ? params.get('tab') : fallbackTab
   const [error, setError] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -162,6 +166,7 @@ export default function AdminTournamentDetail() {
         <TabsContent value="inscricoes" className="mt-4"><RegistrationsPanel {...panelProps} /></TabsContent>
         <TabsContent value="sorteio" className="mt-4"><DrawPanel {...panelProps} /></TabsContent>
         <TabsContent value="cronograma" className="mt-4"><SchedulePanel {...panelProps} /></TabsContent>
+        <TabsContent value="evento" className="mt-4"><LivePanel {...panelProps} /></TabsContent>
         <TabsContent value="partidas" className="mt-4"><MatchesPanel {...panelProps} /></TabsContent>
         <TabsContent value="imprimir" className="mt-4"><PrintPanel {...panelProps} /></TabsContent>
       </Tabs>

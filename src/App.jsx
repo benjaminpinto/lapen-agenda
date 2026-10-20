@@ -24,6 +24,7 @@ import AdminTournaments from './components/admin/tournament/AdminTournaments'
 import AdminTournamentDetail from './components/admin/tournament/AdminTournamentDetail'
 import TournamentHome from './components/tournament/TournamentHome'
 import TournamentPage from './components/tournament/TournamentPage'
+import LiveBoard from './components/tournament/LiveBoard'
 import RegistrationForm from './components/tournament/RegistrationForm'
 import ScheduleForm from './components/ScheduleForm'
 import ScheduleView from './components/ScheduleView'
@@ -89,6 +90,7 @@ function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
             <Route path="/tournaments" element={<TournamentHome />} />
             <Route path="/tournaments/:slug" element={<TournamentPage />} />
             <Route path="/tournaments/:slug/register" element={<RegistrationForm />} />
+            <Route path="/tournaments/:slug/ao-vivo" element={<LiveBoard />} />
             <Route path="/statistics" element={<Statistics />} />
             <Route path="/challenges" element={<Challenges />} />
             <Route path="/statistics/add-result" element={loading ? <div>Carregando...</div> : (isAuthenticated ? <AddMatchResult /> : <Navigate to="/login" />)} />

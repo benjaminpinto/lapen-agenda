@@ -82,11 +82,71 @@ export function GroupsTab({ data }) {
   )
 }
 
+const ADVANCING_LABEL = { qualified: 'classificado', provisional: 'provisório', tie_pending: 'empate a decidir' }
+
+const missingGames = (count) => (count === 1 ? 'falta 1 jogo' : `faltam ${count} jogos`)
+
+/** The bracket is drawn once every group is settled: say which groups are holding it up and who is advancing for now. */
+function PendingBracket({ groups }) {
+  const open = groups.filter((group) => !group.confirmed)
+  const remaining = (group) => group.matches.filter((match) => match.status !== 'completed')
+  const advancing = (group) => group.rows.filter((row) => row.position <= group.qualifiers && ADVANCING_LABEL[row.state])
+  return (
+    <div className="space-y-6" data-testid="tab-chave">
+      <p className="rounded-lg border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground" data-testid="bracket-pending-note">
+        A chave do mata-mata será montada quando todos os grupos terminarem, pois os byes e os cruzamentos dependem da campanha final de cada grupo.
+      </p>
+      {open.length > 0 && (
+        <section className="space-y-3" data-testid="bracket-pending-groups">
+          <h3 className="text-base font-semibold">O que falta para montar a chave</h3>
+          {open.map((group) => {
+            const games = remaining(group)
+            return (
+              <div key={group.id} className="space-y-2" data-testid={`bracket-pending-group-${group.name}`}>
+                <p className="text-sm font-medium">
+                  Grupo {group.name}: {games.length > 0 ? missingGames(games.length) : 'empate a decidir pelo organizador'}
+                </p>
+                {games.length > 0 && (
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {games.map((match) => <MatchCard key={match.id} match={match} />)}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </section>
+      )}
+      <section className="space-y-3" data-testid="bracket-advancing">
+        <h3 className="text-base font-semibold">Quem está avançando</h3>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {groups.map((group) => (
+            <div key={group.id} className="rounded-lg border bg-card px-3 py-2 text-sm" data-testid={`bracket-advancing-group-${group.name}`}>
+              <p className="font-semibold">Grupo {group.name}</p>
+              {advancing(group).length === 0 ? (
+                <p className="text-muted-foreground">Ninguém garantido ainda.</p>
+              ) : (
+                <ul>
+                  {advancing(group).map((row) => (
+                    <li key={row.entry.id} className="flex justify-between gap-2">
+                      <span className="min-w-0 truncate">{row.position}º {row.entry.display_name}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">{ADVANCING_LABEL[row.state]}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  )
+}
+
 export function BracketTab({ data }) {
   const { category } = data
   if (category.draw_format === 'round_robin') return <Empty testId="tab-chave">Esta categoria é todos contra todos: não há chave. Veja a aba Grupos.</Empty>
   if (!category.draw_published) return <Empty testId="tab-chave">A chave aparece aqui quando o sorteio for publicado.</Empty>
-  if (data.knockout_pending) return <Empty testId="tab-chave">A chave do mata-mata será montada quando os grupos terminarem. Veja quem está avançando na aba Grupos.</Empty>
+  if (data.knockout_pending) return <PendingBracket groups={data.groups} />
   return <div data-testid="tab-chave"><BracketView bracket={data.bracket} /></div>
 }
 

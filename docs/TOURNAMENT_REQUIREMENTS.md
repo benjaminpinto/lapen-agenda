@@ -220,7 +220,7 @@ Interpretei algumas respostas e preenchi lacunas. **Se alguma estiver errada, me
 ### 8.1 Cadastro e regras (admin)
 
 - **RF-01** Criar/editar torneio: nome, slug (URL), descrição, local, datas de início/fim, janela de inscrição (abertura e fechamento com data e hora), regulamento em texto livre, contato do organizador e **formato de partida** (RF-03). **D-1:** só pode haver **um torneio ativo** (status de `registration_open` a `in_progress`). Abrir inscrições com outro ativo é bloqueado com a mensagem "Finalize ou cancele o torneio <nome>". Rascunhos são ilimitados. A garantia fica no banco (índice único parcial).
-- **RF-02** Um torneio tem uma ou mais categorias. Campos: nome, vagas máximas, mínimo de inscritos (padrão 4) e ordem de exibição. A mesma pessoa pode se inscrever em mais de uma categoria (D-2).
+- **RF-02** Um torneio tem uma ou mais categorias. Campos: nome, vagas máximas, mínimo de inscritos (padrão 4) e ordem de exibição. A mesma pessoa pode se inscrever em mais de uma categoria (D-2). Com o torneio em andamento ainda é possível criar uma categoria nova e inscrever nela pelo admin (a inscrição pública continua fechada); as categorias já sorteadas seguem travadas.
 - **RF-03** **Formato de partida do torneio**, escolhido na criação **(D-7)**:
   - `best_of_3_super_tb` (**padrão**): 2 sets, tie-break a 6–6, 3º set = super tie-break de 10 pontos;
   - `pro_set_8`: 1 set até 8 games;

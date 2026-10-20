@@ -4,7 +4,7 @@ import random
 import pytest
 from backend.tournament_support import (  # noqa: F401  (fixtures are used by name)
     add_registration, audit_actions, clean_db, client, closed_tournament, create_category, create_tournament,
-    patch_registration, people, set_status, sql,
+    patch_registration, people, set_status, sql, started_tournament,
 )
 from backend.tournament_support import draw_url as url
 from backend.tournament_support import generate_draw as generate
@@ -426,6 +426,25 @@ def test_other_categories_can_be_drawn_while_the_tournament_is_in_progress(clien
 
     assert generate(client, headers, tournament, second)['category']['status'] == 'drawn'
     assert client.post(url(tournament, second, '/publish'), headers=headers).status_code == 200
+
+
+def test_a_category_created_during_the_tournament_is_filled_drawn_and_holds_back_the_finish(client, people):
+    headers = people.admin.headers
+    tournament, first, _ = started_tournament(client, headers, 8)
+    second = create_category(client, headers, tournament['id'], 'Feminino')
+    for n in range(4):
+        response = client.post(f"/api/admin/tournaments/{tournament['id']}/registrations", headers=headers, json={
+            'category_id': second['id'], 'full_name': f'Jogadora {n}', 'email': f'f{n}@example.com', 'phone': '24988887777'})
+        assert response.status_code == 201, response.get_json()
+
+    assert generate(client, headers, tournament, second)['category']['status'] == 'drawn'
+    assert client.post(url(tournament, second, '/publish'), headers=headers).status_code == 200
+
+    sql("UPDATE tournament_categories SET status = 'finished' WHERE id = %s", (first['id'],))
+    blocked = set_status(client, headers, tournament['id'], 'finished')
+    assert blocked.status_code == 409 and blocked.get_json()['code'] == 'categories_unfinished'
+    sql("UPDATE tournament_categories SET status = 'finished' WHERE id = %s", (second['id'],))
+    assert set_status(client, headers, tournament['id'], 'finished').status_code == 200
 
 
 def test_a_published_category_blocks_reopening_registrations_but_a_preview_does_not(client, people):

@@ -350,12 +350,29 @@ def test_category_names_are_unique_within_a_tournament(client, people):
     create_category(client, headers, other['id'], 'Masculino')  # same name elsewhere is fine
 
 
-@pytest.mark.parametrize('state', ['in_progress', 'finished', 'cancelled'])
+@pytest.mark.parametrize('state', ['finished', 'cancelled'])
 def test_categories_cannot_be_added_late(client, people, state):
     tournament = create_tournament(client, people.admin.headers)
     sql('UPDATE tournaments SET status = %s WHERE id = %s', (state, tournament['id']))
     response = client.post(f"/api/admin/tournaments/{tournament['id']}/categories", json={'name': 'Tarde'}, headers=people.admin.headers)
     assert response.status_code == 409
+    assert response.get_json()['code'] == 'tournament_locked'
+
+
+def test_a_category_can_be_added_while_the_tournament_is_in_progress(client, people):
+    headers = people.admin.headers
+    tournament = create_tournament(client, headers)
+    drawn = create_category(client, headers, tournament['id'], 'Masculino')
+    sql('UPDATE tournaments SET status = %s WHERE id = %s', ('in_progress', tournament['id']))
+    sql("UPDATE tournament_categories SET status = 'published' WHERE id = %s", (drawn['id'],))
+
+    added = create_category(client, headers, tournament['id'], 'Feminino')
+    assert added['status'] == 'awaiting_draw'
+    assert 'category_created' in audit_actions(tournament['id'])
+
+    # The category that already has a draw stays frozen
+    blocked = client.put(f"/api/admin/tournaments/{tournament['id']}/categories/{drawn['id']}", json={'num_seeds': 2}, headers=headers)
+    assert blocked.status_code == 409 and blocked.get_json()['code'] == 'draw_exists'
 
 
 def test_category_belongs_to_its_tournament(client, people):

@@ -16,7 +16,8 @@ import LiveOverview from './LiveOverview'
 import ShareDialog from './ShareDialog'
 import WalkoverDialog from './WalkoverDialog'
 import {categoryProgress, defaultDay, focusMatches, isReady, resultLabel, tally} from './liveUtils'
-import {callMessage, summaryText} from './messages'
+import {callMessage, summaryData, summaryText} from './messages'
+import {drawSummary} from './summaryImage'
 
 const chip = 'inline-flex items-center gap-1 rounded-full border bg-white px-3 py-1 text-xs font-medium'
 const CLOCK_REFRESH_MS = 30000
@@ -96,10 +97,15 @@ export default function LivePanel({ tournament, categories, reload }) {
     description: 'Chamada de jogos, para enviar no grupo do torneio',
     text: callMessage({ tournamentName: tournament.name, matches: list, courts: schedule.courts, today }),
   })
-  const shareSummary = () => setShare({
-    description: `Resumo de ${dayTitle(activeDay)} e jogos do próximo dia, para enviar no grupo do torneio`,
-    text: summaryText({ tournamentName: tournament.name, day: activeDay, matches, courts: schedule.courts }),
-  })
+  const shareSummary = () => {
+    const data = summaryData({ day: activeDay, matches, courts: schedule.courts, today })
+    setShare({
+      description: `Resumo de ${dayTitle(activeDay)} e jogos do próximo dia, para enviar no grupo do torneio`,
+      text: summaryText({ tournamentName: tournament.name, day: activeDay, matches, courts: schedule.courts, today }),
+      buildImage: () => drawSummary({ tournamentName: tournament.name, data }),
+      filename: `resumo-${activeDay}.png`,
+    })
+  }
 
   const annul = async () => {
     setBusy(true)
@@ -192,7 +198,7 @@ export default function LivePanel({ tournament, categories, reload }) {
       {walkover && (
         <WalkoverDialog tournament={tournament} match={walkover} onClose={() => setWalkover(null)} onSaved={() => { setWalkover(null); refresh() }} />
       )}
-      {share && <ShareDialog description={share.description} text={share.text} onClose={() => setShare(null)} />}
+      {share && <ShareDialog {...share} onClose={() => setShare(null)} />}
       {detail && (
         <Dialog open onOpenChange={(next) => { if (!next) setDetail(null) }}>
           <DialogContent className="w-full max-w-md" data-testid="live-detail-dialog">

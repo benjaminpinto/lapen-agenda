@@ -401,6 +401,7 @@ def get_schedule(db, slug):
             'id': match['id'], 'category_id': match['category_id'], 'category_name': state.category_by_id[match['category_id']]['name'],
             'stage': match['stage'], 'round_number': match['round_number'], 'round_name': state.round_name(row),
             'group': row['group_name'], 'status': match['status'], 'outcome': row['outcome'], 'score': row['score'],
+            'winner_side': next((slot for slot in (1, 2) if row['winner_entry_id'] and row['winner_entry_id'] == row[f'entry{slot}_id']), None),
             'window': _window(match['window']),
             'sides': [{'name': state.side_name(row, slot), 'defined': row[f'entry{slot}_id'] is not None} for slot in (1, 2)],
         })

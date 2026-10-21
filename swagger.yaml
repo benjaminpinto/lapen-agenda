@@ -612,6 +612,7 @@ components:
                     tied: {type: boolean}
                     state: {type: string, enum: [provisional, open, qualified, eliminated, tie_pending]}
                     played: {type: integer}
+                    played_on_court: {type: integer, description: Matches played on court (a W.O. does not count); the second tiebreak criterion}
                     wins: {type: integer}
                     losses: {type: integer}
                     sets_won: {type: integer}
@@ -620,7 +621,33 @@ components:
                     games_won: {type: integer}
                     games_lost: {type: integer}
                     games_diff: {type: integer}
+                    sets_pct: {type: number, description: Share of sets won, 0 to 1}
+                    games_pct: {type: number, description: Share of games won, 0 to 1}
                     destination: {type: string, nullable: true, example: "Semifinal 1", description: Where a qualified player goes next}
+              tiebreaks:
+                type: array
+                description: For each set of players level on wins, the criteria that separated them, in the order they were applied
+                items:
+                  type: object
+                  properties:
+                    wins: {type: integer}
+                    entries:
+                      type: array
+                      items: {type: integer, description: Entry id}
+                    steps:
+                      type: array
+                      description: Empty when no criterion could split the players
+                      items:
+                        type: object
+                        properties:
+                          criterion: {type: string, enum: [played_on_court, head_to_head, sets_pct, games_pct, manual]}
+                          order:
+                            type: array
+                            description: Entry ids ranked by this criterion, best first; ids tied on it share a list
+                            items:
+                              type: array
+                              items: {type: integer}
+                          walkover: {type: boolean, description: Only on head_to_head; the match was decided by a W.O.}
               matches:
                 type: array
                 items: {$ref: '#/components/schemas/PublicMatch'}

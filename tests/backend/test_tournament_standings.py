@@ -232,3 +232,39 @@ def test_campaign_falls_back_to_sets_then_games_then_group_order():
         ('C', row(2, 0, (4, 1), (31, 20))), ('D', row(2, 0, (4, 1), (31, 20))),
     ])
     assert [name for name, _ in ordered] == ['B', 'C', 'D', 'A']
+
+
+# --- the trail of tiebreaks (what the group screen explains) ---------------------------------------------
+
+def test_the_tiebreak_trail_names_the_criterion_that_split_a_tie_on_wins():
+    # a cycle where the walkover win is what leaves Dimas (D) and Isaacson (I) level on matches played
+    matches = [res('D', 'I', 'W.O.', 'wo', winner='D'), res('B', 'D', '6-1, 1-6, 10-6'), res('B', 'I', '6-4, 5-7, 6-10')]
+    result = compute_standings(['B', 'D', 'I'], matches, qualifiers=2)
+    assert order(result) == ['B', 'D', 'I']
+    assert result['tiebreaks'] == [{
+        'wins': 1, 'entries': ['B', 'D', 'I'],
+        'steps': [{'criterion': 'played_on_court', 'order': [['B'], ['D', 'I']]},
+                  {'criterion': 'head_to_head', 'order': [['D'], ['I']], 'walkover': True}],
+    }]
+
+
+def test_the_tiebreak_trail_follows_a_three_way_tie_down_to_head_to_head():
+    result = compute_standings(list('ABCD'), cycle_with_a_clear_leader(), qualifiers=2)
+    assert result['tiebreaks'] == [{
+        'wins': 2, 'entries': ['A', 'B', 'C'],
+        'steps': [{'criterion': 'sets_pct', 'order': [['A'], ['B', 'C']]},
+                  {'criterion': 'head_to_head', 'order': [['B'], ['C']], 'walkover': False}],
+    }]
+
+
+def test_the_tiebreak_trail_is_empty_when_nobody_is_level_on_wins():
+    matches = [res('A', 'B', WIN), res('A', 'C', WIN), res('B', 'C', WIN)]
+    assert compute_standings(list('ABC'), matches, qualifiers=1)['tiebreaks'] == []
+
+
+def test_the_tiebreak_trail_records_the_organizers_decision_and_what_the_criteria_could_not_split():
+    open_tie = compute_standings(list('ABC'), identical_cycle(), qualifiers=1)
+    assert open_tie['tiebreaks'] == [{'wins': 1, 'entries': ['A', 'B', 'C'], 'steps': []}]
+    decided = compute_standings(list('ABC'), identical_cycle(), qualifiers=1, manual_ranks={'B': 1, 'C': 2, 'A': 3})
+    assert decided['tiebreaks'] == [{'wins': 1, 'entries': ['A', 'B', 'C'],
+                                     'steps': [{'criterion': 'manual', 'order': [['B'], ['C'], ['A']]}]}]

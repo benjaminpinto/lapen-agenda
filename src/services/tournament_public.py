@@ -308,14 +308,15 @@ def get_category(db, slug, category_id):
                     destination = by_entry.get(row['entry']) or by_label.get(f"{row['position']}º Grupo {table['group']['name']}")
                 rows.append({
                     'entry': _person(people, row['entry']), 'position': row['position'], 'tied': row['tied'], 'state': row['state'],
-                    'played': row['played'], 'wins': row['wins'], 'losses': row['losses'],
+                    'played': row['played'], 'played_on_court': row['played_on_court'], 'wins': row['wins'], 'losses': row['losses'],
                     'sets_won': row['sets_won'], 'sets_lost': row['sets_lost'], 'sets_diff': row['sets_won'] - row['sets_lost'],
                     'games_won': row['games_won'], 'games_lost': row['games_lost'], 'games_diff': row['games_won'] - row['games_lost'],
+                    'sets_pct': row['sets_pct'], 'games_pct': row['games_pct'],
                     'destination': destination,
                 })
             groups_data.append({
                 'id': table['group']['id'], 'name': table['group']['name'], 'complete': result['complete'], 'blocked': result['blocked'],
-                'confirmed': result['confirmed'], 'qualifiers': qualifiers, 'rows': rows,
+                'confirmed': result['confirmed'], 'qualifiers': qualifiers, 'rows': rows, 'tiebreaks': result['tiebreaks'],
                 'ties': [{'entries': [_person(people, e) for e in tie['entries']], 'relevant': tie['relevant']} for tie in result['ties']],
             })
     elif published:

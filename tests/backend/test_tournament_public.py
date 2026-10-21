@@ -3,12 +3,12 @@ import json
 from datetime import timedelta
 
 import pytest
+
 from backend.tournament_support import (  # noqa: F401  (fixtures are used by name)
     TEST_SECRET, add_registration, clean_db, client, closed_tournament, create_category, create_tournament,
     draw_matches,
     draw_of, ensure_court, generate_draw, make_user, people, seed, set_status, sql,
 )
-
 from src.services import tournament_public as public
 from src.services import tournament_seed
 from src.utils.time_utils import local_now
@@ -146,8 +146,9 @@ def test_groups_in_progress(client, seed):
         assert len(group['rows']) == 4 and len(group['matches']) == 6 and group['complete'] is False
         assert {r['state'] for r in group['rows']} <= {'provisional', 'open'} and all(r['destination'] is None for r in group['rows'])
         row = group['rows'][0]
-        assert set(row) == {'entry', 'position', 'tied', 'state', 'played', 'wins', 'losses', 'sets_won', 'sets_lost', 'sets_diff',
-                            'games_won', 'games_lost', 'games_diff', 'destination'}
+        assert set(row) == {'entry', 'position', 'tied', 'state', 'played', 'played_on_court', 'wins', 'losses', 'sets_won', 'sets_lost',
+                            'sets_diff', 'games_won', 'games_lost', 'games_diff', 'sets_pct', 'games_pct', 'destination'}
+        assert isinstance(group['tiebreaks'], list)
         assert row['sets_diff'] == row['sets_won'] - row['sets_lost'] and row['games_diff'] == row['games_won'] - row['games_lost']
 
     semis = masculine['bracket']['rounds'][0]['matches']

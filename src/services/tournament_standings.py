@@ -32,7 +32,7 @@ def compute_standings(entries, matches, qualifiers, match_format='best_of_3_supe
     qualifiers: how many positions advance.
     manual_ranks: {entry: rank} chosen by the organizer for players the criteria could not separate.
 
-    Returns {'rows', 'complete', 'blocked', 'confirmed', 'ties'}. Each row has the table columns plus
+    Returns {'rows', 'complete', 'blocked', 'confirmed', 'ties', 'tiebreaks'}. Each row has the table columns plus
     'position' (tied players share one), 'tied' and 'state':
       provisional / open        group still being played (provisional = inside the qualifying places and
                                 already with a win)
@@ -40,11 +40,15 @@ def compute_standings(entries, matches, qualifiers, match_format='best_of_3_supe
       tie_pending               group finished but a tie that matters could not be broken
     'blocked' means a tie inside or across the qualifying places is waiting for the organizer; 'confirmed'
     (finished and not blocked) is when the qualifiers are final.
+    'tiebreaks' explains, for each set of players level on wins, which criterion separated them: {'wins', 'entries',
+    'steps'}, each step {'criterion', 'order'} with 'order' the players it ranked, best first, tied ones together
+    (head_to_head also carries 'walkover'). Steps are empty when no criterion could split the players.
     """
     manual_ranks = manual_ranks or {}
     stats = {e: dict(played=0, played_on_court=0, wins=0, losses=0, sets_won=0, sets_lost=0, games_won=0, games_lost=0)
              for e in entries}
     decided = {}  # frozenset({a, b}) -> winner (None for a double W.O.)
+    walkovers = set()  # frozenset({a, b}) of the matches decided by a W.O.
     pending = 0
     for match in matches:
         if match['status'] != 'completed':
@@ -64,6 +68,8 @@ def compute_standings(entries, matches, qualifiers, match_format='best_of_3_supe
         for entry in (a, b):
             stats[entry]['played'] += 1
         decided[frozenset((a, b))] = winner
+        if match['outcome'] == 'wo':
+            walkovers.add(frozenset((a, b)))
         if match['outcome'] in ('normal', 'retired'):
             parsed = parse_tournament_score(match['score'], match_format, super_tiebreak_points)
             for entry, sets_won, sets_lost, games_won, games_lost in (
@@ -81,37 +87,53 @@ def compute_standings(entries, matches, qualifiers, match_format='best_of_3_supe
     def games_pct(entry):
         return _pct(stats[entry]['games_won'], stats[entry]['games_lost'])
 
-    def resolve(bucket):
-        """Split players level on wins and matches played. Returns buckets, best first (more than one player = still tied)."""
+    def resolve(bucket, trail):
+        """Split players level on wins and matches played. Returns buckets, best first (more than one player = still tied).
+        Each criterion that separates players is appended to trail."""
         if len(bucket) == 1:
             return [bucket]
         if len(bucket) == 2:
             winner = decided.get(frozenset(bucket))
             if winner is not None:
-                return [[winner], [bucket[0] if bucket[1] == winner else bucket[1]]]
-        for criterion in (sets_pct, games_pct):
+                loser = bucket[0] if bucket[1] == winner else bucket[1]
+                trail.append({'criterion': 'head_to_head', 'order': [[winner], [loser]], 'walkover': frozenset(bucket) in walkovers})
+                return [[winner], [loser]]
+        for criterion, measure in (('sets_pct', sets_pct), ('games_pct', games_pct)):
             groups = {}
             for entry in bucket:
-                groups.setdefault(criterion(entry), []).append(entry)
+                groups.setdefault(measure(entry), []).append(entry)
             if len(groups) > 1:
+                parts = [groups[value] for value in sorted(groups, reverse=True)]
+                trail.append({'criterion': criterion, 'order': parts})
                 ordered = []
-                for value in sorted(groups, reverse=True):
-                    ordered += resolve(groups[value])
+                for part in parts:
+                    ordered += resolve(part, trail)
                 return ordered
         return [bucket]
 
-    by_record = {}
+    by_wins = {}
     for entry in entries:
-        by_record.setdefault((stats[entry]['wins'], stats[entry]['played_on_court']), []).append(entry)
-    ordered = []
-    for record in sorted(by_record, reverse=True):
-        ordered += resolve(sorted(by_record[record]))
+        by_wins.setdefault(stats[entry]['wins'], []).append(entry)
+    ordered, tiebreaks, tiebreak_of = [], [], {}
+    for wins in sorted(by_wins, reverse=True):
+        level = sorted(by_wins[wins])
+        by_played = {}
+        for entry in level:
+            by_played.setdefault(stats[entry]['played_on_court'], []).append(entry)
+        parts = [by_played[played] for played in sorted(by_played, reverse=True)]
+        trail = [{'criterion': 'played_on_court', 'order': parts}] if len(parts) > 1 else []
+        for part in parts:
+            ordered += resolve(part, trail)
+        if len(level) > 1:
+            tiebreaks.append({'wins': wins, 'entries': level, 'steps': trail})
+            tiebreak_of.update({entry: tiebreaks[-1] for entry in level})
 
     placed = []  # (bucket, still tied)
     for bucket in ordered:
         ranks = [manual_ranks.get(entry) for entry in bucket]
         if len(bucket) > 1 and None not in ranks and len(set(ranks)) == len(ranks):
             placed += [([entry], False) for _, entry in sorted(zip(ranks, bucket))]
+            tiebreak_of[bucket[0]]['steps'].append({'criterion': 'manual', 'order': [[entry] for _, entry in sorted(zip(ranks, bucket))]})
         else:
             placed.append((bucket, len(bucket) > 1))
 
@@ -134,7 +156,8 @@ def compute_standings(entries, matches, qualifiers, match_format='best_of_3_supe
                 entry=entry, position=place, tied=tied, state=state, **stats[entry],
                 sets_pct=float(sets_pct(entry)), games_pct=float(games_pct(entry))))
         position = end + 1
-    return {'rows': rows, 'complete': complete, 'blocked': blocked, 'confirmed': complete and not blocked, 'ties': ties}
+    return {'rows': rows, 'complete': complete, 'blocked': blocked, 'confirmed': complete and not blocked, 'ties': ties,
+            'tiebreaks': tiebreaks}
 
 
 def campaign_order(group_winners):

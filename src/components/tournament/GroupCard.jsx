@@ -1,6 +1,7 @@
 import {ChevronDown} from 'lucide-react'
 import MatchCard from './MatchCard'
 import StandingsTable from './StandingsTable'
+import TiebreakNote from './TiebreakNote'
 
 function groupStatus(group) {
   if (!group.complete) return 'Em andamento'
@@ -24,6 +25,7 @@ export default function GroupCard({ group, bracket, roundRobin = false }) {
           {group.qualifiers === 1 ? 'Avança o 1º colocado.' : `Avançam os ${group.qualifiers} primeiros colocados.`}
         </p>
       )}
+      <TiebreakNote group={group} />
       {group.blocked && (
         <p className="mx-3 mb-3 rounded-md border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-900 dark:border-orange-700 dark:bg-orange-950/30 dark:text-orange-200" data-testid={`group-tie-notice-${group.name}`}>
           {roundRobin ? 'Há empate que os critérios não resolvem.' : 'Há empate na zona de classificação que os critérios não resolvem.'} O organizador vai decidir e a tabela será atualizada.

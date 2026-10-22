@@ -1,5 +1,5 @@
-import {useEffect, useState} from 'react'
-import {Copy, Image as ImageIcon, Share2} from 'lucide-react'
+import {useEffect, useMemo, useState} from 'react'
+import {Copy, Download, Image as ImageIcon, Share2} from 'lucide-react'
 import {Button} from '@/components/ui/button'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {Textarea} from '@/components/ui/textarea'
@@ -8,7 +8,7 @@ import {useToast} from '@/contexts/ToastContext'
 /**
  * "Compartilhar no WhatsApp", as the agenda does it: the generated message, editable, and a button that opens WhatsApp with it.
  * With `buildImage` (resolves to a PNG blob) the dialog also offers the picture: a preview of the very image that is shared,
- * and a button that shares it, or downloads it where sharing files is not possible.
+ * and the ways to send it that the device allows: the share sheet (phones), copy to paste in WhatsApp Web/Desktop, or download.
  */
 export default function ShareDialog({ description, text, onClose, buildImage, filename = 'compartilhar.png' }) {
   const { toast } = useToast()
@@ -42,22 +42,38 @@ export default function ShareDialog({ description, text, onClose, buildImage, fi
     }
   }
 
+  const file = useMemo(() => image && new File([image.blob], filename, { type: 'image/png' }), [image, filename])
+  const canShareImage = Boolean(file && navigator.share && navigator.canShare?.({ files: [file] }))
+  const canCopyImage = typeof ClipboardItem !== 'undefined' && Boolean(navigator.clipboard?.write)
+
   const shareImage = async () => {
-    const file = new File([image.blob], filename, { type: 'image/png' })
     try {
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: description })
-      } else {
-        const link = document.createElement('a')
-        link.href = image.url
-        link.download = filename
-        link.click()
-        toast({ title: 'Imagem salva', description: 'A imagem foi baixada. Envie-a no grupo.' })
-      }
+      await navigator.share({ files: [file], title: description })
     } catch (error) {
       if (error?.name !== 'AbortError') toast({ title: 'Não foi possível compartilhar a imagem.', variant: 'destructive' })
     }
   }
+  const copyImage = async () => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': image.blob })])
+      toast({ title: 'Imagem copiada', description: 'Cole (Ctrl+V ou ⌘+V) na conversa do WhatsApp.' })
+    } catch {
+      toast({ title: 'Não foi possível copiar a imagem. Baixe e envie no grupo.', variant: 'destructive' })
+    }
+  }
+  const downloadImage = () => {
+    const link = document.createElement('a')
+    link.href = image.url
+    link.download = filename
+    link.click()
+    toast({ title: 'Imagem baixada', description: 'Envie a imagem no grupo do WhatsApp.' })
+  }
+  // Least to most direct: the last one the device allows is the main button.
+  const imageActions = [
+    { key: 'download', label: 'Baixar imagem', Icon: Download, run: downloadImage, testId: 'share-image-download' },
+    canCopyImage && { key: 'copy', label: 'Copiar imagem', Icon: Copy, run: copyImage, testId: 'share-image-copy' },
+    canShareImage && { key: 'share', label: 'Compartilhar imagem', Icon: Share2, run: shareImage, testId: 'share-image-button' },
+  ].filter(Boolean)
 
   const tab = (key, label) => (
     <button
@@ -94,9 +110,14 @@ export default function ShareDialog({ description, text, onClose, buildImage, fi
             </div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={onClose} data-testid="share-close" className="min-h-[44px]">Fechar</Button>
-              <Button type="button" onClick={shareImage} disabled={!image} data-testid="share-image-button" className="min-h-[44px] bg-green-600 hover:bg-green-700">
-                <ImageIcon className="mr-2 h-4 w-4" aria-hidden="true" />Compartilhar imagem
-              </Button>
+              {imageActions.map(({ key, label, Icon, run, testId }, index) => {
+                const main = index === imageActions.length - 1
+                return (
+                  <Button key={key} type="button" variant={main ? 'default' : 'outline'} onClick={run} disabled={!image} data-testid={testId} className={`min-h-[44px] ${main ? 'bg-green-600 hover:bg-green-700' : ''}`}>
+                    <Icon className="mr-2 h-4 w-4" aria-hidden="true" />{label}
+                  </Button>
+                )
+              })}
             </div>
           </div>
         )}

@@ -5,6 +5,7 @@ import {Toaster} from '@/components/ui/toaster'
 import {ToastProvider} from './contexts/ToastContext'
 import {ThemeProvider} from './contexts/ThemeContext'
 import Header from './components/Header'
+import MobileNav from './components/MobileNav'
 import Home from './components/Home'
 import AdminLogin from './components/admin/AdminLogin'
 import AdminDashboard from './components/admin/AdminDashboard'
@@ -71,7 +72,7 @@ function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
     <BrowserRouter>
       <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
         <Header isAdminAuthenticated={isAdminAuthenticated} setIsAdminAuthenticated={setIsAdminAuthenticated} />
-        <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-7xl">
+        <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-7xl pb-28 lg:pb-8">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/schedule" element={<ScheduleForm />} />
@@ -225,6 +226,7 @@ function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
             />
           </Routes>
         </main>
+        <MobileNav />
       </div>
       <Toaster />
     </BrowserRouter>

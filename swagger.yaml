@@ -1053,6 +1053,90 @@ paths:
         '200':
           description: List of schedules
 
+  /api/public/availability/week:
+    get:
+      tags:
+        - Public
+      summary: Week availability grid of every active court
+      description: >
+        Standard 90-minute slots (07:30 to 22:30) of each active court for the Monday-to-Sunday week
+        holding `date`. A slot is listed in `cells` when a booking, a recurring reservation or a
+        holiday/block overlaps it; slots missing from `cells` are free.
+      parameters:
+        - name: date
+          in: query
+          description: Any day of the wanted week (defaults to today, Brazil time)
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Week grid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dates:
+                    type: array
+                    items:
+                      type: string
+                      format: date
+                  slots:
+                    type: array
+                    items:
+                      type: string
+                      example: '16:30'
+                  courts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        type:
+                          type: string
+                  cells:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        court_id:
+                          type: integer
+                        date:
+                          type: string
+                          format: date
+                        slot:
+                          type: string
+                        items:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              kind:
+                                type: string
+                                enum: [booked, recurring, blocked]
+                              id:
+                                type: integer
+                              start_time:
+                                type: string
+                                nullable: true
+                              end_time:
+                                type: string
+                                nullable: true
+                              player1_name:
+                                type: string
+                              player2_name:
+                                type: string
+                              match_type:
+                                type: string
+                              description:
+                                type: string
+        '400':
+          description: Invalid date
+
   /api/auth/register:
     post:
       tags:

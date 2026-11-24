@@ -11,10 +11,11 @@ const MatchTypeBadge = ({ matchType, size = 'default', className = '', iconOnly 
     }
 
     const getColors = () => {
-        if (matchType === 'Liga') return 'bg-yellow-100 text-black border-yellow-300 hover:border-yellow-600'
-        if (matchType === 'Aula') return 'bg-purple-100 text-black border-purple-300 hover:border-purple-600'
-        if (matchType === 'Torneio') return 'bg-orange-100 text-black border-orange-300 hover:border-orange-600'
-        return 'bg-green-100 text-black border-green-300 hover:border-green-600'
+        // Clay palette: each type keeps its own warm hue (no green/blue/purple).
+        if (matchType === 'Liga') return 'bg-amber-100 text-amber-950 border-amber-300 hover:border-amber-600'
+        if (matchType === 'Aula') return 'bg-stone-200 text-stone-900 border-stone-400 hover:border-stone-600'
+        if (matchType === 'Torneio') return 'bg-orange-100 text-orange-950 border-orange-300 hover:border-orange-600'
+        return 'bg-rose-100 text-rose-950 border-rose-300 hover:border-rose-600'
     }
 
     const getTitle = () => {

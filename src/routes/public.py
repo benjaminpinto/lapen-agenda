@@ -5,7 +5,8 @@ from flask import Blueprint, request, jsonify
 
 from src.auth import require_approved_lapen_member
 from src.database import get_db
-from src.utils.time_utils import normalize_time
+from src.services.court_availability import build_cells, week_dates
+from src.utils.time_utils import local_now, normalize_time
 from src.utils.user_lookup import find_user_by_display_name
 
 public_bp = Blueprint('public', __name__, url_prefix='/api/public')
@@ -378,6 +379,39 @@ def get_week_schedules():
             schedule_dict['date'] = schedule_dict['date'].strftime('%Y-%m-%d')
         serialized_schedules.append(schedule_dict)
     return jsonify(serialized_schedules)
+
+
+@public_bp.route('/availability/week', methods=['GET'])
+def get_week_availability():
+    """Week grid of every active court: which standard slots are taken by bookings, recurring
+    reservations or holidays/blocks. Free slots are the ones missing from `cells`."""
+    date_str = request.args.get('date') or local_now().strftime('%Y-%m-%d')
+    try:
+        dates = week_dates(date_str)
+    except ValueError:
+        return jsonify({'error': 'date must be YYYY-MM-DD'}), 400
+
+    db = get_db()
+    courts = [dict(c) for c in db.execute(
+        'SELECT id, name, type FROM courts WHERE active = TRUE ORDER BY id').fetchall()]
+    schedules = db.execute('''
+        SELECT id, court_id, date, start_time, player1_name, player2_name, match_type
+        FROM schedules WHERE date >= %s AND date <= %s AND deleted_at IS NULL
+    ''', (dates[0], dates[-1])).fetchall()
+    blocks = db.execute('SELECT * FROM holidays_blocks WHERE date >= %s AND date <= %s',
+                        (dates[0], dates[-1])).fetchall()
+    recurring = db.execute('SELECT * FROM recurring_schedules WHERE start_date <= %s AND end_date >= %s',
+                           (dates[-1], dates[0])).fetchall()
+
+    slots = generate_time_slots()
+    response = jsonify({
+        'dates': dates,
+        'slots': slots,
+        'courts': courts,
+        'cells': build_cells(dates, slots, courts, schedules, blocks, recurring),
+    })
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return response
 
 
 @public_bp.route('/whatsapp-message', methods=['GET'])

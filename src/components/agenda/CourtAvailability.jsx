@@ -1,6 +1,6 @@
 import {useEffect, useMemo, useState} from 'react'
 import {Link, useNavigate} from 'react-router-dom'
-import {Ban, ChevronLeft, ChevronRight, GraduationCap, Plus, X} from 'lucide-react'
+import {Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, GraduationCap, Plus, X} from 'lucide-react'
 import {getLocalDateString} from '@/utils/dateUtils'
 
 const SLOT_MINUTES = 90
@@ -322,26 +322,49 @@ const DayStrip = ({dates, today, selected, onSelect, freeCount, dayBlock}) => (
     </div>
 )
 
+// Most bookings are in the evening: the day opens on PRIME_START onwards and earlier slots
+// (plus, today, the ones already gone) fold behind a toggle in the middle of the table.
+const PRIME_START = '16:30'
+
 const DayTable = ({date, slots, courts, now, itemsAt, dayBlock, onBook, onSelect}) => {
     const d = parseDate(date)
     const weekday = WEEKDAYS_LONG[(d.getDay() + 6) % 7]
-    const [showPast, setShowPast] = useState(false)
-    // Today opens on what is still ahead; earlier slots stay one tap away.
+    const [expanded, setExpanded] = useState(false)
     const isToday = date === getLocalDateString(now)
-    const pastCount = isToday ? slots.filter(slot => isPast(date, slot, now)).length : 0
-    const hidePast = pastCount > 0 && pastCount < slots.length && !showPast
-    const visibleSlots = hidePast ? slots.filter(slot => !isPast(date, slot, now)) : slots
+    const folded = slots.filter(slot => slot < PRIME_START || (isToday && isPast(date, slot, now)))
+    const canFold = folded.length > 0 && folded.length < slots.length
+    const visibleSlots = canFold && !expanded ? slots.filter(slot => !folded.includes(slot)) : slots
+    const lastFolded = folded[folded.length - 1]
+
+    const foldedGames = folded.reduce((n, slot) =>
+        n + courts.filter(c => statusOf(itemsAt(c.id, date, slot)) !== 'free').length, 0)
+    const foldedFree = folded.reduce((n, slot) =>
+        n + (isPast(date, slot, now) ? 0 : courts.filter(c => statusOf(itemsAt(c.id, date, slot)) === 'free').length), 0)
+    const foldedSummary = [
+        foldedGames && `${foldedGames} ocupado${foldedGames === 1 ? '' : 's'}`,
+        foldedFree && `${foldedFree} livre${foldedFree === 1 ? '' : 's'}`,
+    ].filter(Boolean).join(' · ')
+
+    const FoldToggle = () => (
+        <button type="button" onClick={() => setExpanded(!expanded)} aria-expanded={expanded}
+                style={{gridColumn: '1 / -1'}}
+                className="min-h-0 my-0.5 flex items-center gap-2 text-xs font-semibold text-muted-foreground active:text-foreground"
+                data-testid="day-fold-toggle">
+            <span className="h-px flex-1 bg-border"/>
+            <span className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 shadow-sm">
+                {expanded ? <ChevronDown className="h-3.5 w-3.5 text-primary"/> : <ChevronUp className="h-3.5 w-3.5 text-primary"/>}
+                {expanded
+                    ? 'Recolher'
+                    : <>{folded[0]}–{lastFolded}{foldedSummary && <span className="font-normal">· {foldedSummary}</span>}</>}
+            </span>
+            <span className="h-px flex-1 bg-border"/>
+        </button>
+    )
+
     return (
         <div className="rounded-2xl border bg-card shadow-sm overflow-hidden" data-testid="day-table">
-            <div className="px-3 py-2.5 border-b flex items-center justify-between gap-2">
+            <div className="px-3 py-2.5 border-b">
                 <span className="font-display font-bold">{weekday}, {d.getDate()} {MONTHS[d.getMonth()]}</span>
-                {pastCount > 0 && pastCount < slots.length && (
-                    <button type="button" onClick={() => setShowPast(!showPast)}
-                            className="min-h-0 min-w-0 text-xs font-semibold text-primary py-1"
-                            data-testid="day-toggle-past">
-                        {showPast ? 'Ocultar anteriores' : `+ ${pastCount} anteriores`}
-                    </button>
-                )}
             </div>
             {dayBlock && (
                 <div className="m-3 mb-0 rounded-xl cell-blocked text-white px-3 py-2.5 text-sm flex items-center gap-2"
@@ -351,7 +374,7 @@ const DayTable = ({date, slots, courts, now, itemsAt, dayBlock, onBook, onSelect
                 </div>
             )}
             <div className="p-2 sm:p-3">
-                <div className="grid gap-1.5" style={{gridTemplateColumns: `2.9rem repeat(${courts.length}, minmax(0, 1fr))`}}>
+                <div className="grid gap-1" style={{gridTemplateColumns: `2.9rem repeat(${courts.length}, minmax(0, 1fr))`}}>
                     <div/>
                     {courts.map(c => (
                         <div key={c.id} className="text-center pb-1 min-w-0">
@@ -359,6 +382,7 @@ const DayTable = ({date, slots, courts, now, itemsAt, dayBlock, onBook, onSelect
                             <div className="text-[10px] text-muted-foreground truncate">{c.type}</div>
                         </div>
                     ))}
+                    {canFold && !expanded && <FoldToggle/>}
                     {visibleSlots.map(slot => {
                         const past = isPast(date, slot, now)
                         return (
@@ -372,6 +396,7 @@ const DayTable = ({date, slots, courts, now, itemsAt, dayBlock, onBook, onSelect
                                              onDetails={() => onSelect(slot)}
                                              testId={`day-cell-${c.id}-${slot}`}/>
                                 ))}
+                                {canFold && expanded && slot === lastFolded && <FoldToggle/>}
                             </div>
                         )
                     })}
@@ -383,7 +408,7 @@ const DayTable = ({date, slots, courts, now, itemsAt, dayBlock, onBook, onSelect
 
 const DayCell = ({items, past, onBook, onDetails, testId}) => {
     const status = statusOf(items)
-    const base = 'min-w-0 min-h-0 h-12 w-full rounded-lg px-1.5 text-left flex flex-col justify-center overflow-hidden transition active:scale-[0.97]'
+    const base = 'min-w-0 min-h-0 h-11 w-full rounded-lg px-1.5 text-left flex flex-col justify-center overflow-hidden transition active:scale-[0.97]'
     if (status === 'free') {
         if (past) return <div className="h-7 rounded-lg bg-muted/60 grid place-items-center text-xs text-muted-foreground/50" data-testid={testId}>—</div>
         return (

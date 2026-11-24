@@ -1,10 +1,8 @@
 import {useEffect, useState} from 'react'
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
-import {Badge} from '@/components/ui/badge'
-import {Button} from '@/components/ui/button'
+import {Card, CardContent} from '@/components/ui/card'
 import {Calendar, CheckCircle} from 'lucide-react'
 
-const RankingMatches = ({ seasonId }) => {
+const RankingMatches = ({ seasonId, activeGroup }) => {
   const [matches, setMatches] = useState({ elite: [], challenger: [], nextgen: [] })
   const [filter, setFilter] = useState('scheduled')
   const [loading, setLoading] = useState(true)
@@ -68,59 +66,6 @@ const RankingMatches = ({ seasonId }) => {
     return matches[group].filter(m => m.status === filter)
   }
 
-  const MatchCard = ({ match }) => {
-    const isCompleted = match.status === 'completed'
-    const isWO = isCompleted && match.score?.includes('W.O.')
-    const woComment = isWO ? match.score.replace(/^W\.O\.\s*-?\s*/, '').trim() : ''
-    
-    return (
-      <div className="p-4 border-b last:border-b-0 hover:bg-gray-50">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 flex-1">
-            <span className="text-sm text-gray-500 font-medium">[{match.player1_position}º]</span>
-            <span className="font-medium">{match.player1_name}</span>
-            {isCompleted && match.winner_id === match.player1_id && (
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            )}
-          </div>
-          <div className="text-center">
-            {isCompleted ? (
-              <div className="text-xs font-mono">
-                {isWO ? (
-                  <div>
-                    <div>W.O.</div>
-                    {woComment && (
-                      <div className="text-[10px] text-gray-500 mt-0.5 max-w-[120px] mx-auto">{woComment}</div>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    {match.score.split(', ').map((set, i) => (
-                      <div key={i}>{set.replace('-', ' - ')}</div>
-                    ))}
-                  </>
-                )}
-                <div className="border-t border-gray-300 my-1"></div>
-                <div className="text-gray-600">
-                  {match.points_p1 > 0 ? '+' : ''}{match.points_p1} | {match.points_p2 > 0 ? '+' : ''}{match.points_p2}
-                </div>
-              </div>
-            ) : (
-              <span className="text-2xl text-gray-400 font-bold">X</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 flex-1 justify-end">
-            {isCompleted && match.winner_id === match.player2_id && (
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            )}
-            <span className="font-medium">{match.player2_name}</span>
-            <span className="text-sm text-gray-500 font-medium">[{match.player2_position}º]</span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   if (loading) {
     return (
       <Card>
@@ -131,110 +76,89 @@ const RankingMatches = ({ seasonId }) => {
     )
   }
 
+  const emptyText = hasOpenRound
+    ? `Nenhuma partida ${filter === 'scheduled' ? 'pendente' : 'finalizada'}`
+    : 'Nenhuma rodada aberta'
+
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">{roundTitle}</h2>
-      <div className="flex justify-center gap-2">
-        <Button
-          variant={filter === 'scheduled' ? 'default' : 'outline'}
-          onClick={() => setFilter('scheduled')}
-          className="flex items-center gap-2"
-        >
-          <Calendar className="h-4 w-4" />
-          Pendentes
-        </Button>
-        <Button
-          variant={filter === 'completed' ? 'default' : 'outline'}
-          onClick={() => setFilter('completed')}
-          className="flex items-center gap-2"
-        >
-          <CheckCircle className="h-4 w-4" />
-          Finalizadas
-        </Button>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold">{roundTitle}</h2>
+        <div className="grid grid-cols-2 p-1 rounded-full bg-muted text-sm font-semibold sm:w-72" role="tablist">
+          {[['scheduled', 'Pendentes', Calendar], ['completed', 'Finalizadas', CheckCircle]].map(([value, label, Icon]) => (
+            <button key={value} type="button" role="tab" aria-selected={filter === value}
+                    onClick={() => setFilter(value)}
+                    className={`h-10 rounded-full flex items-center justify-center gap-1.5 transition ${filter === value ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                    data-testid={`ranking-matches-${value}`}>
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <span className="text-amber-600">👑</span>
-                Elite
-              </span>
-              <Badge variant="default">
-                {filteredMatches('elite').length} partidas
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {filteredMatches('elite').length > 0 ? (
-              <div>
-                {filteredMatches('elite').map((match) => (
-                  <MatchCard key={match.id} match={match} />
-                ))}
+        {[['elite', 'Elite'], ['challenger', 'Challenger'], ['nextgen', 'Next Gen']].map(([group, label]) => {
+          const list = filteredMatches(group)
+          return (
+            <section key={group}
+                     className={`rounded-2xl border bg-card shadow-sm overflow-hidden ${!activeGroup || activeGroup === group ? '' : 'hidden lg:block'}`}
+                     data-testid={`ranking-matches-${group}`}>
+              <div className="px-4 py-3 border-b flex items-center justify-between">
+                <h3 className="font-bold">{label}</h3>
+                <span className="text-xs font-semibold text-muted-foreground">{list.length} partidas</span>
               </div>
-            ) : (
-              <div className="p-6 text-center text-gray-500">
-                {hasOpenRound ? `Nenhuma partida ${filter === 'scheduled' ? 'pendente' : 'finalizada'}` : 'Nenhuma rodada aberta'}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <span className="text-blue-600">⚔️</span>
-                Challenger
-              </span>
-              <Badge variant="outline">
-                {filteredMatches('challenger').length} partidas
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {filteredMatches('challenger').length > 0 ? (
-              <div>
-                {filteredMatches('challenger').map((match) => (
-                  <MatchCard key={match.id} match={match} />
-                ))}
-              </div>
-            ) : (
-              <div className="p-6 text-center text-gray-500">
-                {hasOpenRound ? `Nenhuma partida ${filter === 'scheduled' ? 'pendente' : 'finalizada'}` : 'Nenhuma rodada aberta'}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <span className="text-green-600">🌱</span>
-                Next Gen
-              </span>
-              <Badge variant="secondary">
-                {filteredMatches('nextgen').length} partidas
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {filteredMatches('nextgen').length > 0 ? (
-              <div>
-                {filteredMatches('nextgen').map((match) => (
-                  <MatchCard key={match.id} match={match} />
-                ))}
-              </div>
-            ) : (
-              <div className="p-6 text-center text-gray-500">
-                {hasOpenRound ? `Nenhuma partida ${filter === 'scheduled' ? 'pendente' : 'finalizada'}` : 'Nenhuma rodada aberta'}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              {list.length > 0
+                ? <div className="divide-y">{list.map(match => <MatchCard key={match.id} match={match} />)}</div>
+                : <div className="p-6 text-center text-sm text-muted-foreground">{emptyText}</div>}
+            </section>
+          )
+        })}
       </div>
+    </div>
+  )
+}
+
+// One line per player, scoreboard style: position, name, sets, points won.
+const MatchCard = ({ match }) => {
+  const isCompleted = match.status === 'completed'
+  const isWO = isCompleted && match.score?.includes('W.O.')
+  const woComment = isWO ? match.score.replace(/^W\.O\.\s*-?\s*/, '').trim() : ''
+  const sets = isCompleted && !isWO && match.score ? match.score.split(', ').map(set => set.split('-')) : []
+
+  const Line = ({ side }) => {
+    const name = side === 0 ? match.player1_name : match.player2_name
+    const position = side === 0 ? match.player1_position : match.player2_position
+    const playerId = side === 0 ? match.player1_id : match.player2_id
+    const pts = side === 0 ? match.points_p1 : match.points_p2
+    const won = isCompleted && match.winner_id === playerId
+    return (
+      <div className="flex items-center gap-2 min-h-[28px]">
+        <span className="w-9 shrink-0 text-xs tabular-nums text-muted-foreground">{position}º</span>
+        <span className={`flex-1 min-w-0 truncate text-sm ${won ? 'font-bold' : 'font-medium'} ${isCompleted && !won ? 'text-muted-foreground' : ''}`}>
+          {name}
+          {won && <CheckCircle className="inline h-3.5 w-3.5 ml-1 text-primary align-[-2px]" />}
+        </span>
+        {sets.map((set, i) => (
+          <span key={i} className={`w-5 text-center text-sm tabular-nums ${Number(set[side]) > Number(set[1 - side]) ? 'font-bold' : 'text-muted-foreground'}`}>
+            {set[side]}
+          </span>
+        ))}
+        {isWO && <span className="text-xs font-bold text-muted-foreground">{won ? 'W.O.' : ''}</span>}
+        {isCompleted && (
+          <span className={`w-10 text-right text-xs font-semibold tabular-nums ${pts > 0 ? 'text-primary' : 'text-muted-foreground'}`}>
+            {pts > 0 ? '+' : ''}{pts}
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="px-4 py-2.5" data-testid={`ranking-match-${match.id}`}>
+      <Line side={0} />
+      <Line side={1} />
+      {woComment && <div className="pl-11 text-[11px] text-muted-foreground">{woComment}</div>}
     </div>
   )
 }

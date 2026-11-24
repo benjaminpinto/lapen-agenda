@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react'
-import {useSearchParams} from 'react-router-dom'
+import {useNavigate, useSearchParams} from 'react-router-dom'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs'
@@ -20,7 +20,7 @@ import {Textarea} from '@/components/ui/textarea'
 import {Calendar, Clock, Edit, List, MapPin, Share2, Trash2} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
 import {useAuth} from '@/contexts/AuthContext'
-import WeeklyCalendar from './WeeklyCalendar'
+import CourtAvailability from './agenda/CourtAvailability'
 import MonthSelector from './ui/MonthSelector'
 import MatchTypeBadge from './ui/MatchTypeBadge'
 import {fetchWithAuth} from '@/utils/fetchWithAuth'
@@ -28,10 +28,11 @@ import {getCurrentMonth, getCurrentYear, getLocalDateString} from '@/utils/dateU
 
 const ScheduleView = () => {
     const [searchParams] = useSearchParams()
+    const navigate = useNavigate()
     const [schedules, setSchedules] = useState([])
-    const [weekSchedules, setWeekSchedules] = useState([])
     const [loading, setLoading] = useState(true)
-    const [viewType, setViewType] = useState('list')
+    // After booking, `?share=true` shares the month list as WhatsApp text, so open on the list.
+    const [viewType, setViewType] = useState(searchParams.get('share') === 'true' ? 'list' : 'weekly')
     const [editingSchedule, setEditingSchedule] = useState(null)
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
     const [whatsappMessage, setWhatsappMessage] = useState('')
@@ -71,12 +72,6 @@ const ScheduleView = () => {
         }
     }, [searchParams, selectedMonth, selectedYear])
 
-    useEffect(() => {
-        if (viewType === 'weekly') {
-            fetchWeekSchedules()
-        }
-    }, [viewType])
-
     const fetchSchedules = async () => {
         try {
             const response = await fetchWithAuth(`/api/public/schedules/month?year=${selectedYear}&month=${selectedMonth}`)
@@ -88,21 +83,6 @@ const ScheduleView = () => {
             console.error('Error fetching schedules:', error)
         } finally {
             setLoading(false)
-        }
-    }
-
-    const fetchWeekSchedules = async (date = null) => {
-        try {
-            const url = date
-                ? `/api/public/schedules/week?date=${date}`
-                : '/api/public/schedules/week'
-            const response = await fetchWithAuth(url)
-            if (response.ok) {
-                const data = await response.json()
-                setWeekSchedules(data)
-            }
-        } catch (error) {
-            console.error('Error fetching week schedules:', error)
         }
     }
 
@@ -411,23 +391,23 @@ const ScheduleView = () => {
     const groupedSchedules = groupSchedulesByDate(schedules)
 
     return (
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 sm:mb-8 space-y-4 sm:space-y-0">
+        <div className="max-w-6xl mx-auto">
+            <div className="flex items-end justify-between gap-3 mb-4 sm:mb-6">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold">
                         Agenda das Quadras
                     </h1>
-                    <p className="text-muted-foreground text-sm sm:text-base">
-                        Visualize e gerencie os agendamentos
+                    <p className="text-muted-foreground text-sm">
+                        Toque num horário livre para agendar
                     </p>
                 </div>
 
-                <div className="flex gap-2">
-                    <Button onClick={() => window.location.href = '/schedule'} variant="outline" className="w-full sm:w-auto">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Agendar
+                <div className="flex gap-2 shrink-0">
+                    <Button onClick={() => navigate('/schedule')} className="rounded-full" data-testid="schedule-button">
+                        <Calendar className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Agendar</span>
                     </Button>
-                    <Button onClick={handleWhatsappShare} size="icon" title="Compartilhar no WhatsApp">
+                    <Button onClick={handleWhatsappShare} size="icon" variant="outline" className="rounded-full" title="Compartilhar no WhatsApp" data-testid="share-button">
                         <Share2 className="h-4 w-4" />
                     </Button>
                 </div>
@@ -435,15 +415,13 @@ const ScheduleView = () => {
 
             <Tabs value={viewType} onValueChange={setViewType} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="list" className="flex items-center text-xs sm:text-sm">
-                        <List className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                        <span className="hidden sm:inline">Lista</span>
-                        <span className="sm:hidden">Lista</span>
+                    <TabsTrigger value="weekly" className="flex items-center text-sm" data-testid="tab-courts">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Quadras
                     </TabsTrigger>
-                    <TabsTrigger value="weekly" className="flex items-center text-xs sm:text-sm">
-                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                        <span className="hidden sm:inline">Calendário Semanal</span>
-                        <span className="sm:hidden">Semanal</span>
+                    <TabsTrigger value="list" className="flex items-center text-sm" data-testid="tab-list">
+                        <List className="h-4 w-4 mr-2" />
+                        Lista do mês
                     </TabsTrigger>
                 </TabsList>
 
@@ -499,7 +477,7 @@ const ScheduleView = () => {
                                                                 <div className="block sm:hidden space-y-2">
                                                                     <div className="flex items-center justify-between">
                                                                         <div className="flex items-center space-x-2">
-                                                                            <MapPin className="h-4 w-4 text-green-600" />
+                                                                            <MapPin className="h-4 w-4 text-primary" />
                                                                             <span className="font-medium text-sm">{schedule.court_name}</span>
                                                                         </div>
                                                                         <div className="flex items-center space-x-1">
@@ -533,7 +511,7 @@ const ScheduleView = () => {
                                                                 <div className="hidden sm:flex items-center justify-between">
                                                                     <div className="flex items-center space-x-4">
                                                                         <div className="flex items-center">
-                                                                            <MapPin className="h-4 w-4 mr-1 text-green-600 dark:text-green-500" />
+                                                                            <MapPin className="h-4 w-4 mr-1 text-primary" />
                                                                             <span className="font-medium">{schedule.court_name}</span>
                                                                         </div>
                                                                         <div className="flex items-center">
@@ -618,10 +596,8 @@ const ScheduleView = () => {
                     })()}
                 </TabsContent>
 
-                <TabsContent value="weekly" className="mt-6">
-                    <div data-weekly-calendar>
-                        <WeeklyCalendar weekSchedules={weekSchedules} fetchWeekSchedules={fetchWeekSchedules} />
-                    </div>
+                <TabsContent value="weekly" className="mt-4">
+                    <CourtAvailability />
                 </TabsContent>
 
 

@@ -103,11 +103,11 @@ const SignUp = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex items-start sm:items-center justify-center py-2 sm:py-12 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-            <UserPlus className="h-6 w-6 text-green-600" />
+          <div className="mx-auto w-12 h-12 bg-accent rounded-full flex items-center justify-center mb-4">
+            <UserPlus className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold">Criar Conta</CardTitle>
           <CardDescription>
@@ -148,7 +148,7 @@ const SignUp = () => {
                   onChange={handleChange}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Como você quer ser chamado (ex: João Silva)
               </p>
             </div>
@@ -202,7 +202,7 @@ const SignUp = () => {
                   onChange={handleChange}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Usada para receber pagamentos de apostas ganhas
               </p>
             </div>
@@ -249,7 +249,7 @@ const SignUp = () => {
                   onClick={() => setFormData({ ...formData, is_lapen_member: true })}
                   className={`flex-1 py-2 px-4 rounded-md border-2 transition-colors ${
                     formData.is_lapen_member
-                      ? 'border-green-600 bg-green-50 text-green-700 font-medium'
+                      ? 'border-primary bg-accent text-accent-foreground font-medium'
                       : 'border-gray-300 hover:border-gray-400'
                   }`}
                 >
@@ -260,7 +260,7 @@ const SignUp = () => {
                   onClick={() => setFormData({ ...formData, is_lapen_member: false })}
                   className={`flex-1 py-2 px-4 rounded-md border-2 transition-colors ${
                     !formData.is_lapen_member
-                      ? 'border-green-600 bg-green-50 text-green-700 font-medium'
+                      ? 'border-primary bg-accent text-accent-foreground font-medium'
                       : 'border-gray-300 hover:border-gray-400'
                   }`}
                 >
@@ -287,7 +287,7 @@ const SignUp = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Já tem uma conta?{' '}
-              <Link to="/login" className="font-medium text-green-600 hover:text-green-500">
+              <Link to="/login" className="font-medium text-primary hover:text-primary/80">
                 Fazer login
               </Link>
             </p>

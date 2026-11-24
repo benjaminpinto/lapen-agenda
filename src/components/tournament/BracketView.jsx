@@ -65,7 +65,7 @@ function BracketRounds({ rounds }) {
           <button
             key={r.round_number} type="button" role="tab" aria-selected={i === index} data-testid={`bracket-tab-${r.round_number}`}
             onClick={() => go(i)}
-            className={`min-h-[44px] shrink-0 border-b-2 px-3 text-sm font-medium ${i === index ? 'border-primary text-amber-900 dark:border-amber-500 dark:text-amber-300' : 'border-transparent text-muted-foreground'}`}
+            className={`min-h-[44px] shrink-0 border-b-2 px-3 text-sm font-medium ${i === index ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted-foreground'}`}
           >
             {r.name}
           </button>

@@ -1,7 +1,6 @@
-import {CalendarDays, MapPin, Swords} from 'lucide-react'
+import {CalendarDays, ChevronLeft, MapPin, Swords} from 'lucide-react'
 import {Link, useParams, useSearchParams} from 'react-router-dom'
 import {Button} from '@/components/ui/button'
-import BackButton from '@/components/ui/BackButton'
 import StatusBadge from '@/components/admin/tournament/StatusBadge'
 import {TOURNAMENT_STATUS} from '@/components/admin/tournament/labels'
 import {BracketTab, EntriesTab, GroupsTab, ProgressTab, RulesTab} from './CategoryTabs'
@@ -60,8 +59,10 @@ export default function TournamentPage() {
   }
 
   return (
-    <div className="space-y-5" data-testid="tournament-page">
-      <BackButton to="/tournaments" label="Torneios" className="mb-0" />
+    <div className="space-y-4" data-testid="tournament-page">
+      <Link to="/tournaments" className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-foreground" data-testid="back-to-tournaments">
+        <ChevronLeft className="h-4 w-4" aria-hidden="true" />Torneios
+      </Link>
       <header className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-bold sm:text-3xl" data-testid="tournament-name">{tournament.name}</h1>
@@ -72,15 +73,21 @@ export default function TournamentPage() {
           {tournament.location && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" aria-hidden="true" />{tournament.location}</span>}
           <span className="inline-flex items-center gap-1"><Swords className="h-4 w-4" aria-hidden="true" />{tournament.format_text}</span>
         </p>
-        {tournament.registration.open && (
-          <Link to={`/tournaments/${slug}/register`} data-testid="header-register-link">
-            <Button type="button" className="min-h-[44px] bg-primary text-white hover:bg-primary/90">Inscrever-se</Button>
-          </Link>
-        )}
-        {tournament.status === 'in_progress' && tournament.schedule_published && (
-          <Link to={`/tournaments/${slug}/ao-vivo`} data-testid="header-live-link">
-            <Button type="button" variant="outline" className="min-h-[44px]">Ver ao vivo</Button>
-          </Link>
+        {(tournament.registration.open || (tournament.status === 'in_progress' && tournament.schedule_published)) && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {tournament.registration.open && (
+              <Link to={`/tournaments/${slug}/register`} data-testid="header-register-link">
+                <Button type="button" className="min-h-[44px] rounded-full px-6 font-bold">Inscrever-se</Button>
+              </Link>
+            )}
+            {tournament.status === 'in_progress' && tournament.schedule_published && (
+              <Link to={`/tournaments/${slug}/ao-vivo`} data-testid="header-live-link">
+                <Button type="button" variant="outline" className="min-h-[44px] rounded-full">
+                  <span className="mr-2 h-2 w-2 rounded-full bg-red-600 animate-pulse" aria-hidden="true" />Ver ao vivo
+                </Button>
+              </Link>
+            )}
+          </div>
         )}
       </header>
 
@@ -88,13 +95,15 @@ export default function TournamentPage() {
 
       {category && (
         <>
+          {/* Category and section stay in reach while scrolling a long group or bracket */}
+          <div className="sticky top-[68px] sm:top-[76px] z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 pt-2 space-y-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85" data-testid="tournament-sticky-nav">
           {!scheduleTab && categories.length > 1 && (
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Categoria" data-testid="category-chips">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar" role="group" aria-label="Categoria" data-testid="category-chips">
               {categories.map((c) => (
                 <button
                   key={c.id} type="button" aria-pressed={c.id === category.id} data-testid={`category-chip-${c.id}`}
                   onClick={() => choose('categoria', c.id)}
-                  className={`min-h-[44px] rounded-full border px-4 text-sm font-medium ${c.id === category.id ? 'border-primary bg-primary text-white' : 'bg-card hover:bg-muted'}`}
+                  className={`min-h-0 h-9 shrink-0 rounded-full border px-4 text-sm font-semibold ${c.id === category.id ? 'border-foreground bg-foreground text-background' : 'bg-card text-muted-foreground hover:text-foreground'}`}
                 >
                   {c.name}
                 </button>
@@ -102,16 +111,17 @@ export default function TournamentPage() {
             </div>
           )}
 
-          <div role="tablist" aria-label="Seções do torneio" className="flex gap-1 overflow-x-auto border-b" data-testid="tournament-tabs">
+          <div role="tablist" aria-label="Seções do torneio" className="flex gap-1 overflow-x-auto no-scrollbar border-b" data-testid="tournament-tabs">
             {tabs.map((t) => (
               <button
                 key={t.key} type="button" role="tab" aria-selected={t.key === tab} data-testid={`tab-button-${t.key}`}
                 onClick={() => choose('aba', t.key)}
-                className={`min-h-[44px] shrink-0 border-b-2 px-3 text-sm font-medium ${t.key === tab ? 'border-primary text-amber-900 dark:border-amber-500 dark:text-amber-300' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                className={`min-h-[44px] shrink-0 border-b-2 px-3 text-sm font-semibold ${t.key === tab ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
               >
                 {t.label}
               </button>
             ))}
+          </div>
           </div>
 
           {!listTab && !scheduleTab && <RefreshBar updatedAt={detail.updatedAt} refreshing={page.refreshing || detail.refreshing} error={page.error || detail.error} onRefresh={refreshAll} />}

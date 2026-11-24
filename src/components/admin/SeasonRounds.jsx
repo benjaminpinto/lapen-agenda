@@ -280,7 +280,7 @@ const SeasonRounds = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <Button variant="outline" onClick={() => navigate('/admin/ranking')} className="w-full sm:w-auto">
+      <Button variant="ghost" size="sm" onClick={() => navigate('/admin/ranking')} className="rounded-full -ml-2">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Voltar
       </Button>
@@ -325,7 +325,7 @@ const SeasonRounds = () => {
       </Card>
 
       <div className="grid gap-4">
-        {rounds.map(round => (
+        {[...rounds].reverse().map(round => ( // newest (usually the open one) first
           <Card key={round.id}>
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center">

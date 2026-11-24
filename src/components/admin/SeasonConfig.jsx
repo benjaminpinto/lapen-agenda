@@ -112,7 +112,7 @@ const SeasonConfig = () => {
 
   return (
     <div className="space-y-6">
-      <Button variant="outline" onClick={() => navigate('/admin/ranking')}>
+      <Button variant="ghost" size="sm" onClick={() => navigate('/admin/ranking')} className="rounded-full -ml-2">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Voltar
       </Button>

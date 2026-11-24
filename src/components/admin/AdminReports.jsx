@@ -15,6 +15,7 @@ import {
     XCircle
 } from 'lucide-react'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
+import DesktopNotice from './DesktopNotice'
 import {getLocalDateString} from '@/utils/dateUtils'
 
 const AdminReports = () => {
@@ -70,7 +71,8 @@ const AdminReports = () => {
     const { match_statistics, bet_statistics } = reports
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+            <DesktopNotice>Relatórios com tabelas e gráficos: ficam melhores no computador ou tablet.</DesktopNotice>
             <div className="mb-6">
                 <Link to="/admin/matches">
                     <Button variant="outline" size="sm" className="mb-4">

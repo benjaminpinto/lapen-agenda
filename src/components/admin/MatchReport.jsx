@@ -5,6 +5,7 @@ import {Button} from '@/components/ui/button'
 import {Badge} from '@/components/ui/badge'
 import {ArrowLeft, CheckCircle, Clock, Copy, Crown, Trophy, Users, Wallet, XCircle} from 'lucide-react'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
+import DesktopNotice from './DesktopNotice'
 import {formatDateForDisplay} from '@/utils/dateUtils'
 
 const MatchReport = () => {
@@ -50,7 +51,8 @@ const MatchReport = () => {
     const {match, bets, summary} = report
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+            <DesktopNotice>Relatório detalhado da partida: fica melhor no computador ou tablet.</DesktopNotice>
             <div className="mb-6">
                 <Link to="/admin/matches">
                     <Button variant="outline" size="sm" className="mb-4">

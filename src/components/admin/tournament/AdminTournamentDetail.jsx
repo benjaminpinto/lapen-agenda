@@ -149,7 +149,7 @@ export default function AdminTournamentDetail() {
       </div>
 
       <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })}>
-        <div className="overflow-x-auto -mx-1 px-1 pb-1">
+        <div className="overflow-x-auto no-scrollbar -mx-1 px-1 pb-1">
           <TabsList className="h-auto inline-flex min-w-max">
             {TABS.map(([key, label]) => (
               <TabsTrigger key={key} value={key} data-testid={`tab-${key}`} className="min-h-[44px] px-4">{label}</TabsTrigger>

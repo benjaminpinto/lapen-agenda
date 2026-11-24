@@ -5,7 +5,7 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#10b981",
+  "theme_color": "#a83c0c",
   "icons": [
     {
       "src": "/lapen-logo.png",

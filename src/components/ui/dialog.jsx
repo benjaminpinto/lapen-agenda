@@ -17,9 +17,9 @@ const Dialog = ({ open, onOpenChange, children }) => {
     <DialogContext.Provider value={{ open: isOpen, onOpenChange: handleOpenChange }}>
       {!isOpen && children}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50" 
+            className="fixed inset-0 bg-black/45 animate-fade" 
             onClick={() => handleOpenChange(false)}
           />
           {children}
@@ -45,14 +45,16 @@ const DialogContent = ({ className = '', children, ...props }) => {
   if (!open) return null
   
   return (
-    <div className={`relative bg-white rounded-lg shadow-lg max-h-[90vh] overflow-y-auto p-6 ${className}`} {...props}>
+    // Phones get a bottom sheet (full width, thumb-reachable); larger screens keep the centred dialog.
+    <div className={`relative bg-card text-card-foreground rounded-2xl shadow-2xl max-h-[90dvh] overflow-y-auto p-6 ${className} max-sm:!w-full max-sm:!max-w-none max-sm:!mx-0 max-sm:rounded-b-none max-sm:rounded-t-3xl max-sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-sm:animate-sheet`} {...props}>
+      <div className="sm:hidden mx-auto -mt-2 mb-4 h-1 w-10 rounded-full bg-muted" />
       {children}
     </div>
   )
 }
 
 const DialogHeader = ({ className = '', ...props }) => (
-  <div className={`flex flex-col space-y-1.5 text-center sm:text-left mb-4 ${className}`} {...props} />
+  <div className={`flex flex-col space-y-1.5 text-left mb-4 ${className}`} {...props} />
 )
 
 const DialogTitle = ({ className = '', ...props }) => (
@@ -60,7 +62,7 @@ const DialogTitle = ({ className = '', ...props }) => (
 )
 
 const DialogDescription = ({ className = '', ...props }) => (
-  <p className={`text-sm text-gray-600 ${className}`} {...props} />
+  <p className={`text-sm text-muted-foreground ${className}`} {...props} />
 )
 
 const DialogFooter = ({ className = '', ...props }) => (

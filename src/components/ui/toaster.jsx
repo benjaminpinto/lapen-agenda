@@ -5,14 +5,14 @@ export const Toaster = () => {
   const { toasts, removeToast } = useToast()
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-3 inset-x-3 sm:inset-x-auto sm:top-4 sm:right-4 z-[70] space-y-2">
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={`p-4 rounded-lg shadow-lg max-w-sm relative ${
+          className={`p-4 rounded-2xl shadow-xl sm:max-w-sm relative animate-fade ${
             toast.variant === 'destructive'
-              ? 'bg-red-500 text-white'
-              : 'bg-green-500 text-white'
+              ? 'bg-red-700 text-white'
+              : 'bg-[#2a1810] text-white'
           }`}
         >
           <button

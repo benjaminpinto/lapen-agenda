@@ -280,7 +280,7 @@ const SeasonRounds = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <Button variant="outline" onClick={() => navigate('/admin/ranking')} className="w-full sm:w-auto">
+      <Button variant="ghost" size="sm" onClick={() => navigate('/admin/ranking')} className="rounded-full -ml-2">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Voltar
       </Button>
@@ -325,7 +325,7 @@ const SeasonRounds = () => {
       </Card>
 
       <div className="grid gap-4">
-        {rounds.map(round => (
+        {[...rounds].reverse().map(round => ( // newest (usually the open one) first
           <Card key={round.id}>
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center">
@@ -333,7 +333,7 @@ const SeasonRounds = () => {
                   <h3 className="font-semibold">
                     Rodada {round.round_number}{round.description ? ` - ${round.description}` : ''}
                   </h3>
-                  <p className="text-sm text-gray-600">{months.find(m => m.value === round.month)?.label || `Mês ${round.month}`}</p>
+                  <p className="text-sm text-muted-foreground">{months.find(m => m.value === round.month)?.label || `Mês ${round.month}`}</p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
                   {getStatusBadge(round.status)}
@@ -382,11 +382,11 @@ const SeasonRounds = () => {
         const nextgenMatches = matches.filter(m => m.group_type === 'nextgen')
         
         const MatchCard = ({ match }) => (
-          <div key={match.id} className="bg-white border rounded-lg p-3 space-y-2">
+          <div key={match.id} className="bg-card border rounded-lg p-3 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm truncate">{match.player1_name}</div>
-                <div className="text-xs text-gray-500">vs</div>
+                <div className="text-xs text-muted-foreground">vs</div>
                 <div className="font-medium text-sm truncate">{match.player2_name}</div>
               </div>
               <Badge variant={match.status === 'completed' ? 'default' : 'secondary'} className="shrink-0">
@@ -394,12 +394,12 @@ const SeasonRounds = () => {
               </Badge>
             </div>
             {match.score && (
-              <div className="text-sm font-semibold text-center py-1 bg-gray-50 rounded">
+              <div className="text-sm font-semibold text-center py-1 bg-muted/50 rounded">
                 {match.score}
               </div>
             )}
             {match.winner_name && (
-              <div className="text-xs text-green-600 text-center truncate">
+              <div className="text-xs text-primary text-center truncate">
                 🏆 {match.winner_name}
               </div>
             )}
@@ -444,7 +444,7 @@ const SeasonRounds = () => {
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <span className="text-blue-600">⚔️</span>
+                    <span className="text-amber-700">⚔️</span>
                     Challenger ({challengerMatches.length} partidas)
                   </CardTitle>
                 </CardHeader>
@@ -460,7 +460,7 @@ const SeasonRounds = () => {
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <span className="text-green-600">🌱</span>
+                    <span className="text-primary">🌱</span>
                     Next Gen ({nextgenMatches.length} partidas)
                   </CardTitle>
                 </CardHeader>

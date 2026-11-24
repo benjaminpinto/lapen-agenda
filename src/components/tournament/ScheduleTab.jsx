@@ -50,9 +50,9 @@ export default function ScheduleTab({ slug }) {
     <div className="space-y-4" data-testid="schedule-tab">
       <RefreshBar updatedAt={updatedAt} refreshing={refreshing} error={error} onRefresh={refresh} />
       {loading && <p className="py-8 text-center text-sm text-muted-foreground">Carregando…</p>}
-      {error && !data && <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800" data-testid="schedule-error">{error}</p>}
-      {data && !data.published && <p className="rounded-lg border bg-card px-4 py-3 text-sm" data-testid="schedule-unpublished">O organizador ainda não publicou o cronograma.</p>}
-      {data?.published && !current && <p className="rounded-lg border border-dashed bg-card px-4 py-8 text-center text-sm text-muted-foreground" data-testid="schedule-empty">Ainda não há partidas com horário definido.</p>}
+      {error && !data && <p role="alert" className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800" data-testid="schedule-error">{error}</p>}
+      {data && !data.published && <p className="rounded-2xl border bg-card px-4 py-3 text-sm" data-testid="schedule-unpublished">O organizador ainda não publicou o cronograma.</p>}
+      {data?.published && !current && <p className="rounded-2xl border border-dashed bg-card px-4 py-8 text-center text-sm text-muted-foreground" data-testid="schedule-empty">Ainda não há partidas com horário definido.</p>}
 
       {data?.published && current && (
         <>
@@ -65,7 +65,7 @@ export default function ScheduleTab({ slug }) {
                   <button
                     key={d.date} type="button" role="tab" aria-selected={isCurrent} data-testid={`schedule-day-${d.date}`}
                     onClick={() => setDay(d.date)}
-                    className={`min-h-[44px] rounded-md border px-3 text-sm font-medium ${isCurrent ? 'border-amber-800 bg-amber-800 text-white' : 'bg-card hover:bg-muted'}`}
+                    className={`min-h-[44px] rounded-xl border px-3 text-sm font-medium ${isCurrent ? 'border-primary bg-primary text-white' : 'bg-card hover:bg-muted'}`}
                   >
                     {dayTitle(d.date)} <span className="text-xs opacity-80">· {placed}/{d.windows.size}</span>
                   </button>
@@ -78,7 +78,7 @@ export default function ScheduleTab({ slug }) {
             </Button>
           </div>
 
-          <div className="overflow-x-auto rounded-lg border bg-card">
+          <div className="overflow-x-auto rounded-2xl border bg-card">
             <table className="w-full border-collapse text-sm" data-testid={`schedule-table-${current.date}`}>
               <thead>
                 <tr className="bg-muted/50">

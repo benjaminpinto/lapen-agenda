@@ -4,7 +4,7 @@ import {useToast} from '@/contexts/ToastContext'
 import {ADMIN_API, errorMessage, request} from '../tournamentApi'
 import {dayTitle} from './scheduleUtils'
 
-const selectClass = 'h-10 w-full rounded-md border border-stone-300 bg-white px-2 text-sm'
+const selectClass = 'h-10 w-full rounded-xl border border-stone-300 bg-card px-2 text-sm'
 
 const when = (iso) => {
   if (!iso) return '—'
@@ -117,7 +117,7 @@ export default function DistributePanel({ tournamentId, schedule, proposal, onPr
         <input type="checkbox" className="mt-0.5 h-5 w-5 accent-amber-700" checked={redo} onChange={(e) => setRedo(e.target.checked)} data-testid="distribute-redo" />
         <span>Refazer também as partidas que já têm horário <span className="text-stone-500">(as fixadas não mudam)</span></span>
       </label>
-      <Button type="button" onClick={generate} disabled={busy || noSessions} data-testid="distribute-generate" className="min-h-[44px] w-full bg-amber-700 text-white hover:bg-amber-800">
+      <Button type="button" onClick={generate} disabled={busy || noSessions} data-testid="distribute-generate" className="min-h-[44px] w-full bg-primary text-white hover:bg-primary/90">
         {busy && !proposal ? 'Calculando…' : proposal ? 'Gerar outra proposta' : 'Gerar proposta'}
       </Button>
 
@@ -140,7 +140,7 @@ export default function DistributePanel({ tournamentId, schedule, proposal, onPr
               <summary className="cursor-pointer font-semibold text-red-800">Não couberam ({proposal.unplaced.length})</summary>
               <ul className="mt-1 space-y-2">
                 {proposal.unplaced.map((u) => (
-                  <li key={u.match_id} className="rounded border border-red-300 bg-white p-2" data-testid={`unplaced-${u.match_id}`}>
+                  <li key={u.match_id} className="rounded border border-red-300 bg-card p-2" data-testid={`unplaced-${u.match_id}`}>
                     <p className="font-medium">{u.label}</p>
                     <ul className="list-disc pl-4 text-xs text-stone-700">{u.reasons.map((r, i) => <li key={i}>{r}</li>)}</ul>
                   </li>
@@ -150,7 +150,7 @@ export default function DistributePanel({ tournamentId, schedule, proposal, onPr
           )}
           <p className="text-xs text-stone-600">A proposta aparece tracejada no quadro. Nada é gravado até aplicar.</p>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={apply} disabled={busy || (proposal.assignments.length === 0 && proposal.unassign.length === 0)} data-testid="distribute-apply" className="min-h-[44px] flex-1 bg-amber-700 text-white hover:bg-amber-800">Aplicar</Button>
+            <Button type="button" onClick={apply} disabled={busy || (proposal.assignments.length === 0 && proposal.unassign.length === 0)} data-testid="distribute-apply" className="min-h-[44px] flex-1 bg-primary text-white hover:bg-primary/90">Aplicar</Button>
             <Button type="button" variant="outline" onClick={() => onProposal(null)} data-testid="distribute-discard" className="min-h-[44px]">Descartar</Button>
           </div>
         </div>

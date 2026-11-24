@@ -24,7 +24,7 @@ const STATE_CELL = {
 }
 const STATE_BADGE = {
   provisional: 'border-amber-400 bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200',
-  qualified: 'border-amber-800 bg-amber-800 text-white',
+  qualified: 'border-primary bg-primary text-white',
   tie_pending: 'border-orange-500 bg-orange-100 text-orange-900 dark:bg-orange-900/40 dark:text-orange-200',
   eliminated: 'border-stone-300 bg-stone-100 text-stone-600 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300',
   placed: 'border-stone-400 bg-stone-100 text-stone-800 dark:border-stone-500 dark:bg-stone-800 dark:text-stone-200',

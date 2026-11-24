@@ -112,7 +112,7 @@ const SeasonConfig = () => {
 
   return (
     <div className="space-y-6">
-      <Button variant="outline" onClick={() => navigate('/admin/ranking')}>
+      <Button variant="ghost" size="sm" onClick={() => navigate('/admin/ranking')} className="rounded-full -ml-2">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Voltar
       </Button>
@@ -230,7 +230,7 @@ const SeasonConfig = () => {
             </div>
           ))}
           {tempRules.length === 0 && (
-            <p className="text-sm text-gray-500">Nenhuma regra configurada</p>
+            <p className="text-sm text-muted-foreground">Nenhuma regra configurada</p>
           )}
           <Button onClick={saveTempRules} className="mt-2">Salvar Regras</Button>
         </CardContent>

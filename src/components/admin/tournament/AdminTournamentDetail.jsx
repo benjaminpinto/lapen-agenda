@@ -5,7 +5,7 @@ import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs'
 import BackButton from '@/components/ui/BackButton'
 import {useToast} from '@/contexts/ToastContext'
 import ConfirmDialog from './ConfirmDialog'
-import DesktopNotice from './DesktopNotice'
+import DesktopNotice from '../DesktopNotice'
 import StatusBadge from './StatusBadge'
 import TournamentForm from './TournamentForm'
 import CategoriesPanel from './CategoriesPanel'
@@ -134,7 +134,7 @@ export default function AdminTournamentDetail() {
             <Button
               key={action.status} onClick={() => changeStatus(action.status)} disabled={busy}
               variant={action.primary ? 'default' : 'outline'} data-testid={`action-${action.status}`}
-              className={`min-h-[44px] ${action.primary ? 'bg-amber-700 hover:bg-amber-800 text-white' : ''}`}
+              className={`min-h-[44px] ${action.primary ? 'bg-primary hover:bg-primary/90 text-white' : ''}`}
             >
               {action.label}
             </Button>
@@ -149,7 +149,7 @@ export default function AdminTournamentDetail() {
       </div>
 
       <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })}>
-        <div className="overflow-x-auto -mx-1 px-1 pb-1">
+        <div className="overflow-x-auto no-scrollbar -mx-1 px-1 pb-1">
           <TabsList className="h-auto inline-flex min-w-max">
             {TABS.map(([key, label]) => (
               <TabsTrigger key={key} value={key} data-testid={`tab-${key}`} className="min-h-[44px] px-4">{label}</TabsTrigger>

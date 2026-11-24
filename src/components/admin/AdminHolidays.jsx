@@ -5,12 +5,13 @@ import {Label} from '@/components/ui/label'
 import {Textarea} from '@/components/ui/textarea'
 import {Card, CardContent} from '@/components/ui/card'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
-import {ArrowLeft, Calendar, Clock, Plus, Trash2} from 'lucide-react'
+import {Calendar, Clock, Plus, Trash2} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
-import {Link} from 'react-router-dom'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
+import {getLocalDateString} from '@/utils/dateUtils'
 
 const AdminHolidays = () => {
+    const [showPast, setShowPast] = useState(false)
     const [holidays, setHolidays] = useState([])
     const [loading, setLoading] = useState(true)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -134,28 +135,56 @@ const AdminHolidays = () => {
         return <div className="text-center py-8">Carregando bloqueios...</div>
     }
 
+    // Upcoming blocks first; past ones stay one tap away.
+    const today = getLocalDateString()
+    const sorted = [...holidays].sort((a, b) => a.date.localeCompare(b.date))
+    const upcoming = sorted.filter(h => h.date >= today)
+    const past = sorted.filter(h => h.date < today).reverse()
+    const renderHoliday = (holiday) => (
+        <Card key={holiday.id} className={holiday.date < today ? 'opacity-70' : ''}>
+            <CardContent className="py-3 sm:py-4">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-6">
+                        <div className="flex items-center">
+                            <Calendar className="h-5 w-5 mr-2 text-red-600"/>
+                            <span className="font-semibold">{formatDate(holiday.date)}</span>
+                        </div>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4 mr-1"/>
+                            {isFullDayBlock(holiday) ? 'Dia inteiro bloqueado' : `${holiday.start_time} - ${holiday.end_time}`}
+                        </div>
+                        {holiday.description && (
+                            <div className="text-sm text-foreground/80">
+                                {holiday.description}
+                            </div>
+                        )}
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(holiday.id)}
+                        className="shrink-0 text-red-600 hover:text-red-700"
+                    >
+                        <Trash2 className="h-4 w-4"/>
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    )
+
     return (
         <div className="max-w-4xl mx-auto">
-            <Link to="/admin/dashboard">
-                <Button variant="outline" size="sm" className="mb-4">
-                    <ArrowLeft className="h-4 w-4 mr-2"/>
-                    Voltar ao Dashboard
-                </Button>
-            </Link>
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex items-start justify-between gap-3 mb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
                         Feriados e Bloqueios
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                         Gerencie datas e horários bloqueados para agendamentos
                     </p>
                 </div>
 
-                <Button onClick={() => {
-                    resetForm();
-                    setIsDialogOpen(true)
-                }}>
+                <Button className="shrink-0 rounded-full" onClick={() => { resetForm(); setIsDialogOpen(true) }}>
                     <Plus className="h-4 w-4 mr-2"/>
                     Novo Bloqueio
                 </Button>
@@ -213,7 +242,7 @@ const AdminHolidays = () => {
                             />
                         </div>
 
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                             <strong>Dica:</strong> Deixe os horários em branco para bloquear o dia inteiro
                         </p>
 
@@ -233,43 +262,24 @@ const AdminHolidays = () => {
                 {holidays.length === 0 ? (
                     <Card>
                         <CardContent className="text-center py-8">
-                            <p className="text-gray-500">Nenhum bloqueio cadastrado</p>
+                            <p className="text-muted-foreground">Nenhum bloqueio cadastrado</p>
                         </CardContent>
                     </Card>
                 ) : (
-                    holidays
-                        .sort((a, b) => new Date(a.date) - new Date(b.date))
-                        .map((holiday) => (
-                            <Card key={holiday.id}>
-                                <CardContent className="py-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-6">
-                                            <div className="flex items-center">
-                                                <Calendar className="h-5 w-5 mr-2 text-red-600"/>
-                                                <span className="font-semibold">{formatDate(holiday.date)}</span>
-                                            </div>
-                                            <div className="flex items-center text-sm text-gray-600">
-                                                <Clock className="h-4 w-4 mr-1"/>
-                                                {isFullDayBlock(holiday) ? 'Dia inteiro bloqueado' : `${holiday.start_time} - ${holiday.end_time}`}
-                                            </div>
-                                            {holiday.description && (
-                                                <div className="text-sm text-gray-700">
-                                                    {holiday.description}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleDelete(holiday.id)}
-                                            className="text-red-600 hover:text-red-700"
-                                        >
-                                            <Trash2 className="h-4 w-4"/>
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))
+                    <>
+                        {upcoming.length === 0 && (
+                            <p className="rounded-2xl border border-dashed bg-card py-6 text-center text-sm text-muted-foreground">Nenhum bloqueio futuro</p>
+                        )}
+                        {upcoming.map(renderHoliday)}
+                        {past.length > 0 && (
+                            <button type="button" onClick={() => setShowPast(!showPast)}
+                                    className="w-full rounded-full border bg-card py-2 text-sm font-semibold text-muted-foreground"
+                                    data-testid="holidays-toggle-past">
+                                {showPast ? 'Ocultar bloqueios passados' : `Mostrar ${past.length} bloqueio(s) passado(s)`}
+                            </button>
+                        )}
+                        {showPast && past.map(renderHoliday)}
+                    </>
                 )}
             </div>
         </div>

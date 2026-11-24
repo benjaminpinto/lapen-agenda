@@ -9,7 +9,7 @@ export default function CategoryChips({ categories, value, onChange, allLabel, t
           <button
             key={option.id} type="button" aria-pressed={active} data-testid={`${testId}-${option.id === '' ? 'all' : option.id}`}
             onClick={() => onChange(String(option.id))}
-            className={`min-h-[44px] rounded-full border px-4 text-sm font-medium ${active ? 'border-amber-800 bg-amber-800 text-white' : 'bg-card hover:bg-muted'}`}
+            className={`min-h-[44px] rounded-full border px-4 text-sm font-medium ${active ? 'border-primary bg-primary text-white' : 'bg-card hover:bg-muted'}`}
           >
             {option.name}
           </button>

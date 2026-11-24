@@ -40,7 +40,7 @@ const WOForm = ({ match, onSubmit, onCancel }) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="text-center p-4 bg-gray-50 rounded">
+          <div className="text-center p-4 bg-muted/50 rounded">
             <p className="font-medium">
               {match.player1_name} vs {match.player2_name}
             </p>

@@ -100,7 +100,7 @@ export default function LiveBoard() {
           </div>
           <button
             type="button" onClick={toggleFullscreen} data-testid="board-fullscreen" aria-label={fullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-stone-600 text-stone-200 hover:bg-stone-800"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-stone-600 text-stone-200 hover:bg-stone-800"
           >
             {fullscreen ? <Minimize2 className="h-5 w-5" aria-hidden="true" /> : <Maximize2 className="h-5 w-5" aria-hidden="true" />}
           </button>

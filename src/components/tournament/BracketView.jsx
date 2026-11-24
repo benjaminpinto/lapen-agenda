@@ -9,7 +9,7 @@ const sorted = (round) => [...round.matches].sort((a, b) => a.position - b.posit
 function BracketTree({ rounds }) {
   const last = rounds.length - 1
   return (
-    <div className="overflow-x-auto rounded-lg border bg-card p-3" data-testid="bracket-scroll">
+    <div className="overflow-x-auto rounded-2xl border bg-card p-3" data-testid="bracket-scroll">
       <div className="flex min-w-max" data-testid="bracket-tree">
         {rounds.map((round, roundIndex) => (
           <div key={round.round_number} className="flex w-60 shrink-0 flex-col" data-testid={`bracket-round-${round.round_number}`}>
@@ -65,7 +65,7 @@ function BracketRounds({ rounds }) {
           <button
             key={r.round_number} type="button" role="tab" aria-selected={i === index} data-testid={`bracket-tab-${r.round_number}`}
             onClick={() => go(i)}
-            className={`min-h-[44px] shrink-0 border-b-2 px-3 text-sm font-medium ${i === index ? 'border-amber-700 text-amber-900 dark:border-amber-500 dark:text-amber-300' : 'border-transparent text-muted-foreground'}`}
+            className={`min-h-[44px] shrink-0 border-b-2 px-3 text-sm font-medium ${i === index ? 'border-primary text-primary font-semibold' : 'border-transparent text-muted-foreground'}`}
           >
             {r.name}
           </button>

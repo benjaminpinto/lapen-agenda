@@ -10,7 +10,7 @@ import {entryLabel} from './drawUtils'
 import ScoreGrid from '@/components/shared/ScoreGrid'
 import {emptyGrid, gridFromScore, isFilled, needsSuperTiebreak, SCORE_COLUMNS, scoreFromGrid, winnerSide} from '@/utils/scoreGrid'
 
-const selectClass = 'h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm'
+const selectClass = 'h-10 w-full rounded-xl border border-border bg-card px-3 text-sm'
 
 export default function ResultDialog({ tournament, category, match, mode, onClose, onSaved }) {
   const { toast } = useToast()
@@ -97,7 +97,7 @@ export default function ResultDialog({ tournament, category, match, mode, onClos
             <fieldset className="space-y-2" data-testid="result-winner">
               <legend className="text-sm font-medium leading-none mb-2">{retired ? 'Quem continuou (vencedor)' : 'Vencedor por W.O.'}</legend>
               {[1, 2].map((side) => (
-                <label key={side} className="flex min-h-[44px] items-center gap-2 rounded-md border border-gray-200 px-3 text-sm">
+                <label key={side} className="flex min-h-[44px] items-center gap-2 rounded-xl border border-border px-3 text-sm">
                   <input type="radio" name="result-winner" value={side} checked={Number(form.side) === side} onChange={set('side')} data-testid={`result-winner-${side}`} />
                   <span>{names[side - 1]}</span>
                 </label>
@@ -110,7 +110,7 @@ export default function ResultDialog({ tournament, category, match, mode, onClos
           </div>
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose} data-testid="result-cancel" className="min-h-[44px]">Voltar</Button>
-            <Button type="submit" disabled={saving} data-testid="result-submit" className="min-h-[44px] bg-amber-700 hover:bg-amber-800 text-white">{saving ? 'Salvando…' : 'Salvar resultado'}</Button>
+            <Button type="submit" disabled={saving} data-testid="result-submit" className="min-h-[44px] bg-primary hover:bg-primary/90 text-white">{saving ? 'Salvando…' : 'Salvar resultado'}</Button>
           </div>
         </form>
       </DialogContent>

@@ -6,7 +6,7 @@ import {useToast} from '@/contexts/ToastContext'
 import {ADMIN_API, errorMessage, request} from '../tournamentApi'
 import {daysBetween, dayTitle} from './scheduleUtils'
 
-const selectClass = 'h-10 w-full rounded-md border border-stone-300 bg-white px-2 text-sm'
+const selectClass = 'h-10 w-full rounded-xl border border-stone-300 bg-card px-2 text-sm'
 const SLOT_MINUTES = 90
 
 const minutes = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m }
@@ -86,14 +86,14 @@ export default function SessionDialog({ tournament, courts, session, onClose, on
               : 'A sessão precisa ter ao menos 90 minutos.'}
           </p>
           {blocking && (
-            <div className="rounded-md border border-red-400 bg-red-50 p-3 text-sm" role="alert" data-testid="session-blocking">
+            <div className="rounded-xl border border-red-400 bg-red-50 p-3 text-sm" role="alert" data-testid="session-blocking">
               <p className="font-semibold text-red-800">{blocking.error}</p>
               <ul className="mt-1 list-disc pl-4">{blocking.matches.map((m) => <li key={m.id}>{m.label}</li>)}</ul>
             </div>
           )}
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" onClick={onClose} data-testid="session-cancel" className="min-h-[44px]">Voltar</Button>
-            <Button type="submit" disabled={saving || windows === 0 || form.court_ids.length === 0} data-testid="session-submit" className="min-h-[44px] bg-amber-700 text-white hover:bg-amber-800">{saving ? 'Salvando…' : 'Salvar sessão'}</Button>
+            <Button type="submit" disabled={saving || windows === 0 || form.court_ids.length === 0} data-testid="session-submit" className="min-h-[44px] bg-primary text-white hover:bg-primary/90">{saving ? 'Salvando…' : 'Salvar sessão'}</Button>
           </div>
         </form>
       </DialogContent>

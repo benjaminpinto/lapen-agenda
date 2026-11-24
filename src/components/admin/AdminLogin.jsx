@@ -37,14 +37,14 @@ const AdminLogin = ({ setIsAdminAuthenticated }) => {
     <div className="max-w-md mx-auto mt-20">
       <Card>
         <CardHeader className="text-center">
-          <Lock className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+          <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <CardTitle>Área Administrativa</CardTitle>
           <CardDescription>
             Verificando permissões...
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
-          <div className="animate-pulse text-gray-500">
+          <div className="animate-pulse text-muted-foreground">
             Aguarde...
           </div>
         </CardContent>

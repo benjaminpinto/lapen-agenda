@@ -162,13 +162,13 @@ const SeasonParticipants = () => {
 
   return (
     <div className="space-y-6">
-      <Button variant="outline" onClick={() => navigate('/admin/ranking')}>
+      <Button variant="ghost" size="sm" onClick={() => navigate('/admin/ranking')} className="rounded-full -ml-2">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Voltar
       </Button>
-      <div className="flex justify-between items-center">
+      <div className="flex items-start justify-between gap-3">
         <h1 className="text-2xl font-bold">Participantes da Temporada</h1>
-        <Button variant="outline" onClick={() => setShowExpireDialog(true)}>
+        <Button variant="outline" className="shrink-0 rounded-full" onClick={() => setShowExpireDialog(true)}>
           <Clock className="h-4 w-4 mr-2" />
           Expirar Pontos Temp.
         </Button>
@@ -183,14 +183,14 @@ const SeasonParticipants = () => {
             {participants.map((p, i) => {
               const activeIndex = participants.filter((x, idx) => idx < i && x.is_active).length + 1
               return (
-                <div key={p.user_id} className="flex justify-between items-center p-2 border rounded">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{p.is_active ? `${activeIndex}.` : '—'} {p.name}</span>
-                    <Badge className="ml-2">{p.total_points} pts</Badge>
+                <div key={p.user_id} className="flex justify-between items-center gap-2 p-2 border rounded-xl">
+                  <div className="min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="font-medium min-w-0">{p.is_active ? `${activeIndex}.` : '—'} {p.name}</span>
+                    <Badge className="tabular-nums">{p.total_points} pts</Badge>
                     {p.temp_points > 0 && <Badge variant="secondary">+{p.temp_points} temp</Badge>}
                     {!p.is_active && <Badge variant="secondary">Inativo</Badge>}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex shrink-0 gap-1 sm:gap-2">
                     {editingTemp === p.user_id ? (
                       <div className="flex gap-1 items-center">
                         <Input 
@@ -216,8 +216,8 @@ const SeasonParticipants = () => {
                       variant={p.is_active ? "outline" : "default"}
                       onClick={() => toggleParticipant(p.user_id, p.is_active)}
                     >
-                      {p.is_active ? <UserX className="h-4 w-4 mr-1" /> : <UserCheck className="h-4 w-4 mr-1" />}
-                      {p.is_active ? 'Desativar' : 'Ativar'}
+                      {p.is_active ? <UserX className="h-4 w-4 sm:mr-1" /> : <UserCheck className="h-4 w-4 sm:mr-1" />}
+                      <span className="sr-only sm:not-sr-only">{p.is_active ? 'Desativar' : 'Ativar'}</span>
                     </Button>
                   </div>
                 </div>

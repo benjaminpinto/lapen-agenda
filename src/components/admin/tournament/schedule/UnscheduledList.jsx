@@ -14,18 +14,18 @@ export default function UnscheduledList({ matches, categories, categoryIds, sele
       onDrop={(event) => { event.preventDefault(); onDropUnplace(Number(event.dataTransfer.getData('text/plain'))) }}
     >
       <div className="grid gap-2">
-        <select aria-label="Categoria" data-testid="unscheduled-category" className="h-10 w-full rounded-md border border-stone-300 bg-white px-2 text-sm" value={category} onChange={(e) => setCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))}>
+        <select aria-label="Categoria" data-testid="unscheduled-category" className="h-10 w-full rounded-xl border border-stone-300 bg-card px-2 text-sm" value={category} onChange={(e) => setCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))}>
           <option value="all">Todas as categorias</option>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <select aria-label="Fase" data-testid="unscheduled-stage" className="h-10 w-full rounded-md border border-stone-300 bg-white px-2 text-sm" value={stage} onChange={(e) => setStage(e.target.value)}>
+        <select aria-label="Fase" data-testid="unscheduled-stage" className="h-10 w-full rounded-xl border border-stone-300 bg-card px-2 text-sm" value={stage} onChange={(e) => setStage(e.target.value)}>
           <option value="all">Todas as fases</option>
           <option value="group">Grupos</option>
           <option value="knockout">Mata-mata</option>
         </select>
       </div>
       {shown.length === 0 && (
-        <p className="rounded-md border border-dashed border-stone-300 p-4 text-center text-sm text-stone-600" data-testid="unscheduled-empty">
+        <p className="rounded-xl border border-dashed border-stone-300 p-4 text-center text-sm text-stone-600" data-testid="unscheduled-empty">
           {matches.length === 0 ? 'Todas as partidas pendentes têm horário.' : 'Nenhuma partida neste filtro.'}
         </p>
       )}

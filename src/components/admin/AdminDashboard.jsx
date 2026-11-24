@@ -1,8 +1,7 @@
 import {useEffect, useState} from 'react'
 import {Link} from 'react-router-dom'
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
-import {Button} from '@/components/ui/button'
-import {Award, Calendar, Clock, MapPin, Medal, Trophy, UserCog, Users} from 'lucide-react'
+import {Medal} from 'lucide-react'
+import {ADMIN_SECTIONS} from './AdminNav'
 import {ADMIN_API, request} from './tournament/tournamentApi'
 import {fetchWithAuth} from '../../utils/fetchWithAuth.js'
 
@@ -40,140 +39,49 @@ const AdminDashboard = () => {
         return <div className="text-center py-8">Carregando estatísticas...</div>
     }
 
+    const pendingCard = tournamentSummary?.tournament && (
+        <section className="rounded-2xl border border-amber-300 bg-card p-4 shadow-sm" data-testid="tournament-pending-card">
+            <h2 className="text-lg font-bold flex items-center gap-2 mb-3">
+                <Medal className="h-5 w-5 text-primary" /> {tournamentSummary.tournament.name}
+            </h2>
+            <div className="grid gap-2 grid-cols-3">
+                {[
+                    ['pending-registrations', tournamentSummary.pending_registrations, 'inscrições pendentes', 'inscricoes'],
+                    ['pending-results', tournamentSummary.overdue_results, 'resultados atrasados', 'partidas'],
+                    ['pending-ties', tournamentSummary.ties_to_decide, 'empates a decidir', 'partidas'],
+                ].map(([testId, count, label, tab]) => (
+                    <Link
+                        key={testId} to={`/admin/tournaments/${tournamentSummary.tournament.id}?tab=${tab}`} data-testid={testId}
+                        className={`rounded-xl border p-3 min-h-[44px] flex flex-col ${count > 0 ? 'border-orange-400 bg-orange-50 text-orange-900' : 'border-stone-200 text-stone-500'}`}
+                    >
+                        <span className="font-display text-2xl font-bold tabular-nums" data-testid={`${testId}-count`}>{count}</span>
+                        <span className="text-xs leading-tight">{label}</span>
+                    </Link>
+                ))}
+            </div>
+        </section>
+    )
+
     return (
-        <div className="max-w-6xl mx-auto">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    Painel Administrativo
-                </h1>
-                <p className="text-gray-600">
-                    Gerencie quadras, jogadores e agendamentos
-                </p>
+        <div className="max-w-6xl mx-auto space-y-6">
+            <div>
+                <h1 className="text-2xl sm:text-3xl font-bold">Painel Administrativo</h1>
+                <p className="text-sm text-muted-foreground">Gerencie quadras, jogadores, ranking e torneios</p>
             </div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 auto-cols-fr">
-                <Link to="/admin/courts">
-                    <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                        <CardHeader className="text-center pb-2">
-                            <MapPin className="h-8 w-8 text-green-600 mx-auto" />
-                            <CardTitle className="text-lg whitespace-nowrap">Quadras</CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-center">
-                            <Button variant="ghost" size="sm">Gerenciar</Button>
-                        </CardContent>
-                    </Card>
-                </Link>
+            {pendingCard}
 
-                <Link to="/admin/holidays">
-                    <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                        <CardHeader className="text-center pb-2">
-                            <Calendar className="h-8 w-8 text-red-600 mx-auto" />
-                            <CardTitle className="text-lg whitespace-nowrap">Feriados</CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-center">
-                            <Button variant="ghost" size="sm">Gerenciar</Button>
-                        </CardContent>
-                    </Card>
-                </Link>
-
-                <Link to="/admin/recurring">
-                    <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                        <CardHeader className="text-center pb-2">
-                            <Clock className="h-8 w-8 text-purple-600 mx-auto" />
-                            <CardTitle className="text-lg whitespace-nowrap">Recorrências</CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-center">
-                            <Button variant="ghost" size="sm">Gerenciar</Button>
-                        </CardContent>
-                    </Card>
-                </Link>
-
-                <Link to="/admin/matches">
-                    <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                        <CardHeader className="text-center pb-2">
-                            <Trophy className="h-8 w-8 text-yellow-600 mx-auto" />
-                            <CardTitle className="text-lg whitespace-nowrap">Apostas</CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-center">
-                            <Button variant="ghost" size="sm">Gerenciar</Button>
-                        </CardContent>
-                    </Card>
-                </Link>
-
-                <Link to="/admin/lapen-approvals">
-                    <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                        <CardHeader className="text-center pb-2">
-                            <Users className="h-8 w-8 text-orange-600 mx-auto" />
-                            <CardTitle className="text-lg whitespace-nowrap">Membros</CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-center">
-                            <Button variant="ghost" size="sm">Aprovar</Button>
-                        </CardContent>
-                    </Card>
-                </Link>
-
-                <Link to="/admin/users">
-                    <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                        <CardHeader className="text-center pb-2">
-                            <UserCog className="h-8 w-8 text-blue-600 mx-auto" />
-                            <CardTitle className="text-lg whitespace-nowrap">Usuários</CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-center">
-                            <Button variant="ghost" size="sm">Gerenciar</Button>
-                        </CardContent>
-                    </Card>
-                </Link>
-
-                <Link to="/admin/ranking">
-                    <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                        <CardHeader className="text-center pb-2">
-                            <Award className="h-8 w-8 text-indigo-600 mx-auto" />
-                            <CardTitle className="text-lg whitespace-nowrap">Ranking</CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-center">
-                            <Button variant="ghost" size="sm">Gerenciar</Button>
-                        </CardContent>
-                    </Card>
-                </Link>
-
-                <Link to="/admin/tournaments" data-testid="dashboard-tournaments-card">
-                    <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                        <CardHeader className="text-center pb-2">
-                            <Medal className="h-8 w-8 text-amber-700 mx-auto" />
-                            <CardTitle className="text-lg whitespace-nowrap">Torneios</CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-center">
-                            <Button variant="ghost" size="sm">Gerenciar</Button>
-                        </CardContent>
-                    </Card>
-                </Link>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {ADMIN_SECTIONS.filter(s => s.to !== '/admin/dashboard').map(({to, label, icon: Icon}) => (
+                    <Link key={to} to={to} data-testid={to === '/admin/tournaments' ? 'dashboard-tournaments-card' : `dashboard-${to.split('/').pop()}-card`}
+                          className="flex items-center gap-3 rounded-2xl border bg-card p-3 sm:p-4 transition hover:border-primary/40 active:scale-[0.98]">
+                        <span className="h-10 w-10 shrink-0 rounded-full bg-accent text-accent-foreground grid place-items-center">
+                            <Icon className="h-5 w-5" />
+                        </span>
+                        <span className="font-semibold">{label}</span>
+                    </Link>
+                ))}
             </div>
-
-            {tournamentSummary?.tournament && (
-                <Card className="border-amber-300" data-testid="tournament-pending-card">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                            <Medal className="h-5 w-5 text-amber-700" /> {tournamentSummary.tournament.name}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-2 sm:grid-cols-3">
-                        {[
-                            ['pending-registrations', tournamentSummary.pending_registrations, 'inscrição(ões) pendente(s)', 'inscricoes'],
-                            ['pending-results', tournamentSummary.overdue_results, 'resultado(s) atrasado(s)', 'partidas'],
-                            ['pending-ties', tournamentSummary.ties_to_decide, 'empate(s) a decidir', 'partidas'],
-                        ].map(([testId, count, label, tab]) => (
-                            <Link
-                                key={testId} to={`/admin/tournaments/${tournamentSummary.tournament.id}?tab=${tab}`} data-testid={testId}
-                                className={`rounded-md border p-3 min-h-[44px] ${count > 0 ? 'border-orange-400 bg-orange-50 text-orange-900' : 'border-stone-200 text-stone-500'}`}
-                            >
-                                <span className="text-2xl font-bold mr-2" data-testid={`${testId}-count`}>{count}</span>
-                                <span className="text-sm">{label}</span>
-                            </Link>
-                        ))}
-                    </CardContent>
-                </Card>
-            )}
         </div>
     )
 }

@@ -16,7 +16,7 @@ function registrationNote(registration) {
 function CurrentTournament({ tournament }) {
   const note = registrationNote(tournament.registration)
   return (
-    <section className="space-y-3 rounded-lg border-2 border-amber-600 bg-card p-4 sm:p-6" data-testid="current-tournament">
+    <section className="space-y-3 rounded-3xl border bg-card p-4 shadow-sm ring-2 ring-primary/30 sm:p-6" data-testid="current-tournament">
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-xl font-bold sm:text-2xl" data-testid="current-tournament-name">{tournament.name}</h2>
         <StatusBadge info={TOURNAMENT_STATUS[tournament.status]} testId="current-tournament-status" />
@@ -29,11 +29,11 @@ function CurrentTournament({ tournament }) {
       {note && <p className="text-sm font-medium" data-testid="registration-note">{note}</p>}
       <div className="flex flex-wrap gap-2">
         <Link to={`/tournaments/${tournament.slug}`} data-testid="follow-tournament-link">
-          <Button type="button" className="min-h-[44px] bg-amber-700 text-white hover:bg-amber-800">Acompanhar torneio</Button>
+          <Button type="button" className="min-h-[44px] rounded-full px-6 font-bold">Acompanhar torneio</Button>
         </Link>
         {tournament.registration.open && (
           <Link to={`/tournaments/${tournament.slug}/register`} data-testid="register-link">
-            <Button type="button" variant="outline" className="min-h-[44px] border-amber-700 text-amber-900 dark:text-amber-300">Inscrever-se</Button>
+            <Button type="button" variant="outline" className="min-h-[44px] rounded-full border-primary text-primary">Inscrever-se</Button>
           </Link>
         )}
       </div>
@@ -43,9 +43,9 @@ function CurrentTournament({ tournament }) {
 
 function HistoryItem({ tournament }) {
   return (
-    <li className="space-y-2 rounded-lg border bg-card p-4" data-testid={`history-${tournament.slug}`}>
+    <li className="space-y-2 rounded-2xl border bg-card p-4" data-testid={`history-${tournament.slug}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <Link to={`/tournaments/${tournament.slug}`} className="font-semibold text-amber-900 underline-offset-2 hover:underline dark:text-amber-300" data-testid={`history-link-${tournament.slug}`}>
+        <Link to={`/tournaments/${tournament.slug}`} className="font-semibold text-primary underline-offset-2 hover:underline" data-testid={`history-link-${tournament.slug}`}>
           {tournament.name}
         </Link>
         <span className="text-xs text-muted-foreground">{formatDate(tournament.start_date)} a {formatDate(tournament.end_date)}</span>
@@ -71,12 +71,12 @@ export default function TournamentHome() {
     <div className="mx-auto max-w-3xl space-y-6" data-testid="tournament-home">
       <h1 className="text-2xl font-bold sm:text-3xl">Torneios</h1>
       {loading && <p className="py-8 text-center text-sm text-muted-foreground">Carregando…</p>}
-      {error && !data && <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800" data-testid="home-error">{error}</p>}
+      {error && !data && <p role="alert" className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800" data-testid="home-error">{error}</p>}
       {data && (
         <>
           {data.current
             ? <CurrentTournament tournament={data.current} />
-            : <p className="rounded-lg border border-dashed bg-card px-4 py-8 text-center text-sm text-muted-foreground" data-testid="no-current-tournament">Nenhum torneio aberto no momento.</p>}
+            : <p className="rounded-2xl border border-dashed bg-card px-4 py-8 text-center text-sm text-muted-foreground" data-testid="no-current-tournament">Nenhum torneio aberto no momento.</p>}
           {data.history.length > 0 && (
             <section className="space-y-3" data-testid="tournament-history">
               <h2 className="text-lg font-semibold">Torneios anteriores</h2>

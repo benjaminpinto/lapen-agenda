@@ -4,7 +4,7 @@ import {courtName, dayTitle, matchTitle} from '../schedule/scheduleUtils'
 
 const STATE = {
   late: { label: 'Atrasada', className: 'bg-orange-600 text-white' },
-  now: { label: 'Agora', className: 'bg-amber-800 text-white' },
+  now: { label: 'Agora', className: 'bg-primary text-white' },
   next: { label: 'A seguir', className: 'bg-stone-200 text-stone-800' },
 }
 
@@ -24,7 +24,7 @@ export default function AttentionList({ items, courts, today, canRecord, onRecor
       </div>
       <ul className="space-y-2">
         {items.map(({ match, state }) => (
-          <li key={match.id} className="flex flex-col gap-2 rounded-md border bg-white p-3 sm:flex-row sm:items-center sm:justify-between" data-testid={`live-attention-${match.id}`} data-state={state}>
+          <li key={match.id} className="flex flex-col gap-2 rounded-xl border bg-card p-3 sm:flex-row sm:items-center sm:justify-between" data-testid={`live-attention-${match.id}`} data-state={state}>
             <div className="min-w-0">
               <p className="flex flex-wrap items-center gap-2 text-xs text-stone-600">
                 <span className={`rounded px-1.5 py-0.5 font-semibold ${STATE[state].className}`}>{STATE[state].label}</span>
@@ -34,7 +34,7 @@ export default function AttentionList({ items, courts, today, canRecord, onRecor
               <p className="truncate text-sm font-medium">{matchTitle(match)}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button type="button" size="sm" disabled={!canRecord} onClick={() => onRecord(match)} data-testid={`live-attention-record-${match.id}`} className="min-h-[44px] bg-amber-700 text-white hover:bg-amber-800">Resultado</Button>
+              <Button type="button" size="sm" disabled={!canRecord} onClick={() => onRecord(match)} data-testid={`live-attention-record-${match.id}`} className="min-h-[44px] bg-primary text-white hover:bg-primary/90">Resultado</Button>
               <Button type="button" size="sm" variant="outline" disabled={!canRecord} onClick={() => onWalkover(match)} data-testid={`live-attention-wo-${match.id}`} className="min-h-[44px]">W.O.</Button>
               <Button type="button" size="sm" variant="outline" onClick={() => onCall([match])} data-testid={`live-attention-call-${match.id}`} className="min-h-[44px]">Chamar</Button>
             </div>

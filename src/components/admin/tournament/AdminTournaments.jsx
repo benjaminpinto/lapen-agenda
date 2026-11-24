@@ -4,10 +4,9 @@ import {Card, CardContent} from '@/components/ui/card'
 import {Button} from '@/components/ui/button'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {Plus, Trophy} from 'lucide-react'
-import BackButton from '@/components/ui/BackButton'
 import {useToast} from '@/contexts/ToastContext'
 import TournamentForm from './TournamentForm'
-import DesktopNotice from './DesktopNotice'
+import DesktopNotice from '../DesktopNotice'
 import StatusBadge from './StatusBadge'
 import {ADMIN_API, errorMessage, request} from './tournamentApi'
 import {formatDate, TOURNAMENT_STATUS} from './labels'
@@ -42,7 +41,6 @@ export default function AdminTournaments() {
 
   return (
     <div className="max-w-6xl mx-auto" data-testid="admin-tournaments">
-      <BackButton to="/admin/dashboard" label="Painel" />
       <DesktopNotice />
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
@@ -51,7 +49,7 @@ export default function AdminTournaments() {
           </h1>
           <p className="text-stone-600 text-sm">Só um torneio pode estar ativo por vez.</p>
         </div>
-        <Button onClick={() => setCreating(true)} data-testid="new-tournament-button" className="bg-amber-700 hover:bg-amber-800 text-white min-h-[44px]">
+        <Button onClick={() => setCreating(true)} data-testid="new-tournament-button" className="bg-primary hover:bg-primary/90 text-white min-h-[44px]">
           <Plus className="h-4 w-4 mr-2" /> Novo torneio
         </Button>
       </div>

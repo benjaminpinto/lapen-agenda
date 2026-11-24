@@ -14,7 +14,7 @@ import SessionDialog from './SessionDialog'
 import UnscheduledList from './UnscheduledList'
 import {buildDays, conflictLevels, courtName, dayTitle, matchTitle, publishedText, windowKey} from './scheduleUtils'
 
-const chip = 'inline-flex items-center gap-1 rounded-full border bg-white px-3 py-1 text-xs font-medium'
+const chip = 'inline-flex items-center gap-1 rounded-full border bg-card px-3 py-1 text-xs font-medium'
 
 /** The Cronograma tab: sessions, the day grid, matches without a time, conflicts and the automatic distribution. */
 export default function SchedulePanel({ tournament }) {
@@ -141,7 +141,7 @@ export default function SchedulePanel({ tournament }) {
 
   return (
     <div className="space-y-4" data-testid="schedule-panel">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-3">
         <ul className="flex flex-wrap gap-2" data-testid="schedule-summary" aria-label="Resumo">
           <li className={chip} data-testid="summary-pending">Pendentes: <strong>{summary.pending}</strong></li>
           <li className={chip} data-testid="summary-placed">Com horário: <strong>{summary.placed}</strong></li>
@@ -157,14 +157,14 @@ export default function SchedulePanel({ tournament }) {
           </span>
           {!terminal && (published
             ? <Button type="button" variant="outline" onClick={() => setPublished(false)} disabled={busy} data-testid="unpublish-button" className="min-h-[44px]"><EyeOff className="mr-1 h-4 w-4" aria-hidden="true" />Ocultar</Button>
-            : <Button type="button" onClick={() => setPublishing(true)} disabled={busy || summary.placed === 0} data-testid="publish-button" className="min-h-[44px] bg-amber-700 text-white hover:bg-amber-800"><Eye className="mr-1 h-4 w-4" aria-hidden="true" />Publicar cronograma</Button>)}
+            : <Button type="button" onClick={() => setPublishing(true)} disabled={busy || summary.placed === 0} data-testid="publish-button" className="min-h-[44px] bg-primary text-white hover:bg-primary/90"><Eye className="mr-1 h-4 w-4" aria-hidden="true" />Publicar cronograma</Button>)}
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2" data-testid="sessions-bar">
         <span className="text-sm font-semibold text-stone-700">Sessões:</span>
         {schedule.sessions.map((s) => (
-          <span key={s.id} className="inline-flex items-center gap-1 rounded-full border bg-white py-1 pl-3 pr-1 text-sm" data-testid={`session-${s.id}`}>
+          <span key={s.id} className="inline-flex items-center gap-1 rounded-full border bg-card py-1 pl-3 pr-1 text-sm" data-testid={`session-${s.id}`}>
             {dayTitle(s.date)} · {s.start}–{s.end} · {s.court_ids.length} quadra(s) · {s.windows} janelas
             {!terminal && (
               <>
@@ -178,14 +178,14 @@ export default function SchedulePanel({ tournament }) {
       </div>
 
       {days.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-stone-300 bg-white p-8 text-center text-stone-700" data-testid="schedule-empty">
+        <p className="rounded-2xl border border-dashed border-stone-300 bg-card p-8 text-center text-stone-700" data-testid="schedule-empty">
           Comece criando as sessões: os dias e horários em que as quadras são do torneio. Depois é só distribuir as partidas.
         </p>
       ) : (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
           <div className="min-w-0 flex-1 space-y-3">
             {selection && !terminal && (
-              <div className="flex flex-wrap items-center gap-2 rounded-lg border-2 border-amber-700 bg-amber-50 p-3 text-sm" data-testid="selection-bar">
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border-2 border-primary bg-amber-50 p-3 text-sm" data-testid="selection-bar">
                 {selectedMatch ? (
                   <>
                     <span className="min-w-0 flex-1" data-testid="selection-text"><strong>Selecionada:</strong> {selectedMatch.category_name} · {selectedMatch.round_name} · {matchTitle(selectedMatch)}.{' '}
@@ -219,12 +219,12 @@ export default function SchedulePanel({ tournament }) {
             />
           </div>
 
-          <aside className="w-full shrink-0 rounded-lg border bg-white p-3 lg:sticky lg:top-4 lg:w-[22rem] lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto" data-testid="schedule-sidebar">
+          <aside className="w-full shrink-0 rounded-2xl border bg-card p-3 lg:sticky lg:top-4 lg:w-[22rem] lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto" data-testid="schedule-sidebar">
             <div role="tablist" aria-label="Painel lateral" className="mb-3 flex flex-wrap gap-1">
               {sidebarTabs.map(([key, label]) => (
                 <button
                   key={key} type="button" role="tab" aria-selected={openSidebar === key} data-testid={`sidebar-tab-${key}`} onClick={() => setSidebar(key)}
-                  className={`min-h-[40px] rounded-md px-3 text-sm font-medium ${openSidebar === key ? 'bg-amber-800 text-white' : 'bg-stone-100 hover:bg-stone-200'}`}
+                  className={`min-h-[40px] rounded-md px-3 text-sm font-medium ${openSidebar === key ? 'bg-primary text-white' : 'bg-stone-100 hover:bg-stone-200'}`}
                 >
                   {label}
                 </button>
@@ -274,7 +274,7 @@ export default function SchedulePanel({ tournament }) {
             {attention.conflicts?.length > 0 && (
               <ul className="space-y-2 text-sm" data-testid="attention-conflicts">
                 {attention.conflicts.map((c, i) => (
-                  <li key={i} className={`rounded-md border p-2 ${c.severity === 'error' ? 'border-red-400 bg-red-50' : 'border-orange-400 bg-orange-50'}`}>
+                  <li key={i} className={`rounded-xl border p-2 ${c.severity === 'error' ? 'border-red-400 bg-red-50' : 'border-orange-400 bg-orange-50'}`}>
                     <strong>{c.severity === 'error' ? 'Conflito: ' : 'Aviso: '}</strong>{c.message}
                   </li>
                 ))}
@@ -283,7 +283,7 @@ export default function SchedulePanel({ tournament }) {
             {attention.list?.length > 0 && <ul className="list-disc pl-5 text-sm" data-testid="attention-list">{attention.list.map((m) => <li key={m.id}>{m.label}</li>)}</ul>}
             <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={() => setAttention(null)} data-testid="attention-cancel" className="min-h-[44px]">{attention.retry ? 'Voltar' : 'Entendi'}</Button>
-              {attention.retry && <Button type="button" onClick={attention.retry} disabled={busy} data-testid="attention-confirm" className="min-h-[44px] bg-amber-700 text-white hover:bg-amber-800">Aplicar mesmo assim</Button>}
+              {attention.retry && <Button type="button" onClick={attention.retry} disabled={busy} data-testid="attention-confirm" className="min-h-[44px] bg-primary text-white hover:bg-primary/90">Aplicar mesmo assim</Button>}
             </div>
           </DialogContent>
         </Dialog>

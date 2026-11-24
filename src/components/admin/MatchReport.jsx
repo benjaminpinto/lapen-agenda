@@ -5,6 +5,7 @@ import {Button} from '@/components/ui/button'
 import {Badge} from '@/components/ui/badge'
 import {ArrowLeft, CheckCircle, Clock, Copy, Crown, Trophy, Users, Wallet, XCircle} from 'lucide-react'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
+import DesktopNotice from './DesktopNotice'
 import {formatDateForDisplay} from '@/utils/dateUtils'
 
 const MatchReport = () => {
@@ -50,7 +51,8 @@ const MatchReport = () => {
     const {match, bets, summary} = report
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+            <DesktopNotice>Relatório detalhado da partida: fica melhor no computador ou tablet.</DesktopNotice>
             <div className="mb-6">
                 <Link to="/admin/matches">
                     <Button variant="outline" size="sm" className="mb-4">
@@ -61,13 +63,13 @@ const MatchReport = () => {
 
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold mb-2">Relatório da Partida</h1>
-                        <p className="text-gray-600">
+                        <h1 className="text-2xl sm:text-3xl font-bold mb-1">Relatório da Partida</h1>
+                        <p className="text-muted-foreground">
                             {match.player1_name} vs {match.player2_name} - {formatDateForDisplay(match.date)}
                         </p>
                     </div>
                     <Badge className={`text-lg px-4 py-2 ${
-                        report.match.status === 'cancelled' ? 'bg-red-100 text-red-800 hover:bg-yellow-200' : 'bg-green-100 text-green-800 hover:bg-yellow-200'
+                        report.match.status === 'cancelled' ? 'bg-red-100 text-red-800 hover:bg-yellow-200' : 'bg-accent text-accent-foreground hover:bg-yellow-200'
                     }`}>
                         {report.match.status === 'cancelled' ? 'Cancelada' : 'Finalizada'}
                     </Badge>
@@ -79,31 +81,31 @@ const MatchReport = () => {
                 <Card>
                     <CardContent className="p-4 text-center">
                         <Crown className="h-8 w-8 mx-auto text-yellow-600 mb-2"/>
-                        <div className="text-sm text-gray-500">Vencedor</div>
+                        <div className="text-sm text-muted-foreground">Vencedor</div>
                         <div className="font-bold text-lg">{summary.winner}</div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <Wallet className="h-8 w-8 mx-auto text-green-600 mb-2"/>
-                        <div className="text-sm text-gray-500">Total Apostado</div>
+                        <Wallet className="h-8 w-8 mx-auto text-primary mb-2"/>
+                        <div className="text-sm text-muted-foreground">Total Apostado</div>
                         <div className="font-bold text-lg">R$ {summary.total_pool.toFixed(2)}</div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <Users className="h-8 w-8 mx-auto text-blue-600 mb-2"/>
-                        <div className="text-sm text-gray-500">Total Apostadores</div>
+                        <Users className="h-8 w-8 mx-auto text-amber-700 mb-2"/>
+                        <div className="text-sm text-muted-foreground">Total Apostadores</div>
                         <div className="font-bold text-lg">{summary.total_bettors}</div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardContent className="p-4 text-center">
-                        <Trophy className="h-8 w-8 mx-auto text-purple-600 mb-2"/>
-                        <div className="text-sm text-gray-500">Prêmio Distribuído</div>
+                        <Trophy className="h-8 w-8 mx-auto text-stone-600 mb-2"/>
+                        <div className="text-sm text-muted-foreground">Prêmio Distribuído</div>
                         <div className="font-bold text-lg">R$ {summary.total_winnings.toFixed(2)}</div>
                     </CardContent>
                 </Card>
@@ -126,18 +128,18 @@ const MatchReport = () => {
                         <div className="space-y-3">
                             {bets.filter(bet => bet.player_name === match.player1_name).map(bet => (
                                 <div key={bet.id} className={`p-3 rounded border ${
-                                    bet.status === 'won' ? 'bg-green-50 border-green-200' : 
+                                    bet.status === 'won' ? 'bg-accent border-primary/30' : 
                                     bet.status === 'refunded' && bet.refund_status === 'failed' ? 'bg-red-50 border-red-200' :
-                                    bet.status === 'refunded' ? 'bg-blue-50 border-blue-200' :
+                                    bet.status === 'refunded' ? 'bg-amber-50 border-amber-200' :
                                     'bg-red-50 border-red-200'
                                 }`}>
                                     <div className="flex justify-between items-center">
                                         <div className="flex items-center space-x-2">
                                             <div>
                                                 <div className="font-semibold">{bet.user_name}</div>
-                                                <div className="text-sm text-gray-600">{bet.user_email}</div>
+                                                <div className="text-sm text-muted-foreground">{bet.user_email}</div>
                                                 {bet.user_pix_key && (
-                                                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                                         <span>PIX: {bet.user_pix_key}</span>
                                                         <Button
                                                             variant="ghost"
@@ -148,14 +150,14 @@ const MatchReport = () => {
                                                             <Copy className="h-3 w-3"/>
                                                         </Button>
                                                         {copiedKey === bet.user_pix_key && (
-                                                            <span className="text-green-600 font-medium">✓</span>
+                                                            <span className="text-primary font-medium">✓</span>
                                                         )}
                                                     </div>
                                                 )}
                                             </div>
                                             {bet.status === 'refunded' && bet.refund_status && (
                                                 <div className="flex items-center" title={bet.refund_failure_reason || 'Reembolso enviado'}>
-                                                    {bet.refund_status === 'succeeded' && <CheckCircle className="h-4 w-4 text-green-600" />}
+                                                    {bet.refund_status === 'succeeded' && <CheckCircle className="h-4 w-4 text-primary" />}
                                                     {bet.refund_status === 'failed' && <XCircle className="h-4 w-4 text-red-600" />}
                                                     {bet.refund_status === 'pending' && <Clock className="h-4 w-4 text-yellow-600" />}
                                                 </div>
@@ -164,7 +166,7 @@ const MatchReport = () => {
                                         <div className="text-right">
                                             <div className="font-semibold">R$ {bet.amount.toFixed(2)}</div>
                                             {bet.status === 'won' && (
-                                                <div className="text-sm text-green-600 font-medium">
+                                                <div className="text-sm text-primary font-medium">
                                                     Ganhou: R$ {bet.potential_return.toFixed(2)}
                                                 </div>
                                             )}
@@ -172,7 +174,7 @@ const MatchReport = () => {
                                                 <div className="text-sm text-red-600">Perdeu</div>
                                             )}
                                             {bet.status === 'refunded' && (
-                                                <div className="text-sm text-blue-600">Reembolsado</div>
+                                                <div className="text-sm text-amber-700">Reembolsado</div>
                                             )}
                                         </div>
                                     </div>
@@ -180,7 +182,7 @@ const MatchReport = () => {
                             ))}
 
                             {bets.filter(bet => bet.player_name === match.player1_name).length === 0 && (
-                                <div className="text-center py-4 text-gray-500">
+                                <div className="text-center py-4 text-muted-foreground">
                                     Nenhuma aposta neste jogador
                                 </div>
                             )}
@@ -203,18 +205,18 @@ const MatchReport = () => {
                         <div className="space-y-3">
                             {bets.filter(bet => bet.player_name === match.player2_name).map(bet => (
                                 <div key={bet.id} className={`p-3 rounded border ${
-                                    bet.status === 'won' ? 'bg-green-50 border-green-200' : 
+                                    bet.status === 'won' ? 'bg-accent border-primary/30' : 
                                     bet.status === 'refunded' && bet.refund_status === 'failed' ? 'bg-red-50 border-red-200' :
-                                    bet.status === 'refunded' ? 'bg-blue-50 border-blue-200' :
+                                    bet.status === 'refunded' ? 'bg-amber-50 border-amber-200' :
                                     'bg-red-50 border-red-200'
                                 }`}>
                                     <div className="flex justify-between items-center">
                                         <div className="flex items-center space-x-2">
                                             <div>
                                                 <div className="font-semibold">{bet.user_name}</div>
-                                                <div className="text-sm text-gray-600">{bet.user_email}</div>
+                                                <div className="text-sm text-muted-foreground">{bet.user_email}</div>
                                                 {bet.user_pix_key && (
-                                                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                                         <span>PIX: {bet.user_pix_key}</span>
                                                         <Button
                                                             variant="ghost"
@@ -225,14 +227,14 @@ const MatchReport = () => {
                                                             <Copy className="h-3 w-3"/>
                                                         </Button>
                                                         {copiedKey === bet.user_pix_key && (
-                                                            <span className="text-green-600 font-medium">✓</span>
+                                                            <span className="text-primary font-medium">✓</span>
                                                         )}
                                                     </div>
                                                 )}
                                             </div>
                                             {bet.status === 'refunded' && bet.refund_status && (
                                                 <div className="flex items-center" title={bet.refund_failure_reason || 'Reembolso enviado'}>
-                                                    {bet.refund_status === 'succeeded' && <CheckCircle className="h-4 w-4 text-green-600" />}
+                                                    {bet.refund_status === 'succeeded' && <CheckCircle className="h-4 w-4 text-primary" />}
                                                     {bet.refund_status === 'failed' && <XCircle className="h-4 w-4 text-red-600" />}
                                                     {bet.refund_status === 'pending' && <Clock className="h-4 w-4 text-yellow-600" />}
                                                 </div>
@@ -241,7 +243,7 @@ const MatchReport = () => {
                                         <div className="text-right">
                                             <div className="font-semibold">R$ {bet.amount.toFixed(2)}</div>
                                             {bet.status === 'won' && (
-                                                <div className="text-sm text-green-600 font-medium">
+                                                <div className="text-sm text-primary font-medium">
                                                     Ganhou: R$ {bet.potential_return.toFixed(2)}
                                                 </div>
                                             )}
@@ -249,7 +251,7 @@ const MatchReport = () => {
                                                 <div className="text-sm text-red-600">Perdeu</div>
                                             )}
                                             {bet.status === 'refunded' && (
-                                                <div className="text-sm text-blue-600">Reembolsado</div>
+                                                <div className="text-sm text-amber-700">Reembolsado</div>
                                             )}
                                         </div>
                                     </div>
@@ -257,7 +259,7 @@ const MatchReport = () => {
                             ))}
 
                             {bets.filter(bet => bet.player_name === match.player2_name).length === 0 && (
-                                <div className="text-center py-4 text-gray-500">
+                                <div className="text-center py-4 text-muted-foreground">
                                     Nenhuma aposta neste jogador
                                 </div>
                             )}

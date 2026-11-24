@@ -11,8 +11,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import {ArrowLeft, CheckCircle, Clock, Users, XCircle} from 'lucide-react'
-import {Link} from 'react-router-dom'
+import {CheckCircle, Clock, Users, XCircle} from 'lucide-react'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const LapenApprovals = () => {
@@ -116,16 +115,10 @@ const LapenApprovals = () => {
 
     return (
         <div className="space-y-6">
-            <Link to="/admin/dashboard">
-                <Button variant="outline" size="sm" className="mb-4">
-                    <ArrowLeft className="h-4 w-4 mr-2"/>
-                    Voltar ao Dashboard
-                </Button>
-            </Link>
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center">
-                        <Users className="h-6 w-6 mr-2 text-green-600"/>
+                        <Users className="h-6 w-6 mr-2 text-primary"/>
                         Aprovações de Membros LAPEN
                     </CardTitle>
                     <CardDescription>
@@ -163,9 +156,9 @@ const LapenApprovals = () => {
 
                     {/* Requests List */}
                     {loading ? (
-                        <div className="text-center py-8 text-gray-500">Carregando...</div>
+                        <div className="text-center py-8 text-muted-foreground">Carregando...</div>
                     ) : requests.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
+                        <div className="text-center py-8 text-muted-foreground">
                             Nenhuma solicitação encontrada
                         </div>
                     ) : (
@@ -173,30 +166,30 @@ const LapenApprovals = () => {
                             {/* Desktop View */}
                             <div className="hidden md:block overflow-x-auto">
                                 <table className="w-full">
-                                    <thead className="bg-gray-50">
+                                    <thead className="bg-muted/50">
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Nome</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Email</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Telefone</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Solicitado
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-foreground/80">Nome</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-foreground/80">Email</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-foreground/80">Telefone</th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-foreground/80">Solicitado
                                             em
                                         </th>
                                         {filter === 'approved' && (
-                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Aprovado
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-foreground/80">Aprovado
                                                 em</th>
                                         )}
                                         {filter === 'rejected' && (
-                                            <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Rejeitado
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-foreground/80">Rejeitado
                                                 em</th>
                                         )}
                                         {filter === 'pending' && (
-                                            <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Ações</th>
+                                            <th className="px-4 py-3 text-right text-sm font-medium text-foreground/80">Ações</th>
                                         )}
                                     </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-200">
+                                    <tbody className="divide-y divide-border">
                                     {requests.map((request) => (
-                                        <tr key={request.id} className="hover:bg-gray-50">
+                                        <tr key={request.id} className="hover:bg-muted/50">
                                             <td className="px-4 py-3 text-sm">{request.name}</td>
                                             <td className="px-4 py-3 text-sm">{request.email}</td>
                                             <td className="px-4 py-3 text-sm">{request.phone || '-'}</td>
@@ -212,7 +205,7 @@ const LapenApprovals = () => {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
-                                                        className="text-green-600 hover:text-green-700"
+                                                        className="text-primary hover:text-primary/80"
                                                         onClick={() => handleApprove(request.id)}
                                                     >
                                                         <CheckCircle className="h-4 w-4 mr-1"/>
@@ -244,14 +237,14 @@ const LapenApprovals = () => {
                                                 <div className="flex justify-between items-start">
                                                     <div>
                                                         <p className="font-medium">{request.name}</p>
-                                                        <p className="text-sm text-gray-600">{request.email}</p>
+                                                        <p className="text-sm text-muted-foreground">{request.email}</p>
                                                         {request.phone && (
-                                                            <p className="text-sm text-gray-600">{request.phone}</p>
+                                                            <p className="text-sm text-muted-foreground">{request.phone}</p>
                                                         )}
                                                     </div>
 
                                                 </div>
-                                                <div className="text-sm text-gray-600">
+                                                <div className="text-sm text-muted-foreground">
                                                     <p>Solicitado: {formatDate(request.lapen_requested_at)}</p>
                                                     {filter === 'approved' && request.lapen_approved_at && (
                                                         <p>Aprovado: {formatDate(request.lapen_approved_at)}</p>

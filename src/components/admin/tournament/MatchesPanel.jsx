@@ -47,7 +47,7 @@ function Standings({ tournament, group, roundRobin, onChanged }) {
   }
 
   return (
-    <div className="rounded-md border border-stone-200 bg-white p-3" data-testid={`standings-${group.name}`}>
+    <div className="rounded-xl border border-stone-200 bg-card p-3" data-testid={`standings-${group.name}`}>
       {!roundRobin && <p className="font-semibold text-stone-900 mb-2">Grupo {group.name}</p>}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -79,7 +79,7 @@ function Standings({ tournament, group, roundRobin, onChanged }) {
             <div key={entry.registration_id} className="flex items-center gap-2">
               <span className="flex-1 text-sm">{entry.display_name}</span>
               <select
-                aria-label={`Posição de ${entry.display_name}`} data-testid={`tie-rank-${entry.registration_id}`} className="h-10 rounded-md border border-gray-200 bg-white px-2 text-sm"
+                aria-label={`Posição de ${entry.display_name}`} data-testid={`tie-rank-${entry.registration_id}`} className="h-10 rounded-xl border border-border bg-card px-2 text-sm"
                 value={ranks[entry.registration_id] || ''} onChange={(event) => setRanks({ ...ranks, [entry.registration_id]: event.target.value })}
               >
                 <option value="">Posição…</option>
@@ -87,7 +87,7 @@ function Standings({ tournament, group, roundRobin, onChanged }) {
               </select>
             </div>
           ))}
-          <Button onClick={() => decide(tie)} disabled={!ready(tie)} data-testid={`tie-submit-${group.name}`} className="min-h-[44px] bg-amber-700 hover:bg-amber-800 text-white">Decidir empate</Button>
+          <Button onClick={() => decide(tie)} disabled={!ready(tie)} data-testid={`tie-submit-${group.name}`} className="min-h-[44px] bg-primary hover:bg-primary/90 text-white">Decidir empate</Button>
         </div>
       ))}
     </div>
@@ -100,7 +100,7 @@ function MatchRow({ match, tournament, onRecord, onCorrect, onAnnul }) {
   const winner = (slot) => match.status === 'completed' && match.winner_entry_id && match[`entry${slot}`]?.registration_id === match.winner_entry_id
   const started = tournament.status === 'in_progress'
   return (
-    <li className="rounded-md border border-stone-200 bg-white p-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between" data-testid={`match-${match.id}`}>
+    <li className="rounded-xl border border-stone-200 bg-card p-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between" data-testid={`match-${match.id}`}>
       <div className="min-w-0">
         <p className="text-sm">
           <span className={winner(1) ? 'font-bold' : ''}>{sideLabel(match, 1)}</span>
@@ -112,7 +112,7 @@ function MatchRow({ match, tournament, onRecord, onCorrect, onAnnul }) {
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
-        {ready && <Button size="sm" onClick={() => onRecord(match)} disabled={!started} data-testid={`record-result-${match.id}`} className="min-h-[44px] bg-amber-700 hover:bg-amber-800 text-white">Lançar resultado</Button>}
+        {ready && <Button size="sm" onClick={() => onRecord(match)} disabled={!started} data-testid={`record-result-${match.id}`} className="min-h-[44px] bg-primary hover:bg-primary/90 text-white">Lançar resultado</Button>}
         {match.status === 'completed' && match.outcome !== 'bye' && (
           <>
             <Button size="sm" variant="outline" onClick={() => onCorrect(match)} data-testid={`correct-result-${match.id}`} className="min-h-[44px]">Corrigir</Button>

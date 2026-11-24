@@ -48,9 +48,9 @@ const EmailVerification = () => {
   const getIcon = () => {
     switch (status) {
       case 'loading':
-        return <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
+        return <Loader2 className="h-6 w-6 text-primary animate-spin" />
       case 'success':
-        return <CheckCircle className="h-6 w-6 text-green-600" />
+        return <CheckCircle className="h-6 w-6 text-primary" />
       case 'error':
         return <XCircle className="h-6 w-6 text-red-600" />
       default:
@@ -72,7 +72,7 @@ const EmailVerification = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex items-start sm:items-center justify-center py-2 sm:py-12 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">

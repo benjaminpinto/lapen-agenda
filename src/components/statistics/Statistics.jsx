@@ -697,7 +697,7 @@ export default function Statistics() {
           onClick={handleShare}
           disabled={isSharing}
           size="icon"
-          className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-50"
+          className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] lg:bottom-6 right-4 lg:right-6 h-12 w-12 rounded-full shadow-lg z-50"
           data-testid="share-stats-btn-mobile"
         >
           <Share2 className="h-5 w-5" />

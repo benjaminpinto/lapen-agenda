@@ -59,11 +59,11 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex items-start sm:items-center justify-center py-2 sm:py-12 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-            <LogIn className="h-6 w-6 text-green-600" />
+          <div className="mx-auto w-12 h-12 bg-accent rounded-full flex items-center justify-center mb-4">
+            <LogIn className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold">Entrar</CardTitle>
           <CardDescription>
@@ -93,7 +93,7 @@ const Login = () => {
             <div>
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Senha</Label>
-                <Link to="/forgot-password" tabIndex={4} className="text-xs text-green-600 hover:text-green-500">
+                <Link to="/forgot-password" tabIndex={4} className="text-xs text-primary hover:text-primary/80">
                   Esqueceu a senha?
                 </Link>
               </div>
@@ -139,7 +139,7 @@ const Login = () => {
               <div className="w-full border-t border-gray-300"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">ou</span>
+              <span className="px-2 bg-card text-muted-foreground">ou</span>
             </div>
           </div>
 
@@ -148,7 +148,7 @@ const Login = () => {
               Não tem uma conta?
             </p>
             <Link to="/signup" className="block">
-              <Button variant="outline" className="w-full border-green-600 text-green-600 hover:bg-green-50">
+              <Button variant="outline" className="w-full border-primary text-primary hover:bg-accent">
                 Criar nova conta
               </Button>
             </Link>

@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react'
-import {Link, useNavigate} from 'react-router-dom'
+import {Link, useNavigate, useSearchParams} from 'react-router-dom'
 import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
@@ -16,14 +16,19 @@ import {getLocalDateString} from '@/utils/dateUtils'
 
 const ScheduleForm = () => {
   const { canBookCourts, user } = useAuth()
+  const [searchParams] = useSearchParams()
+  // A free slot tapped on the agenda grid arrives as ?court_id=&date=&time= and survives the match-type choice.
+  const slot = {
+    court_id: searchParams.get('court_id') || '',
+    date: searchParams.get('date') || '',
+    start_time: searchParams.get('time') || ''
+  }
   const [courts, setCourts] = useState([])
   const [players, setPlayers] = useState([])
   const [availableTimes, setAvailableTimes] = useState([])
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    court_id: '',
-    date: '',
-    start_time: '',
+    ...slot,
     player1_name: '',
     player2_name: '',
     match_type: ''
@@ -261,7 +266,7 @@ const ScheduleForm = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <CalendarIcon className="h-6 w-6 mr-2 text-green-600" />
+            <CalendarIcon className="h-6 w-6 mr-2 text-primary" />
             Novo Agendamento
           </CardTitle>
           <CardDescription>
@@ -278,15 +283,12 @@ const ScheduleForm = () => {
                   type="button"
                   onClick={() => {
                     setFormData({
-                      court_id: '',
-                      date: '',
-                      start_time: '',
+                      ...slot,
                       player1_name: '',
                       player2_name: '',
                       match_type: 'Liga'
                     })
                     setSelectedMatch(null)
-                    setAvailableTimes([])
                   }}
                   className={`p-3 border-2 rounded-lg flex items-center gap-2 transition-all ${
                     formData.match_type === 'Liga'
@@ -303,15 +305,12 @@ const ScheduleForm = () => {
                   type="button"
                   onClick={() => {
                     setFormData({
-                      court_id: '',
-                      date: '',
-                      start_time: '',
+                      ...slot,
                       player1_name: user?.short_name || '',
                       player2_name: '',
                       match_type: 'Amistoso'
                     })
                     setSelectedMatch(null)
-                    setAvailableTimes([])
                   }}
                   className={`p-3 border-2 rounded-lg flex items-center gap-2 transition-all ${
                     formData.match_type === 'Amistoso'
@@ -328,15 +327,12 @@ const ScheduleForm = () => {
                   type="button"
                   onClick={() => {
                     setFormData({
-                      court_id: '',
-                      date: '',
-                      start_time: '',
+                      ...slot,
                       player1_name: user?.short_name || '',
                       player2_name: '',
                       match_type: 'Torneio'
                     })
                     setSelectedMatch(null)
-                    setAvailableTimes([])
                   }}
                   className={`p-3 border-2 rounded-lg flex items-center gap-2 transition-all ${
                     formData.match_type === 'Torneio'

@@ -14,7 +14,7 @@ export default defineConfig({
         name: 'LAPEN Agenda',
         short_name: 'LAPEN',
         description: 'Sistema de Gerenciamento de Quadras de Tênis',
-        theme_color: '#10b981',
+        theme_color: '#a83c0c',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',

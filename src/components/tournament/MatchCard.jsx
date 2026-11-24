@@ -66,7 +66,7 @@ export default function MatchCard({ match, showContext = false, className = '' }
       data-testid={`match-card-${match.id}`}
       data-status={match.status}
       data-outcome={match.outcome || undefined}
-      className={`overflow-hidden rounded-md border bg-card text-sm shadow-sm ${className}`}
+      className={`overflow-hidden rounded-xl border bg-card text-sm shadow-sm ${className}`}
     >
       {showContext && context && <div className="border-b bg-muted/50 px-2 py-1 text-xs font-medium text-muted-foreground">{context}</div>}
       <div className="divide-y">

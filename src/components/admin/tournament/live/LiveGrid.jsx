@@ -3,7 +3,7 @@ import {courtName, dayTitle, toneFor, windowKey} from '../schedule/scheduleUtils
 import {clockState, isCurrentRow, resultLabel} from './liveUtils'
 
 const CLOCK = {
-  now: { label: 'Agora', ring: 'ring-2 ring-amber-700', badge: 'bg-amber-800 text-white' },
+  now: { label: 'Agora', ring: 'ring-2 ring-amber-700', badge: 'bg-primary text-white' },
   late: { label: 'Atrasada', ring: 'ring-2 ring-orange-600', badge: 'bg-orange-600 text-white' },
 }
 
@@ -17,7 +17,7 @@ function LiveCell({ match, tone, clock, canRecord, onOpen }) {
     <button
       type="button" data-testid={`live-match-${match.id}`} data-status={match.status} data-clock={clock || undefined}
       disabled={!clickable} onClick={() => onOpen(match)}
-      className={`block min-h-[5rem] w-full rounded-md border border-l-4 px-2 py-1.5 text-left text-xs shadow-sm transition ${tone} ${flag?.ring ?? ''} ${clickable ? 'cursor-pointer hover:shadow-md' : 'cursor-default opacity-70'}`}
+      className={`block min-h-[5rem] w-full rounded-xl border border-l-4 px-2 py-1.5 text-left text-xs shadow-sm transition ${tone} ${flag?.ring ?? ''} ${clickable ? 'cursor-pointer hover:shadow-md' : 'cursor-default opacity-70'}`}
     >
       <span className="flex items-start justify-between gap-1">
         <span className="min-w-0 truncate font-semibold text-stone-800" title={match.category_name}>{match.category_name}</span>
@@ -50,14 +50,14 @@ export default function LiveGrid({ days, day, onDay, courts, byWindow, categoryI
           return (
             <button
               key={d.date} type="button" role="tab" aria-selected={d.date === current.date} data-testid={`live-day-${d.date}`} onClick={() => onDay(d.date)}
-              className={`min-h-[44px] rounded-md border px-3 text-sm font-medium ${d.date === current.date ? 'border-amber-800 bg-amber-800 text-white' : 'bg-white hover:bg-stone-50'}`}
+              className={`min-h-[44px] rounded-xl border px-3 text-sm font-medium ${d.date === current.date ? 'border-primary bg-primary text-white' : 'bg-card hover:bg-stone-50'}`}
             >
               {dayTitle(d.date)}{d.date === today ? ' · Hoje' : ''} <span className="text-xs opacity-80">· {done}/{placed.length}</span>
             </button>
           )
         })}
       </div>
-      <div className="overflow-x-auto rounded-lg border bg-white">
+      <div className="overflow-x-auto rounded-2xl border bg-card">
         <table className="w-full border-collapse text-sm" data-testid={`live-table-${current.date}`}>
           <thead>
             <tr className="bg-stone-50">
@@ -72,7 +72,7 @@ export default function LiveGrid({ days, day, onDay, courts, byWindow, categoryI
               const running = isCurrentRow(current.date, time, today, nowMinutes, slotMinutes)
               return (
                 <tr key={time} data-testid={`live-row-${time}`} data-current={running ? 'true' : undefined}>
-                  <th scope="row" className={`sticky left-0 z-10 border-b px-2 py-1 text-left align-top text-xs font-semibold tabular-nums ${running ? 'bg-amber-100 text-amber-900' : 'bg-white text-stone-700'}`}>
+                  <th scope="row" className={`sticky left-0 z-10 border-b px-2 py-1 text-left align-top text-xs font-semibold tabular-nums ${running ? 'bg-amber-100 text-amber-900' : 'bg-card text-stone-700'}`}>
                     {time}{running && <span className="block text-[0.65rem] font-semibold uppercase">Agora</span>}
                   </th>
                   {current.courtIds.map((courtId) => {
@@ -89,7 +89,7 @@ export default function LiveGrid({ days, day, onDay, courts, byWindow, categoryI
                           />
                         )}
                         {window && !match && (
-                          <div className="flex min-h-[5rem] items-center justify-center rounded-md border border-dashed border-stone-200 text-xs text-stone-400">
+                          <div className="flex min-h-[5rem] items-center justify-center rounded-xl border border-dashed border-stone-200 text-xs text-stone-400">
                             {window.blocked ? <><Ban className="mr-1 h-3.5 w-3.5" aria-hidden="true" />Bloqueada</> : 'Livre'}
                           </div>
                         )}

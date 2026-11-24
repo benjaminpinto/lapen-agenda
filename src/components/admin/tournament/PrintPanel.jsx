@@ -148,7 +148,7 @@ export default function PrintPanel({ tournament, categories }) {
       <fieldset className="space-y-2" data-testid="print-categories">
         <legend className="mb-2 text-sm font-medium">Categorias</legend>
         {playable.map((category) => (
-          <label key={category.id} className="flex min-h-[44px] items-center gap-2 rounded-md border border-stone-200 bg-white px-3 text-sm">
+          <label key={category.id} className="flex min-h-[44px] items-center gap-2 rounded-xl border border-stone-200 bg-card px-3 text-sm">
             <input type="checkbox" checked={!skipped.has(category.id)} onChange={() => toggle(category.id)} data-testid={`print-category-${category.id}`} />
             <span>{category.name}</span>
           </label>
@@ -157,7 +157,7 @@ export default function PrintPanel({ tournament, categories }) {
       {error && <p role="alert" className="text-sm text-red-700" data-testid="print-error">{error}</p>}
       <Button
         type="button" onClick={() => window.print()} disabled={!draws || selected.length === 0}
-        className="min-h-[44px] bg-amber-700 hover:bg-amber-800 text-white" data-testid="print-submit"
+        className="min-h-[44px] bg-primary hover:bg-primary/90 text-white" data-testid="print-submit"
       >
         <Printer className="mr-2 h-4 w-4" aria-hidden="true" />
         {draws ? `Imprimir ${selected.length} folha(s)` : 'Carregando…'}

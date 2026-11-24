@@ -11,7 +11,7 @@ import useTournamentData from './useTournamentData'
 
 const EMPTY = { category_id: '', full_name: '', display_name: '', email: '', phone: '', notes: '', accepted_terms: false, data_consent: false, website: '' }
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const SELECT = 'h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500'
+const SELECT = 'h-11 w-full rounded-xl border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500'
 
 /** What the server would refuse, caught early. Returns { field: message }. */
 function validate(form) {
@@ -92,13 +92,13 @@ export default function RegistrationForm() {
           <p className="text-sm" data-testid="registration-success-message">{done.message}</p>
           <div className="flex flex-wrap gap-2">
             {open.length > 0 && <Button type="button" variant="outline" className="min-h-[44px]" onClick={another} data-testid="register-another">Inscrever-se em outra categoria</Button>}
-            <Link to={`/tournaments/${slug}`}><Button type="button" className="min-h-[44px] bg-amber-700 text-white hover:bg-amber-800" data-testid="back-to-tournament">Ver o torneio</Button></Link>
+            <Link to={`/tournaments/${slug}`}><Button type="button" className="min-h-[44px] bg-primary text-white hover:bg-primary/90" data-testid="back-to-tournament">Ver o torneio</Button></Link>
           </div>
         </div>
       )}
 
       {!done && !canRegister && (
-        <div className="space-y-3 rounded-lg border bg-card p-4 text-sm" data-testid="registration-closed">
+        <div className="space-y-3 rounded-2xl border bg-card p-4 text-sm" data-testid="registration-closed">
           <p>
             {tournament.registration.state === 'not_started' && tournament.registration.opens_at
               ? `As inscrições abrem em ${formatDateTime(tournament.registration.opens_at)}.`
@@ -109,7 +109,7 @@ export default function RegistrationForm() {
       )}
 
       {!done && canRegister && (
-        <form onSubmit={submit} noValidate className="space-y-4 rounded-lg border bg-card p-4" data-testid="registration-form">
+        <form onSubmit={submit} noValidate className="space-y-4 rounded-2xl border bg-card p-4" data-testid="registration-form">
           <div>
             <Label htmlFor="category_id">Categoria</Label>
             <select id="category_id" value={form.category_id} onChange={set('category_id')} className={SELECT} data-testid="reg-category" aria-invalid={Boolean(errors.category_id)}>
@@ -161,8 +161,8 @@ export default function RegistrationForm() {
             <FieldError id="data_consent" message={errors.data_consent} />
           </div>
 
-          {serverError && <p role="alert" className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800" data-testid="reg-error">{serverError}</p>}
-          <Button type="submit" disabled={sending} className="min-h-[44px] w-full bg-amber-700 text-white hover:bg-amber-800" data-testid="reg-submit">
+          {serverError && <p role="alert" className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800" data-testid="reg-error">{serverError}</p>}
+          <Button type="submit" disabled={sending} className="min-h-[44px] w-full bg-primary text-white hover:bg-primary/90" data-testid="reg-submit">
             {sending ? 'Enviando…' : 'Enviar inscrição'}
           </Button>
           <p className="text-xs text-muted-foreground">A inscrição só vale depois que o organizador confirmar. Ele entra em contato pelo telefone informado.</p>

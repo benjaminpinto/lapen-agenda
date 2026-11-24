@@ -78,7 +78,7 @@ export default function ShareDialog({ description, text, onClose, buildImage, fi
   const tab = (key, label) => (
     <button
       type="button" role="tab" aria-selected={view === key} data-testid={`share-view-${key}`} onClick={() => setView(key)}
-      className={`min-h-[44px] rounded-md border px-4 text-sm font-medium ${view === key ? 'border-amber-800 bg-amber-800 text-white' : 'bg-white hover:bg-stone-50'}`}
+      className={`min-h-[44px] rounded-xl border px-4 text-sm font-medium ${view === key ? 'border-primary bg-primary text-white' : 'bg-card hover:bg-stone-50'}`}
     >
       {label}
     </button>
@@ -98,12 +98,12 @@ export default function ShareDialog({ description, text, onClose, buildImage, fi
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={onClose} data-testid="share-close" className="min-h-[44px]">Fechar</Button>
               <Button type="button" variant="outline" onClick={copy} data-testid="share-copy" className="min-h-[44px]"><Copy className="mr-2 h-4 w-4" aria-hidden="true" />Copiar</Button>
-              <Button type="button" onClick={share} data-testid="share-whatsapp" className="min-h-[44px] bg-green-600 hover:bg-green-700"><Share2 className="mr-2 h-4 w-4" aria-hidden="true" />Compartilhar no WhatsApp</Button>
+              <Button type="button" onClick={share} data-testid="share-whatsapp" className="min-h-[44px] bg-primary hover:bg-primary/90"><Share2 className="mr-2 h-4 w-4" aria-hidden="true" />Compartilhar no WhatsApp</Button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="max-h-[60vh] overflow-auto rounded-md border bg-stone-100 p-2" data-testid="share-image-preview">
+            <div className="max-h-[60vh] overflow-auto rounded-xl border bg-stone-100 p-2" data-testid="share-image-preview">
               {image && <img src={image.url} alt="Prévia da imagem do resumo" className="mx-auto w-full max-w-[480px]" data-testid="share-image" />}
               {!image && !imageFailed && <p className="py-12 text-center text-sm text-stone-600">Gerando a imagem…</p>}
               {imageFailed && <p className="py-12 text-center text-sm text-red-700" data-testid="share-image-error">Não foi possível gerar a imagem. Use a mensagem.</p>}
@@ -113,7 +113,7 @@ export default function ShareDialog({ description, text, onClose, buildImage, fi
               {imageActions.map(({ key, label, Icon, run, testId }, index) => {
                 const main = index === imageActions.length - 1
                 return (
-                  <Button key={key} type="button" variant={main ? 'default' : 'outline'} onClick={run} disabled={!image} data-testid={testId} className={`min-h-[44px] ${main ? 'bg-green-600 hover:bg-green-700' : ''}`}>
+                  <Button key={key} type="button" variant={main ? 'default' : 'outline'} onClick={run} disabled={!image} data-testid={testId} className={`min-h-[44px] ${main ? 'bg-primary hover:bg-primary/90' : ''}`}>
                     <Icon className="mr-2 h-4 w-4" aria-hidden="true" />{label}
                   </Button>
                 )

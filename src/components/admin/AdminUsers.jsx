@@ -1,5 +1,4 @@
 import {useEffect, useRef, useState} from 'react'
-import {useNavigate} from 'react-router-dom'
 import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
@@ -7,7 +6,7 @@ import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {useToast} from '@/contexts/ToastContext'
-import {ArrowLeft, Download, Edit, FileText, Key, Printer, Trash2} from 'lucide-react'
+import {Download, Edit, FileText, Key, Printer, Trash2} from 'lucide-react'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const FILTER_OPTIONS = [
@@ -40,7 +39,6 @@ const matchTri = (filter, value) => {
 }
 
 const AdminUsers = () => {
-  const navigate = useNavigate()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [editDialog, setEditDialog] = useState(false)
@@ -320,20 +318,43 @@ const AdminUsers = () => {
 
   return (
     <div className="space-y-6">
-      <Button variant="outline" onClick={() => navigate('/admin/dashboard')}>
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Voltar ao Dashboard
-      </Button>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
           <CardTitle>Gerenciar Usuários</CardTitle>
-          <Button onClick={openReport} className="bg-[#1a3c34] hover:bg-[#142f29] text-white">
+          <Button onClick={openReport} className="rounded-full">
             <FileText className="h-4 w-4 mr-2" />
             Gerar Relatório
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Phones: one card per user; the table stays for wider screens */}
+          <ul className="md:hidden divide-y -mx-2" data-testid="users-list-mobile">
+            {users.map(user => (
+              <li key={user.id} className="flex items-center gap-3 px-2 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold truncate">
+                    {user.short_name || user.name}
+                    {user.is_admin && <span className="ml-2 rounded-full bg-foreground px-2 py-0.5 text-[10px] font-bold text-background align-middle">Admin</span>}
+                    {user.lapen_approved && <span className="ml-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground align-middle">LAPEN</span>}
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate">{user.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <Button size="icon" variant="outline" className="rounded-full" aria-label="Editar" onClick={() => handleEdit(user)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="outline" className="rounded-full" aria-label="Alterar senha" onClick={() => handlePasswordChange(user)}>
+                    <Key className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="destructive" className="rounded-full" aria-label="Excluir" onClick={() => handleDelete(user)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b">
@@ -470,7 +491,7 @@ const AdminUsers = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 no-print">
             <div>
-              <Label className="text-xs uppercase tracking-wide text-gray-600">Membro LAPEN</Label>
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Membro LAPEN</Label>
               <Select value={filters.lapen_approved} onValueChange={(v) => setFilters({...filters, lapen_approved: v})}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -479,7 +500,7 @@ const AdminUsers = () => {
               </Select>
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-wide text-gray-600">Administrador</Label>
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Administrador</Label>
               <Select value={filters.is_admin} onValueChange={(v) => setFilters({...filters, is_admin: v})}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -488,7 +509,7 @@ const AdminUsers = () => {
               </Select>
             </div>
             <div>
-              <Label className="text-xs uppercase tracking-wide text-gray-600">Ativo</Label>
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">Ativo</Label>
               <Select value={filters.is_active} onValueChange={(v) => setFilters({...filters, is_active: v})}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -499,12 +520,12 @@ const AdminUsers = () => {
           </div>
 
           {reportLoading ? (
-            <div className="py-12 text-center text-gray-500">Carregando dados...</div>
+            <div className="py-12 text-center text-muted-foreground">Carregando dados...</div>
           ) : (
             <div
               id="lapen-report"
               ref={reportRef}
-              className="bg-white border border-gray-200 shadow-sm"
+              className="bg-card border border-border shadow-sm"
               style={{ fontFamily: "'Merriweather', Georgia, serif", color: '#2c3e50' }}
             >
               <div style={{ padding: '32px 36px' }}>

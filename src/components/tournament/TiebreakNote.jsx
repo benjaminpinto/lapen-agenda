@@ -5,7 +5,7 @@ export default function TiebreakNote({ group }) {
   const lines = tiebreakLines(group)
   if (lines.length === 0) return null
   return (
-    <div className="mx-3 mb-3 space-y-3 rounded-md border bg-muted/40 px-3 py-2 text-sm" data-testid={`group-tiebreak-${group.name}`}>
+    <div className="mx-3 mb-3 space-y-3 rounded-xl border bg-muted/40 px-3 py-2 text-sm" data-testid={`group-tiebreak-${group.name}`}>
       {lines.map((line) => (
         <div key={line.wins}>
           <p className="font-medium">{line.intro} Desempate:</p>

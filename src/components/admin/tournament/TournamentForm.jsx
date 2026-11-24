@@ -71,13 +71,13 @@ export default function TournamentForm({ tournament = null, onSubmit, submitLabe
           </Field>
         </div>
 
-        <div className="rounded-md border border-stone-200 p-3 space-y-3">
+        <div className="rounded-xl border border-stone-200 p-3 space-y-3">
           <p className="text-sm font-semibold text-stone-800">Formato das partidas</p>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Formato" htmlFor="tournament-format" hint="Fica travado depois do primeiro resultado.">
               <select
                 id="tournament-format" data-testid="tournament-form-match-format"
-                className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm"
+                className="h-10 w-full rounded-xl border border-border bg-card px-3 text-sm"
                 value={form.match_format} onChange={set('match_format')}
               >
                 {Object.entries(MATCH_FORMATS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}

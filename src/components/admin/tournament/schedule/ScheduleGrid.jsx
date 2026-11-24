@@ -24,14 +24,14 @@ export default function ScheduleGrid({
             <button
               key={d.date} type="button" role="tab" aria-selected={d.date === current.date} data-testid={`schedule-day-${d.date}`}
               onClick={() => onDay(d.date)}
-              className={`min-h-[44px] rounded-md border px-3 text-sm font-medium ${d.date === current.date ? 'border-amber-800 bg-amber-800 text-white' : 'bg-white hover:bg-stone-50'}`}
+              className={`min-h-[44px] rounded-xl border px-3 text-sm font-medium ${d.date === current.date ? 'border-primary bg-primary text-white' : 'bg-card hover:bg-stone-50'}`}
             >
               {dayTitle(d.date)} <span className="text-xs opacity-80">· {placed}/{d.windows.size}</span>
             </button>
           )
         })}
       </div>
-      <div className="overflow-x-auto rounded-lg border bg-white">
+      <div className="overflow-x-auto rounded-2xl border bg-card">
         <table className="w-full border-collapse text-sm" data-testid={`schedule-table-${current.date}`}>
           <thead>
             <tr className="bg-stone-50">
@@ -44,7 +44,7 @@ export default function ScheduleGrid({
           <tbody>
             {current.times.map((time) => (
               <tr key={time}>
-                <th scope="row" className="sticky left-0 z-10 border-b bg-white px-2 py-1 text-left align-top text-xs font-semibold tabular-nums text-stone-700">{time}</th>
+                <th scope="row" className="sticky left-0 z-10 border-b bg-card px-2 py-1 text-left align-top text-xs font-semibold tabular-nums text-stone-700">{time}</th>
                 {current.courtIds.map((courtId) => {
                   const window = current.windows.get(windowKey({ court_id: courtId, date: current.date, time }))
                   const key = windowKey({ court_id: courtId, date: current.date, time })

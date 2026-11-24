@@ -5,7 +5,7 @@ import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Badge} from '@/components/ui/badge'
-import {ArrowLeft, Calendar, Plus, RefreshCw, Settings, Users} from 'lucide-react'
+import {Calendar, Plus, RefreshCw, Settings, Users} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 import {formatDateForDisplay, getCurrentYear} from '@/utils/dateUtils'
@@ -159,10 +159,6 @@ const AdminRanking = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <Button variant="outline" onClick={() => navigate('/admin/dashboard')} className="w-full sm:w-auto">
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Voltar ao Dashboard
-      </Button>
       <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center">
         <h1 className="text-xl sm:text-2xl font-bold">Gerenciar Ranking</h1>
         <Button onClick={() => setShowCreateForm(true)} className="w-full sm:w-auto">
@@ -235,7 +231,7 @@ const AdminRanking = () => {
                   <h3 className="text-base sm:text-lg font-semibold">
                     Temporada {season.year}{season.description ? ` - ${season.description}` : ''}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {formatDateForDisplay(season.start_date)} - {formatDateForDisplay(season.end_date)}
                   </p>
                   <div className="mt-2">
@@ -287,7 +283,7 @@ const AdminRanking = () => {
       {seasons.length === 0 && (
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-gray-500">Nenhuma temporada encontrada</p>
+            <p className="text-muted-foreground">Nenhuma temporada encontrada</p>
           </CardContent>
         </Card>
       )}

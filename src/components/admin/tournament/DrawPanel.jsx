@@ -6,7 +6,7 @@ import {ADMIN_API, errorMessage, request} from './tournamentApi'
 import {CATEGORY_STATUS, DRAW_FORMATS} from './labels'
 import {drawEntries, entryLabel, sideLabel} from './drawUtils'
 
-const selectClass = 'h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm'
+const selectClass = 'h-10 w-full rounded-xl border border-border bg-card px-3 text-sm'
 
 export function DrawPreview({ draw, testId }) {
   return (
@@ -14,7 +14,7 @@ export function DrawPreview({ draw, testId }) {
       {draw.groups.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {draw.groups.map((group) => (
-            <div key={group.id} className="rounded-md border border-stone-200 p-3" data-testid={`preview-group-${group.name}`}>
+            <div key={group.id} className="rounded-xl border border-stone-200 p-3" data-testid={`preview-group-${group.name}`}>
               <p className="font-semibold text-stone-900 mb-2">{draw.format === 'round_robin' ? 'Jogadores' : `Grupo ${group.name}`}</p>
               <ol className="space-y-1 text-sm">
                 {group.entries.map((entry) => <li key={entry.registration_id}>{entryLabel(entry)}</li>)}
@@ -101,7 +101,7 @@ function CategoryDraw({ tournament, category, reload }) {
   const entries = result && category.status === 'drawn' ? drawEntries(result.draw) : []
 
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-4 space-y-3" data-testid={`draw-category-${category.id}`}>
+    <section className="rounded-2xl border border-stone-200 bg-card p-4 space-y-3" data-testid={`draw-category-${category.id}`}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
         <div>
           <h3 className="font-semibold text-stone-900">{category.name}</h3>
@@ -110,12 +110,12 @@ function CategoryDraw({ tournament, category, reload }) {
         </div>
         <div className="flex flex-wrap gap-2">
           {category.status === 'awaiting_draw' && (
-            <Button onClick={generate} disabled={busy || !canDraw} data-testid={`draw-generate-${category.id}`} className="min-h-[44px] bg-amber-700 hover:bg-amber-800 text-white">Sortear</Button>
+            <Button onClick={generate} disabled={busy || !canDraw} data-testid={`draw-generate-${category.id}`} className="min-h-[44px] bg-primary hover:bg-primary/90 text-white">Sortear</Button>
           )}
           {category.status === 'drawn' && (
             <>
               <Button variant="outline" onClick={generate} disabled={busy} data-testid={`draw-regenerate-${category.id}`} className="min-h-[44px]">Sortear de novo</Button>
-              <Button onClick={publish} disabled={busy} data-testid={`draw-publish-${category.id}`} className="min-h-[44px] bg-amber-700 hover:bg-amber-800 text-white">Publicar sorteio</Button>
+              <Button onClick={publish} disabled={busy} data-testid={`draw-publish-${category.id}`} className="min-h-[44px] bg-primary hover:bg-primary/90 text-white">Publicar sorteio</Button>
             </>
           )}
           {hasDraw && !['finished'].includes(category.status) && (
@@ -130,7 +130,7 @@ function CategoryDraw({ tournament, category, reload }) {
       {warnings.map((warning) => <p key={warning} className="text-sm text-orange-800 bg-orange-50 rounded-md p-3" data-testid={`draw-warning-${category.id}`}>{warning}</p>)}
 
       {category.status === 'drawn' && entries.length > 0 && (
-        <div className="rounded-md border border-dashed border-stone-300 p-3 space-y-2" data-testid={`draw-swap-${category.id}`}>
+        <div className="rounded-xl border border-dashed border-stone-300 p-3 space-y-2" data-testid={`draw-swap-${category.id}`}>
           <p className="text-sm font-medium text-stone-800">Ajuste manual: trocar dois inscritos de lugar</p>
           <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
             <select aria-label="Primeiro inscrito" data-testid={`draw-swap-first-${category.id}`} className={selectClass} value={swap.first} onChange={(event) => setSwap({ ...swap, first: event.target.value })}>

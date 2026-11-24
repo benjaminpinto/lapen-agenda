@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react'
-import {Link, useNavigate} from 'react-router-dom'
+import {useNavigate} from 'react-router-dom'
 import {useToast} from '@/contexts/ToastContext'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
@@ -8,7 +8,7 @@ import {Label} from '@/components/ui/label'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Badge} from '@/components/ui/badge'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
-import {ArrowLeft, ChevronDown, Trophy, Users, Wallet} from 'lucide-react'
+import {ChevronDown, Trophy, Users, Wallet} from 'lucide-react'
 import FinishedMatchCard from '../shared/FinishedMatchCard'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 import {formatDateForDisplay} from '@/utils/dateUtils'
@@ -157,7 +157,7 @@ const AdminMatches = () => {
             const statusMap = {
                 upcoming: {label: 'Agendada', className: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'},
                 live: {label: 'Ao Vivo', className: 'bg-orange-100 text-orange-800 hover:bg-orange-120'},
-                finished: {label: 'Finalizada', className: 'bg-green-100 text-green-800 hover:bg-green-120'},
+                finished: {label: 'Finalizada', className: 'bg-accent text-accent-foreground hover:bg-accent'},
                 cancelled: {label: 'Cancelada', className: 'bg-red-100 text-red-800 hover:bg-red-120'}
             }
 
@@ -184,14 +184,14 @@ const AdminMatches = () => {
                 <CardContent>
                     <div className="grid grid-cols-3 gap-4 mb-4">
                         <div className="text-center">
-                            <div className="text-sm text-gray-500">Total das Apostas</div>
+                            <div className="text-sm text-muted-foreground">Total das Apostas</div>
                             <div className="font-semibold flex items-center justify-center">
                                 <Wallet className="h-4 w-4 mr-1"/>
                                 R$ {Object.values(details?.betting_stats || {}).reduce((sum, stat) => sum + (stat.total_amount || 0), 0).toFixed(2)}
                             </div>
                         </div>
                         <div className="text-center">
-                            <div className="text-sm text-gray-500">Apostas</div>
+                            <div className="text-sm text-muted-foreground">Apostas</div>
                             <div className="font-semibold flex items-center justify-center">
                                 <Users className="h-4 w-4 mr-1"/>
                                 {details?.betting_stats ?
@@ -199,7 +199,7 @@ const AdminMatches = () => {
                             </div>
                         </div>
                         <div className="text-center">
-                            <div className="text-sm text-gray-500">Apostas Ativas</div>
+                            <div className="text-sm text-muted-foreground">Apostas Ativas</div>
                             <div className="font-semibold">
                                 {match.betting_enabled ? 'Sim' : 'Não'}
                             </div>
@@ -209,24 +209,24 @@ const AdminMatches = () => {
                     {(details?.betting_stats || match.status === 'finished') && (
                         <div className="grid grid-cols-2 gap-4 mb-4">
                             <div className={`text-center p-3 rounded ${
-                                details?.winner === match.player1_name ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-blue-50'
+                                details?.winner === match.player1_name ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-amber-50'
                             }`}>
                                 <div className="font-semibold flex items-center justify-center">
                                     {match.player1_name}
                                     {details?.winner === match.player1_name && <Trophy className="h-4 w-4 ml-1 text-yellow-600" />}
                                 </div>
-                                <div className="text-sm text-gray-600">
+                                <div className="text-sm text-muted-foreground">
                                     R$ {details?.betting_stats?.[match.player1_name]?.total_amount?.toFixed(2) || '0.00'}
                                 </div>
                             </div>
                             <div className={`text-center p-3 rounded ${
-                                details?.winner === match.player2_name ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-green-50'
+                                details?.winner === match.player2_name ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-accent'
                             }`}>
                                 <div className="font-semibold flex items-center justify-center">
                                     {match.player2_name}
                                     {details?.winner === match.player2_name && <Trophy className="h-4 w-4 ml-1 text-yellow-600" />}
                                 </div>
-                                <div className="text-sm text-gray-600">
+                                <div className="text-sm text-muted-foreground">
                                     R$ {details?.betting_stats?.[match.player2_name]?.total_amount?.toFixed(2) || '0.00'}
                                 </div>
                             </div>
@@ -295,20 +295,14 @@ const AdminMatches = () => {
 
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="mb-8">
-                <Link to="/admin/dashboard">
-                    <Button variant="outline" size="sm" className="mb-4">
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Voltar ao Dashboard
-                    </Button>
-                </Link>
-                <div className="flex justify-between items-center">
+        <div className="max-w-6xl mx-auto">
+            <div className="mb-6">
+                <div className="flex items-start justify-between gap-3">
                     <div>
-                        <h1 className="text-3xl font-bold mb-2">Gerenciar Partidas</h1>
-                        <p className="text-gray-600">Finalize partidas e liquide apostas</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold mb-1">Gerenciar Partidas</h1>
+                        <p className="text-muted-foreground">Finalize partidas e liquide apostas</p>
                     </div>
-                    <Button onClick={() => navigate('/admin/reports')} variant="outline">
+                    <Button onClick={() => navigate('/admin/reports')} variant="outline" className="shrink-0 rounded-full">
                         Ver Relatórios
                     </Button>
                 </div>
@@ -335,8 +329,8 @@ const AdminMatches = () => {
                             {matches.filter(m => m.match_id && m.status !== 'finished' && m.status !== 'cancelled').length === 0 ? (
                                 <Card>
                                     <CardContent className="text-center py-8">
-                                        <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
-                                        <p className="text-gray-500">Nenhuma partida em aberto</p>
+                                        <Trophy className="h-12 w-12 mx-auto text-muted-foreground/70 mb-4"/>
+                                        <p className="text-muted-foreground">Nenhuma partida em aberto</p>
                                     </CardContent>
                                 </Card>
                             ) : (
@@ -351,23 +345,23 @@ const AdminMatches = () => {
                     <div>
                         <button
                             onClick={() => setFinishedMatchesOpen(!finishedMatchesOpen)}
-                            className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100 rounded-lg transition-all duration-200 border border-gray-200 mb-4"
+                            className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-muted/40 to-card hover:from-gray-100 hover:to-slate-100 rounded-lg transition-all duration-200 border border-border mb-4"
                         >
                             <div className="flex items-center gap-2">
-                                <Trophy className="h-5 w-5 text-gray-600"/>
-                                <h2 className="text-xl font-semibold text-gray-900">Partidas Encerradas</h2>
-                                <Badge className="bg-gray-600 text-white">
+                                <Trophy className="h-5 w-5 text-muted-foreground"/>
+                                <h2 className="text-xl font-semibold text-foreground">Partidas Encerradas</h2>
+                                <Badge className="bg-stone-600 text-white">
                                     {matches.filter(m => m.match_id && (m.status === 'finished' || m.status === 'cancelled')).length}
                                 </Badge>
                             </div>
-                            <ChevronDown className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${finishedMatchesOpen ? 'rotate-180' : ''}`}/>
+                            <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${finishedMatchesOpen ? 'rotate-180' : ''}`}/>
                         </button>
                         <div className={`transition-all duration-300 ease-in-out overflow-hidden ${finishedMatchesOpen ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                             {matches.filter(m => m.match_id && (m.status === 'finished' || m.status === 'cancelled')).length === 0 ? (
                                 <Card>
                                     <CardContent className="text-center py-8">
-                                        <Trophy className="h-12 w-12 mx-auto text-gray-400 mb-4"/>
-                                        <p className="text-gray-500">Nenhuma partida encerrada</p>
+                                        <Trophy className="h-12 w-12 mx-auto text-muted-foreground/70 mb-4"/>
+                                        <p className="text-muted-foreground">Nenhuma partida encerrada</p>
                                     </CardContent>
                                 </Card>
                             ) : (
@@ -453,7 +447,7 @@ const AdminMatches = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <p className="text-gray-500 text-center py-4">
+                                <p className="text-muted-foreground text-center py-4">
                                     Selecione uma partida para finalizar
                                 </p>
                             )}

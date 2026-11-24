@@ -34,14 +34,14 @@ export default function MatchListTab({ slug, categoryId, view, published }) {
     <div className="space-y-4" data-testid={`tab-${upcoming ? 'jogos' : 'resultados'}`}>
       <RefreshBar updatedAt={updatedAt} refreshing={refreshing} error={error} onRefresh={refresh} />
       {upcoming && !published && (
-        <p className="rounded-lg border bg-card px-4 py-3 text-sm" data-testid="schedule-unpublished-note">
+        <p className="rounded-2xl border bg-card px-4 py-3 text-sm" data-testid="schedule-unpublished-note">
           Os horários e quadras serão divulgados aqui quando o organizador publicar o cronograma.
         </p>
       )}
       {loading && <p className="py-8 text-center text-sm text-muted-foreground">Carregando…</p>}
-      {error && !data && <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>}
+      {error && !data && <p role="alert" className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>}
       {data && matches.length === 0 && (
-        <p className="rounded-lg border border-dashed bg-card px-4 py-8 text-center text-sm text-muted-foreground" data-testid="match-list-empty">
+        <p className="rounded-2xl border border-dashed bg-card px-4 py-8 text-center text-sm text-muted-foreground" data-testid="match-list-empty">
           {upcoming ? 'Nenhum jogo pronto para ser disputado no momento.' : 'Nenhum resultado ainda.'}
         </p>
       )}

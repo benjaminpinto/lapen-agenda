@@ -22,7 +22,7 @@ export default function ProgressTrack({ stage, progress }) {
             )}
             <span
               className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs font-bold ${
-                step.state === 'done' ? 'border-amber-700 bg-amber-700 text-white'
+                step.state === 'done' ? 'border-primary bg-primary text-white'
                   : step.state === 'current' ? 'border-amber-600 bg-card text-amber-800 ring-2 ring-amber-300 dark:text-amber-400 dark:ring-amber-700'
                     : 'border-border bg-card text-muted-foreground'
               }`}

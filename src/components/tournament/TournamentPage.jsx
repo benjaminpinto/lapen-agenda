@@ -74,7 +74,7 @@ export default function TournamentPage() {
         </p>
         {tournament.registration.open && (
           <Link to={`/tournaments/${slug}/register`} data-testid="header-register-link">
-            <Button type="button" className="min-h-[44px] bg-amber-700 text-white hover:bg-amber-800">Inscrever-se</Button>
+            <Button type="button" className="min-h-[44px] bg-primary text-white hover:bg-primary/90">Inscrever-se</Button>
           </Link>
         )}
         {tournament.status === 'in_progress' && tournament.schedule_published && (
@@ -84,7 +84,7 @@ export default function TournamentPage() {
         )}
       </header>
 
-      {categories.length === 0 && <p className="rounded-lg border border-dashed bg-card px-4 py-8 text-center text-sm text-muted-foreground" data-testid="no-categories">Este torneio ainda não tem categorias.</p>}
+      {categories.length === 0 && <p className="rounded-2xl border border-dashed bg-card px-4 py-8 text-center text-sm text-muted-foreground" data-testid="no-categories">Este torneio ainda não tem categorias.</p>}
 
       {category && (
         <>
@@ -94,7 +94,7 @@ export default function TournamentPage() {
                 <button
                   key={c.id} type="button" aria-pressed={c.id === category.id} data-testid={`category-chip-${c.id}`}
                   onClick={() => choose('categoria', c.id)}
-                  className={`min-h-[44px] rounded-full border px-4 text-sm font-medium ${c.id === category.id ? 'border-amber-800 bg-amber-800 text-white' : 'bg-card hover:bg-muted'}`}
+                  className={`min-h-[44px] rounded-full border px-4 text-sm font-medium ${c.id === category.id ? 'border-primary bg-primary text-white' : 'bg-card hover:bg-muted'}`}
                 >
                   {c.name}
                 </button>
@@ -107,7 +107,7 @@ export default function TournamentPage() {
               <button
                 key={t.key} type="button" role="tab" aria-selected={t.key === tab} data-testid={`tab-button-${t.key}`}
                 onClick={() => choose('aba', t.key)}
-                className={`min-h-[44px] shrink-0 border-b-2 px-3 text-sm font-medium ${t.key === tab ? 'border-amber-700 text-amber-900 dark:border-amber-500 dark:text-amber-300' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+                className={`min-h-[44px] shrink-0 border-b-2 px-3 text-sm font-medium ${t.key === tab ? 'border-primary text-amber-900 dark:border-amber-500 dark:text-amber-300' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
               >
                 {t.label}
               </button>
@@ -119,7 +119,7 @@ export default function TournamentPage() {
           <div role="tabpanel" aria-label={tabs.find((t) => t.key === tab).label}>
             {scheduleTab && <ScheduleTab slug={slug} />}
             {!scheduleTab && listTab && <MatchListTab key={`${category.id}-${tab}`} slug={slug} categoryId={category.id} view={tab === 'jogos' ? 'upcoming' : 'results'} published={tournament.schedule_published} />}
-            {!scheduleTab && !listTab && detail.error && !detail.data && <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800" data-testid="category-error">{detail.error}</p>}
+            {!scheduleTab && !listTab && detail.error && !detail.data && <p role="alert" className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800" data-testid="category-error">{detail.error}</p>}
             {!scheduleTab && !listTab && detail.loading && <p className="py-8 text-center text-sm text-muted-foreground" data-testid="category-loading">Carregando…</p>}
             {!scheduleTab && !listTab && detail.data && (
               <>

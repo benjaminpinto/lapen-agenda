@@ -230,7 +230,7 @@ const SeasonConfig = () => {
             </div>
           ))}
           {tempRules.length === 0 && (
-            <p className="text-sm text-gray-500">Nenhuma regra configurada</p>
+            <p className="text-sm text-muted-foreground">Nenhuma regra configurada</p>
           )}
           <Button onClick={saveTempRules} className="mt-2">Salvar Regras</Button>
         </CardContent>

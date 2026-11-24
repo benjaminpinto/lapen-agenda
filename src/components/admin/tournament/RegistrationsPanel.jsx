@@ -12,7 +12,7 @@ import UnavailabilityDialog from './schedule/UnavailabilityDialog'
 import {ADMIN_API, errorMessage, request} from './tournamentApi'
 import {REGISTRATION_STATUS} from './labels'
 
-const selectClass = 'h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm'
+const selectClass = 'h-10 w-full rounded-xl border border-border bg-card px-3 text-sm'
 
 const normalizeText = (value) => (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 
@@ -117,10 +117,10 @@ function EditDialog({ registration, categories, tournament, onClose, onSaved }) 
               <Input id="reg-seed" data-testid="edit-seed" type="number" min="1" max={category.num_seeds} value={form.seed} onChange={set('seed')} />
             </Field>
           )}
-          <div className="space-y-1.5 rounded-md border border-stone-200 p-3">
+          <div className="space-y-1.5 rounded-xl border border-stone-200 p-3">
             <Label htmlFor="member-search">Vínculo com membro LAPEN (só aprovados)</Label>
             <Input id="member-search" data-testid="edit-member-search" placeholder="Buscar por nome ou e-mail" value={search} onChange={(event) => setSearch(event.target.value)} />
-            <div className="max-h-48 overflow-y-auto rounded-md border border-stone-200 bg-white" data-testid="edit-member-list">
+            <div className="max-h-48 overflow-y-auto rounded-xl border border-stone-200 bg-card" data-testid="edit-member-list">
               <button
                 type="button" onClick={() => setForm((current) => ({ ...current, user_id: '' }))} data-testid="member-option-none"
                 className={`flex min-h-[44px] w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-stone-50 ${form.user_id === '' ? 'bg-amber-50 font-semibold' : ''}`}
@@ -149,7 +149,7 @@ function EditDialog({ registration, categories, tournament, onClose, onSaved }) 
           </div>
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose} data-testid="edit-cancel" className="min-h-[44px]">Voltar</Button>
-            <Button type="submit" disabled={saving} data-testid="edit-submit" className="min-h-[44px] bg-amber-700 hover:bg-amber-800 text-white">{saving ? 'Salvando…' : 'Salvar'}</Button>
+            <Button type="submit" disabled={saving} data-testid="edit-submit" className="min-h-[44px] bg-primary hover:bg-primary/90 text-white">{saving ? 'Salvando…' : 'Salvar'}</Button>
           </div>
         </form>
       </DialogContent>
@@ -203,7 +203,7 @@ function AddDialog({ categories, tournament, onClose, onSaved }) {
           </Field>
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose} data-testid="add-cancel" className="min-h-[44px]">Voltar</Button>
-            <Button type="submit" disabled={saving || open.length === 0} data-testid="add-submit" className="min-h-[44px] bg-amber-700 hover:bg-amber-800 text-white">{saving ? 'Salvando…' : 'Criar inscrição'}</Button>
+            <Button type="submit" disabled={saving || open.length === 0} data-testid="add-submit" className="min-h-[44px] bg-primary hover:bg-primary/90 text-white">{saving ? 'Salvando…' : 'Criar inscrição'}</Button>
           </div>
         </form>
       </DialogContent>
@@ -312,7 +312,7 @@ export default function RegistrationsPanel({ tournament, categories, reload }) {
         <div className="flex flex-wrap gap-2">
           {canBatch && (
             <>
-              <Button size="sm" onClick={() => batch(selected, 'confirmed')} data-testid="batch-confirm" className="min-h-[44px] bg-amber-700 hover:bg-amber-800 text-white">Confirmar ({selected.length})</Button>
+              <Button size="sm" onClick={() => batch(selected, 'confirmed')} data-testid="batch-confirm" className="min-h-[44px] bg-primary hover:bg-primary/90 text-white">Confirmar ({selected.length})</Button>
               <Button size="sm" variant="outline" onClick={() => setRejecting(selected)} data-testid="batch-reject" className="min-h-[44px] text-red-700 border-red-300">Recusar ({selected.length})</Button>
             </>
           )}
@@ -330,7 +330,7 @@ export default function RegistrationsPanel({ tournament, categories, reload }) {
       )}
 
       {data.registrations.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border border-stone-200 bg-white">
+        <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-card">
           <table className="w-full text-sm" data-testid="registrations-table">
             <thead className="bg-stone-50 text-left text-xs font-semibold uppercase tracking-wide text-stone-600">
               <tr>
@@ -360,7 +360,7 @@ export default function RegistrationsPanel({ tournament, categories, reload }) {
                     <td className="min-w-[11rem] px-3 py-3">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <p className="font-semibold text-stone-900" data-testid={`registration-name-${registration.id}`}>{registration.display_name}</p>
-                        {registration.is_member && <span className="inline-flex rounded-full border border-amber-700 px-2 py-0.5 text-xs font-semibold text-amber-800" data-testid={`registration-member-${registration.id}`}>Membro LAPEN</span>}
+                        {registration.is_member && <span className="inline-flex rounded-full border border-primary px-2 py-0.5 text-xs font-semibold text-amber-800" data-testid={`registration-member-${registration.id}`}>Membro LAPEN</span>}
                         {registration.seed && <span className="inline-flex rounded-full bg-stone-800 px-2 py-0.5 text-xs font-semibold text-white" data-testid={`registration-seed-${registration.id}`}>CC{registration.seed}</span>}
                       </div>
                       <p className="text-stone-700">{registration.full_name}</p>
@@ -387,14 +387,14 @@ export default function RegistrationsPanel({ tournament, categories, reload }) {
                       <div className="flex min-w-[13rem] flex-wrap justify-end gap-1.5">
                         <a
                           href={`https://wa.me/55${registration.phone}`} target="_blank" rel="noreferrer" data-testid={`whatsapp-${registration.id}`} aria-label={`WhatsApp de ${registration.display_name}`}
-                          className="inline-flex min-h-[40px] items-center gap-1 rounded-md border border-input px-3 text-sm font-medium hover:bg-accent"
+                          className="inline-flex min-h-[40px] items-center gap-1 rounded-xl border border-input px-3 text-sm font-medium hover:bg-accent"
                         >
                           <MessageCircle className="h-4 w-4" aria-hidden="true" /> WhatsApp
                         </a>
                         {actionsFor(registration).map((action) => (
                           <Button
                             key={action.key} size="sm" variant={action.primary ? 'default' : 'outline'} onClick={action.run} data-testid={`${action.key}-registration-${registration.id}`}
-                            className={`min-h-[40px] ${action.primary ? 'bg-amber-700 text-white hover:bg-amber-800' : ''}`}
+                            className={`min-h-[40px] ${action.primary ? 'bg-primary text-white hover:bg-primary/90' : ''}`}
                           >
                             {action.label}
                           </Button>

@@ -9,6 +9,7 @@ import MobileNav from './components/MobileNav'
 import Home from './components/Home'
 import AdminLogin from './components/admin/AdminLogin'
 import AdminDashboard from './components/admin/AdminDashboard'
+import AdminNav from './components/admin/AdminNav'
 import AdminCourts from './components/admin/AdminCourts'
 import AdminHolidays from './components/admin/AdminHolidays'
 import AdminRecurring from './components/admin/AdminRecurring'
@@ -73,6 +74,7 @@ function Router({ isAdminAuthenticated, setIsAdminAuthenticated }) {
       <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
         <Header isAdminAuthenticated={isAdminAuthenticated} setIsAdminAuthenticated={setIsAdminAuthenticated} />
         <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-7xl pb-28 lg:pb-8">
+          <AdminNav isAdminAuthenticated={isAdminAuthenticated} />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/schedule" element={<ScheduleForm />} />

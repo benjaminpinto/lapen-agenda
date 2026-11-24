@@ -14,7 +14,7 @@ const blank = {
   num_seeds: 0, wo_tolerance_min: 15, min_rest_min: 60, match_format: '', no_ad: '', match_tiebreak_points: '',
 }
 
-const selectClass = 'h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm'
+const selectClass = 'h-10 w-full rounded-xl border border-border bg-card px-3 text-sm'
 
 function CategoryDialog({ tournament, category, onClose, onSaved }) {
   const { toast } = useToast()
@@ -90,7 +90,7 @@ function CategoryDialog({ tournament, category, onClose, onSaved }) {
               <Input id="category-seeds" data-testid="category-form-seeds" type="number" min="0" max="16" value={form.num_seeds} onChange={set('num_seeds')} />
             </div>
           </fieldset>
-          <div className="rounded-md border border-stone-200 p-3 space-y-3" data-testid="category-match-format">
+          <div className="rounded-xl border border-stone-200 p-3 space-y-3" data-testid="category-match-format">
             <p className="text-sm font-semibold text-stone-800">Formato das partidas</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
@@ -137,7 +137,7 @@ function CategoryDialog({ tournament, category, onClose, onSaved }) {
           </div>
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose} data-testid="category-form-cancel" className="min-h-[44px]">Voltar</Button>
-            <Button type="submit" disabled={saving} data-testid="category-form-submit" className="min-h-[44px] bg-amber-700 hover:bg-amber-800 text-white">
+            <Button type="submit" disabled={saving} data-testid="category-form-submit" className="min-h-[44px] bg-primary hover:bg-primary/90 text-white">
               {saving ? 'Salvando…' : 'Salvar categoria'}
             </Button>
           </div>
@@ -172,7 +172,7 @@ export default function CategoriesPanel({ tournament, categories, reload }) {
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-stone-600">{categories.length} categoria(s)</p>
         {!locked && (
-          <Button onClick={() => setEditing('new')} data-testid="new-category-button" className="bg-amber-700 hover:bg-amber-800 text-white min-h-[44px]">
+          <Button onClick={() => setEditing('new')} data-testid="new-category-button" className="bg-primary hover:bg-primary/90 text-white min-h-[44px]">
             <Plus className="h-4 w-4 mr-2" /> Nova categoria
           </Button>
         )}
@@ -182,7 +182,7 @@ export default function CategoriesPanel({ tournament, categories, reload }) {
 
       <ul className="grid gap-3 md:grid-cols-2">
         {categories.map((category) => (
-          <li key={category.id} className="rounded-lg border border-stone-200 bg-white p-4" data-testid={`category-card-${category.id}`}>
+          <li key={category.id} className="rounded-2xl border border-stone-200 bg-card p-4" data-testid={`category-card-${category.id}`}>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-semibold text-stone-900" data-testid={`category-name-${category.id}`}>{category.name}</p>

@@ -13,7 +13,7 @@ const CRITERIA = [
 export default function TiebreakExplainer({ open = false, roundRobin = false }) {
   const criteria = roundRobin ? [...CRITERIA.slice(0, -1), 'Se ainda houver empate, o organizador decide.'] : CRITERIA
   return (
-    <details className="group rounded-lg border bg-card" open={open || undefined} data-testid="tiebreak-explainer">
+    <details className="group rounded-2xl border bg-card" open={open || undefined} data-testid="tiebreak-explainer">
       <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-2 px-4 py-2 text-sm font-semibold" data-testid="tiebreak-explainer-toggle">
         Como é definida a classificação
         <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />

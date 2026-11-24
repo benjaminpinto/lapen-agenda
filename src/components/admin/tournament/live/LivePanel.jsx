@@ -19,7 +19,7 @@ import {categoryProgress, defaultDay, focusMatches, isReady, resultLabel, tally}
 import {callMessage, summaryData, summaryText} from './messages'
 import {drawSummary} from './summaryImage'
 
-const chip = 'inline-flex items-center gap-1 rounded-full border bg-white px-3 py-1 text-xs font-medium'
+const chip = 'inline-flex items-center gap-1 rounded-full border bg-card px-3 py-1 text-xs font-medium'
 const CLOCK_REFRESH_MS = 30000
 
 /** The schedule's match as the result form wants it. */
@@ -125,12 +125,12 @@ export default function LivePanel({ tournament, categories, reload }) {
   return (
     <div className="space-y-5" data-testid="live-panel">
       {!canRecord && (
-        <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-stone-700" data-testid="live-not-started">
+        <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-stone-700" data-testid="live-not-started">
           {tournament.status === 'registration_closed' ? 'Inicie o torneio para lançar resultados.' : 'Os resultados só podem ser lançados com o torneio em andamento.'}
         </p>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-3">
         <ul className="flex flex-wrap gap-2" data-testid="live-summary" aria-label="Resumo do dia">
           <li className={chip} data-testid="live-total">Jogos do dia: <strong>{dayTally.total}</strong></li>
           <li className={chip} data-testid="live-done">Com resultado: <strong>{dayTally.done}</strong></li>
@@ -151,7 +151,7 @@ export default function LivePanel({ tournament, categories, reload }) {
         <p className="text-xs text-stone-600" data-testid="live-board-note">O telão só mostra os jogos depois que o cronograma for publicado (aba Cronograma).</p>
       )}
       {ties > 0 && (
-        <p className="rounded-md border border-orange-300 bg-orange-50 p-3 text-sm text-orange-900" data-testid="live-ties-note">
+        <p className="rounded-xl border border-orange-300 bg-orange-50 p-3 text-sm text-orange-900" data-testid="live-ties-note">
           Há empate na classificação que os critérios não resolvem. A chave só avança depois que você decidir, na aba{' '}
           <button type="button" className="font-semibold underline" onClick={() => setParams({ tab: 'partidas' }, { replace: true })} data-testid="live-go-matches">Partidas</button>.
         </p>
@@ -160,7 +160,7 @@ export default function LivePanel({ tournament, categories, reload }) {
       <AttentionList items={focus} courts={schedule.courts} today={today} canRecord={canRecord} onRecord={record} onCall={call} onWalkover={setWalkover} />
 
       {days.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-stone-300 bg-white p-8 text-center text-stone-700" data-testid="live-empty">
+        <p className="rounded-2xl border border-dashed border-stone-300 bg-card p-8 text-center text-stone-700" data-testid="live-empty">
           Ainda não há sessões. Crie os dias e horários na aba Cronograma para acompanhar o dia do evento por aqui.
         </p>
       ) : (
@@ -175,12 +175,12 @@ export default function LivePanel({ tournament, categories, reload }) {
           <h3 className="text-base font-semibold text-stone-900">Prontos para jogar, sem horário</h3>
           <ul className="grid gap-2 md:grid-cols-2">
             {unscheduled.map((match) => (
-              <li key={match.id} className="flex items-center justify-between gap-2 rounded-md border bg-white p-3 text-sm" data-testid={`live-unscheduled-${match.id}`}>
+              <li key={match.id} className="flex items-center justify-between gap-2 rounded-xl border bg-card p-3 text-sm" data-testid={`live-unscheduled-${match.id}`}>
                 <span className="min-w-0">
                   <span className="block truncate text-xs text-stone-600">{match.category_name} · {match.round_name}</span>
                   <span className="block truncate">{matchTitle(match)}</span>
                 </span>
-                <Button type="button" size="sm" disabled={!canRecord} onClick={() => record(match)} data-testid={`live-record-${match.id}`} className="min-h-[44px] shrink-0 bg-amber-700 text-white hover:bg-amber-800">Lançar resultado</Button>
+                <Button type="button" size="sm" disabled={!canRecord} onClick={() => record(match)} data-testid={`live-record-${match.id}`} className="min-h-[44px] shrink-0 bg-primary text-white hover:bg-primary/90">Lançar resultado</Button>
               </li>
             ))}
           </ul>
@@ -210,7 +210,7 @@ export default function LivePanel({ tournament, categories, reload }) {
             <div className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={() => setDetail(null)} data-testid="live-detail-close" className="min-h-[44px]">Fechar</Button>
               <Button type="button" variant="outline" disabled={!canRecord} onClick={() => { setAnnulling(detail); setDetail(null) }} data-testid="live-detail-annul" className="min-h-[44px] border-red-300 text-red-700">Anular</Button>
-              <Button type="button" disabled={!canRecord} onClick={() => { setDialog({ match: detail, mode: 'correct' }); setDetail(null) }} data-testid="live-detail-correct" className="min-h-[44px] bg-amber-700 text-white hover:bg-amber-800">Corrigir</Button>
+              <Button type="button" disabled={!canRecord} onClick={() => { setDialog({ match: detail, mode: 'correct' }); setDetail(null) }} data-testid="live-detail-correct" className="min-h-[44px] bg-primary text-white hover:bg-primary/90">Corrigir</Button>
             </div>
           </DialogContent>
         </Dialog>

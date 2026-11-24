@@ -12,7 +12,7 @@ function GroupMini({ group, games, qualifiers, roundRobin }) {
   const done = games.filter((match) => match.status === 'completed').length
   const badge = groupBadge(group)
   return (
-    <div className="rounded-lg border bg-white p-3" data-testid={`live-group-${group.id}`} data-complete={group.complete ? 'true' : 'false'}>
+    <div className="rounded-2xl border bg-card p-3" data-testid={`live-group-${group.id}`} data-complete={group.complete ? 'true' : 'false'}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-1">
         <p className="font-semibold text-stone-900">{roundRobin ? 'Classificação' : `Grupo ${group.name}`} <span className="text-xs font-normal text-stone-500">· {done}/{games.length} jogos</span></p>
         <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${badge.className}`} data-testid={`live-group-status-${group.id}`}>{badge.text}</span>
@@ -54,7 +54,7 @@ export default function LiveOverview({ categories, matches, progress, standings 
               <span className="text-xs text-stone-600">{CATEGORY_STATUS[category.status] ?? category.status}</span>
               <span className="text-xs text-stone-600" data-testid={`live-progress-${category.id}`}>{stats.done}/{stats.total} jogos</span>
               <div className="h-2 w-32 overflow-hidden rounded-full bg-stone-200" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label={`Progresso de ${category.name}`}>
-                <div className="h-full bg-amber-700" style={{ width: `${percent}%` }} />
+                <div className="h-full bg-primary" style={{ width: `${percent}%` }} />
               </div>
             </div>
             {waiting && groups.length > 0 && (

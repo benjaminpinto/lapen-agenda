@@ -7,12 +7,12 @@ import {Checkbox} from '@/components/ui/checkbox'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Card, CardContent} from '@/components/ui/card'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from '@/components/ui/dialog'
-import {ArrowLeft, Clock, MapPin, Plus, Trash2} from 'lucide-react'
+import {Clock, MapPin, Plus, Trash2} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext';
-import {Link} from 'react-router-dom'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const AdminRecurring = () => {
+    const [editingGroup, setEditingGroup] = useState(null)
     const [schedules, setSchedules] = useState([])
     const [courts, setCourts] = useState([])
     const [loading, setLoading] = useState(true)
@@ -218,26 +218,17 @@ const AdminRecurring = () => {
 
     return (
         <div className="max-w-6xl mx-auto">
-            <Link to="/admin/dashboard">
-                <Button variant="outline" size="sm" className="mb-4">
-                    <ArrowLeft className="h-4 w-4 mr-2"/>
-                    Voltar ao Dashboard
-                </Button>
-            </Link>
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex items-start justify-between gap-3 mb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
                         Agenda Fixa
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                         Configure agendamentos recorrentes para aulas ou eventos fixos
                     </p>
                 </div>
 
-                <Button onClick={() => {
-                    resetForm();
-                    setIsDialogOpen(true)
-                }}>
+                <Button className="shrink-0 rounded-full" onClick={() => { resetForm(); setIsDialogOpen(true) }}>
                     <Plus className="h-4 w-4 mr-2"/>
                     Nova Agenda Fixa
                 </Button>
@@ -374,48 +365,81 @@ const AdminRecurring = () => {
                 {schedules.length === 0 ? (
                     <Card>
                         <CardContent className="text-center py-8">
-                            <p className="text-gray-500">Nenhuma agenda fixa cadastrada</p>
+                            <p className="text-muted-foreground">Nenhuma agenda fixa cadastrada</p>
                         </CardContent>
                     </Card>
                 ) : (
-                    schedules
-                        .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
-                        .map((schedule) => (
-                            <Card key={schedule.id}>
-                                <CardContent className="py-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-6">
-                                            <div className="flex items-center">
-                                                <MapPin className="h-5 w-5 mr-2 text-green-600"/>
-                                                <span className="font-semibold">{schedule.court_name}</span>
-                                            </div>
-                                            <div className="flex items-center text-sm text-gray-600">
-                                                <Clock className="h-4 w-4 mr-1"/>
-                                                {getDayName(schedule.day_of_week)} - {schedule.start_time}
-                                            </div>
-                                            <div className="text-sm text-gray-500">
-                                                {formatDate(schedule.start_date)} até {formatDate(schedule.end_date)}
-                                            </div>
-                                            <div className="text-sm text-gray-700">
-                                                {schedule.description}
+                    groupRecurring(schedules).map((group) => (
+                        <Card key={group.key} data-testid="recurring-group">
+                            <CardContent className="py-4 space-y-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-1.5 font-semibold">
+                                            <MapPin className="h-4 w-4 shrink-0 text-primary"/>
+                                            <span className="truncate">{group.court_name}</span>
+                                        </div>
+                                        {group.description && <div className="text-sm text-foreground/80">{group.description}</div>}
+                                        <div className="text-xs text-muted-foreground">
+                                            {formatDate(group.start_date)} até {formatDate(group.end_date)}
+                                        </div>
+                                    </div>
+                                    <Button variant="outline" size="sm" className="shrink-0 rounded-full"
+                                            onClick={() => setEditingGroup(editingGroup === group.key ? null : group.key)}
+                                            data-testid="recurring-group-edit">
+                                        {editingGroup === group.key ? 'Concluir' : 'Editar'}
+                                    </Button>
+                                </div>
+                                <div className="space-y-1.5">
+                                    {group.days.map(({day, items}) => (
+                                        <div key={day} className="flex items-start gap-2">
+                                            <span className="w-16 shrink-0 pt-1 text-xs font-semibold text-muted-foreground">{getDayName(day).split("-")[0]}</span>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {items.map((schedule) => (
+                                                    <span key={schedule.id}
+                                                          className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-xs font-semibold tabular-nums text-accent-foreground">
+                                                        <Clock className="h-3 w-3"/>
+                                                        {schedule.start_time}
+                                                        {editingGroup === group.key && (
+                                                            <button type="button" onClick={() => handleDelete(schedule.id)}
+                                                                    aria-label={`Remover ${getDayName(day)} ${schedule.start_time}`}
+                                                                    className="min-h-0 min-w-0 -mr-1 ml-0.5 h-5 w-5 rounded-full bg-red-600 text-white grid place-items-center"
+                                                                    data-testid={`recurring-delete-${schedule.id}`}>
+                                                                <Trash2 className="h-3 w-3"/>
+                                                            </button>
+                                                        )}
+                                                    </span>
+                                                ))}
                                             </div>
                                         </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleDelete(schedule.id)}
-                                            className="text-red-600 hover:text-red-700"
-                                        >
-                                            <Trash2 className="h-4 w-4"/>
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))
                 )}
             </div>
         </div>
     )
+}
+
+// One card per court + description + period; inside it, each weekday with its start times.
+function groupRecurring(schedules) {
+    const groups = new Map()
+    schedules.forEach(schedule => {
+        const key = [schedule.court_id, schedule.description, schedule.start_date, schedule.end_date].join('|')
+        if (!groups.has(key)) groups.set(key, {key, court_name: schedule.court_name, description: schedule.description,
+            start_date: schedule.start_date, end_date: schedule.end_date, byDay: new Map()})
+        const group = groups.get(key)
+        if (!group.byDay.has(schedule.day_of_week)) group.byDay.set(schedule.day_of_week, [])
+        group.byDay.get(schedule.day_of_week).push(schedule)
+    })
+    return [...groups.values()]
+        .sort((a, b) => a.start_date.localeCompare(b.start_date) || a.court_name.localeCompare(b.court_name))
+        .map(group => ({
+            ...group,
+            days: [...group.byDay.entries()].sort(([a], [b]) => a - b)
+                .map(([day, items]) => ({day, items: items.sort((a, b) => a.start_time.localeCompare(b.start_time))})),
+        }))
 }
 
 export default AdminRecurring

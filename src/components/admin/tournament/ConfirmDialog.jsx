@@ -14,7 +14,7 @@ export default function ConfirmDialog({ open, title, description, confirmLabel =
           <Button variant="outline" onClick={onCancel} disabled={busy} data-testid="confirm-dialog-cancel" className="min-h-[44px]">Voltar</Button>
           <Button
             onClick={onConfirm} disabled={busy} data-testid="confirm-dialog-confirm"
-            className={`min-h-[44px] ${destructive ? 'bg-red-700 hover:bg-red-800 text-white' : 'bg-amber-700 hover:bg-amber-800 text-white'}`}
+            className={`min-h-[44px] ${destructive ? 'bg-red-700 hover:bg-red-800 text-white' : 'bg-primary hover:bg-primary/90 text-white'}`}
           >
             {busy ? 'Aguarde…' : confirmLabel}
           </Button>

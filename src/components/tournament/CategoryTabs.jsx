@@ -8,7 +8,7 @@ import ProgressTrack from './ProgressTrack'
 import TiebreakExplainer from './TiebreakExplainer'
 
 const Empty = ({ children, testId }) => (
-  <p className="rounded-lg border border-dashed bg-card px-4 py-8 text-center text-sm text-muted-foreground" data-testid={testId}>{children}</p>
+  <p className="rounded-2xl border border-dashed bg-card px-4 py-8 text-center text-sm text-muted-foreground" data-testid={testId}>{children}</p>
 )
 
 function MatchSection({ title, matches, emptyText, linkLabel, onMore, testId }) {
@@ -45,7 +45,7 @@ export function ProgressTab({ data, onTab }) {
       )}
       <ProgressTrack stage={category.stage} progress={category.progress} />
       {preDraw && (
-        <p className="rounded-lg border bg-card px-4 py-3 text-sm" data-testid="pre-draw-note">
+        <p className="rounded-2xl border bg-card px-4 py-3 text-sm" data-testid="pre-draw-note">
           {capacity.confirmed} {capacity.confirmed === 1 ? 'inscrito confirmado' : 'inscritos confirmados'}
           {capacity.max_entries ? ` (máximo de ${capacity.max_entries})` : ''}. O sorteio ainda não foi realizado; a chave e os grupos aparecem aqui assim que for publicado.
         </p>
@@ -93,7 +93,7 @@ function PendingBracket({ groups }) {
   const advancing = (group) => group.rows.filter((row) => row.position <= group.qualifiers && ADVANCING_LABEL[row.state])
   return (
     <div className="space-y-6" data-testid="tab-chave">
-      <p className="rounded-lg border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground" data-testid="bracket-pending-note">
+      <p className="rounded-2xl border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground" data-testid="bracket-pending-note">
         A chave do mata-mata será montada quando todos os grupos terminarem, pois os byes e os cruzamentos dependem da campanha final de cada grupo.
       </p>
       {open.length > 0 && (
@@ -120,7 +120,7 @@ function PendingBracket({ groups }) {
         <h3 className="text-base font-semibold">Quem está avançando</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {groups.map((group) => (
-            <div key={group.id} className="rounded-lg border bg-card px-3 py-2 text-sm" data-testid={`bracket-advancing-group-${group.name}`}>
+            <div key={group.id} className="rounded-2xl border bg-card px-3 py-2 text-sm" data-testid={`bracket-advancing-group-${group.name}`}>
               <p className="font-semibold">Grupo {group.name}</p>
               {advancing(group).length === 0 ? (
                 <p className="text-muted-foreground">Ninguém garantido ainda.</p>
@@ -162,7 +162,7 @@ export function EntriesTab({ data, registrationOpen }) {
       {entries.length === 0 ? <Empty>Ainda não há inscrições confirmadas nesta categoria.</Empty> : (
         <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {entries.map((entry, index) => (
-            <li key={entry.id} data-testid={`entry-${entry.id}`} className="flex items-center justify-between gap-2 rounded-md border bg-card px-3 py-2 text-sm">
+            <li key={entry.id} data-testid={`entry-${entry.id}`} className="flex items-center justify-between gap-2 rounded-xl border bg-card px-3 py-2 text-sm">
               <span className="min-w-0 truncate"><span className="mr-2 text-muted-foreground tabular-nums">{index + 1}.</span>{entry.display_name}</span>
               {entry.seed ? <span className="shrink-0 rounded-full border border-amber-400 bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">Cabeça {entry.seed}</span> : null}
             </li>
@@ -183,7 +183,7 @@ export function RulesTab({ tournament, category, slug }) {
   return (
     <div className="space-y-4" data-testid="tab-regulamento">
       {tournament.description && <p className="whitespace-pre-line text-sm" data-testid="rules-description">{tournament.description}</p>}
-      <dl className="divide-y rounded-lg border bg-card text-sm">
+      <dl className="divide-y rounded-2xl border bg-card text-sm">
         {rows.map(([label, value]) => (
           <div key={label} className="flex flex-col gap-0.5 px-4 py-2 sm:flex-row sm:justify-between">
             <dt className="text-muted-foreground">{label}</dt>
@@ -192,13 +192,13 @@ export function RulesTab({ tournament, category, slug }) {
         ))}
       </dl>
       {tournament.rules_text && (
-        <section className="rounded-lg border bg-card p-4">
+        <section className="rounded-2xl border bg-card p-4">
           <h3 className="mb-2 font-semibold">Regulamento</h3>
           <p className="whitespace-pre-line text-sm" data-testid="rules-text">{tournament.rules_text}</p>
         </section>
       )}
       {tournament.contact_info && (
-        <section className="rounded-lg border bg-card p-4">
+        <section className="rounded-2xl border bg-card p-4">
           <h3 className="mb-2 font-semibold">Contato da organização</h3>
           <p className="whitespace-pre-line text-sm" data-testid="rules-contact">{tournament.contact_info}</p>
         </section>
@@ -206,7 +206,7 @@ export function RulesTab({ tournament, category, slug }) {
       <TiebreakExplainer open roundRobin={category.draw_format === 'round_robin'} />
       {tournament.registration.open && (
         <Link to={`/tournaments/${slug}/register`} data-testid="rules-register-link">
-          <Button type="button" className="min-h-[44px] bg-amber-700 text-white hover:bg-amber-800">Inscrever-se</Button>
+          <Button type="button" className="min-h-[44px] bg-primary text-white hover:bg-primary/90">Inscrever-se</Button>
         </Link>
       )}
     </div>

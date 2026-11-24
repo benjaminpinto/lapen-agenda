@@ -12,7 +12,7 @@ function groupStatus(group) {
 export default function GroupCard({ group, bracket, roundRobin = false }) {
   const decided = group.matches.filter((m) => m.status === 'completed').length
   return (
-    <section className="overflow-hidden rounded-lg border bg-card" data-testid={`group-card-${group.name}`} data-complete={group.complete ? 'true' : 'false'}>
+    <section className="overflow-hidden rounded-2xl border bg-card" data-testid={`group-card-${group.name}`} data-complete={group.complete ? 'true' : 'false'}>
       <header className="flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-2">
         <h3 className="font-semibold">Grupo {group.name}</h3>
         <span className="text-xs font-medium text-muted-foreground" data-testid={`group-status-${group.name}`}>
@@ -27,7 +27,7 @@ export default function GroupCard({ group, bracket, roundRobin = false }) {
       )}
       <TiebreakNote group={group} />
       {group.blocked && (
-        <p className="mx-3 mb-3 rounded-md border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-900 dark:border-orange-700 dark:bg-orange-950/30 dark:text-orange-200" data-testid={`group-tie-notice-${group.name}`}>
+        <p className="mx-3 mb-3 rounded-xl border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-900 dark:border-orange-700 dark:bg-orange-950/30 dark:text-orange-200" data-testid={`group-tie-notice-${group.name}`}>
           {roundRobin ? 'Há empate que os critérios não resolvem.' : 'Há empate na zona de classificação que os critérios não resolvem.'} O organizador vai decidir e a tabela será atualizada.
         </p>
       )}

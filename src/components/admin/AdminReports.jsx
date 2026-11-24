@@ -81,8 +81,8 @@ const AdminReports = () => {
 
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold mb-2">Relatórios de Apostas</h1>
-                        <p className="text-gray-600">Estatísticas e análises financeiras</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold mb-1">Relatórios de Apostas</h1>
+                        <p className="text-muted-foreground">Estatísticas e análises financeiras</p>
                     </div>
                     <Button onClick={exportReport} variant="outline">
                         <Download className="h-4 w-4 mr-2" />
@@ -109,8 +109,8 @@ const AdminReports = () => {
                             live: Clock
                         }
                         const statusColors = {
-                            upcoming: 'text-blue-600',
-                            finished: 'text-green-600',
+                            upcoming: 'text-amber-700',
+                            finished: 'text-primary',
                             cancelled: 'text-red-600',
                             live: 'text-orange-600'
                         }
@@ -118,10 +118,10 @@ const AdminReports = () => {
                         return (
                             <Card key={status}>
                                 <CardContent className="p-4 text-center">
-                                    <IconComponent className={`h-8 w-8 mx-auto ${statusColors[status] || 'text-blue-600'} mb-2`} />
-                                    <div className="text-sm text-gray-500">{statusLabels[status] || status}</div>
+                                    <IconComponent className={`h-8 w-8 mx-auto ${statusColors[status] || 'text-amber-700'} mb-2`} />
+                                    <div className="text-sm text-muted-foreground">{statusLabels[status] || status}</div>
                                     <div className="font-bold text-lg">{stats.count}</div>
-                                    <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-muted-foreground">
                                         R$ {stats.total_pool.toFixed(2)}
                                     </div>
                                 </CardContent>
@@ -149,23 +149,23 @@ const AdminReports = () => {
                             refunded: DollarSign
                         }
                         const betColors = {
-                            active: 'text-blue-600',
+                            active: 'text-amber-700',
                             won: 'text-yellow-600',
                             lost: 'text-red-600',
-                            refunded: 'text-gray-600'
+                            refunded: 'text-muted-foreground'
                         }
                         const BetIconComponent = betIcons[status] || Wallet
                         return (
                             <Card key={status}>
                                 <CardContent className="p-4 text-center">
-                                    <BetIconComponent className={`h-8 w-8 mx-auto ${betColors[status] || 'text-green-600'} mb-2`} />
-                                    <div className="text-sm text-gray-500">{statusLabels[status] || status}</div>
+                                    <BetIconComponent className={`h-8 w-8 mx-auto ${betColors[status] || 'text-primary'} mb-2`} />
+                                    <div className="text-sm text-muted-foreground">{statusLabels[status] || status}</div>
                                     <div className="font-bold text-lg">{stats.count}</div>
-                                    <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-muted-foreground">
                                         R$ {stats.total_amount.toFixed(2)}
                                     </div>
                                     {status === 'won' && stats.total_returns > 0 && (
-                                        <div className="text-xs text-green-600">
+                                        <div className="text-xs text-primary">
                                             Retorno: R$ {stats.total_returns.toFixed(2)}
                                         </div>
                                     )}
@@ -195,13 +195,13 @@ const AdminReports = () => {
                             </div>
                             <div className="flex justify-between">
                                 <span>Total Pago aos Vencedores:</span>
-                                <span className="font-semibold text-green-600">
+                                <span className="font-semibold text-primary">
                                     R$ {(bet_statistics.won?.total_returns || 0).toFixed(2)}
                                 </span>
                             </div>
                             <div className="flex justify-between border-t pt-2">
                                 <span>Receita da Casa (20%):</span>
-                                <span className="font-semibold text-blue-600">
+                                <span className="font-semibold text-amber-700">
                                     R$ {(((bet_statistics.won?.total_amount || 0) + (bet_statistics.lost?.total_amount || 0)) * 0.2).toFixed(2)}
                                 </span>
                             </div>
@@ -226,13 +226,13 @@ const AdminReports = () => {
                             </div>
                             <div className="flex justify-between">
                                 <span>Apostas Ativas:</span>
-                                <span className="font-semibold text-blue-600">
+                                <span className="font-semibold text-amber-700">
                                     {bet_statistics.active?.count || 0}
                                 </span>
                             </div>
                             <div className="flex justify-between">
                                 <span>Taxa de Vitória:</span>
-                                <span className="font-semibold text-green-600">
+                                <span className="font-semibold text-primary">
                                     {bet_statistics.won && bet_statistics.lost ? 
                                         ((bet_statistics.won.count / (bet_statistics.won.count + bet_statistics.lost.count)) * 100).toFixed(1) + '%' 
                                         : '0%'}

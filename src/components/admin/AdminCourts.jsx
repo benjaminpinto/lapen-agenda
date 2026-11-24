@@ -18,9 +18,8 @@ import {
   AlertDialogTitle
 } from '@/components/ui/alert-dialog'
 import {Badge} from '@/components/ui/badge'
-import {ArrowLeft, Edit, MapPin, Plus, Trash2} from 'lucide-react'
+import {Edit, MapPin, Plus, Trash2} from 'lucide-react'
 import {useToast} from '@/contexts/ToastContext'
-import {Link} from 'react-router-dom'
 import {fetchWithAuth} from "../../utils/fetchWithAuth.js";
 
 const AdminCourts = () => {
@@ -185,23 +184,17 @@ const AdminCourts = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <Link to="/admin/dashboard">
-        <Button variant="outline" size="sm" className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar ao Dashboard
-        </Button>
-      </Link>
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex items-start justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
             Gerenciar Quadras
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Adicione, edite ou remova quadras do sistema
           </p>
         </div>
         
-        <Button onClick={() => { resetForm(); setIsDialogOpen(true); }}>
+        <Button className="shrink-0 rounded-full" onClick={() => { resetForm(); setIsDialogOpen(true) }}>
           <Plus className="h-4 w-4 mr-2" />
           Nova Quadra
         </Button>
@@ -291,7 +284,7 @@ const AdminCourts = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle className="flex items-center">
-                    <MapPin className="h-5 w-5 mr-2 text-green-600" />
+                    <MapPin className="h-5 w-5 mr-2 text-primary" />
                     {court.name}
                   </CardTitle>
                   <CardDescription className="mt-1">
@@ -315,7 +308,7 @@ const AdminCourts = () => {
             </CardHeader>
             {court.description && (
               <CardContent>
-                <p className="text-gray-600 text-sm">{court.description}</p>
+                <p className="text-muted-foreground text-sm">{court.description}</p>
               </CardContent>
             )}
           </Card>

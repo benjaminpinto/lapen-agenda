@@ -8,7 +8,7 @@ import {useToast} from '@/contexts/ToastContext'
 import {ADMIN_API, errorMessage, request} from '../tournamentApi'
 import {daysBetween, dayTitle} from './scheduleUtils'
 
-const selectClass = 'h-10 w-full rounded-md border border-stone-300 bg-white px-2 text-sm'
+const selectClass = 'h-10 w-full rounded-xl border border-stone-300 bg-card px-2 text-sm'
 const describe = (item) => `${dayTitle(item.date)} · ${item.whole_day ? 'dia todo' : `${item.start}–${item.end}`}`
 
 /** Days and times when a player cannot play. Private to the organizer; the distribution never schedules a match then. */
@@ -62,9 +62,9 @@ export default function UnavailabilityDialog({ tournament, registration, onClose
         {items !== null && (
           <>
             {items.length === 0
-              ? <p className="mb-3 rounded-md border border-dashed border-stone-300 p-3 text-center text-sm text-stone-600" data-testid="unavailability-empty">Nenhum impedimento marcado.</p>
+              ? <p className="mb-3 rounded-xl border border-dashed border-stone-300 p-3 text-center text-sm text-stone-600" data-testid="unavailability-empty">Nenhum impedimento marcado.</p>
               : (
-                <ul className="mb-3 divide-y rounded-md border" data-testid="unavailability-list">
+                <ul className="mb-3 divide-y rounded-xl border" data-testid="unavailability-list">
                   {items.map((item, index) => (
                     <li key={index} className="flex items-center justify-between gap-2 px-3 py-2 text-sm" data-testid={`unavailability-item-${index}`}>
                       <span><strong>{describe(item)}</strong>{item.note ? <span className="text-stone-600"> · {item.note}</span> : null}</span>
@@ -76,7 +76,7 @@ export default function UnavailabilityDialog({ tournament, registration, onClose
                   ))}
                 </ul>
               )}
-            <fieldset className="space-y-3 rounded-md border border-stone-200 p-3">
+            <fieldset className="space-y-3 rounded-xl border border-stone-200 p-3">
               <legend className="px-1 text-sm font-semibold">Adicionar impedimento</legend>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="space-y-1.5">
@@ -104,7 +104,7 @@ export default function UnavailabilityDialog({ tournament, registration, onClose
         )}
         <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" onClick={onClose} data-testid="unavailability-cancel" className="min-h-[44px]">Voltar</Button>
-          <Button type="button" onClick={save} disabled={saving || items === null} data-testid="unavailability-save" className="min-h-[44px] bg-amber-700 text-white hover:bg-amber-800">{saving ? 'Salvando…' : 'Salvar impedimentos'}</Button>
+          <Button type="button" onClick={save} disabled={saving || items === null} data-testid="unavailability-save" className="min-h-[44px] bg-primary text-white hover:bg-primary/90">{saving ? 'Salvando…' : 'Salvar impedimentos'}</Button>
         </div>
       </DialogContent>
     </Dialog>

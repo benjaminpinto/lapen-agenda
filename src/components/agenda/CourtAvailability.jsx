@@ -1,6 +1,6 @@
 import {useEffect, useMemo, useState} from 'react'
 import {Link, useNavigate} from 'react-router-dom'
-import {Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, GraduationCap, Plus, X} from 'lucide-react'
+import {Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, GraduationCap, Pencil, Plus, Trash2, X} from 'lucide-react'
 import {getLocalDateString} from '@/utils/dateUtils'
 
 const SLOT_MINUTES = 90
@@ -51,7 +51,7 @@ const isPast = (date, slot, now) => {
     return toMinutes(slot) <= now.getHours() * 60 + now.getMinutes()
 }
 
-const CourtAvailability = ({compact = false, defaultMode = 'week'}) => {
+const CourtAvailability = ({compact = false, defaultMode = 'week', onEdit, onDelete, refreshKey = 0}) => {
     const navigate = useNavigate()
     const today = getLocalDateString()
     const [anchor, setAnchor] = useState(today)
@@ -71,7 +71,7 @@ const CourtAvailability = ({compact = false, defaultMode = 'week'}) => {
             .then(json => { if (!cancelled) setData(json) })
             .catch(() => { if (!cancelled) setError(true) })
         return () => { cancelled = true }
-    }, [anchor])
+    }, [anchor, refreshKey])
 
     const cellMap = useMemo(() => {
         const map = {}
@@ -220,7 +220,7 @@ const CourtAvailability = ({compact = false, defaultMode = 'week'}) => {
                 <SlotSheet
                     date={sheet.date} slot={sheet.slot} courts={visibleCourts}
                     past={isPast(sheet.date, sheet.slot, now)} itemsAt={itemsAt}
-                    onBook={book} onClose={() => setSheet(null)}
+                    onBook={book} onEdit={onEdit} onDelete={onDelete} onClose={() => setSheet(null)}
                 />
             )}
         </div>
@@ -449,7 +449,7 @@ const Legend = () => (
     </div>
 )
 
-const SlotSheet = ({date, slot, courts, past, itemsAt, onBook, onClose}) => {
+const SlotSheet = ({date, slot, courts, past, itemsAt, onBook, onEdit, onDelete, onClose}) => {
     const d = parseDate(date)
     useEffect(() => {
         const onKey = (e) => e.key === 'Escape' && onClose()
@@ -479,18 +479,39 @@ const SlotSheet = ({date, slot, courts, past, itemsAt, onBook, onClose}) => {
                         const status = statusOf(items)
                         return (
                             <div key={c.id} className="flex items-center gap-3 rounded-2xl border p-3" data-testid={`sheet-court-${c.id}`}>
-                                <span className={`h-10 w-1.5 rounded-full ${cellClass(status, false)}`}/>
+                                <span className={`self-stretch min-h-10 w-1.5 rounded-full ${cellClass(status, false)}`}/>
                                 <div className="flex-1 min-w-0">
                                     <div className="text-sm font-bold truncate">{c.name}</div>
                                     {status === 'free' ? (
                                         <div className="text-xs text-muted-foreground">{past ? 'Horário já passou' : 'Livre'}</div>
                                     ) : items.map((item, idx) => (
-                                        <div key={idx} className="text-xs text-muted-foreground truncate">
-                                            {item.kind === 'booked'
-                                                ? <><b className="text-foreground">{item.player1_name} × {item.player2_name}</b> · {item.match_type} · {item.start_time}</>
-                                                : item.kind === 'recurring'
-                                                    ? <>{item.description} · {item.start_time}–{item.end_time}</>
-                                                    : <>{item.description}{item.start_time ? ` · ${item.start_time}–${item.end_time}` : ' · dia todo'}</>}
+                                        <div key={idx}>
+                                            <div className="text-xs text-muted-foreground truncate">
+                                                {item.kind === 'booked'
+                                                    ? <><b className="text-foreground">{item.player1_name} × {item.player2_name}</b> · {item.match_type} · {item.start_time}</>
+                                                    : item.kind === 'recurring'
+                                                        ? <>{item.description} · {item.start_time}–{item.end_time}</>
+                                                        : <>{item.description}{item.start_time ? ` · ${item.start_time}–${item.end_time}` : ' · dia todo'}</>}
+                                            </div>
+                                            {/* Same actions as the month list: edit (not for league games) and delete, upcoming games only */}
+                                            {item.kind === 'booked' && !past && (onEdit || onDelete) && (
+                                                <div className="mt-2 flex gap-2">
+                                                    {onEdit && item.match_type !== 'Liga' && (
+                                                        <button type="button" onClick={() => { onClose(); onEdit(item) }}
+                                                                className="min-h-0 h-9 px-3.5 rounded-full border text-xs font-semibold inline-flex items-center gap-1.5 active:scale-95 transition"
+                                                                data-testid={`sheet-edit-${item.id}`}>
+                                                            <Pencil className="h-3.5 w-3.5"/>Editar
+                                                        </button>
+                                                    )}
+                                                    {onDelete && (
+                                                        <button type="button" onClick={() => { onClose(); onDelete(item) }}
+                                                                className="min-h-0 h-9 px-3.5 rounded-full border border-red-200 text-red-700 text-xs font-semibold inline-flex items-center gap-1.5 active:scale-95 transition"
+                                                                data-testid={`sheet-delete-${item.id}`}>
+                                                            <Trash2 className="h-3.5 w-3.5"/>Apagar
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

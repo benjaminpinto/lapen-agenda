@@ -30,6 +30,7 @@ const ScheduleView = () => {
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
     const [schedules, setSchedules] = useState([])
+    const [agendaVersion, setAgendaVersion] = useState(0)
     const [loading, setLoading] = useState(true)
     // After booking, `?share=true` shares the month list as WhatsApp text, so open on the list.
     const [viewType, setViewType] = useState(searchParams.get('share') === 'true' ? 'list' : 'weekly')
@@ -200,6 +201,7 @@ const ScheduleView = () => {
                     description: data.message
                 })
                 fetchSchedules()
+                setAgendaVersion(v => v + 1)
                 setIsEditDialogOpen(false)
             } else {
                 toast({
@@ -249,6 +251,7 @@ const ScheduleView = () => {
                     description: data.message
                 })
                 fetchSchedules()
+                setAgendaVersion(v => v + 1)
             } else {
                 toast({
                     title: "Erro",
@@ -283,6 +286,7 @@ const ScheduleView = () => {
                 })
                 setDeletingSchedule(null)
                 fetchSchedules()
+                setAgendaVersion(v => v + 1)
             } else {
                 toast({
                     title: "Erro",
@@ -597,7 +601,7 @@ const ScheduleView = () => {
                 </TabsContent>
 
                 <TabsContent value="weekly" className="mt-4">
-                    <CourtAvailability />
+                    <CourtAvailability onEdit={handleEdit} onDelete={handleDeleteClick} refreshKey={agendaVersion} />
                 </TabsContent>
 
 

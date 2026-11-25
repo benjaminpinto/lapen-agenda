@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import {useEffect, useState} from 'react'
 import CourtAvailability from './agenda/CourtAvailability'
+import useScheduleActions from './agenda/useScheduleActions'
 import {useAuth} from '@/contexts/AuthContext'
 
 const Home = () => {
@@ -25,6 +26,9 @@ const Home = () => {
   const [rankings, setRankings] = useState({ elite: [], challenger: [] })
   const [onFire, setOnFire] = useState({ elite: [], challenger: [] })
   const [loading, setLoading] = useState(true)
+  // Same edit/delete as the agenda page, from the court grid's slot sheet
+  const [agendaVersion, setAgendaVersion] = useState(0)
+  const { handleEdit, handleDeleteClick, dialogs } = useScheduleActions(() => setAgendaVersion(v => v + 1))
 
   useEffect(() => {
     const fetchData = async () => {
@@ -109,7 +113,8 @@ const Home = () => {
           {/* Courts today */}
           <section>
             <SectionTitle icon={<Clock className="h-5 w-5" />} title="Quadras" hint="Toque num horário livre para agendar" />
-            <CourtAvailability compact />
+            <CourtAvailability compact onEdit={handleEdit} onDelete={handleDeleteClick} refreshKey={agendaVersion} />
+            {dialogs}
           </section>
 
           {/* Quick access */}

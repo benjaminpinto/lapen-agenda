@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 const DialogContext = createContext()
 
@@ -16,14 +17,16 @@ const Dialog = ({ open, onOpenChange, children }) => {
   return (
     <DialogContext.Provider value={{ open: isOpen, onOpenChange: handleOpenChange }}>
       {!isOpen && children}
-      {isOpen && (
+      {/* Rendered on <body> so a transformed ancestor (e.g. an entrance animation) can't trap the overlay */}
+      {isOpen && createPortal(
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
           <div 
             className="fixed inset-0 bg-black/45 animate-fade" 
             onClick={() => handleOpenChange(false)}
           />
           {children}
-        </div>
+        </div>,
+        document.body
       )}
     </DialogContext.Provider>
   )

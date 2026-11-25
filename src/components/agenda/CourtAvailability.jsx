@@ -1,4 +1,5 @@
 import {useEffect, useMemo, useState} from 'react'
+import {createPortal} from 'react-dom'
 import {Link, useNavigate} from 'react-router-dom'
 import {Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, GraduationCap, Pencil, Plus, Trash2, X} from 'lucide-react'
 import {getLocalDateString} from '@/utils/dateUtils'
@@ -456,7 +457,8 @@ const SlotSheet = ({date, slot, courts, past, itemsAt, onBook, onEdit, onDelete,
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
     }, [onClose])
-    return (
+    // Portal to <body>: on Home the grid sits inside an animated (transformed) container that would trap a fixed overlay
+    return createPortal(
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center" data-testid="slot-sheet">
             <div className="absolute inset-0 bg-black/40 animate-fade" onClick={onClose}/>
             <div className="relative w-full sm:max-w-md bg-card rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] animate-sheet">
@@ -527,7 +529,8 @@ const SlotSheet = ({date, slot, courts, past, itemsAt, onBook, onEdit, onDelete,
                     })}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }
 

@@ -28,7 +28,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true)
   // Same edit/delete as the agenda page, from the court grid's slot sheet
   const [agendaVersion, setAgendaVersion] = useState(0)
-  const { handleEdit, handleDeleteClick, dialogs } = useScheduleActions(() => setAgendaVersion(v => v + 1))
+  const { handleEdit, handleDeleteClick, handleMove, dialogs } = useScheduleActions(() => setAgendaVersion(v => v + 1))
 
   useEffect(() => {
     const fetchData = async () => {
@@ -113,7 +113,7 @@ const Home = () => {
           {/* Courts today */}
           <section>
             <SectionTitle icon={<Clock className="h-5 w-5" />} title="Quadras" hint="Toque num horário livre para agendar" />
-            <CourtAvailability compact onEdit={handleEdit} onDelete={handleDeleteClick} refreshKey={agendaVersion} />
+            <CourtAvailability compact onEdit={handleEdit} onDelete={handleDeleteClick} onMove={handleMove} refreshKey={agendaVersion} />
             {dialogs}
           </section>
 

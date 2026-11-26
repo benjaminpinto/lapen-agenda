@@ -991,6 +991,17 @@ paths:
                   type: string
                 match_type:
                   type: string
+                court_id:
+                  type: integer
+                  description: Optional. Move the booking to this court (drag and drop)
+                date:
+                  type: string
+                  format: date
+                  description: Optional. Move the booking to this date
+                start_time:
+                  type: string
+                  example: '18:00'
+                  description: Optional. Move the booking to this start time
       responses:
         '200':
           description: Schedule updated successfully
@@ -998,6 +1009,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Missing fields, Liga match, active bets, or target slot taken/blocked
         '404':
           $ref: '#/components/responses/NotFoundError'
     delete:

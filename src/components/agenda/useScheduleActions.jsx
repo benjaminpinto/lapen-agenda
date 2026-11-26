@@ -165,6 +165,32 @@ export default function useScheduleActions(onChanged) {
         }
     }
 
+    // Drag and drop on the court grid: same booking, new court/date/time. Resolves true when it moved.
+    const handleMove = async (schedule, where, label) => {
+        try {
+            const response = await fetchWithAuth(`/api/public/schedules/${schedule.id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    player1_name: schedule.player1_name,
+                    player2_name: schedule.player2_name,
+                    match_type: schedule.match_type,
+                    ...where
+                }),
+            })
+            const data = await response.json()
+            if (response.ok && data.success) {
+                toast({title: 'Jogo movido', description: label})
+                onChanged?.()
+                return true
+            }
+            toast({title: 'Não foi possível mover', description: data.error || 'Erro ao mover agendamento', variant: 'destructive'})
+        } catch (error) {
+            toast({title: 'Erro', description: 'Erro ao conectar com o servidor', variant: 'destructive'})
+        }
+        return false
+    }
+
     const handleDeleteClick = async (schedule) => {
         if (!isAuthenticated) {
             setShowAuthRequired(true)
@@ -391,5 +417,6 @@ export default function useScheduleActions(onChanged) {
         </>
     )
 
-    return {handleEdit, handleDeleteClick, dialogs}
+    // Moving needs a logged-in member; logged-out visitors just tap the cards
+    return {handleEdit, handleDeleteClick, handleMove: isAuthenticated ? handleMove : undefined, dialogs}
 }

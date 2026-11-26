@@ -29,12 +29,8 @@ const slotEnd = (slot) => {
 }
 // "Eduardo Regueira - Q1" -> "Q1"; names without a suffix keep their first word.
 const courtShort = (name) => name.includes(' - ') ? name.split(' - ').pop().trim() : name.split(' ')[0]
-// The courts people actually book; the rest start hidden but are one tap away in the selector.
-const MAIN_COURTS = ['Q1', 'Q2']
-const defaultCourtIds = (courts) => {
-    const main = courts.filter(c => MAIN_COURTS.includes(courtShort(c.name))).map(c => c.id)
-    return main.length ? main : courts.map(c => c.id)
-}
+// Every court starts shown ("Todas"); the selector narrows it down.
+const defaultCourtIds = (courts) => courts.map(c => c.id)
 const firstName = (name) => (name || '').trim().split(' ')[0]
 
 // Which status wins when several things share a slot.

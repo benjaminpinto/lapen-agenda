@@ -30,7 +30,7 @@ export default function MoveConfirmDialog({move, onConfirm, onCancel}) {
 
     return (
         <AlertDialog open onOpenChange={(open) => !open && onCancel()}>
-            <AlertDialogContent className={`w-auto max-w-md ${own ? '' : 'border-2 border-red-600 bg-red-50'}`}
+            <AlertDialogContent className={`max-w-md ${own ? '' : 'border-2 border-red-600 bg-red-50'}`}
                                 data-testid="move-confirm-dialog" data-own={own}>
                 <AlertDialogHeader>
                     <AlertDialogTitle className={own ? '' : 'flex items-center gap-2 text-red-700'}>

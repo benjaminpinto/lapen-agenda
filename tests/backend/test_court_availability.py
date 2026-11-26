@@ -37,6 +37,11 @@ def test_booking_takes_only_its_own_slot_and_court():
     assert cells[(1, MONDAY, '16:30')][0]['player1_name'] == 'Ana'
 
 
+def test_booking_carries_player_ids_so_the_grid_knows_whose_game_it_is():
+    item = cells_of(schedules=[booking(1, '16:30', player1_id=3, player2_id=None)])[(1, MONDAY, '16:30')][0]
+    assert (item['player1_id'], item['player2_id']) == (3, None)
+
+
 def test_off_grid_booking_takes_both_slots_it_overlaps():
     cells = cells_of(schedules=[booking(2, '16:00')])
     assert set(cells) == {(2, MONDAY, '15:00'), (2, MONDAY, '16:30')}

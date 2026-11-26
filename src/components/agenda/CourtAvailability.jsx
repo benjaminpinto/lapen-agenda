@@ -4,6 +4,8 @@ import {Link, useNavigate} from 'react-router-dom'
 import {Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, GraduationCap, Pencil, Plus, Trash2, X} from 'lucide-react'
 import {getLocalDateString} from '@/utils/dateUtils'
 import useBookingDrag from './useBookingDrag'
+import MoveConfirmDialog from './MoveConfirmDialog'
+import {useAuth} from '@/contexts/AuthContext'
 
 const SLOT_MINUTES = 90
 const WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
@@ -32,6 +34,16 @@ const courtShort = (name) => name.includes(' - ') ? name.split(' - ').pop().trim
 // Every court starts shown ("Todas"); the selector narrows it down.
 const defaultCourtIds = (courts) => courts.map(c => c.id)
 const firstName = (name) => (name || '').trim().split(' ')[0]
+
+// Ids are the source of truth; names cover bookings that were never linked to a user.
+const isParticipant = (item, user) => {
+    if (!user) return false
+    const normalize = (name) => (name || '').trim().toLowerCase()
+    const names = [user.short_name, user.name].map(normalize).filter(Boolean)
+    return [1, 2].some(n => item[`player${n}_id`]
+        ? item[`player${n}_id`] === user.id
+        : names.includes(normalize(item[`player${n}_name`])))
+}
 
 // Which status wins when several things share a slot.
 const statusOf = (items) => {
@@ -71,6 +83,8 @@ const CourtAvailability = ({compact = false, defaultMode = 'week', onEdit, onDel
     const [data, setData] = useState(null)
     const [error, setError] = useState(false)
     const [sheet, setSheet] = useState(null)
+    const [pendingMove, setPendingMove] = useState(null)
+    const {user} = useAuth()
     const now = new Date()
 
     useEffect(() => {
@@ -106,6 +120,22 @@ const CourtAvailability = ({compact = false, defaultMode = 'week', onEdit, onDel
         const court = data.courts.find(c => c.id === courtId)
         const ok = await onMove(item, {court_id: courtId, date, start_time: slot}, `${courtShort(court?.name || '')} · ${slot}`)
         if (!ok) setData(before)
+    }
+
+    // A drop only asks; the booking moves once the member confirms
+    const askMove = (item, date, fromCourtId, courtId, slot) => {
+        const courtName = (id) => data.courts.find(c => c.id === id)?.name || ''
+        setPendingMove({
+            item, date, courtId, slot,
+            own: isParticipant(item, user),
+            from: {court: courtName(fromCourtId), time: item.start_time},
+            to: {court: courtName(courtId), time: slot},
+        })
+    }
+    const confirmMove = () => {
+        const {item, date, courtId, slot} = pendingMove
+        setPendingMove(null)
+        moveBooking(item, date, courtId, slot)
     }
 
     if (error) {
@@ -222,11 +252,13 @@ const CourtAvailability = ({compact = false, defaultMode = 'week', onEdit, onDel
                     <DayTable key={selectedDay} date={selectedDay} slots={slots} courts={visibleCourts} now={now}
                               itemsAt={itemsAt} dayBlock={dayBlock(selectedDay)}
                               onBook={book} onSelect={(slot) => setSheet({date: selectedDay, slot})}
-                              onMove={onMove && ((item, courtId, slot) => moveBooking(item, selectedDay, courtId, slot))}/>
+                              onMove={onMove && ((item, fromCourtId, courtId, slot) => askMove(item, selectedDay, fromCourtId, courtId, slot))}/>
                 </>
             )}
 
             <Legend/>
+
+            <MoveConfirmDialog move={pendingMove} onConfirm={confirmMove} onCancel={() => setPendingMove(null)}/>
 
             {compact && (
                 <Link to="/view" className="block text-center text-sm font-semibold text-primary py-2"
@@ -346,7 +378,7 @@ const DayStrip = ({dates, today, selected, onSelect, freeCount, dayBlock}) => (
 const PRIME_START = '16:30'
 
 const DayTable = ({date, slots, courts, now, itemsAt, dayBlock, onBook, onSelect, onMove}) => {
-    const {drag, pressing, bind} = useBookingDrag((payload, to) => onMove(payload.item, to.courtId, to.slot))
+    const {drag, pressing, bind} = useBookingDrag((payload, to) => onMove(payload.item, payload.courtId, to.courtId, to.slot))
     const d = parseDate(date)
     const weekday = WEEKDAYS_LONG[(d.getDay() + 6) % 7]
     const [expanded, setExpanded] = useState(false)
@@ -420,7 +452,7 @@ const DayTable = ({date, slots, courts, now, itemsAt, dayBlock, onBook, onSelect
                                         <DayCell key={c.id} items={items} past={past}
                                                  onBook={() => onBook(c.id, date, slot)}
                                                  onDetails={() => onSelect(slot)}
-                                                 dragProps={draggable ? bind({key, item: booked}) : null}
+                                                 dragProps={draggable ? bind({key, item: booked, courtId: c.id}) : null}
                                                  pressing={pressing === key}
                                                  placeholder={!!booked && drag?.payload.item.id === booked.id}
                                                  dropCourt={c.id} dropSlot={slot}

@@ -1133,6 +1133,14 @@ paths:
                                 enum: [booked, recurring, blocked]
                               id:
                                 type: integer
+                              player1_id:
+                                type: integer
+                                nullable: true
+                                description: Booked items only; null when the name matches no user
+                              player2_id:
+                                type: integer
+                                nullable: true
+                                description: Booked items only; null when the name matches no user
                               start_time:
                                 type: string
                                 nullable: true

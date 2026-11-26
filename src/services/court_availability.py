@@ -63,6 +63,7 @@ def build_cells(dates, slots, courts, schedules, blocks, recurring):
                     if s['court_id'] == court['id'] and _overlaps(slot_start, slot_end, start, start + SLOT_MINUTES):
                         items.append({'kind': 'booked', 'id': s['id'], 'start_time': normalize_time(s['start_time'])[:5],
                                       'player1_name': s['player1_name'], 'player2_name': s['player2_name'],
+                                      'player1_id': s.get('player1_id'), 'player2_id': s.get('player2_id'),
                                       'match_type': s['match_type']})
                 recurring_by_description = {}  # hourly reservations of one class collapse into one item
                 for r in sorted(day_recurring, key=lambda r: to_minutes(r['start_time'])):

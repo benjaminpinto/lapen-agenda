@@ -415,7 +415,7 @@ def get_week_availability():
     courts = [dict(c) for c in db.execute(
         'SELECT id, name, type FROM courts WHERE active = TRUE ORDER BY id').fetchall()]
     schedules = db.execute('''
-        SELECT id, court_id, date, start_time, player1_name, player2_name, match_type
+        SELECT id, court_id, date, start_time, player1_name, player2_name, player1_id, player2_id, match_type
         FROM schedules WHERE date >= %s AND date <= %s AND deleted_at IS NULL
     ''', (dates[0], dates[-1])).fetchall()
     blocks = db.execute('SELECT * FROM holidays_blocks WHERE date >= %s AND date <= %s',

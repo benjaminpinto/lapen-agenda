@@ -3,6 +3,7 @@ import {createPortal} from 'react-dom'
 import {Link, useNavigate} from 'react-router-dom'
 import {Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, GraduationCap, Pencil, Plus, Trash2, X} from 'lucide-react'
 import {getLocalDateString} from '@/utils/dateUtils'
+import useBookingDrag from './useBookingDrag'
 
 const SLOT_MINUTES = 90
 const WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
@@ -46,13 +47,25 @@ const statusOf = (items) => {
 
 const STATUS_LABEL = {free: 'Livre', booked: 'Jogo', recurring: 'Aula / fixo', blocked: 'Bloqueado'}
 
+// Optimistic drag and drop: the booking leaves every cell of its day and lands on the target cell.
+const relocate = (cells, item, date, courtId, slot) => {
+    const moved = {...item, start_time: slot}
+    const rest = cells
+        .map(c => c.date === date ? {...c, items: c.items.filter(i => !(i.kind === 'booked' && i.id === item.id))} : c)
+        .filter(c => c.items.length)
+    const target = rest.find(c => c.court_id === courtId && c.date === date && c.slot === slot)
+    return target
+        ? rest.map(c => c === target ? {...c, items: [...c.items, moved]} : c)
+        : [...rest, {court_id: courtId, date, slot, items: [moved]}]
+}
+
 const isPast = (date, slot, now) => {
     const today = getLocalDateString(now)
     if (date !== today) return date < today
     return toMinutes(slot) <= now.getHours() * 60 + now.getMinutes()
 }
 
-const CourtAvailability = ({compact = false, defaultMode = 'week', onEdit, onDelete, refreshKey = 0}) => {
+const CourtAvailability = ({compact = false, defaultMode = 'week', onEdit, onDelete, onMove, refreshKey = 0}) => {
     const navigate = useNavigate()
     const today = getLocalDateString()
     const [anchor, setAnchor] = useState(today)
@@ -90,6 +103,14 @@ const CourtAvailability = ({compact = false, defaultMode = 'week', onEdit, onDel
     const goToday = () => { setAnchor(today); setSelectedDay(today) }
 
     const book = (courtId, date, slot) => navigate(`/schedule?court_id=${courtId}&date=${date}&time=${slot}`)
+
+    const moveBooking = async (item, date, courtId, slot) => {
+        const before = data
+        setData(d => ({...d, cells: relocate(d.cells, item, date, courtId, slot)}))
+        const court = data.courts.find(c => c.id === courtId)
+        const ok = await onMove(item, {court_id: courtId, date, start_time: slot}, `${courtShort(court?.name || '')} · ${slot}`)
+        if (!ok) setData(before)
+    }
 
     if (error) {
         return <p className="text-sm text-muted-foreground py-6 text-center">Não foi possível carregar a agenda.</p>
@@ -204,7 +225,8 @@ const CourtAvailability = ({compact = false, defaultMode = 'week', onEdit, onDel
                               onSelect={setSelectedDay} freeCount={freeCount} dayBlock={dayBlock}/>
                     <DayTable key={selectedDay} date={selectedDay} slots={slots} courts={visibleCourts} now={now}
                               itemsAt={itemsAt} dayBlock={dayBlock(selectedDay)}
-                              onBook={book} onSelect={(slot) => setSheet({date: selectedDay, slot})}/>
+                              onBook={book} onSelect={(slot) => setSheet({date: selectedDay, slot})}
+                              onMove={onMove && ((item, courtId, slot) => moveBooking(item, selectedDay, courtId, slot))}/>
                 </>
             )}
 
@@ -327,7 +349,8 @@ const DayStrip = ({dates, today, selected, onSelect, freeCount, dayBlock}) => (
 // (plus, today, the ones already gone) fold behind a toggle in the middle of the table.
 const PRIME_START = '16:30'
 
-const DayTable = ({date, slots, courts, now, itemsAt, dayBlock, onBook, onSelect}) => {
+const DayTable = ({date, slots, courts, now, itemsAt, dayBlock, onBook, onSelect, onMove}) => {
+    const {drag, pressing, bind} = useBookingDrag((payload, to) => onMove(payload.item, to.courtId, to.slot))
     const d = parseDate(date)
     const weekday = WEEKDAYS_LONG[(d.getDay() + 6) % 7]
     const [expanded, setExpanded] = useState(false)
@@ -391,44 +414,81 @@ const DayTable = ({date, slots, courts, now, itemsAt, dayBlock, onBook, onSelect
                                 <div className={`text-[11px] tabular-nums font-semibold flex flex-col justify-center items-end pr-1 leading-tight ${past ? 'text-muted-foreground/60' : 'text-muted-foreground'}`}>
                                     <span>{slot}</span>
                                 </div>
-                                {courts.map(c => (
-                                    <DayCell key={c.id} items={itemsAt(c.id, date, slot)} past={past}
-                                             onBook={() => onBook(c.id, date, slot)}
-                                             onDetails={() => onSelect(slot)}
-                                             testId={`day-cell-${c.id}-${slot}`}/>
-                                ))}
+                                {courts.map(c => {
+                                    const items = itemsAt(c.id, date, slot)
+                                    const booked = statusOf(items) === 'booked' && items.find(i => i.kind === 'booked')
+                                    // Upcoming non-league games can be dragged to a free slot (league games follow the league flow)
+                                    const draggable = onMove && booked && !past && booked.match_type !== 'Liga'
+                                    const key = `${c.id}-${slot}`
+                                    return (
+                                        <DayCell key={c.id} items={items} past={past}
+                                                 onBook={() => onBook(c.id, date, slot)}
+                                                 onDetails={() => onSelect(slot)}
+                                                 dragProps={draggable ? bind({key, item: booked}) : null}
+                                                 pressing={pressing === key}
+                                                 placeholder={!!booked && drag?.payload.item.id === booked.id}
+                                                 dropCourt={c.id} dropSlot={slot}
+                                                 dropMode={drag && !drag.settle
+                                                     ? (drag.over?.courtId === c.id && drag.over.slot === slot ? 'over' : 'candidate')
+                                                     : null}
+                                                 testId={`day-cell-${c.id}-${slot}`}/>
+                                    )
+                                })}
                                 {canFold && expanded && slot === lastFolded && <FoldToggle/>}
                             </div>
                         )
                     })}
                 </div>
             </div>
+            {drag && createPortal(
+                <div className={`booking-ghost ${drag.settle ? 'booking-ghost-settle' : ''}`} data-testid="booking-drag-ghost"
+                     style={{
+                         width: (drag.settle || drag).width,
+                         height: (drag.settle || drag).height,
+                         transform: `translate3d(${(drag.settle || drag).x}px, ${(drag.settle || drag).y}px, 0)`,
+                     }}>
+                    <div className="booking-ghost-card cell-booked text-white px-1.5 flex flex-col justify-center overflow-hidden">
+                        <BookedNames item={drag.payload.item}/>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     )
 }
 
-const DayCell = ({items, past, onBook, onDetails, testId}) => {
+const BookedNames = ({item}) => (
+    <>
+        <span className="text-[11px] font-bold leading-tight truncate w-full">{firstName(item.player1_name)}</span>
+        <span className="text-[11px] font-bold leading-tight truncate w-full"><span className="opacity-70 font-normal">×</span> {firstName(item.player2_name)}</span>
+    </>
+)
+
+const DayCell = ({items, past, onBook, onDetails, dragProps, pressing, placeholder, dropCourt, dropSlot, dropMode, testId}) => {
     const status = statusOf(items)
     const base = 'min-w-0 min-h-0 h-11 w-full rounded-lg px-1.5 text-left flex flex-col justify-center overflow-hidden transition active:scale-[0.97]'
     if (status === 'free') {
         if (past) return <div className="h-7 rounded-lg bg-muted/60 grid place-items-center text-xs text-muted-foreground/50" data-testid={testId}>—</div>
         return (
-            <button type="button" onClick={onBook} className={`${base} cell-free items-center text-primary`}
+            <button type="button" onClick={onBook}
+                    className={`${base} cell-free items-center text-primary ${dropMode ? `drop-candidate ${dropMode === 'over' ? 'drop-over' : ''}` : ''}`}
+                    data-drop-court={dropCourt} data-drop-slot={dropSlot}
                     data-testid={testId} data-status="free">
-                <span className="flex items-center gap-0.5 text-xs font-bold"><Plus className="h-3.5 w-3.5"/>Livre</span>
+                <span className="flex items-center gap-0.5 text-xs font-bold">
+                    {dropMode === 'over' ? 'Soltar aqui' : <><Plus className="h-3.5 w-3.5"/>Livre</>}
+                </span>
             </button>
         )
     }
     const booked = items.find(i => i.kind === 'booked')
     const other = items.find(i => i.kind === status)
     return (
-        <button type="button" onClick={onDetails} className={`${base} ${cellClass(status, past)} text-white`}
-                data-testid={testId} data-status={status}>
+        <button type="button" onClick={onDetails}
+                className={`${base} ${cellClass(status, past)} text-white ${dragProps ? 'booking-draggable' : ''} ${pressing ? 'booking-pressing' : ''} ${placeholder ? 'booking-placeholder' : ''}`}
+                {...dragProps}
+                data-testid={testId} data-status={status} data-draggable={dragProps ? 'true' : undefined}>
             {status === 'booked' ? (
-                <>
-                    <span className="text-[11px] font-bold leading-tight truncate w-full">{firstName(booked.player1_name)}</span>
-                    <span className="text-[11px] font-bold leading-tight truncate w-full"><span className="opacity-70 font-normal">×</span> {firstName(booked.player2_name)}</span>
-                </>
+                <BookedNames item={booked}/>
             ) : (
                 <span className="text-[11px] font-semibold leading-tight line-clamp-2 flex items-start gap-1">
                     {status === 'recurring' ? <GraduationCap className="h-3 w-3 shrink-0 mt-px"/> : <Ban className="h-3 w-3 shrink-0 mt-px"/>}

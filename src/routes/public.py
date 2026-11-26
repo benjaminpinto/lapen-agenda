@@ -242,9 +242,17 @@ def update_schedule(schedule_id):
     db = get_db()
 
     # Check if schedule exists
-    existing = db.execute('SELECT id, match_type FROM schedules WHERE id = %s', (schedule_id,)).fetchone()
+    existing = db.execute('SELECT id, match_type, court_id, date, start_time FROM schedules WHERE id = %s',
+                          (schedule_id,)).fetchone()
     if not existing:
         return jsonify({'error': 'Agendamento não encontrado'}), 404
+
+    # Optional move (drag and drop on the court grid): unchanged fields keep their current value
+    court_id = data.get('court_id') or existing['court_id']
+    date = data.get('date') or str(existing['date'])
+    start_time = normalize_time(data.get('start_time') or existing['start_time'])[:5]
+    moved = (int(court_id) != existing['court_id'] or date != str(existing['date'])
+             or start_time != normalize_time(existing['start_time'])[:5])
 
     if existing['match_type'] == 'Liga' or match_type == 'Liga':
         return jsonify({'error': 'Partidas da Liga não podem ser editadas pela agenda'}), 400
@@ -258,15 +266,27 @@ def update_schedule(schedule_id):
         if active_bets['count'] > 0:
             return jsonify({'error': 'Não é possível editar agendamento com apostas ativas', 'has_bets': True}), 400
 
+    if moved:
+        taken = db.execute('''
+            SELECT id FROM schedules
+            WHERE court_id = %s AND date = %s AND start_time = %s AND deleted_at IS NULL AND id <> %s
+        ''', (court_id, date, start_time, schedule_id)).fetchone()
+        if taken:
+            return jsonify({'error': 'Horário não está mais disponível'}), 400
+        if is_time_blocked(date, start_time, court_id):
+            return jsonify({'error': 'Horário está bloqueado'}), 400
+
     p1_user = find_user_by_display_name(db, player1_name)
     p2_user = find_user_by_display_name(db, player2_name)
 
     try:
         db.execute('''
             UPDATE schedules
-            SET player1_name = TRIM(%s), player2_name = TRIM(%s), player1_id = %s, player2_id = %s, match_type = %s
+            SET player1_name = TRIM(%s), player2_name = TRIM(%s), player1_id = %s, player2_id = %s, match_type = %s,
+                court_id = %s, date = %s, start_time = %s
             WHERE id = %s
-        ''', (player1_name, player2_name, p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None, match_type, schedule_id))
+        ''', (player1_name, player2_name, p1_user['id'] if p1_user else None, p2_user['id'] if p2_user else None, match_type,
+              court_id, date, start_time, schedule_id))
         db.commit()
         return jsonify({'success': True, 'message': 'Agendamento atualizado com sucesso'})
     except Exception:

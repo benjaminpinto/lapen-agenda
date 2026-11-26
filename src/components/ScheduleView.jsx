@@ -30,7 +30,7 @@ const ScheduleView = () => {
     const [selectedYear, setSelectedYear] = useState(getCurrentYear())
 
     const { toast } = useToast()
-    const { handleEdit, handleDeleteClick, dialogs } = useScheduleActions(() => {
+    const { handleEdit, handleDeleteClick, handleMove, dialogs } = useScheduleActions(() => {
         fetchSchedules()
         setAgendaVersion(v => v + 1)
     })
@@ -372,7 +372,7 @@ const ScheduleView = () => {
                 </TabsContent>
 
                 <TabsContent value="weekly" className="mt-4">
-                    <CourtAvailability onEdit={handleEdit} onDelete={handleDeleteClick} refreshKey={agendaVersion} />
+                    <CourtAvailability onEdit={handleEdit} onDelete={handleDeleteClick} onMove={handleMove} refreshKey={agendaVersion} />
                 </TabsContent>
 
 

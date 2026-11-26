@@ -261,3 +261,66 @@ def test_admin_list_pending_requests(setup_db):
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
+
+
+def _move_setup(token_email):
+    """A member, a court and one Amistoso at 2026-06-10 10:00 to drag around."""
+    _, token = create_test_user(token_email, is_lapen=True, approved=True)
+    db = get_db()
+    court_id = db.execute(
+        "INSERT INTO courts (id, name, type, active) VALUES (9998, 'EditLiga Court', 'saibro', true) "
+        "ON CONFLICT (id) DO UPDATE SET active = EXCLUDED.active RETURNING id"
+    ).fetchone()['id']
+    schedule_id = db.execute(
+        "INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, match_type) "
+        "VALUES (%s, '2026-06-10', '10:30', 'EditLiga A', 'EditLiga B', 'Amistoso') RETURNING id",
+        (court_id,)
+    ).fetchone()['id']
+    db.commit()
+    db.close()
+    return token, court_id, schedule_id
+
+
+def _move(client, token, schedule_id, **where):
+    return client.put(
+        f'/api/public/schedules/{schedule_id}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={'player1_name': 'EditLiga A', 'player2_name': 'EditLiga B', 'match_type': 'Amistoso', **where}
+    )
+
+
+def test_schedule_move_to_free_slot(setup_db):
+    """Dragging a booking to a free slot changes its court, date and time."""
+    token, court_id, schedule_id = _move_setup('test_move_ok@lapen.com')
+    from main import app
+
+    with app.test_client() as client:
+        response = _move(client, token, schedule_id, court_id=court_id, date='2026-06-11', start_time='18:00')
+        assert response.status_code == 200, response.get_json()
+
+    db = get_db()
+    row = db.execute('SELECT date, start_time FROM schedules WHERE id = %s', (schedule_id,)).fetchone()
+    db.close()
+    assert str(row['date']) == '2026-06-11'
+    assert str(row['start_time'])[:5] == '18:00'
+
+
+def test_schedule_move_to_taken_slot_is_rejected(setup_db):
+    """A booking cannot land on a slot another booking already holds."""
+    token, court_id, schedule_id = _move_setup('test_move_taken@lapen.com')
+    db = get_db()
+    db.execute(
+        "INSERT INTO schedules (court_id, date, start_time, player1_name, player2_name, match_type) "
+        "VALUES (%s, '2026-06-10', '12:00', 'EditLiga C', 'EditLiga D', 'Amistoso')", (court_id,))
+    db.commit()
+    db.close()
+    from main import app
+
+    with app.test_client() as client:
+        response = _move(client, token, schedule_id, court_id=court_id, date='2026-06-10', start_time='12:00')
+        assert response.status_code == 400
+
+    db = get_db()
+    row = db.execute('SELECT start_time FROM schedules WHERE id = %s', (schedule_id,)).fetchone()
+    db.close()
+    assert str(row['start_time'])[:5] == '10:30'
